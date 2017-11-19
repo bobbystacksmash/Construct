@@ -1,0 +1,77 @@
+<html>
+    <head>
+        <title>This, is the Construct.</title>
+        
+    </head>
+    <body>
+        <div class="container" >
+            <h4>This, is the Construct.</h4>
+
+            <!--<form>
+            <div class="row" >
+                <div class="six columns" >
+                    <label for="txt-argv0">Arg0</label>
+                    <input class="u-full-width" placeholder="www.bad.com"
+                           id="txt-argv0">
+                </div>
+            </div>
+            </form>-->
+
+            <div class="row">
+                <div class="twelve columns">
+                    <textarea id="txt-code" 
+                        style="height:250px; font-size: 0.8em; font-family: Courier" 
+                        class="u-full-width" placeholder="Paste JS here..."></textarea>
+                </div>
+            </div>
+            <div class="row" >
+                <div class="twelve columns" >
+                    <button id="btn-debug">Debug</button>
+                </div>
+            </div>
+            <!-- Messages appear here... -->
+            <div id="messages"></div>
+        </div>
+        <script src="bundle.js"></script>
+
+        <script type="x-tmpl-mustache" id="tmpl-msg-exception">
+            <div class="twelve columns msgbox">
+                <span style="color:#a4e405">[!]</span>
+                <span style="color: #4fa9bc; font-weight: 1200"> ERROR </span>
+                <span style="color: #cec767;">{{ type }}</span>
+                <span style="color: #4fa9bc;"> -&gt; </span>
+                <span style="color: #e42169;">{{ message }}</span>
+                <pre style="color: #pink;">{{ stack }}</pre>
+            </div>
+        </script>
+
+        <script type="x-tmpl-mustache" id="tmpl-msg-prop-access">
+            <div class="twelve columns msgbox">
+                <span style="color:#a4e405">[+]</span>
+                <span style="color: #cec767;">{{ tag }}</span>
+                <span style="color: #4fa9bc;"> -&gt; </span>
+                <span style="color: #e42169;">{{ key }}</span>
+            </div>
+        </script>
+
+        <script type="x-tmpl-mustache" id="tmpl-msg-construct">
+            <div class="twelve columns msgbox">
+                <span style="color:#a4e405">[+]</span>
+                <span style="color: #4fa9bc;"> new </span>
+                <span style="color: #cec767;">{{ parent }}</span>
+                <span style="color: #4fa9bc;"> -&gt; </span>
+                <span style="color: #e42169;">{{ arg }}</span>
+            </div>
+        </script>
+
+        <script type="x-tmpl-mustache" id="tmpl-msgrow">
+            <div class="twelve columns msgbox">
+                <span style="color:#a4e405">[+]</span>
+                <span style="color: #4fa9bc;"> new </span>
+                <span style="color: #cec767;">{{ title }}</span>
+                <span style="color: #4fa9bc;"> -&gt; </span>
+                <span style="color: #e42169;">WScript.Shell</span>
+            </div>
+        </script>
+    </body>
+</html>

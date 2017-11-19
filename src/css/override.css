@@ -1,0 +1,17 @@
+body {
+    background-color: #263238;
+    color: #cdd3df;
+}
+
+input[type="text"], textarea {
+    background-color: #323c41;
+}
+
+.msgbox {
+    margin-top: 3px;
+    font-family: "Courier New";
+}
+
+.msgbox > pre {
+    font-family: "Courier New";
+}
