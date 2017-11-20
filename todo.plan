@@ -1,0 +1,11 @@
++ WshScriptExec.StdOut.ReadAll() needs implementing
+  ? Add a UI element so the user can paste in StdOut
+  ? UI element should show process args so user knows what is expected (e.g.: CSV tasklist)
+
++ May need some form of mock TaskManager.
+
++ Add a simple scratch-pad for copy/paste/running of code.
++ Instrument code - dump value of return.
++ Instrument code - dump arguments.
++ Instrument code - add option for adding a 'debugger' statement.
++ Instrument code - add function capture, so params in -> value out capture.
