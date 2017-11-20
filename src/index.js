@@ -125,31 +125,6 @@ function add_msg(opts) {
     messages.innerHTML += rendered;
 }
 
-/*
- * +-------------+
- * | E V E N T S |
- * +-------------+
- */
-function generic_message(name, msg) {
-    add_msg({
-        title : name,
-        msg   : msg
-    });
-};
-
-ee.on("call.pre.WScript.Echo", function (args) {
-    generic_message("WScript.Echo()", args);
-});
-
-ee.on("call.pre.WScript.Arguments", function (args) {
-    generic_message("WScript.Arguments()", args);
-});
-
-ee.on("call.generic", function (name, args) {
-    generic_message(name, args);
-})
-
-
 function make_script_env(code) {
 
     return function () {
