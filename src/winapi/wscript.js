@@ -30,7 +30,7 @@
  */
 
 const winevts = require("../events");
-const proxify = require("../proxify");
+const Proxify = require("../proxify");
 
 function mock_MISSING_METHOD (name) {
     let msg = `[WScript.${name}] - METHOD NOT YET IMPLEMENTED.`;
@@ -71,6 +71,7 @@ function mock_Echo (msg) {
  *
  */
 function mock_Sleep (time) {
+    debugger;
     alert(`[WScript.Sleep] - Sleeping for ${time} seconds...`);
 }
 
@@ -123,9 +124,9 @@ var mock_WScript_API = {
     }
 };
 
-function create(emitter) {
+function create(opts) {
 
-    EE = emitter;
+    ee = opts.emitter || { emit: () => {}, on: () => {} };
 
     let mock_WScript_API = {
         Arguments: mock_Arguments,
@@ -136,7 +137,8 @@ function create(emitter) {
         GetObject:    mock_GetObject
     };
 
-    return proxify(mock_WScript_API, null, "WScript ROOT");
+    var proxify = new Proxify({ emitter: ee });
+    return proxify(mock_WScript_API, {}, "WScript");
 }
 
 module.exports = create;

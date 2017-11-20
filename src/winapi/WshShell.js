@@ -26,8 +26,9 @@
  *  - SendKeys
  */
 
-const winevts = require("../events");
-const Proxify = require("../proxify");
+const winevts           = require("../events");
+const Proxify           = require("../proxify");
+const WshScriptExec_API = require("./WshScriptExec");
 
 var ee;
 
@@ -78,15 +79,28 @@ function make_mock_WshShell_SpecialFolders_prop() {
     };
 }
 
+/*
+ * =====================
+ * WScript.WshShell.Exec
+ * =====================
+ *
+ */
+function mock_WshShell_Exec (cmd) {
+
+    alert(`WScript.WshShell.Exec::cmd => \n   ${cmd}`);
+
+    // Create a new WshScriptExec instance!
+    let WshScriptExec = WshScriptExec_API({ emitter: ee });
+    return WshScriptExec;
+}
+
+
+
+
 
 function mock_CreateObject (type) {
     mock_MISSING_METHOD("WScript.CreateObject");
 }
-
-
-var mock_WshShell_API = {
-
-};
 
 
 function create(opts) {
@@ -94,14 +108,13 @@ function create(opts) {
     ee = opts.emitter || { emit: () => {}, on: () => {} };
 
     let mock_WshShell_API = {
-        SpecialFolders: make_mock_WshShell_SpecialFolders_prop()
+        SpecialFolders: make_mock_WshShell_SpecialFolders_prop(),
+        Exec: mock_WshShell_Exec
     };
 
     let overrides = {
         get: (target, key) => {
-            if (key === "SpecialFolders") {
-                return mock_WshShell_API.SpecialFolders;
-            }
+            return mock_WshShell_API[key]
         }
     };
 
