@@ -11,7 +11,3 @@ input[type="text"], textarea {
     margin-top: 3px;
     font-family: "Courier New";
 }
-
-.msgbox > pre {
-    font-family: "Courier New";
-}
