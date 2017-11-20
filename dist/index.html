@@ -4,8 +4,7 @@
         
     </head>
     <body>
-        <div class="container" >
-            <h4>This, is the Construct.</h4>
+        <div class="container u-full-width u-max-full-width" >
 
             <!--<form>
             <div class="row" >
@@ -18,19 +17,29 @@
             </form>-->
 
             <div class="row">
-                <div class="twelve columns">
+                <div class="seven columns">
+                    <h6>Events</h6>
+                    <div class="container u-full-width u-max-full-width">
+                        <div class="row">
+                            <div id="messages" class="twelve columns">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="five columns">
+                    <h6>Input</h6>
+                    <button id="btn-debug">Debug</button>
                     <textarea id="txt-code" 
                         style="height:250px; font-size: 0.8em; font-family: Courier" 
                         class="u-full-width" placeholder="Paste JS here..."></textarea>
+
+                    <textarea id="stdin"
+                        style="height:250px; font-size: 0.8em; font-family: Courier" 
+                        class="u-full-width" placeholder="StdOut"></textarea>
+
                 </div>
             </div>
-            <div class="row" >
-                <div class="twelve columns" >
-                    <button id="btn-debug">Debug</button>
-                </div>
-            </div>
-            <!-- Messages appear here... -->
-            <div id="messages"></div>
         </div>
         <script src="bundle.js"></script>
 
