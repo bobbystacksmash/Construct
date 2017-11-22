@@ -1,67 +1,98 @@
 
+const winevts        = require("../events");
+const Proxify        = require("../proxify");
+const _              = require("lodash");
+
 /*
  * ==================
  * XMLHttpRequest API
  * ==================
  */
 
-function proxied_XMLHttpRequest (tag, target) {
 
-    var handler = {
 
-            apply (target, ctx, args) {
-                console.info(`${tag} :: APPLY called with ${args.length} args`);
-                return Reflect.apply(...arguments);
-            },
+function prox_XHR_fn_call (target, ctx, args) {
 
-            get (target, key, trap) {
+}
 
-                console.info(`${tag} :: GET on "${key}`);
 
-                if (typeof target[key] === 'function') {
+function mock_open (xhr) {
+    return (method, url, asyn, user, password) => {
+        alert("mock open: " + url);
+        //console.info(`${tag} :: XHR.open(${method}, ${url}, ${asyn})`);
+        // Translate the URL to something that won't violate CORS:
+        let new_url = "http://localhost:3000/fetch/" + encodeURIComponent(url);
+        //console.info(`${tag} :: ${url} -> ${new_url}`);
+        return xhr.open(method, url, asyn, user, password);
+    }
+}
 
-                    console.info(`${tag} :: is a function...`);
 
-                    switch (key) {
-                    case "open":
-                        return (method, url, asyn, user, password) => {
-                            console.info(`${tag} :: XHR.open(${method}, ${url}, ${asyn})`);
+function mock_send (xhr) {
+    
+    return () => {
+        debugger;
+        alert("mock send: ");
+        return xhr.send();
+    }
+}
 
-                            // Translate the URL to something that won't violate CORS:
-                            let new_url = "http://localhost:3000/fetch/" + encodeURIComponent(url);
 
-                            console.info(`${tag} :: ${url} -> ${new_url}`);
+function prox_XHR_prop_get (target, key, trap) {
 
-                            return target[key](method, new_url, asyn, user, password);
-                        };
+    alert("prox_XHR_prop_get");
 
-                    default:
-                        return (...args) => {
-                            console.info(`${tag} :: XHR.${key}(${args})`);
-                            return target[key](...args);
-                        };
-                    }
-                }
-                else {
+    if (typeof target[key] === 'function') {
 
-                    if (key == "Status") key = "status";
+        console.info(`${tag} :: is a function...`);
 
-                    return target[key];
-                }
-            },
+        switch (key) {
+        case "open":
+                mock_open(...args);
+                break;
 
-            set (target, key, value) {
-                console.info(`${tag} :: SET on "${key}" with "${value}"`);
-                return true;
-            },
+        default:
+            return (...args) => {
+                console.info(`${tag} :: XHR.${key}(${args})`);
+                return target[key](...args);
+            };
+        }
+    }
+    else {
 
-            construct (target, args) {
-                console.info(`${tag} :: NEW called with ${args.length} args`);
-                return new target(...args);
+        if (key == "Status") key = "status";
+
+        return target[key];
+    }
+}
+
+
+function create(opts) {
+
+    ee = opts.emitter || { emit: () => {}, on: () => {} };
+
+    var xhr = new window.XMLHttpRequest();
+
+    var mock_xhr_api = {
+        open: mock_open(xhr),
+        send: mock_send(xhr)
+
+        // TODO: Add all other props and defs.
+    }
+
+    var overrides = {
+        get: (target, key) => {
+
+            if (key === "Status") {
+                return target["status"];
             }
-        };
 
-    return new Proxy(target, handler);
-};
+            return target[key];
+        }
+    };
 
-module.exports = proxied_XMLHttpRequest;
+    var proxify = new Proxify({ emitter: ee });
+    return proxify(mock_xhr_api, overrides, "XMLHttpRequest");
+}
+
+module.exports = create;

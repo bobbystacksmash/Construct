@@ -4,7 +4,7 @@
  */
 
 const winevts                = require("../events");
-const proxied_XMLHttpRequest = require("./xhr");
+const XMLHttpRequest_API     = require("./xhr");
 const ADODBStreamProxy       = require("./adodb");
 const FileSystemObjectProxy  = require("./fso");
 const WshShell_API           = require("./WshShell.js");
@@ -30,9 +30,13 @@ var mock_ActiveXObject = function (type) {
 
     switch (type) {
 
+        // https://msdn.microsoft.com/en-us/library/ms763680(v=vs.85).aspx
+        // https://stackoverflow.com/questions/1163045/differences-between-msxml2-serverxmlhttp-and-winhttp-winhttprequest
+        case "MSXML2.SERVERXMLHTTP":
         case "MSXML2.XMLHTTP":
             console.info(`[ActiveXObject] Returning new XMLHttpRequest() instance...`);
-            return proxied_XMLHttpRequest("MockXHR", new window.XMLHttpRequest());
+            let xhr = XMLHttpRequest_API({ emitter: ee });
+            return xhr;
 
         case "SCRIPTING.FILESYSTEMOBJECT":
             console.info(`[ActiveXObject] Returning new File System Object (FSO)...`);
@@ -45,7 +49,6 @@ var mock_ActiveXObject = function (type) {
         case "WSCRIPT.SHELL":
             // https://msdn.microsoft.com/fr-fr/library/aew9yb99(v=vs.84).aspx
             // https://msdn.microsoft.com/fr-fr/library/fd7hxfdd(v=vs.84).aspx
-            debugger;
             console.info(`[ActiveXObject] Returning new Wscript.Shell (WshShell) instance...`);
             let WshShell = WshShell_API({ emitter: ee });
             return WshShell;
