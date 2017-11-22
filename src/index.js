@@ -132,18 +132,34 @@ function make_script_env(code) {
 
         console.log("--[ Running Evul Code ]--");
 
+		let known_globals = [
+			"ActiveXObject",
+			"eval",
+			"this",
+			"String",
+			"parseInt",
+			"RegExp",
+			"Array",
+			"Date",
+			"WScript"
+		];
+
+		var reserved_regexp = new RegExp("^(?:" + known_globals.join("|") + ")$", "i");
+
         // Detect globals
         var globals = detect_globals(txt_code.value);
-        var names   = globals.filter((g) => /^(ActiveXObject|Array|Date|WScript)$/i.test(g.name) === false);
+        var names   = globals.filter((g) => reserved_regexp.test(g.name) === false);
 
         // TODO: Update this so we do it properly...
         var strict_variable_defs = "";
         names.forEach((n) => {
             strict_variable_defs += `var ${n.name};\n`;
+			alert(n.name);
         });
 
         var code_to_run = strict_variable_defs + txt_code.value;
-        code_to_run  = "alert('running...');debugger;" + code_to_run;
+
+		txt_code.value = code_to_run;
 
 		new Function("WScript", "ActiveXObject", code_to_run)(WScript, ActiveXObject);
         //eval(code_to_run);
