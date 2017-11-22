@@ -94,6 +94,7 @@ function add_msg_prop_access(prop) {
 
 
 function add_msg_error(ex) {
+
     Mustache.parse(TMPL.msg_error);
     var rendered = Mustache.render(TMPL.msg_error, {
         type    : ex.name,
@@ -141,10 +142,10 @@ function make_script_env(code) {
             strict_variable_defs += `var ${n.name};\n`;
         });
 
-
         var code_to_run = strict_variable_defs + txt_code.value;
-        code_to_run += "debugger;";
+        code_to_run  = "alert('running...');debugger;" + code_to_run;
 
-        eval(code_to_run);
+		new Function("WScript", "ActiveXObject", code_to_run)(WScript, ActiveXObject);
+        //eval(code_to_run);
     };
 }

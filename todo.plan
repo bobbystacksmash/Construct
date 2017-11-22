@@ -1,3 +1,8 @@
++ When calling WShell.Exec, need to setup a TextStream for each "file":
+  - StdOut
+  - StdIn
+  - StdErr
+
 + WshScriptExec.StdOut.ReadAll() needs implementing
   ? Add a UI element so the user can paste in StdOut
   ? UI element should show process args so user knows what is expected (e.g.: CSV tasklist)

@@ -18,8 +18,11 @@
  *   - Terminate https://msdn.microsoft.com/en-us/yk84ffsf(v=vs.84)
  */
 
-const winevts = require("../events");
-const Proxify = require("../proxify");
+const winevts        = require("../events");
+const Proxify        = require("../proxify");
+const TextStream_API = require("./TextStream");
+
+var buf_stdin, buf_stdout, buf_stderr;
 
 function mock_MISSING_METHOD (name) {
     let msg = `[WshShell.${name}] - METHOD NOT YET IMPLEMENTED.`;
@@ -30,9 +33,11 @@ function mock_MISSING_METHOD (name) {
 function create(opts) {
 
     ee = opts.emitter || { emit: () => {}, on: () => {} };
-    
+
     let mock_WshScriptExec = {
-        StdOut: "snakes"
+        StdIn : opts.stdin  || TextStream_API({ emitter: ee }),
+        StdOut: opts.stdout || TextStream_API({ emitter: ee }),
+        StdErr: opts.stderr || TextStream_API({ emitter: ee })
     };
 
     let overrides = {
