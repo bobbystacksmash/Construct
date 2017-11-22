@@ -15,7 +15,7 @@ function Proxify(opts) {
         handlers._debug     = hndlrs.debug     || console.log;
         handlers._construct = hndlrs.construct || null;
         handlers._apply     = hndlrs.apply     || null;
-        handlers._get       = hndlrs.get       || null;
+        handlers._get       = hndlrs.get       || NOOP;
         handlers._any       = hndlrs.any       || NOOP;
         handlers._emit      = hndlrs.emit      || NOOP;
 
@@ -50,11 +50,15 @@ function Proxify(opts) {
                 tag    : tag
             });
 
-            let key_exists = (target.hasOwnProperty(key) === true);
+
+            let key_exists = typeof target[key] !== "undefined";
+
+            // If we start seeing weird errors, re-think this...
+            //let key_exists = (target.hasOwnProperty(key) === true);
             handlers._debug(`[Proxy:${tag}] DEBUG get: ${key}, exists? ${key_exists}`);
             handlers._any("GET", ...arguments);
 
-            if (! target.hasOwnProperty(key)) {
+            if (! key_exists) {
                 ee.emit(winevts.DEBUG.error, new TypeError(
                     `[MISSING PROPERTY] ${tag} instance has no prop ${key}`
                 ));
