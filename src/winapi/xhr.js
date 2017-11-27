@@ -1,7 +1,6 @@
 
-const winevts        = require("../events");
-const Proxify        = require("../proxify");
-const _              = require("lodash");
+const winevts = require("../events");
+const Proxify = require("../proxify");
 
 /*
  * ==================
@@ -11,58 +10,62 @@ const _              = require("lodash");
 
 
 
-function prox_XHR_fn_call (target, ctx, args) {
-
-}
-
-
 function mock_open (xhr) {
     return (method, url, asyn, user, password) => {
-        alert("mock open: " + url);
-        //console.info(`${tag} :: XHR.open(${method}, ${url}, ${asyn})`);
-        // Translate the URL to something that won't violate CORS:
         let new_url = "http://localhost:3000/fetch/" + encodeURIComponent(url);
-        //console.info(`${tag} :: ${url} -> ${new_url}`);
-        return xhr.open(method, url, asyn, user, password);
+
+        ee.emit(winevts.WINAPI.XMLHttpRequest.open, {
+            method  : method,
+            url     : url,
+            async   : asyn,
+            user    : user,
+            password: password
+        });
+
+        return xhr.open(method, new_url, asyn, user, password);
     }
 }
 
 
 function mock_send (xhr) {
-    
     return () => {
         debugger;
-        alert("mock send: ");
         return xhr.send();
     }
 }
 
 
-function prox_XHR_prop_get (target, key, trap) {
+function mock_abort (xhr) {
+    return () => {
+        return xhr.abort(...args);
+    };
+}
 
-    alert("prox_XHR_prop_get");
 
-    if (typeof target[key] === 'function') {
+function mock_getAllResponseHeaders (xhr) {
+    return () => {
+        return xhr.getAllResponseHeaders(...args);
+    };
+}
 
-        console.info(`${tag} :: is a function...`);
 
-        switch (key) {
-        case "open":
-                mock_open(...args);
-                break;
-
-        default:
-            return (...args) => {
-                console.info(`${tag} :: XHR.${key}(${args})`);
-                return target[key](...args);
-            };
-        }
+function mock_getResponseHeader (xhr) {
+    return () => {
+        return xhr.getResponseHeader(...args);
     }
-    else {
+}
 
-        if (key == "Status") key = "status";
 
-        return target[key];
+function mock_setRequestHeader (xhr) {
+    return () => {
+        return xhr.setRequestHeader(...args);
+    }
+}
+
+
+function mock_overrideMimeType (xhr) {
+    return () => {
+        return xhr.overrideMimeType(...args);
     }
 }
 
@@ -71,25 +74,45 @@ function create(opts) {
 
     ee = opts.emitter || { emit: () => {}, on: () => {} };
 
-    var xhr = new window.XMLHttpRequest();
+    var XMLHttpRequest = opts.XMLHttpRequest || window.XMLHttpRequest,
+        xhr            = new XMLHttpRequest();
 
     var mock_xhr_api = {
-        open: mock_open(xhr),
-        send: mock_send(xhr)
+    
+        // PROPERTIES
+        // ==========
+        onreadystatechange: null,
+        readyState: null,
+        responseXML: null,
+        timeout: null,
+        upload: null,
+        withCredentials: null,
+        status: 200,
+        ResponseBody: "Snakes on a plane", // TODO!
 
-        // TODO: Add all other props and defs.
-    }
+        // METHODS
+        // =======
+        open: mock_open(xhr),
+        send: mock_send(xhr),
+        abort: mock_abort(xhr),
+        getAllResponseHeaders: mock_getAllResponseHeaders(xhr),
+        getResponseHeader: mock_getResponseHeader(xhr),
+        overrideMimeType: mock_overrideMimeType(xhr),
+        setRequestHeader: mock_setRequestHeader(xhr),
+    };
 
     var overrides = {
         get: (target, key) => {
 
-            if (key === "Status") {
-                return target["status"];
+            if (key == "ResponseBody") {
+                return xhr.responseText;
             }
 
             return target[key];
         }
     };
+
+    ee.emit(winevts.WINAPI.XMLHttpRequest.new);
 
     var proxify = new Proxify({ emitter: ee });
     return proxify(mock_xhr_api, overrides, "XMLHttpRequest");

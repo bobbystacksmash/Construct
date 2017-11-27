@@ -3,11 +3,11 @@
  * https://docs.microsoft.com/en-us/scripting/javascript/reference/activexobject-object-javascript
  */
 
-const winevts                = require("../events");
-const XMLHttpRequest_API     = require("./xhr");
-const ADODBStreamProxy       = require("./adodb");
-const FileSystemObjectProxy  = require("./fso");
-const WshShell_API           = require("./WshShell.js");
+const winevts              = require("../events");
+const XMLHttpRequest_API   = require("./xhr");
+const ADODB_API            = require("./adodb");
+const FileSystemObject_API = require("./fso");
+const WshShell_API         = require("./WshShell.js");
 
 const Proxify = require("../proxify");
 
@@ -44,7 +44,8 @@ var mock_ActiveXObject = function (type) {
 
         case "ADODB.STREAM":
             console.info(`[ActiveXObject] Returning new ADODB Stream...`);
-            return ADODBStreamProxy;
+            let adodb = ADODB_API({ emitter: ee });
+            return adodb;
 
         case "WSCRIPT.SHELL":
             // https://msdn.microsoft.com/fr-fr/library/aew9yb99(v=vs.84).aspx
