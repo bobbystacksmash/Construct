@@ -43,6 +43,18 @@
         </div>
         <script src="bundle.js"></script>
 
+
+        <script type="x-tmpl-mustache" id="tmpl-msg-basic">
+            <div class="row" style="border-left: solid 1px #a4e405;">
+                <div class="twelve columns" style="padding: 5px;">
+                    <span style="color: white;">{{ title }}</span>
+                    <br>
+                    <span style="color: #556276; font-size: 0.8em">{{ subtitle }}</span>  
+                </div>
+            </div>
+        </script>
+
+
         <script type="x-tmpl-mustache" id="tmpl-msg-exception">
             <div class="twelve columns msgbox">
                 <span style="color:#a4e405">[!]</span>
@@ -55,11 +67,12 @@
         </script>
 
         <script type="x-tmpl-mustache" id="tmpl-msg-prop-access">
-            <div class="twelve columns msgbox">
-                <span style="color:#a4e405">[+]</span>
-                <span style="color: #cec767;">{{ tag }}</span>
-                <span style="color: #4fa9bc;"> -&gt; </span>
-                <span style="color: #e42169;">{{ key }}</span>
+            <div class="row" style="border-left: solid 1px #e42169;">
+                <div class="twelve columns" style="padding: 5px;">
+                    <span style="color: white;">{{ tag }}</span>
+                    <span style="color: #4fa9bc;"> :: </span>
+                    <span style="color: #556276; font-size: 0.8em">{{ key }}</span>  
+                </div>
             </div>
         </script>
 
