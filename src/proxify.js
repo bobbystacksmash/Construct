@@ -12,12 +12,14 @@ function Proxify(opts) {
 
         tag = tag || "?";
 
-        handlers._debug     = hndlrs.debug     || console.log;
+        handlers._debug     = hndlrs.debug     || NOOP;
         handlers._construct = hndlrs.construct || null;
         handlers._apply     = hndlrs.apply     || null;
         handlers._get       = hndlrs.get       || NOOP;
         handlers._any       = hndlrs.any       || NOOP;
         handlers._emit      = hndlrs.emit      || NOOP;
+
+        var _this = target;
 
         /*
          * =========================
@@ -26,15 +28,22 @@ function Proxify(opts) {
          */
         function apply (target, ctx, args) {
 
-            handlers._debug(`[Proxy:${tag}] DEBUG apply: ${args}`);
-            handlers._any("APPLY", ...arguments);
+            ee.emit(winevts.DEBUG.method_call, {
+                target : target,
+                ctx    : ctx,
+                args   : args,
+                tag    : tag
+            });
 
-            if (handlers._apply) {
-                return handlers._apply(...arguments);
-            }
-            else {
-                return Reflect.apply(...argument);
-            }
+            //handlers._debug(`[Proxy:${tag}] DEBUG apply: ${args}`);
+            //handlers._any("APPLY", ...arguments);
+
+            //if (handlers._apply) {
+            //    return handlers._apply(...arguments);
+            //}
+            //else {
+                return Reflect.apply(...arguments);
+            //}
         }
 
         /*
@@ -43,13 +52,23 @@ function Proxify(opts) {
          * ==========================
          */
         function get (target, key) {
-
             ee.emit(winevts.DEBUG.property_access, {
                 target : target,
                 key    : key,
                 tag    : tag
             });
 
+            return handlers._get(target, key);
+        }
+
+
+        function _get (target, key) {
+
+            ee.emit(winevts.DEBUG.property_access, {
+                target : target,
+                key    : key,
+                tag    : tag
+            });
 
             let key_exists = typeof target[key] !== "undefined";
 
