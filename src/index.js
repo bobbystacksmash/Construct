@@ -3,7 +3,6 @@
  * ====
  *
  * [!] Add UI-level information for undefined WinAPI calls.
- * [!] Add a nicer "fixer-upper" for adding undefined globals.
  *
  */
 
@@ -22,12 +21,21 @@ const ActiveXObject_API = require("./winapi/activex");
 const winevts                = require("./events");
 const ee = new EventEmitter();
 
-ee.on(winevts.WINAPI.generic.new,          (x) => add_msg_construct({ parent: x.obj, arg: x.arg }));
-ee.on(winevts.WINAPI.generic.call,         console.log);
+ee.on(winevts.WINAPI.generic.new,          (x) => add_msg_basic({ title: `new ${x.obj}`, subtitle: x.arg }));
+ee.on(winevts.WINAPI.generic.call,         (x) => alert(x));
 ee.on(winevts.WINAPI.generic.property.set, console.log);
 ee.on(winevts.WINAPI.generic.property.get, console.log);
 ee.on(winevts.DEBUG.error,                 (e) => add_msg_error(e));
 ee.on(winevts.DEBUG.property_access,       (p) => add_msg_prop_access(p));
+ee.on(winevts.DEBUG.method_call,           (p) => alert(p));
+
+
+// --[ XMLHttpRequest ]--
+
+ee.on(winevts.WINAPI.XMLHttpRequest.open, (obj) => {
+    add_msg_basic({ title: `XMLHttpRequest: ${obj.method} => ${obj.url}`, subtitle: "Remote content was requested" });
+});
+
 
 // --[ WIN API ]--
 const WScript       = WScript_API({ emitter: ee });
@@ -51,6 +59,7 @@ document.addEventListener("DOMContentLoaded", function (evt) {
 
     // Templates
     TMPL = {
+        msg_basic       : document.getElementById("tmpl-msg-basic").innerHTML,
         msg_construct   : document.getElementById("tmpl-msg-construct").innerHTML,
         msg_prop_access : document.getElementById("tmpl-msg-prop-access").innerHTML,
         msg_error       : document.getElementById("tmpl-msg-exception").innerHTML,
@@ -105,6 +114,16 @@ function add_msg_error(ex) {
 }
 
 
+function add_msg_basic(opts) {
+    Mustache.parse(TMPL.msg_basic);
+    var rendered = Mustache.render(TMPL.msg_basic, {
+        title    : opts.title    || "",
+        subtitle : opts.subtitle || ""
+    });
+    messages.innerHTML += rendered;
+}
+
+
 
 function add_msg_construct(opts) {
     Mustache.parse(TMPL.msg_construct);
@@ -154,13 +173,13 @@ function make_script_env(code) {
         var strict_variable_defs = "";
         names.forEach((n) => {
             strict_variable_defs += `var ${n.name};\n`;
-			alert(n.name);
         });
 
-        var code_to_run = strict_variable_defs + txt_code.value;
+        var code_to_run = strict_variable_defs +";\n\n" +  txt_code.value;
 
 		txt_code.value = code_to_run;
 
+        window.WScript = WScript;
 		new Function("WScript", "ActiveXObject", code_to_run)(WScript, ActiveXObject);
         //eval(code_to_run);
     };
