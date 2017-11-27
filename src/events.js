@@ -14,6 +14,10 @@ module.exports = {
                 get: "WINAPI.generic.property.get",
             }
         },
+        XMLHttpRequest: {
+            new: "WINAPI.XMLHttpRequest.new",
+            open: "WINAPI.XMLHttpRequest.open",
+        },
         WScript: {
             WshShell: {
                 SpecialFolders: {
