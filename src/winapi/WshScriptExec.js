@@ -42,13 +42,12 @@ function create(opts) {
 
     let overrides = {
         get: (target, key) => {
-            alert("WshScriptExec!");
             return mock_WshScriptExec[key]
         }
     };
 
     var proxify = new Proxify({ emitter: ee });
-    return proxify(mock_WshScriptExec, {}, "WshScriptExec");
+    return proxify(mock_WshScriptExec, overrides, "WshScriptExec");
 }
 
 module.exports = create;

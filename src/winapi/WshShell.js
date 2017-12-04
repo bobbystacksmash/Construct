@@ -10,7 +10,7 @@
  * PROPERTIES
  * [ ] -  CurrentDirectory
  * [ ] -  Environment
- * [ ] -  SpecialFolders
+ * [ ] -  SpecialFolders https://msdn.microsoft.com/en-us/subscriptions/0ea7b5xe(v=vs.84).aspx
  *
  * METHODS
  * [ ] -  AppActivate
@@ -72,13 +72,10 @@ function make_mock_WshShell_SpecialFolders_prop() {
 
     return {
         item: (name) => {
-            ee.emit(
-                winevts.WINAPI.WScript.WshShell.SpecialFolders.get,
-
-                // FIXME - set a special folders handler up to catch
-                //         property access.
-
-            );
+            ee.emit(winevts.WINAPI.WScript.WshShell.SpecialFolders.get, {
+                highlight:   "wshshell.SpecialFolders",
+                description: winevts.WINAPI.WScript.WshShell.SpecialFolders.get_help
+            });
             return (special_folders[name]) ? special_folders[name] : "";
         }
     };
@@ -95,7 +92,7 @@ function make_mock_WshShell_SpecialFolders_prop() {
  */
 function mock_WshShell_Exec (cmd) {
 
-    alert(`WScript.WshShell.Exec::cmd => \n   ${cmd}`);
+    console.log(`WScript.WshShell.Exec::cmd => \n   ${cmd}`);
 
     // Let's wire-up IO for this "process".
     var buf_stdin  = TextStream_API({ emitter: ee }),
@@ -133,6 +130,14 @@ function create(opts) {
             return mock_WshShell_API[key]
         }
     };
+
+    // EVENTING
+    // ========
+    // Q: Why no winevts.WINAPI.WScript.WshShell.new event?
+    //
+    // A: Much like ADODB Streams, a WshShell instance can only be created
+    //    through either an ActiveXObject or the CreateObject function. Both
+    //    of these functions will emit the alert that an instance was created.
 
     var proxify = new Proxify({ emitter: ee });
     return proxify(mock_WshShell_API, overrides, "WshShell");

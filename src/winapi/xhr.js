@@ -1,4 +1,6 @@
 
+// https://msdn.microsoft.com/en-us/library/ms757849(v=vs.85).aspx
+
 const winevts = require("../events");
 const Proxify = require("../proxify");
 
@@ -12,14 +14,18 @@ const Proxify = require("../proxify");
 
 function mock_open (xhr) {
     return (method, url, asyn, user, password) => {
-        let new_url = "http://localhost:3000/fetch/" + encodeURIComponent(url);
+        let new_url     = "http://localhost:3000/fetch/" + encodeURIComponent(url),
+            safeish_url = url.replace(/\./g, "[.]").replace(/^http/i, "hxxp");
 
-        ee.emit(winevts.WINAPI.XMLHttpRequest.open, {
-            method  : method,
-            url     : url,
-            async   : asyn,
-            user    : user,
-            password: password
+        ee.winapi(winevts.WINAPI.XMLHttpRequest.open, {
+            args: {
+                method: method,
+                url: url,
+                asyn: asyn,
+                user: user,
+                password: password
+            },
+            desc: `xhr.open(${method}, ${safeish_url})`
         });
 
         return xhr.open(method, new_url, asyn, user, password);
@@ -29,7 +35,6 @@ function mock_open (xhr) {
 
 function mock_send (xhr) {
     return () => {
-        debugger;
         return xhr.send();
     }
 }
@@ -72,7 +77,12 @@ function mock_overrideMimeType (xhr) {
 
 function create(opts) {
 
-    ee = opts.emitter || { emit: () => {}, on: () => {} };
+    ee = opts.emitter || { 
+        emit:     () => {}, 
+        on:       () => {}, 
+        onwinapi: () => {}, 
+        winapi:   () => {} 
+    };
 
     var XMLHttpRequest = opts.XMLHttpRequest || window.XMLHttpRequest,
         xhr            = new XMLHttpRequest();
@@ -112,7 +122,7 @@ function create(opts) {
         }
     };
 
-    ee.emit(winevts.WINAPI.XMLHttpRequest.new);
+    ee.winapi(winevts.WINAPI.XMLHttpRequest.new, "new XMLHttpRequest()");
 
     var proxify = new Proxify({ emitter: ee });
     return proxify(mock_xhr_api, overrides, "XMLHttpRequest");

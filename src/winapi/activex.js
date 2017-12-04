@@ -13,6 +13,7 @@ const Proxify = require("../proxify");
 
 var ee = () => {};
 
+
 /*
  * =================
  * ActiveXObject API
@@ -24,7 +25,8 @@ var mock_ActiveXObject = function (type) {
         servername = types[0],
         typename   = types[1];
 
-    ee.emit(winevts.WINAPI.generic.new, { obj: "ActiveXObject", arg: type });
+    
+    ee.winapi(winevts.WINAPI.ActiveXObject.new, `new ActiveXObject("${type}")`);
 
     type = type.toUpperCase();
 
@@ -40,7 +42,8 @@ var mock_ActiveXObject = function (type) {
 
         case "SCRIPTING.FILESYSTEMOBJECT":
             console.info(`[ActiveXObject] Returning new File System Object (FSO)...`);
-            return FileSystemObjectProxy;
+            let fso = FileSystemObject_API({ emitter: ee });
+            return fso;
 
         case "ADODB.STREAM":
             console.info(`[ActiveXObject] Returning new ADODB Stream...`);

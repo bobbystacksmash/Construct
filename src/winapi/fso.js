@@ -3,6 +3,12 @@
  * File System Object (FSO)
  * ========================
  */
+
+const winevts           = require("../events");
+const Proxify           = require("../proxify");
+
+var ee;
+
 var mock_fso = {
 
     // TODO: Add some sort of VFS here...
@@ -31,4 +37,22 @@ var FileSystemObjectProxy = new Proxy(mock_fso, {
     }
 });
 
-module.exports = FileSystemObjectProxy;
+
+function create(opts) {
+
+    ee = opts.emitter || { emit: () => {}, on: () => {} };
+
+    let mock_FileSystemObject_API = {
+    };
+
+    let overrides = {
+        get: (target, key) => {
+            return mock_FileSystemObject_API[key]
+        }
+    };
+
+    var proxify = new Proxify({ emitter: ee });
+    return proxify(mock_FileSystemObject_API, overrides, "FileSystemObject");
+}
+
+module.exports = create;

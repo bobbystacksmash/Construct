@@ -52,10 +52,11 @@
 const winevts = require("../events");
 const Proxify = require("../proxify");
 
+var ee;
+
 function mock_MISSING_METHOD (prop) {
     return () => {
         let msg = `[ADODB.${prop}] - METHOD NOT YET IMPLEMENTED. ${JSON.stringify(arguments)}`;
-        debugger;
         alert(msg)
         console.log(msg);
     };
@@ -63,19 +64,31 @@ function mock_MISSING_METHOD (prop) {
 
 
 function mock_Open (source, mode, opts, user, password) {
+
+    ee.winapi(winevts.WINAPI.ADODB.Open, "adodb.Open()");
+
     console.log(`ADODB.mock_Open ` + source);
     console.log(`ADODB.mock_Open OPTS: ${JSON.stringify(opts)}`);
 }
 
 
 function mock_Write (buffer) {
-    alert("mock_write: " + buffer);
+    ee.winapi(winevts.WINAPI.ADODB.Write, "adodb.Write(buf...)");
+    console.log("MOCK_WRITE: " + buffer);
 }
 
 
 function mock_SaveToFile (filename, save_opts) {
-    alert("Save to file: " + filename);
+
+    ee.winapi(winevts.WINAPI.ADODB.SaveToFile, `adodb.SaveToFile(${filename}, ...)`);
+
+    console.log("ADODB: Save to file: " + filename);
     console.log(save_opts, "<-- save opts (saveTofile)");
+}
+
+
+function mock_Close () {
+    console.log("ADODB :: Close (mark this obj as closed)");
 }
 
 
@@ -85,7 +98,7 @@ function create (opts) {
 
     let mock_ADODB_Stream = {
         Cancel       : mock_MISSING_METHOD("Cancel"),
-        Close        : mock_MISSING_METHOD("Close"),
+        Close        : mock_Close,
         CopyTo       : mock_MISSING_METHOD("CopyTo"),
         Flush        : mock_MISSING_METHOD("Flush"),
         LoadFromFile : mock_MISSING_METHOD("LoadFromFile"),
@@ -105,6 +118,15 @@ function create (opts) {
             return mock_ADODB_Stream[key]
         }
     };
+
+    // EVENTING
+    //
+    // Q: Why no winevts.WINAPI.ADODB.new event?
+    //
+    // A: You can't create an ADODB stream as a standalone object,
+    //    instead, it can only be created through either ActiveXObject
+    //    or the CreateObject function; both of which will alert that an
+    //    ADODB Stream was created.
 
     var proxify = new Proxify({ emitter: ee });
     return proxify(mock_ADODB_Stream, overrides, "ADODB");

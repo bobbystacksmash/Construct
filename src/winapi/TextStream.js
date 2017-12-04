@@ -162,8 +162,8 @@ function create(opts, buffer, iomode) {
     // +--------------+-------+-----------------------------------------------------+
     // |   CONSTANT   | VALUE | DESCRIPTION                                         |
     // +--------------+-------+-----------------------------------------------------+
-    // |  ForReading  |   1   | Open a file for reading only. Cannot be written to. |
-    // |  ForWriting  |   2   | Open a file for writing only. Cannot be read from.  |
+    // |   ForReading |   1   | Open a file for reading only. Cannot be written to. |
+    // |   ForWriting |   2   | Open a file for writing only. Cannot be read from.  |
     // | ForAppending |   3   | Open a file and write to the end of the file.       |
     // +--------------+-------+-----------------------------------------------------+
     //
