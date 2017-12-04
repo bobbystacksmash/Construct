@@ -17,24 +17,43 @@ const Mustache          = require("mustache");
 const detect_globals    = require("acorn-globals");
 const WScript_API       = require("./winapi/wscript");
 const ActiveXObject_API = require("./winapi/activex");
+const winevts           = require("./events");
+const $                 = require("jquery");
+const ee                = require("./emitter")();
 
-const winevts                = require("./events");
-const ee = new EventEmitter();
+let add_msg = (evt, highlight, ) => {
+    add_msg_row({
+        highlight: highlight,
+        description: evt.desc
+    });
+};
 
-ee.on(winevts.WINAPI.generic.new,          (x) => add_msg_basic({ title: `new ${x.obj}`, subtitle: x.arg }));
-ee.on(winevts.WINAPI.generic.call,         (x) => alert(x));
-ee.on(winevts.WINAPI.generic.property.set, console.log);
-ee.on(winevts.WINAPI.generic.property.get, console.log);
-ee.on(winevts.DEBUG.error,                 (e) => add_msg_error(e));
-ee.on(winevts.DEBUG.property_access,       (p) => add_msg_prop_access(p));
-ee.on(winevts.DEBUG.method_call,           (p) => alert(p));
+// +-------------+
+// | E V E N T S |
+// +-------------+
+//
+// ADODB Stream
+// ============
+ee.onwinapi(winevts.WINAPI.ADODB.Open,       add_msg);
+ee.onwinapi(winevts.WINAPI.ADODB.Write,      add_msg);
+ee.onwinapi(winevts.WINAPI.ADODB.SaveToFile, add_msg);
 
+// XMLHttpRequest
+// ==============
+ee.onwinapi(winevts.WINAPI.XMLHttpRequest.new,  add_msg);
+ee.onwinapi(winevts.WINAPI.XMLHttpRequest.open, add_msg);
 
-// --[ XMLHttpRequest ]--
+ee.onwinapi(winevts.WINAPI.ActiveXObject.new,   add_msg);
 
-ee.on(winevts.WINAPI.XMLHttpRequest.open, (obj) => {
-    add_msg_basic({ title: `XMLHttpRequest: ${obj.method} => ${obj.url}`, subtitle: "Remote content was requested" });
-});
+//ee.onwinapi(winevts.WINAPI.generic.new,         add_msg);
+/*ee.onwinapi(winevts.DEBUG.property_access,      add_msg);
+ee.onwinapi(winevts.DEBUG.method_call,          add_msg);
+
+ee.onwinapi(winevts.WINAPI.generic.call,         (x) => alert(x));
+ee.onwinapi(winevts.WINAPI.generic.property.set, alert);
+ee.onwinapi(winevts.WINAPI.generic.property.get, alert);
+ee.onwinapi(winevts.DEBUG.error,                 alert);*/
+
 
 
 // --[ WIN API ]--
@@ -43,9 +62,14 @@ const ActiveXObject = ActiveXObject_API({ emitter: ee });
 
 
 
+// --[ ENV ]--
+
+
 var btn_dbg, txt_code, txt_argv0, messages, TMPL;
 
-document.addEventListener("DOMContentLoaded", function (evt) {
+
+$(() => {
+
     btn_dbg  = document.getElementById("btn-debug");
     txt_code = document.getElementById("txt-code");
     messages = document.getElementById("messages");
@@ -59,12 +83,7 @@ document.addEventListener("DOMContentLoaded", function (evt) {
 
     // Templates
     TMPL = {
-        msg_basic       : document.getElementById("tmpl-msg-basic").innerHTML,
-        msg_construct   : document.getElementById("tmpl-msg-construct").innerHTML,
-        msg_prop_access : document.getElementById("tmpl-msg-prop-access").innerHTML,
-        msg_error       : document.getElementById("tmpl-msg-exception").innerHTML,
-        msgrow          : document.getElementById("tmpl-msgrow").innerHTML,
-
+        msg_row : document.getElementById("tmpl-info-row").innerHTML,
     };
 
     btn_dbg.addEventListener("click", function (e) {
@@ -85,21 +104,15 @@ document.addEventListener("DOMContentLoaded", function (evt) {
                 console.log("[SCRIPT EXITED as expected...]");
             }
 
-            add_msg_error(ex);
+            add_msg_row({
+                summary: "Exception",
+                description: ex.message
+            });
         }
 
     });
 
 });
-
-function add_msg_prop_access(prop) {
-    Mustache.parse(TMPL.msg_prop_access);
-    var rendered = Mustache.render(TMPL.msg_prop_access, {
-        key: prop.key,
-        tag: prop.tag
-    });
-    messages.innerHTML += rendered;
-}
 
 
 function add_msg_error(ex) {
@@ -113,37 +126,15 @@ function add_msg_error(ex) {
     messages.innerHTML += rendered;
 }
 
-
-function add_msg_basic(opts) {
-    Mustache.parse(TMPL.msg_basic);
-    var rendered = Mustache.render(TMPL.msg_basic, {
-        title    : opts.title    || "",
-        subtitle : opts.subtitle || ""
+function add_msg_row (opts) {
+    Mustache.parse(TMPL.msg_row);
+    var rendered = Mustache.render(TMPL.msg_row, {
+        highlight   : opts.highlight   || "",
+        description : opts.description || ""
     });
     messages.innerHTML += rendered;
 }
 
-
-
-function add_msg_construct(opts) {
-    Mustache.parse(TMPL.msg_construct);
-    var rendered = Mustache.render(TMPL.msg_construct, {
-        parent: opts.parent,
-        arg   : opts.arg || ""
-    });
-    messages.innerHTML += rendered;
-}
-
-
-function add_msg(opts) {
-    Mustache.parse(TMPL.msgrow);
-    var rendered = Mustache.render(TMPL.msgrow, {
-        title: opts.title,
-        msg: opts.msg
-    });
-
-    messages.innerHTML += rendered;
-}
 
 function make_script_env(code) {
 
