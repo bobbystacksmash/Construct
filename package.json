@@ -1,5 +1,5 @@
 {
-  "name": "coolname",
+  "name": "construct",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -26,9 +26,11 @@
     "acorn-globals": "^4.1.0",
     "espree": "^3.5.2",
     "esprima": "^4.0.0",
+    "eventemitter2": "^5.0.0",
     "events": "^1.1.1",
     "express": "^4.16.2",
     "falafel": "^2.1.0",
+    "jquery": "^3.2.1",
     "js-beautify": "^1.7.4",
     "lodash": "^4.17.4",
     "mustache": "^2.3.0"

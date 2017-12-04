@@ -11,3 +11,22 @@ input[type="text"], textarea {
     margin-top: 3px;
     font-family: "Courier New";
 }
+
+
+#messages {
+    font-size: 0.8em;
+}
+
+#messages > div > div:nth-child(1) {
+    padding-left: 10px; 
+    border-left: 6px solid #ff3267;
+}
+
+#messages > .info-row {
+    margin-bottom: 2px; 
+}
+
+.hidden {
+    display: none;
+}
+
