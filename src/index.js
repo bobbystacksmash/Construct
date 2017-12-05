@@ -20,6 +20,9 @@ const ActiveXObject_API = require("./winapi/activex");
 const winevts           = require("./events");
 const $                 = require("jquery");
 const ee                = require("./emitter")();
+const HostEnvironment   = require("./hostenvironment")
+
+let host = new HostEnvironment({ emitter: ee });
 
 let add_msg = (evt, highlight, ) => {
     add_msg_row({
@@ -57,10 +60,8 @@ ee.onwinapi(winevts.DEBUG.error,                 alert);*/
 
 
 // --[ WIN API ]--
-const WScript       = WScript_API({ emitter: ee });
-const ActiveXObject = ActiveXObject_API({ emitter: ee });
-
-
+const WScript       = WScript_API({ emitter: ee, host: host });
+const ActiveXObject = ActiveXObject_API({ emitter: ee, host: host });
 
 // --[ ENV ]--
 

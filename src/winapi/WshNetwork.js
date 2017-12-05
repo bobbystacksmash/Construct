@@ -66,8 +66,6 @@ function mock_AddWindowsPrinterconnection (strPrinterPath, strDriverName, strPor
             strDriverName:  strDriverName
         }
     });
-
-    // TODO...
 }
 
 
