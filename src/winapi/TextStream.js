@@ -26,9 +26,8 @@
  * [x] - WriteLine       https://msdn.microsoft.com/en-us/subscriptions/t5399c99(v=vs.84).aspx
  */
 
-const Buffer  = require("buffer/").Buffer;
-const winevts = require("../events");
-const Proxify = require("../proxify");
+const winevts  = require("../events");
+const proxify2 = require("../proxify2");
 
 var buf            = [];
 var buf_closed     = false;
@@ -191,26 +190,34 @@ function create(opts, buffer, iomode) {
         WriteBlankLines: mock_WriteBlankLines,
         WriteLine:       mock_WriteLine
     };
-
-    let overrides = {
-        get: (target, key) => {
-            switch (key) {
-                case "AtEndOfLine":
-                    break;
-                case "AtEndOfStream":
-                    break;
-                case "Column":
-                    break;
-                case "Line":
-                    break;
-                default:
-                    return target[key];
-            }
-        }
-    };
-
-    var proxify = new Proxify({ emitter: ee });
-    return proxify(mock_TextStream, overrides, "TextStream");
 }
 
-module.exports = create;
+module.exports = function TextStream (opts) {
+
+    let ee  = opts.emitter,
+        buf = opts.buffer;
+
+    let NOOP = () => {
+        console.log("TextStream noop");
+    };
+
+
+    let TextStream = {
+        Close: NOOP,
+        Read: () => buf,
+        ReadAll: () => buf,
+        ReadLine: () => buf,
+        Skip: NOOP,
+        SkipLine: NOOP,
+        Write: NOOP,
+        WriteBlankLines: NOOP,
+        WriteLine: NOOP,
+
+        AtEndOfLine: null,
+        AtEndOfStream: null,
+        Column: null,
+        Line: null,
+    };
+
+    return proxify2(TextStream, "TextStream", opts);
+};

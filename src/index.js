@@ -1,164 +1,121 @@
 /*
- * TODO
- * ====
+ * XXXXXXXXXXXXXXXXX
+ * C O N S T R U C T
+ * XXXXXXXXXXXXXXXXX
  *
- * [!] Add UI-level information for undefined WinAPI calls.
+ * It's like procmon, but for Microsoft JScript.
  *
  */
 
-
-import './css/normalize.css';
-import './css/skeleton.css';
-import './css/override.css';
-
+/*const argparse          = require("minimist");
 const beautify          = require("js-beautify");
-const EventEmitter      = require("events");
 const Mustache          = require("mustache");
-const detect_globals    = require("acorn-globals");
 const WScript_API       = require("./winapi/wscript");
 const ActiveXObject_API = require("./winapi/activex");
-const winevts           = require("./events");
 const $                 = require("jquery");
-const ee                = require("./emitter")();
-const HostEnvironment   = require("./hostenvironment")
+const HostEnvironment   = require("./hostenvironment")*/
 
-let host = new HostEnvironment({ emitter: ee });
+const evts              = require("./events");
+const EventEmitter2     = require("eventemitter2").EventEmitter2;
+const fs                = require("fs");
+const detect_globals    = require("acorn-globals");
+const WINAPI            = require("./winapi");
 
-let add_msg = (evt, highlight, ) => {
-    add_msg_row({
-        highlight: highlight,
-        description: evt.desc
-    });
-};
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// A R G U M E N T   P A R S I N G
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+let js_file_to_examine = process.argv[2],
+    js_file_contents   = fs.readFileSync(js_file_to_examine).toString();
 
-// +-------------+
-// | E V E N T S |
-// +-------------+
-//
-// ADODB Stream
-// ============
-ee.onwinapi(winevts.WINAPI.ADODB.Open,       add_msg);
-ee.onwinapi(winevts.WINAPI.ADODB.Write,      add_msg);
-ee.onwinapi(winevts.WINAPI.ADODB.SaveToFile, add_msg);
-
-// XMLHttpRequest
-// ==============
-ee.onwinapi(winevts.WINAPI.XMLHttpRequest.new,  add_msg);
-ee.onwinapi(winevts.WINAPI.XMLHttpRequest.open, add_msg);
-
-ee.onwinapi(winevts.WINAPI.ActiveXObject.new,   add_msg);
-
-//ee.onwinapi(winevts.WINAPI.generic.new,         add_msg);
-/*ee.onwinapi(winevts.DEBUG.property_access,      add_msg);
-ee.onwinapi(winevts.DEBUG.method_call,          add_msg);
-
-ee.onwinapi(winevts.WINAPI.generic.call,         (x) => alert(x));
-ee.onwinapi(winevts.WINAPI.generic.property.set, alert);
-ee.onwinapi(winevts.WINAPI.generic.property.get, alert);
-ee.onwinapi(winevts.DEBUG.error,                 alert);*/
-
-
-
-// --[ WIN API ]--
-const WScript       = WScript_API({ emitter: ee, host: host });
-const ActiveXObject = ActiveXObject_API({ emitter: ee, host: host });
-
-// --[ ENV ]--
-
-
-var btn_dbg, txt_code, txt_argv0, messages, TMPL;
-
-
-$(() => {
-
-    btn_dbg  = document.getElementById("btn-debug");
-    txt_code = document.getElementById("txt-code");
-    messages = document.getElementById("messages");
-
-    txt_code.addEventListener("change", () => {
-        txt_code.value = beautify(txt_code.value);
-    });
-
-    // Arguments
-    txt_argv0 = document.getElementById("txt-argv0");
-
-    // Templates
-    TMPL = {
-        msg_row : document.getElementById("tmpl-info-row").innerHTML,
-    };
-
-    btn_dbg.addEventListener("click", function (e) {
-
-        messages.innerHTML = "";
-
-        // Load contents from the textbox...
-        let script_contents = txt_code.value;
-
-        let runnable = make_script_env(script_contents);
-
-        try {
-            runnable();
-        }
-        catch (ex) {
-
-            if (ex.name === "Script Requested Shutdown") {
-                console.log("[SCRIPT EXITED as expected...]");
-            }
-
-            add_msg_row({
-                summary: "Exception",
-                description: ex.message
-            });
-        }
-
-    });
-
+let ee = new EventEmitter2({
+    wildcard: true
 });
 
 
-function add_msg_error(ex) {
+ee.on("DEBUG.**", (D) => {
 
-    Mustache.parse(TMPL.msg_error);
-    var rendered = Mustache.render(TMPL.msg_error, {
-        type    : ex.name,
-        message : ex.message,
-        stack   : ex.stack
-    });
-    messages.innerHTML += rendered;
+    switch (D.type) {
+
+        case "get":
+            console.log(D);
+            handle_GET_property(D);
+            break;
+
+        case "constructed":
+            handle_NEW(D);
+            break;
+
+        default:
+            console.log("Unhandled event type: " + D.type);
+    }
+});
+
+function handle_NEW (D) {
+
+    if (D.args && D.tag === "ActiveXObject") {
+        console.log(`[DEBUG] ${D.args[0]} created (via ${D.tag}).`);
+    }
 }
 
-function add_msg_row (opts) {
-    Mustache.parse(TMPL.msg_row);
-    var rendered = Mustache.render(TMPL.msg_row, {
-        highlight   : opts.highlight   || "",
-        description : opts.description || ""
-    });
-    messages.innerHTML += rendered;
+function handle_GET_property (D) {
+
+    /*if (!D.exists) {
+        console.log(`[DEBUG] MISSING PROPERTY ${D.tag}.${D.key} -- please report this as an issue.`);
+        console.log(`[DEBUG] Exiting.`);
+        process.exit(1);
+        return;
+    }
+
+    console.log(`[DEBUG] ${D.tag}.${D.key} exists`);*/
 }
 
 
-function make_script_env(code) {
+let winapi = new WINAPI({
+    emitter: ee
+});
+
+
+// --[ WIN API ]--
+//const WScript       = WScript_API();
+//const ActiveXObject = ActiveXObject_API();
+
+// XXXXXXXXXXXXX
+// R U N T I M E
+// XXXXXXXXXXXXX
+try {
+    console.log("\nRunning sample");
+    console.log("--------------\n");
+    let fn = instrument_and_wrap_fn(js_file_contents);
+    fn();
+
+}
+catch (ex) {
+    console.log("\nERROR");
+    console.log(ex);
+}
+
+function instrument_and_wrap_fn(code) {
+
+    let known_globals = [
+        "ActiveXObject",
+        "eval",
+        "this",
+        "String",
+        "parseInt",
+        "RegExp",
+        "Array",
+        "Date",
+        "WScript"
+    ];
 
     return function () {
 
-        console.log("--[ Running Evul Code ]--");
-
-		let known_globals = [
-			"ActiveXObject",
-			"eval",
-			"this",
-			"String",
-			"parseInt",
-			"RegExp",
-			"Array",
-			"Date",
-			"WScript"
-		];
+        console.log("RUNNING");
 
 		var reserved_regexp = new RegExp("^(?:" + known_globals.join("|") + ")$", "i");
 
         // Detect globals
-        var globals = detect_globals(txt_code.value);
+        var globals = detect_globals(code);
         var names   = globals.filter((g) => reserved_regexp.test(g.name) === false);
 
         // TODO: Update this so we do it properly...
@@ -167,12 +124,9 @@ function make_script_env(code) {
             strict_variable_defs += `var ${n.name};\n`;
         });
 
-        var code_to_run = strict_variable_defs +";\n\n" +  txt_code.value;
+        var code_to_run = strict_variable_defs +";\n\n" +  code;
+		let fn = new Function("WScript", "ActiveXObject", "console", "JSON", code_to_run);
 
-		txt_code.value = code_to_run;
-
-        window.WScript = WScript;
-		new Function("WScript", "ActiveXObject", code_to_run)(WScript, ActiveXObject);
-        //eval(code_to_run);
+        fn(winapi.WScript, winapi.ActiveXObject, console, JSON);
     };
 }

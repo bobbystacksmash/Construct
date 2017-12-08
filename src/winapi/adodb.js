@@ -1,3 +1,5 @@
+const proxify2 = require("../proxify2");
+
 /*
  * ============
  * ADODB Stream
@@ -49,87 +51,38 @@
  *
  */
 
-const winevts = require("../events");
-const Proxify = require("../proxify");
+module.exports = function ADODBStream (opts) {
 
-var ee;
+    let ee = opts.emitter;
 
-function mock_MISSING_METHOD (prop) {
-    return () => {
-        let msg = `[ADODB.${prop}] - METHOD NOT YET IMPLEMENTED. ${JSON.stringify(arguments)}`;
-        alert(msg)
-        console.log(msg);
-    };
-}
+    function Open (source, mode, opts, user, password) {
+        console.log(`ADODBStream.Open ` + source);
+        console.log(`ADODBStream.Open OPTS: ${JSON.stringify(opts)}`);
+    }
 
 
-function mock_Open (source, mode, opts, user, password) {
-
-    ee.winapi(winevts.WINAPI.ADODB.Open, "adodb.Open()");
-
-    console.log(`ADODB.mock_Open ` + source);
-    console.log(`ADODB.mock_Open OPTS: ${JSON.stringify(opts)}`);
-}
+    function Write (buffer) {
+        console.log("MOCK_WRITE: " + buffer);
+    }
 
 
-function mock_Write (buffer) {
-    ee.winapi(winevts.WINAPI.ADODB.Write, "adodb.Write(buf...)");
-    console.log("MOCK_WRITE: " + buffer);
-}
+    function SaveToFile (filename, save_opts) {
+
+        console.log("ADODB: Save to file: " + filename);
+        console.log(save_opts, "<-- save opts (saveTofile)");
+    }
 
 
-function mock_SaveToFile (filename, save_opts) {
+    function Close () {
+        console.log("ADODB :: Close (mark this obj as closed)");
+    }
 
-    ee.winapi(winevts.WINAPI.ADODB.SaveToFile, `adodb.SaveToFile(${filename}, ...)`);
-
-    console.log("ADODB: Save to file: " + filename);
-    console.log(save_opts, "<-- save opts (saveTofile)");
-}
-
-
-function mock_Close () {
-    console.log("ADODB :: Close (mark this obj as closed)");
-}
-
-
-function create (opts) {
-
-    ee = opts.emitter || { emit: () => {}, on: () => {} };
-
-    let mock_ADODB_Stream = {
-        Cancel       : mock_MISSING_METHOD("Cancel"),
-        Close        : mock_Close,
-        CopyTo       : mock_MISSING_METHOD("CopyTo"),
-        Flush        : mock_MISSING_METHOD("Flush"),
-        LoadFromFile : mock_MISSING_METHOD("LoadFromFile"),
-        Open         : mock_Open,
-        Read         : mock_MISSING_METHOD("Read"),
-        ReadText     : mock_MISSING_METHOD("ReadText"),
-        SaveToFile   : mock_SaveToFile,
-        SetEOS       : mock_MISSING_METHOD("SetEOS"),
-        SkipLine     : mock_MISSING_METHOD("SkipLine"),
-        Stat         : mock_MISSING_METHOD("Stat"),
-        Write        : mock_Write,
-        WriteText    : mock_MISSING_METHOD("WriteText"),
+    let ADODBStream = {
+        Open: Open,
+        Write: Write,
+        SaveToFile: SaveToFile,
+        Close: Close
     };
 
-    let overrides = {
-        get: (target, key) => {
-            return mock_ADODB_Stream[key]
-        }
-    };
-
-    // EVENTING
-    //
-    // Q: Why no winevts.WINAPI.ADODB.new event?
-    //
-    // A: You can't create an ADODB stream as a standalone object,
-    //    instead, it can only be created through either ActiveXObject
-    //    or the CreateObject function; both of which will alert that an
-    //    ADODB Stream was created.
-
-    var proxify = new Proxify({ emitter: ee });
-    return proxify(mock_ADODB_Stream, overrides, "ADODB");
+    return proxify2(ADODBStream, "ADODBStream", opts);
 }
-
-module.exports = create;

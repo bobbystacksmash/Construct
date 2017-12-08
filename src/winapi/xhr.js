@@ -17,6 +17,8 @@ function mock_open (xhr) {
         let new_url     = "http://localhost:3000/fetch/" + encodeURIComponent(url),
             safeish_url = url.replace(/\./g, "[.]").replace(/^http/i, "hxxp");
 
+        console.log(`XMLHttpRequest.open(${method}, ${safeish_url})`);
+
         ee.winapi(winevts.WINAPI.XMLHttpRequest.open, {
             args: {
                 method: method,
@@ -34,8 +36,9 @@ function mock_open (xhr) {
 
 
 function mock_send (xhr) {
-    return () => {
-        return xhr.send();
+    return (body) => {
+        console.log("XMLHttpRequest.Sending...");
+        xhr.send(body);
     }
 }
 
@@ -62,7 +65,8 @@ function mock_getResponseHeader (xhr) {
 
 
 function mock_setRequestHeader (xhr) {
-    return () => {
+    return (header, value) => {
+        console.log(`XMLHttpRequest.setRequestHeader(${header}, ${value})`);
         return xhr.setRequestHeader(...args);
     }
 }

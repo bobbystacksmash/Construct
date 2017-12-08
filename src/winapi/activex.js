@@ -1,8 +1,8 @@
-
 /*
  * https://docs.microsoft.com/en-us/scripting/javascript/reference/activexobject-object-javascript
  */
 
+const get_host_or_err      = require("../errorhostundef");
 const winevts              = require("../events");
 const XMLHttpRequest_API   = require("./xhr");
 const ADODB_API            = require("./adodb");
@@ -21,11 +21,10 @@ var ee = () => {};
  */
 var mock_ActiveXObject = function (type) {
 
-    let types = type.split("."),
+    let types      = type.split("."),
         servername = types[0],
         typename   = types[1];
 
-    
     ee.winapi(winevts.WINAPI.ActiveXObject.new, `new ActiveXObject("${type}")`);
 
     type = type.toUpperCase();
@@ -37,7 +36,7 @@ var mock_ActiveXObject = function (type) {
         case "MSXML2.SERVERXMLHTTP":
         case "MSXML2.XMLHTTP":
             console.info(`[ActiveXObject] Returning new XMLHttpRequest() instance...`);
-            let xhr = XMLHttpRequest_API({ emitter: ee });
+            let xhr = new XMLHttpRequest_API({ emitter: ee });
             return xhr;
 
         case "SCRIPTING.FILESYSTEMOBJECT":
@@ -47,7 +46,7 @@ var mock_ActiveXObject = function (type) {
 
         case "ADODB.STREAM":
             console.info(`[ActiveXObject] Returning new ADODB Stream...`);
-            let adodb = ADODB_API({ emitter: ee });
+            let adodb = ADODB_API({ host: host, emitter: ee });
             return adodb;
 
         case "WSCRIPT.SHELL":
@@ -65,7 +64,11 @@ var mock_ActiveXObject = function (type) {
 };
 
 function create(opts) {
-    ee = opts.emitter || ee;
+    ee   = opts.emitter || ee;
+    host = get_host_or_err("ActiveXObject", opts);
+
+    console.log(host);
+
     let proxify = new Proxify({ emitter: ee });
     return proxify(mock_ActiveXObject, null, "ActiveXObject");
 }

@@ -36,6 +36,19 @@
 const winevts = require("../events");
 const Proxify = require("../proxify");
 
+function WScript () {
+
+    // Undefined method handler
+
+    var proxify = new Proxify({ emitter: ee });
+    return proxify(mock_WScript_API, overrides, "WScript");
+
+}
+
+
+
+
+
 function mock_MISSING_METHOD (name) {
     let msg = `[WScript.${name}] - METHOD NOT YET IMPLEMENTED.`;
     alert(msg)

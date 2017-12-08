@@ -1,8 +1,12 @@
 module.exports = {
 
     DEBUG: {
-        error           : "DEBUG.error",
-        property_access : "property_access",
+        error            : "DEBUG.error",
+        constructed: "DEBUG.constructed",
+        property: {
+            missing: "DEBUG.property.missing",
+            exists:  "DEBUG.property.exists"
+        }
     },
 
     WINAPI: {
@@ -38,9 +42,16 @@ module.exports = {
         },
         ActiveXObject: {
             new: {
-                e: "WINAPI.ActiveXObject",
-                desc: "FIXME",
-                url: "FIXME",
+                WScript: {
+                    Shell: "WINAPI.ActiveXObject.new.WScript.Shell",
+                },
+                MSXML2: {
+                    ServerXMLHttp: "WINAPI.ActiveXObject.new.MSXML2.ServerXMLHttp",
+                    XMLHttp: "WINAPI.ActiveXObject.new.MSXML2.XMLHttp",
+                },
+                ADODB: {
+                    Stream: "WINAPI.ActiveXObject.new.ADODB.Stream"
+                }
             }
         },
         XMLHttpRequest: {

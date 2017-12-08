@@ -18,36 +18,32 @@
  *   - Terminate https://msdn.microsoft.com/en-us/yk84ffsf(v=vs.84)
  */
 
-const winevts        = require("../events");
-const Proxify        = require("../proxify");
-const TextStream_API = require("./TextStream");
+const proxify2   = require("../proxify2");
+const TextStream = require("./TextStream");
 
-var buf_stdin, buf_stdout, buf_stderr;
+module.exports = function WshScriptExec (opts) {
 
-function mock_MISSING_METHOD (name) {
-    let msg = `[WshShell.${name}] - METHOD NOT YET IMPLEMENTED.`;
-    alert(msg)
-    console.log(msg);
-}
+    debugger; 
+    console.log("><><><><><><><>><<>><><>><<>>");
 
-function create(opts) {
+    let ee = opts.emitter;
 
-    ee = opts.emitter || { emit: () => {}, on: () => {} };
+    let stdout = new TextStream({ emitter: ee, buffer: "stdout buf" });
+    let stdin  = new TextStream({ emitter: ee, buffer: "stdin  buf" });
+    let stderr = new TextStream({ emitter: ee, buffer: "stderr buf" });
 
-    let mock_WshScriptExec = {
-        StdIn : opts.stdin  || TextStream_API({ emitter: ee }),
-        StdOut: opts.stdout || TextStream_API({ emitter: ee }),
-        StdErr: opts.stderr || TextStream_API({ emitter: ee })
+    let WshScriptExec = {
+        ExitCode: 0,
+        ProcessID: 1337,
+        Status: 1, // Wsh Finished
+        StdErr: stderr,
+        StdIn: stdin,
+        StdOut: stdout,
+
+        Terminate: () => {}
     };
 
-    let overrides = {
-        get: (target, key) => {
-            return mock_WshScriptExec[key]
-        }
-    };
+    return proxify2(WshScriptExec, "WshScriptExec", opts);
+};
 
-    var proxify = new Proxify({ emitter: ee });
-    return proxify(mock_WshScriptExec, overrides, "WshScriptExec");
-}
 
-module.exports = create;
