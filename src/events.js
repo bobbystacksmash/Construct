@@ -20,6 +20,8 @@ module.exports = {
         getTime:    "Date.Time",
     },
 
+    eval: "eval",
+
     WINAPI: {
         generic: {
             new:  "WINAPI.generic.new",
@@ -30,22 +32,30 @@ module.exports = {
             }
         },
         ADODB: {
-            new: {
+            Stream: {
+                new: "WINAPI.ADODB.new",
+                Open: "WINAPI.ADODB.Open",
+                Write: "WINAPI.ADODB.Write",
+                SaveToFile: "WINAPI.ADODB.SaveToFile",
+                Close: "WINAPI.ADODB.Close",
+            },
+
+            _new: {
                 e: "WINAPI.ADODB.new",
                 desc: "Represents a stream of binary data or text.",
                 url:  "https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/stream-object-ado"
             },
-            Open: {
+            _Open: {
                 e: "WINAPI.ADODB.Open",
                 desc: "Opens a Stream object to manipulate streams of binary or text data.",
                 url: "https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/open-method-ado-stream",
             },
-            Write: {
+            _Write: {
                 e: "WINAPI.ADODB.Write",
                 desc: "Writes binary data to a Stream object.",
                 url: "https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/write-method",
             },
-            SaveToFile: {
+            _SaveToFile: {
                 e: "WINAPI.ADODB.SaveToFile",
                 desc: "Saves the binary contents of a stream to a file.",
                 url: "https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/savetofile-method",
@@ -71,17 +81,9 @@ module.exports = {
                 }
             }
         },
-        XMLHttpRequest: {
-            new: {
-                e:    "WINAPI.XMLHttpRequest.new",
-                desc: "Allows data transfer between a client and a remote web server.",
-                url:  "https://msdn.microsoft.com/en-us/library/ms757849(v=vs.85).aspx",
-            },
-            open: {
-                e:    "WINAPI.XMLHttpRequest.open",
-                desc: "Initializes a request and specifies the method, URL, and authentication information.",
-                url:  "https://msdn.microsoft.com/en-us/library/ms757849",
-            },
+        ShellApplication: {
+            new: "WINAPI.ShellApplication.new",
+            ShellExecute: "WINAPI.ShellApplication.ShellExecute",
         },
         WScript: {
             Sleep: "WINAPI.WScript.Sleep",
@@ -104,6 +106,23 @@ module.exports = {
                     get_url: "https://msdn.microsoft.com/en-us/subscriptions/0ea7b5xe(v=vs.84).aspx"
                 }
             }
-        }
+        },
+        XMLHttpRequest: {
+            new: "WINAPI.XMLHttpRequest.new",
+            open: "WINAPI.XMLHttpRequest.open",
+            send: "WINAPI.XMLHttpRequest.send",
+
+            _new: {
+                e:    "WINAPI.XMLHttpRequest.new",
+                desc: "Allows data transfer between a client and a remote web server.",
+                url:  "https://msdn.microsoft.com/en-us/library/ms757849(v=vs.85).aspx",
+            },
+            _open: {
+                e:    "WINAPI.XMLHttpRequest.open",
+                desc: "Initializes a request and specifies the method, URL, and authentication information.",
+                url:  "https://msdn.microsoft.com/en-us/library/ms757849",
+            },
+        },
+
     },
 };
