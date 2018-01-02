@@ -15,6 +15,8 @@ var fs                = require("fs");
 var detect_globals    = require("acorn-globals");
 var WINAPI            = require("./winapi");
 var _Date             = require("./Date");
+var Eval             = require("./Eval");
+
 
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // A R G U M E N T   P A R S I N G
@@ -27,9 +29,23 @@ var ee = new EventEmitter2({
 });
 
 
-ee.on("Date.*", (d) => {
-    console.log(d.fn, ":", d.v);
+var runtime_events = [];
+
+ee.on("**", function (x) {
+
+    if (this.event.startsWith("DEBUG"))
+        return;
+
+    runtime_events.push({ 
+        event: this.event, 
+        args: x, 
+        t: new Date().getTime() 
+    }); 
 });
+
+/*ee.on("Date.*", (d) => {
+    console.log(d.fn, ":", d.v);
+});*/
 
 ee.on("DEBUG.**", (D) => {});
 
@@ -57,19 +73,30 @@ function handle_GET_property (D) {
 // XXXXXXXXXXXXX
 // R U N T I M E
 // XXXXXXXXXXXXX
+(function runtime(timestamp) {
 try {
     console.log("\nRunning sample");
     console.log("--------------\n");
     var fn = instrument_and_wrap_fn(js_file_contents);
     fn();
 
+    runtime_events.forEach((e) => {
+        if (e.event.startsWith("DEBUG"))
+            return;
+        console.log(e.event, e);
+    });
+
+    // Date check (experiment)
+    console.log("---[ FINISHED ]---");
+    console.log(`Captured a total of ${runtime_events.length} events...`);
 }
 catch (ex) {
     console.log("\nERROR");
     console.log(ex);
 }
+}());
 
-function instrument_and_wrap_fn(code) {
+function instrument_and_wrap_fn(code, timestamp) {
 
     var known_globals = [
         "ActiveXObject",
@@ -99,7 +126,7 @@ function instrument_and_wrap_fn(code) {
             strict_variable_defs += `var ${n.name};\n`;
         });
 
-        var code_to_run = strict_variable_defs +";\n\ndebugger;" +  code;
+        var code_to_run = strict_variable_defs +";\n\ndebugger;\n\n" +  code;
 
         var date      = new _Date({ emitter: ee }),
             date_inst = date();
@@ -110,7 +137,8 @@ function instrument_and_wrap_fn(code) {
         };
 
         var wscript = new WScript(context);
-            activex = new ActiveXObject(context);
+            activex = new ActiveXObject(context),
+            _eval   = new Eval(context);
 
 		var fn = new Function("console", "Date", "WScript", "ActiveXObject", code_to_run);
         fn(console, date, wscript, activex);

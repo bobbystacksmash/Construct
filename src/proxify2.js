@@ -5,8 +5,6 @@ module.exports = function proxify2(target_obj, tag, opts) {
 
     if (!opts) opts = {};
 
-    console.log("proxify2(opts.emitter = " + tag);
-
     let ee = opts.emitter || { emit: () => {} };
 
     return new Proxy(target_obj, {

@@ -1,4 +1,5 @@
 const proxify2 = require("../proxify2");
+const events   = require("../events");
 
 /*
  * ============
@@ -56,17 +57,35 @@ module.exports = function ADODBStream (opts) {
     let ee = opts.emitter;
 
     function Open (source, mode, opts, user, password) {
+        ee.emit(events.WINAPI.ADODB.Stream.Open, {
+            source: source,
+            mode: mode,
+            opts: opts,
+            user: user,
+            password: password
+        });
+
         console.log(`ADODBStream.Open ` + source);
         console.log(`ADODBStream.Open OPTS: ${JSON.stringify(opts)}`);
     }
 
 
     function Write (buffer) {
+
+        ee.emit(events.WINAPI.ADODB.Stream.Write, {
+            buffer: buffer
+        });
+
         console.log("MOCK_WRITE: " + buffer);
     }
 
 
     function SaveToFile (filename, save_opts) {
+
+        ee.emit(events.WINAPI.ADODB.Stream.SaveToFile, {
+            filename: filename,
+            save_opts: save_opts
+        });
 
         console.log("ADODB: Save to file: " + filename);
         console.log(save_opts, "<-- save opts (saveTofile)");

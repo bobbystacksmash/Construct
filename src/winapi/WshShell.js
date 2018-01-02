@@ -30,6 +30,11 @@ const winevts       = require("../events");
 const proxify2      = require("../proxify2");
 const WshScriptExec = require("./WshScriptExec");
 
+function ExpandEnvironmentStrings (env_var_name) {
+    console.log(`WshShell.ExpandEnvironmentStrings(${env_var_name})`);
+    return 'some_bullshit.exe';
+}
+
 /*
  * ===============================
  * WScript.WshShell.SpecialFolders
@@ -67,6 +72,52 @@ function make_WshShell_SpecialFolders_prop(opts) {
     };
 }
 
+
+/*
+ * WshShell.SpecialFolders
+ *
+ */
+function SpecialFolders(spec_dir) {
+    var special_folders = [
+        "AllUsersDesktop",
+        "AllUsersStartMenu",
+        "AllUsersPrograms",
+        "AllUsersStartup",
+        "Desktop",
+        "Favorites",
+        "Fonts",
+        "MyDocuments",
+        "NetHood",
+        "PrintHood",
+        "Programs",
+        "Recent",
+        "SendTo",
+        "StartMenu",
+        "Startup",
+        "Templates"
+    ];
+
+    var found_spec_dir = special_folders.filter((f) => f.toLowerCase() === spec_dir);
+    console.log("Found spec dir: ", found_spec_dir);
+    return (found_spec_dir.length === 1) ? found_spec_dir.pop() : "";
+}
+
+
+
+
+/*
+ * ================
+ * WshShell.RegRead
+ * ================
+ *
+ * TODO
+ * ----
+ *
+ */
+function RegRead(str_name) {
+    return 'C:\\Users\\Public\\Pictures';
+}
+
 /*
  * =====================
  * WScript.WshShell.Exec
@@ -80,13 +131,13 @@ module.exports = function (opts) {
 
     let ee = opts.emitter;
 
-    console.log("@@@@@ CREATING WSH SHELL");
-
     let WshShell = {
-        SpecialFolders: make_WshShell_SpecialFolders_prop(),
+        //SpecialFolders: make_WshShell_SpecialFolders_prop(),
+        SpecialFolders: SpecialFolders,
+        ExpandEnvironmentStrings: ExpandEnvironmentStrings,
+        RegRead: RegRead,
         Exec: (cmd) => {
             console.log(`WScript.WshShell.Exec::cmd => \n   ${cmd}`);
-
             return new WshScriptExec(opts);
         }
     };
