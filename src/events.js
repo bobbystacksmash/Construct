@@ -9,6 +9,17 @@ module.exports = {
         }
     },
 
+    Date: {
+        new: "Date.new",
+        getDate: "Date.getDate",
+        getMonth: "Date.getMonth",
+        getYear: "Date.getYear",
+        getHours: "Date.getHours",
+        getMinutes: "Date.getMinutes",
+        getSeconds: "Date.getSeconds",
+        getTime:    "Date.Time",
+    },
+
     WINAPI: {
         generic: {
             new:  "WINAPI.generic.new",
@@ -42,8 +53,14 @@ module.exports = {
         },
         ActiveXObject: {
             new: {
+                Shell: {
+                    Application: "WINAPI.ActiveXObject.new.Shell.Application",
+                },
                 WScript: {
                     Shell: "WINAPI.ActiveXObject.new.WScript.Shell",
+                },
+                Scripting: {
+                    FileSystemObject: "WINAPI.ActiveXObject.new.Scripting.FileSystemObject",
                 },
                 MSXML2: {
                     ServerXMLHttp: "WINAPI.ActiveXObject.new.MSXML2.ServerXMLHttp",
@@ -67,6 +84,7 @@ module.exports = {
             },
         },
         WScript: {
+            Sleep: "WINAPI.WScript.Sleep",
             WshNetwork: {
                 AddWindowsPrinterConnection: {
                     e: "WINAPI.WScript.WshNetwork.AddWindowsPrinterConnection",
