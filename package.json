@@ -27,6 +27,7 @@
   "dependencies": {
     "acorn": "^5.2.1",
     "acorn-globals": "^4.1.0",
+    "colors": "^1.1.2",
     "espree": "^3.5.2",
     "esprima": "^4.0.0",
     "eventemitter2": "^5.0.0",

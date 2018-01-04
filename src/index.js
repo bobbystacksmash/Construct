@@ -7,8 +7,11 @@
  *
  */
 
-var WScript       = require("./winapi/WScript");
-var ActiveXObject = require("./winapi/ActiveXObject");
+
+// http://perfectionkills.com/global-eval-what-are-the-options/#how_eval_works
+
+var CWScript       = require("./winapi/WScript");
+var CActiveXObject = require("./winapi/ActiveXObject");
 var evts              = require("./events");
 var EventEmitter2     = require("eventemitter2").EventEmitter2;
 var fs                = require("fs");
@@ -16,7 +19,11 @@ var detect_globals    = require("acorn-globals");
 var WINAPI            = require("./winapi");
 var _Date             = require("./Date");
 var Eval             = require("./Eval");
+var colors           = require("colors");
 
+var EVAL = eval;
+
+const vm = require("vm");
 
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // A R G U M E N T   P A R S I N G
@@ -83,7 +90,20 @@ try {
     runtime_events.forEach((e) => {
         if (e.event.startsWith("DEBUG"))
             return;
-        console.log(e.event, e);
+
+        var event_name = e.event.replace(/^WINAPI\./, ""),
+            output     = `${event_name}(`;
+
+        console.log(event_name.underline.yellow);
+        if (Object.keys(e.args).length > 0) {
+            Object.keys(e.args).forEach((arg) => {
+                let val = e.args[arg];
+                console.log(`    ${arg.cyan}: ${val}`);
+            });
+            console.log("\n");
+        }
+
+
     });
 
     // Date check (experiment)
@@ -114,6 +134,18 @@ function instrument_and_wrap_fn(code, timestamp) {
 
         console.log("RUNNING");
 
+        var date      = new _Date({ emitter: ee }),
+            date_inst = date();
+
+        var context = { 
+            emitter: ee,
+            date:    date_inst
+        };
+
+
+        var WScript       = new CWScript(context);
+            ActiveXObject = new CActiveXObject(context);
+
 		var reserved_regexp = new RegExp("^(?:" + known_globals.join("|") + ")$", "i");
 
         // Detect globals
@@ -126,21 +158,11 @@ function instrument_and_wrap_fn(code, timestamp) {
             strict_variable_defs += `var ${n.name};\n`;
         });
 
-        var code_to_run = strict_variable_defs +";\n\ndebugger;\n\n" +  code;
 
-        var date      = new _Date({ emitter: ee }),
-            date_inst = date();
-
-        var context = { 
-            emitter: ee,
-            date:    date_inst
-        };
-
-        var wscript = new WScript(context);
-            activex = new ActiveXObject(context),
-            _eval   = new Eval(context);
+        var code_to_run = strict_variable_defs + "\n\ndebugger;\n\n" +  code;
 
 		var fn = new Function("console", "Date", "WScript", "ActiveXObject", code_to_run);
-        fn(console, date, wscript, activex);
+        fn(console, date, WScript, ActiveXObject);
+
     };
 }

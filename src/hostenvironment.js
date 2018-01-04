@@ -3,16 +3,17 @@
 // import virtual filesystem
 // import virtual tasklist
 
-const VFS = require("./vfilesys");
+const evts = require("./events");
+const VFS  = require("./vfilesys");
 
 module.exports = function HostEnvironment (opts) {
 
-    let emitter = opts.emitter || {};
-
+    let emitter = opts.emitter || {},
+        vfs     = new VFS({ emitter: emitter });
 
     // PUBLIC API
     // ==========
     return {
-        fs: new VFS({ emitter: emitter })
+        fs: vfs
     }
 };

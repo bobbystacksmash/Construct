@@ -18,37 +18,39 @@ function ActiveXObject (opts) {
 
     return function ActiveXObject (type) {
 
-        type = type.toLowerCase();
+        let orig_type = type;
+
+        type = orig_type.toLowerCase();
 
         switch (type) { 
 
             case "shell.application":
-                ee.emit(evts.WINAPI.ActiveXObject.new.Shell.Application, {});
+                ee.emit(evts.WINAPI.ActiveXObject.new.Shell.Application, { type: orig_type });
                 var shellapplication = new ShellApplication({ emitter: ee });
                 return shellapplication;
 
             case "wscript.shell":
-                ee.emit(evts.WINAPI.ActiveXObject.new.WScript.Shell, {});
+                ee.emit(evts.WINAPI.ActiveXObject.new.WScript.Shell, { type: orig_type });
                 var wshshell = new WshShell({ emitter: ee });
                 return wshshell;
 
             case "scripting.filesystemobject":
-                ee.emit(evts.WINAPI.ActiveXObject.new.Scripting.FileSystemObject, {});
+                ee.emit(evts.WINAPI.ActiveXObject.new.Scripting.FileSystemObject, { type: orig_type });
                 var fso = new FileSystemObject({ emitter: ee });
                 return fso;
 
             case "adodb.stream":
-                ee.emit(evts.WINAPI.ActiveXObject.new.ADODB.Stream, {});
+                ee.emit(evts.WINAPI.ActiveXObject.new.ADODB.Stream, { type: orig_type });
                 var adodbstream = new ADODBStream({ emitter: ee });
                 return adodbstream;
 
             case "msxml2.serverxmlhttp":
-                ee.emit(evts.WINAPI.ActiveXObject.new.MSXML2.ServerXMLHttp, {});
+                ee.emit(evts.WINAPI.ActiveXObject.new.MSXML2.ServerXMLHttp, { type: orig_type });
                 var xhr = new XMLHttpRequest({ emitter: ee });
                 return xhr;
 
             case "msxml2.xmlhttp":
-                ee.emit(evts.WINAPI.ActiveXObject.new.MSXML2.XMLHttp, {});
+                ee.emit(evts.WINAPI.ActiveXObject.new.MSXML2.XMLHttp, { type: orig_type });
                 var xhr = new XMLHttpRequest({ emitter: ee });
                 return xhr;
 

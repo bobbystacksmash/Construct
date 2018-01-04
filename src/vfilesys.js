@@ -1,19 +1,14 @@
-module.exports = function (opts) {
+module.exports = function VFS (opts) {
 
     var vfs     = {},
         emitter = opts.emitter || { emit: () => {} };
 
     function save (filepath, contents) {
-        emitter.emit("fixme...", {});
 
-        if (vfs.hasOwnProperty(filepath)) {
-            emitter.emit("vfs.overwrite.event", {
-                filepath: filepath,
-                prev_contents: filepath[contents],
-                now_contents:  contents
-            });
-        }
-
+        emitter.emit("vfs.save", {
+            path:     filepath,
+            contents: contents
+        });
 
         vfs[filepath] = contents;
     }

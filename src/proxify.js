@@ -52,11 +52,11 @@ function Proxify(opts) {
          * ==========================
          */
         function get (target, key) {
-            ee.emit(winevts.DEBUG.property_access, {
+            /*ee.emit(winevts.DEBUG.property_access, {
                 target : target,
                 key    : key,
                 tag    : tag
-            });
+            });*/
 
             return handlers._get(target, key);
         }
