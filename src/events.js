@@ -9,6 +9,10 @@ module.exports = {
         }
     },
 
+    Report: {
+        coverage: "Report.coverage",
+    },
+
     Date: {
         new: "Date.new",
         getDate: "Date.getDate",

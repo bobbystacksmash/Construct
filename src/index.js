@@ -10,6 +10,8 @@
 
 // http://perfectionkills.com/global-eval-what-are-the-options/#how_eval_works
 
+const istanbul = require("istanbul");
+
 var CWScript       = require("./winapi/WScript");
 var CActiveXObject = require("./winapi/ActiveXObject");
 var evts              = require("./events");
@@ -20,10 +22,15 @@ var WINAPI            = require("./winapi");
 var _Date             = require("./Date");
 var Eval             = require("./Eval");
 var colors           = require("colors");
+var events           = require("./events");
 
 var EVAL = eval;
 
 const vm = require("vm");
+
+var instrumenter = new istanbul.Instrumenter(),
+    cover_utils  = istanbul.utils,
+    collector    = new istanbul.Collector();
 
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // A R G U M E N T   P A R S I N G
@@ -40,15 +47,20 @@ var runtime_events = [];
 
 ee.on("**", function (x) {
 
-    if (this.event.startsWith("DEBUG"))
+    if (this.event.startsWith("DEBUG") || this.event.startsWith("Report"))
         return;
 
     runtime_events.push({ 
         event: this.event, 
         args: x, 
         t: new Date().getTime() 
-    }); 
+    });
 });
+
+ee.on("Report.coverage", (e) => {
+    console.log(e);
+});
+
 
 /*ee.on("Date.*", (d) => {
     console.log(d.fn, ":", d.v);
@@ -159,10 +171,23 @@ function instrument_and_wrap_fn(code, timestamp) {
         });
 
 
-        var code_to_run = strict_variable_defs + "\n\ndebugger;\n\n" +  code;
+        var code_to_run = strict_variable_defs + "\n\ndebugger;\n\n" +  code,
+            instrumented_code = instrumenter.instrumentSync(code_to_run, js_file_to_examine); // RAGING FIXME
+            instrumented_code += ";done(__coverage__)";                                       // ============
+                                                                                              // Need to do something to make a coverage var
+                                                                                              // that's unlikely to collide with code...
 
-		var fn = new Function("console", "Date", "WScript", "ActiveXObject", code_to_run);
-        fn(console, date, WScript, ActiveXObject);
+        function done(x) {
+            collector.add(x);
+            collector.files().forEach(function (key) {
+                ee.emit(events.Report.coverage, {
+                    filename: key,
+                    report: cover_utils.summarizeFileCoverage(collector.fileCoverageFor(key))
+                });
+            });
+        }
 
+		var fn = new Function("console", "Date", "WScript", "ActiveXObject", "done", instrumented_code);
+        fn(console, date, WScript, ActiveXObject, done);
     };
 }
