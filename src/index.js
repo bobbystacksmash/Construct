@@ -57,7 +57,17 @@ ee.on("**", function (x) {
 });
 
 ee.on("Report.coverage", (e) => {
-    console.log(e);
+
+    let statements = e.report.statements,
+        lines      = e.report.lines,
+        functions  = e.report.functions,
+        branches   = e.report.branches;
+
+    console.log(`---[ COVERAGE REPORT ]---`);
+    console.log(` * Statements [${statements.pct}%]: total: ${statements.total}, covered: ${statements.covered}, skipped: ${statements.skipped}`);
+    console.log(` * Functions  [${functions.pct}%]: total: ${functions.total}, covered: ${functions.covered}, skipped: ${functions.skipped}`);
+    console.log(` * Branches   [${branches.pct}%]: total: ${branches.total}, covered: ${branches.covered}, skipped: ${branches.skipped}`);
+    console.log(` * Lines      [${lines.pct}%]: total: ${lines.total}, covered: ${lines.covered}, skipped: ${lines.skipped}`);
 });
 
 
