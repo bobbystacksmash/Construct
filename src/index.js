@@ -18,7 +18,6 @@ var evts              = require("./events");
 var EventEmitter2     = require("eventemitter2").EventEmitter2;
 var fs                = require("fs");
 var detect_globals    = require("acorn-globals");
-var WINAPI            = require("./winapi");
 var _Date             = require("./Date");
 var Eval             = require("./Eval");
 var colors           = require("colors");
