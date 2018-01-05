@@ -65,8 +65,8 @@ module.exports = function ADODBStream (opts) {
             password: password
         });
 
-        console.log(`ADODBStream.Open ` + source);
-        console.log(`ADODBStream.Open OPTS: ${JSON.stringify(opts)}`);
+        /*console.log(`ADODBStream.Open ` + source);
+        console.log(`ADODBStream.Open OPTS: ${JSON.stringify(opts)}`);*/
     }
 
 
@@ -76,7 +76,7 @@ module.exports = function ADODBStream (opts) {
             buffer: buffer
         });
 
-        console.log("MOCK_WRITE: " + buffer);
+        //console.log("MOCK_WRITE: " + buffer);
     }
 
 
@@ -87,13 +87,13 @@ module.exports = function ADODBStream (opts) {
             save_opts: save_opts
         });
 
-        console.log("ADODB: Save to file: " + filename);
-        console.log(save_opts, "<-- save opts (saveTofile)");
+        /*console.log("ADODB: Save to file: " + filename);
+        console.log(save_opts, "<-- save opts (saveTofile)");*/
     }
 
 
     function Close () {
-        console.log("ADODB :: Close (mark this obj as closed)");
+        //console.log("ADODB :: Close (mark this obj as closed)");
     }
 
     let ADODBStream = {

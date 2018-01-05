@@ -31,7 +31,7 @@ const proxify2      = require("../proxify2");
 const WshScriptExec = require("./WshScriptExec");
 
 function ExpandEnvironmentStrings (env_var_name) {
-    console.log(`WshShell.ExpandEnvironmentStrings(${env_var_name})`);
+    /*console.log(`WshShell.ExpandEnvironmentStrings(${env_var_name})`);*/
     return 'some_bullshit.exe';
 }
 
@@ -98,7 +98,7 @@ function SpecialFolders(spec_dir) {
     ];
 
     var found_spec_dir = special_folders.filter((f) => f.toLowerCase() === spec_dir);
-    console.log("Found spec dir: ", found_spec_dir);
+    //console.log("Found spec dir: ", found_spec_dir);
     return (found_spec_dir.length === 1) ? found_spec_dir.pop() : "";
 }
 
@@ -132,12 +132,12 @@ module.exports = function (opts) {
     let ee = opts.emitter;
 
     let WshShell = {
-        //SpecialFolders: make_WshShell_SpecialFolders_prop(),
-        SpecialFolders: SpecialFolders,
+        SpecialFolders: make_WshShell_SpecialFolders_prop(),
+        //SpecialFolders: SpecialFolders,
         ExpandEnvironmentStrings: ExpandEnvironmentStrings,
         RegRead: RegRead,
         Exec: (cmd) => {
-            console.log(`WScript.WshShell.Exec::cmd => \n   ${cmd}`);
+            //console.log(`WScript.WshShell.Exec::cmd => \n   ${cmd}`);
             return new WshScriptExec(opts);
         }
     };

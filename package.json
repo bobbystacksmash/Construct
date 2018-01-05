@@ -40,6 +40,7 @@
     "js-beautify": "^1.7.4",
     "lodash": "^4.17.4",
     "minimist": "^1.2.0",
-    "mustache": "^2.3.0"
+    "mustache": "^2.3.0",
+    "stats-lite": "^2.1.0"
   }
 }

@@ -23,12 +23,9 @@ module.exports = function XMLHttpRequest (opts) {
         };
 
         ee.emit(events.WINAPI.XMLHttpRequest.open, last_req);
-
-        console.log(`XMLHttpRequest.open(${JSON.stringify(last_req)})`);
     }
 
     function send () {
-        console.log(`XMLHttpRequest.sending: ${JSON.stringify(last_req)}`);
         ee.emit(events.WINAPI.XMLHttpRequest.send, last_req);
     }
 
@@ -49,7 +46,8 @@ module.exports = function XMLHttpRequest (opts) {
         Send: send,
 
         setRequestHeader: (header, value) => {
-            console.log(`XHR.setRequestHeader | ${header}: ${value}`);
+            // TODO: Add an event here!
+            //console.log(`XHR.setRequestHeader | ${header}: ${value}`);
         },
     };
 

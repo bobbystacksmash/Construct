@@ -23,9 +23,6 @@ const TextStream = require("./TextStream");
 
 module.exports = function WshScriptExec (opts) {
 
-    debugger; 
-    console.log("><><><><><><><>><<>><><>><<>>");
-
     let ee = opts.emitter;
 
     let stdout = new TextStream({ emitter: ee, buffer: "stdout buf" });

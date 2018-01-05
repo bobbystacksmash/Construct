@@ -50,7 +50,6 @@ function WScript (opts) {
         let time_before = dt.getTime();
         dt.skew(milliseconds);
         let time_after  = dt.getTime();
-        console.log(`WScript.Sleep(${milliseconds}) - tbefore: ${time_before}, tafter: ${time_after}`);
         ee.emit(evts.WINAPI.WScript.Sleep, { time: milliseconds });
     };
 
@@ -61,12 +60,10 @@ function WScript (opts) {
         switch(prog_id) {
             case "msxml2.serverxmlhttp":
                 // TODO: emit that this is happening
-                console.log("Making ServerXMLHTTP!");
                 var xhr = new XMLHttpRequest({ emitter: ee });
                 return xhr;
 
             default:
-                console.log(`WScript.CreateObject(${prog_id}) is not implemented!`);
                 process.exit();
                 break;
         }
