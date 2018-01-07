@@ -43,6 +43,8 @@ function WScript (opts) {
         dt = opts.date;
 
     function Echo () {
+        let msg = Array.prototype.splice(arguments);
+        ee.emit(evts.WINAPI.WScript.Echo, { msg: msg });
     };
 
     function Sleep (milliseconds) {
@@ -74,7 +76,7 @@ function WScript (opts) {
     var WScript = {
         Sleep: Sleep,
         CreateObject: CreateObject,
-        Echo:  () => console.log("WScript.Echo::", ...arguments),
+        Echo:  () => Echo,
     };
 
     return proxify2(WScript, "WScript", opts);

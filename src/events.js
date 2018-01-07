@@ -91,6 +91,7 @@ module.exports = {
         },
         WScript: {
             Sleep: "WINAPI.WScript.Sleep",
+            Echo: "WINAPI.WScript.Echo",
             WshNetwork: {
                 AddWindowsPrinterConnection: {
                     e: "WINAPI.WScript.WshNetwork.AddWindowsPrinterConnection",
