@@ -6,7 +6,9 @@ const EventEmitter2  = require("eventemitter2").EventEmitter2;
 const CWScript       = require("../winapi/WScript");
 const CActiveXObject = require("../winapi/ActiveXObject");
 const CDate          = require("../Date");
+const urlparse       = require("url-parse");
 const vm = require("vm");
+
 
 
 
@@ -100,7 +102,9 @@ Runtime.prototype._make_runnable = function () {
                 report: cover_utils.summarizeFileCoverage(collector.fileCoverageFor(key))
             };
 
-            self.coverage = coverage_report;
+            self.coverage           = coverage_report;
+            self.interesting_events = self._filter_interesting_events();
+
             done();
         }
 
@@ -118,6 +122,60 @@ Runtime.prototype._make_runnable = function () {
         fn(Array, date, WScript, ActiveXObject, script_finished);*/
     };
 }
+
+
+Runtime.prototype._filter_interesting_events  = function () {
+
+
+    // Collect high-severity events
+    let high_severity_events = this.events
+        .filter((e) => {
+            switch (e.event) {
+                case "WINAPI.ActiveXObject.new.WScript.Shell":
+                case "WINAPI.XMLHttpRequest.open":
+                case "WINAPI.ADODB.SaveToFile":
+                case "WINAPI.ADODB.Write":
+                    return true;
+                default:
+                    return false;
+            }
+        })
+        .map((e) => { 
+            return {
+                esrc: e.event,
+                summary: "Summary for why this event is bad...",
+                link_to_docs: "http://msdn.com/link/to/docs"
+            }
+        });
+
+    // Collect URLs
+    let url_based_events = this.events
+        .filter((e) => /(?:^WINAPI\.XMLHttpRequest\.send)$/.test(e.event))
+        .map((e)    => { 
+
+            let url    = urlparse(e.args.url),
+                domain = url.host,
+                safeish_domain = url.host.replace(/\./g, "[.]");
+
+            return { 
+                url:         e.args.url, 
+                safe_url:    e.args.safeish_url, 
+                domain:      url.host,
+                safe_domain: safeish_domain,
+                esrc:        e.event 
+            }
+        });
+
+    return {
+        severity: {
+            high:   high_severity_events,
+            medium: [],
+            low:    []
+        },
+        url: url_based_events,
+    };
+}
+
 
 
 Runtime.prototype._instrument_code = function (code_file_contents) {

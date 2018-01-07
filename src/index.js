@@ -10,6 +10,7 @@ var Runtime = require("./runtime");
 const vorpal          = require("vorpal")();
 const vorpal_autocomp = require("vorpal-autocomplete-fs");
 const path            = require("path");
+const table          = require("table");
 
 const evts           = require("./events");
 const EventEmitter2  = require("eventemitter2").EventEmitter2;
@@ -18,7 +19,7 @@ const Eval           = require("./Eval");
 const colors         = require("colors");
 const events         = require("./events");
 
-var runtime = new Runtime({ epoch: 1506808800000 });
+var runtime = new Runtime({ epoch: new Date().getTime() });
 
 /*console.log(`Construct version 0.1.0`);
 console.log(`BSD License`);
@@ -36,8 +37,8 @@ console.log(``);*/
  * COMMAND: Load File
  * ==================
  */
-const help_load_file = `
-Load a JScript file from the filesystem.  Once loaded, the code will be
+const help_load_file = 
+`Load a JScript file from the filesystem.  Once loaded, the code will be
 analysed and preapred for inspection.
 `
 
@@ -56,9 +57,21 @@ function cmd_load_file(args) {
             reject(e);
         }
 
+        let start_time = new Date().getTime();
+
         try {
             runnable(function (err, results) {
                 if (err) reject(err);
+
+                let time_delta = new Date().getTime() - start_time,
+                    cov_stmts  = runtime.coverage.report.statements;
+
+                console.log(``);
+                console.log(` Script execution completed in ${time_delta}ms.`);
+                console.log(` ${cov_stmts.covered}/${cov_stmts.total} (${cov_stmts.pct}%) of statements were executed.`);
+                console.log(` Collected ${runtime.events.length} events.`);
+                console.log(``);
+
                 resolve();
             });
         }
@@ -78,13 +91,96 @@ vorpal
 
 
 /*
+ * ===============
+ * COMMAND: `urls`
+ * ===============
+ */
+const CMDHELP_urls = 
+`During the runtime execution of a script (see \`load FILE\`),
+events are generated and captured.  The \`urls\` command will
+dump a list of all URLs extracted at runtime from the script by
+hooking well-known INET objects, such as XMLHttpRequest.`;
+
+function CMD_urls (args, callback) {
+
+
+    var self             = this,
+        safety_first     = args.hasOwnProperty("safe");
+
+    if (!runtime.events || !runtime.events.length) {
+        self.log("No events were found -- did you run `load FILE` beforehand?");
+        return callback();
+    }
+
+    if (!runtime.interesting_events || runtime.interesting_events.url.length === 0) {
+
+        let stmt_coverage_pct = runtime.coverage.report.statements.pct,
+            output_message    = [];
+
+        console.log(``);
+        console.log(` Zero runtime events known to establish network connections were `);
+        console.log(` detected during script execution.  Perhaps try the \`deceive\` command, `);
+        console.log(` it's designed to coax code in to execution.`);
+
+        const STMT_COVERAGE_HWMARK = 30;
+
+        if (stmt_coverage_pct <= STMT_COVERAGE_HWMARK) {
+            console.log(``);
+            console.log(` Also, the loaded script only executed ${stmt_coverage_pct}% of `);
+            console.log(` it's total statements.  This highly suggests something is preventing `);
+            console.log(` comprehensive script execution (and you should try \`deceive\`).`);
+        }
+
+        console.log(``);
+
+        return callback();
+    }
+
+    // Still here? Cool.  We've got some URLs to process...
+    let urls = runtime.interesting_events.url.map((e) => { 
+        return [(safety_first) ? e.safe_url : e.url, e.esrc];
+    });
+
+    console.log(``);
+    console.log(` Found ${urls.length} URLs:`);
+    console.log(``);
+
+    console.log(table.table(urls));
+    callback();
+}
+
+vorpal
+    .command("urls [safe]")
+    .option("-u, --urls", "Display a summary of each URL generated during script execution.")
+    .description(CMDHELP_urls)
+    .action(CMD_urls);
+
+
+
+/*
+ * ==============
+ * COMMAND: deceive
+ * ==============
+ */
+const CMDHELP_deceive = 
+`Sometimes a script will test its environment and decide (for a great many reasons)
+that execution should not continue.  The \`deceive\` command is a series of tests
+which attempts to jiggle environmental factors the script may be testing to determine
+whether or not it should execute.`;
+
+function CMD_deceive (args, callback) {
+
+}
+
+
+/*
  * =====================
- * COMMAND: Show summary
+ * COMMAND: show summary
  * =====================
  */
 
-const help_summary = `
-This is summary help. FIXME. FIXME. FIXME.`;
+const help_summary = 
+`This is summary help. FIXME. FIXME. FIXME.`;
 
 function cmd_show_summary(args, callback) {
 
@@ -95,7 +191,6 @@ function cmd_show_summary(args, callback) {
         return callback();
     }
 
-    console.log("events evnents events");
     callback();
 }
 
