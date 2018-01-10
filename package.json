@@ -43,6 +43,7 @@
     "mustache": "^2.3.0",
     "stats-lite": "^2.1.0",
     "table": "^4.0.2",
+    "text-table": "^0.2.0",
     "url-parse": "^1.2.0",
     "vorpal": "^1.12.0",
     "vorpal-autocomplete-fs": "0.0.3"

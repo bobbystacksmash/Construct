@@ -10,27 +10,36 @@ var Runtime = require("./runtime");
 const vorpal          = require("vorpal")();
 const vorpal_autocomp = require("vorpal-autocomplete-fs");
 const path            = require("path");
-const table          = require("table");
-
+const table           = require("text-table");
 const evts           = require("./events");
-const EventEmitter2  = require("eventemitter2").EventEmitter2;
 const fs             = require("fs");
 const Eval           = require("./Eval");
 const colors         = require("colors");
 const events         = require("./events");
+const _              = require("lodash");
 
 var runtime = new Runtime({ epoch: new Date().getTime() });
 
-/*console.log(`Construct version 0.1.0`);
+console.log(`Construct version 0.1.0`);
 console.log(`BSD License`);
 console.log(`Please report bugs to: github.com/blah/bugs`);
 console.log(`For help, type "help"`);
-console.log(``);*/
+console.log(``);
 
 // Vorpal mixed mode:
 //
 //   https://github.com/dthree/vorpal/wiki/API-%7C-vorpal#vorpalparseargv-options
 //
+
+function util_get_table_string(data, title) {
+
+    let str_table = table(data)
+        .split("\n")
+        .map((row) => ` ${row}`)
+        .join("\n")
+
+    return `\n${str_table}\n`;
+}
 
 /*
  * ==================
@@ -39,12 +48,14 @@ console.log(``);*/
  */
 const help_load_file = 
 `Load a JScript file from the filesystem.  Once loaded, the code will be
-analysed and preapred for inspection.`
+  analysed and preapred for inspection.`
 
 function cmd_load_file(args) {
 
     let FILE = args.FILE,
         self = this;
+
+    runtime = new Runtime({ epoch: new Date().getTime() });
 
     return new Promise(function (resolve, reject) {
 
@@ -95,10 +106,10 @@ vorpal
  * ===============
  */
 const CMDHELP_net = 
-`During the runtime execution of a script (see \`load FILE\`),
-events are generated and captured.  The \`net\` command will
-dump a list of all URLs extracted at runtime from the script by
-hooking well-known INET objects, such as XMLHttpRequest.`;
+`During the runtime execution of a script (see \`load FILE\`), events are
+  generated and captured.  The \`net\` command will dump a list of all URLs
+  extracted at runtime from the script by hooking well-known INET objects, 
+  such as XMLHttpRequest.`;
 
 function CMD_net (args, callback) {
 
@@ -106,7 +117,8 @@ function CMD_net (args, callback) {
 
     let safety_first = args.options.safe    || false,
         show_domains = args.options.domains || false,
-        show_urls    = args.options.urls    || false, // Show only URLs by default.
+        show_event   = args.options.event   || false,
+        show_uniq    = args.options.uniq    || false,
         self         = this;
 
     var domains, urls;
@@ -140,38 +152,45 @@ function CMD_net (args, callback) {
         return callback();
     }
 
-    domains = runtime.interesting_events.url.map((url) => {
-        return [(safety_first) ? url.safe_domain : url.domain, url.esrc];
-    });
+    domains = runtime.interesting_events.url
+        .map((url) => {
+            let result = [(safety_first) ? url.safe_domain : url.domain];
+            if (show_event) result.push(url.esrc)
+            return result;
+        })
 
     urls = runtime.interesting_events.url.map((url) => {
-        return [(safety_first) ? url.safe_url : url.url, url.esrc];
+        let result = [(safety_first) ? url.safe_url : url.url];
+        if (show_event) result.push(url.esrc);
+        return result;
     });
 
+    if (show_uniq) {
+        urls = _.uniqBy(urls, x => x[0]);
+    }
+
     console.log(``);
 
-    if ((!show_domains && !show_urls) || (show_urls && !show_domains)) {
-        // Just show urls...
+    if (show_domains) {
+        domains = _.uniqBy(domains, x => x[0]);
+        console.log(` Found ${urls.domains} domains:`);
+        console.log(util_get_table_string(domains));
+    }
+    else {
+        // Just show full urls...
         console.log(` Found ${urls.length} URLs:`);
-        console.log(table.table(urls));
-        console.log(``);
-    }
-    else if (show_domains) {
-        console.log(` Found ${urls.length} domains:`);
-        console.log(table.table(domains));
-        console.log(``);
+        console.log(util_get_table_string(urls));
     }
 
-
-    console.log(``);
     callback();
 }
 
 vorpal
     .command("net")
     .option("-s, --safe",    "Make any domains copy/paste safe.")
-    .option("-u, --urls",    "Display full URLs captured during execution.")
     .option("-d, --domains", "Display only cpatured domains.")
+    .option("-e, --event",   "Display the event which produced this network entry.")
+    .option("-u, --uniq",    "Display only unique rows.")
     .description(CMDHELP_net)
     .action(CMD_net);
 
@@ -199,8 +218,38 @@ function CMD_deceive (args, callback) {
  */
 const CMDHELP_timeline = 
 `Display a list of events in the order they were emitted from the running
-script.`
+  script.`
 
+function cmd_show_timeline (args, callback) {
+
+    var self = this;
+
+    if (!runtime.events || !runtime.events.length) {
+        self.log("No events were found -- did you run `load FILE` beforehand?");
+        return callback();
+    }
+
+    let events = runtime.events.map((e, i) => {
+        
+        var event    = e.event.replace("WINAPI.", ""),
+            axo_test = /^(ActiveXObject)\.new\.(.+)$/.exec(event);
+
+        if (axo_test) {
+            event = `new ${axo_test[1]}("${axo_test[2]}")`;
+        }
+        
+        return [i, event ];
+    });
+
+    console.log(util_get_table_string(events));
+
+    callback();
+}
+
+vorpal
+    .command("timeline")
+    .description(CMDHELP_timeline)
+    .action(cmd_show_timeline);
 
 
 /*
@@ -226,7 +275,6 @@ function cmd_show_summary(args, callback) {
 
 vorpal
     .command("summary")
-    .option("-s, --summary", "Produce a short summary of events captured during script execution.")
     .description(help_summary)
     .action(cmd_show_summary);
 
