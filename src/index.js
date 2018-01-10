@@ -39,8 +39,7 @@ console.log(``);*/
  */
 const help_load_file = 
 `Load a JScript file from the filesystem.  Once loaded, the code will be
-analysed and preapred for inspection.
-`
+analysed and preapred for inspection.`
 
 function cmd_load_file(args) {
 
@@ -92,20 +91,25 @@ vorpal
 
 /*
  * ===============
- * COMMAND: `urls`
+ * COMMAND: `net`
  * ===============
  */
-const CMDHELP_urls = 
+const CMDHELP_net = 
 `During the runtime execution of a script (see \`load FILE\`),
-events are generated and captured.  The \`urls\` command will
+events are generated and captured.  The \`net\` command will
 dump a list of all URLs extracted at runtime from the script by
 hooking well-known INET objects, such as XMLHttpRequest.`;
 
-function CMD_urls (args, callback) {
+function CMD_net (args, callback) {
 
+    args.options = args.options || {};
 
-    var self             = this,
-        safety_first     = args.hasOwnProperty("safe");
+    let safety_first = args.options.safe    || false,
+        show_domains = args.options.domains || false,
+        show_urls    = args.options.urls    || false, // Show only URLs by default.
+        self         = this;
+
+    var domains, urls;
 
     if (!runtime.events || !runtime.events.length) {
         self.log("No events were found -- did you run `load FILE` beforehand?");
@@ -136,41 +140,67 @@ function CMD_urls (args, callback) {
         return callback();
     }
 
-    // Still here? Cool.  We've got some URLs to process...
-    let urls = runtime.interesting_events.url.map((e) => { 
-        return [(safety_first) ? e.safe_url : e.url, e.esrc];
+    domains = runtime.interesting_events.url.map((url) => {
+        return [(safety_first) ? url.safe_domain : url.domain, url.esrc];
+    });
+
+    urls = runtime.interesting_events.url.map((url) => {
+        return [(safety_first) ? url.safe_url : url.url, url.esrc];
     });
 
     console.log(``);
-    console.log(` Found ${urls.length} URLs:`);
-    console.log(``);
 
-    console.log(table.table(urls));
+    if ((!show_domains && !show_urls) || (show_urls && !show_domains)) {
+        // Just show urls...
+        console.log(` Found ${urls.length} URLs:`);
+        console.log(table.table(urls));
+        console.log(``);
+    }
+    else if (show_domains) {
+        console.log(` Found ${urls.length} domains:`);
+        console.log(table.table(domains));
+        console.log(``);
+    }
+
+
+    console.log(``);
     callback();
 }
 
 vorpal
-    .command("urls [safe]")
-    .option("-u, --urls", "Display a summary of each URL generated during script execution.")
-    .description(CMDHELP_urls)
-    .action(CMD_urls);
-
+    .command("net")
+    .option("-s, --safe",    "Make any domains copy/paste safe.")
+    .option("-u, --urls",    "Display full URLs captured during execution.")
+    .option("-d, --domains", "Display only cpatured domains.")
+    .description(CMDHELP_net)
+    .action(CMD_net);
 
 
 /*
- * ==============
+ * ================
  * COMMAND: deceive
- * ==============
+ * ================
  */
 const CMDHELP_deceive = 
-`Sometimes a script will test its environment and decide (for a great many reasons)
-that execution should not continue.  The \`deceive\` command is a series of tests
-which attempts to jiggle environmental factors the script may be testing to determine
-whether or not it should execute.`;
+`Sometimes a script will test its environment and decide (for a great many
+reasons) that execution should not continue.  The \`deceive\` command is a
+series of tests which attempts to jiggle environmental factors the script may
+be testing to determine whether or not it should execute.`;
 
 function CMD_deceive (args, callback) {
 
 }
+
+
+/*
+ * =================
+ * COMMAND: timeline
+ * =================
+ */
+const CMDHELP_timeline = 
+`Display a list of events in the order they were emitted from the running
+script.`
+
 
 
 /*
