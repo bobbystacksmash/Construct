@@ -1,6 +1,6 @@
 var proxify2       = require("../proxify2"),
     XMLHttpRequest = require("./XMLHttpRequest"),
-    evts           = require("../events");
+    events         = require("../events");
 
 /*
  * WScript Object Properties and Methods
@@ -37,22 +37,19 @@ var proxify2       = require("../proxify2"),
  *
  */
 
-function WScript (opts) {
+function WScript (ctx) {
 
-    var ee = opts.emitter,
-        dt = opts.date;
+    var ee = ctx.emitter,
+        dt = ctx.date;
 
     function Echo () {
         let msg = Array.prototype.splice(arguments);
-        ee.emit(evts.WINAPI.WScript.Echo, { msg: msg });
+        ee.emit(events.WINAPI.WScript.Echo, { msg: msg });
     };
 
     function Sleep (milliseconds) {
-
-        let time_before = dt.getTime();
         dt.skew(milliseconds);
-        let time_after  = dt.getTime();
-        ee.emit(evts.WINAPI.WScript.Sleep, { time: milliseconds });
+        ee.emit(events.WINAPI.WScript.Sleep, { time: milliseconds });
     };
 
     function CreateObject (prog_id, prefix) {
@@ -79,7 +76,7 @@ function WScript (opts) {
         Echo:  () => Echo,
     };
 
-    return proxify2(WScript, "WScript", opts);
+    return proxify2(WScript, "WScript", ctx);
 }
 
 

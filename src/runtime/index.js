@@ -1,15 +1,10 @@
-
+const HostContext    = require("./hostcontext");
 const detect_globals = require("acorn-globals");
 const fs             = require("fs");
 const istanbul       = require("istanbul");
 const EventEmitter2  = require("eventemitter2").EventEmitter2;
-const CWScript       = require("../winapi/WScript");
-const CActiveXObject = require("../winapi/ActiveXObject");
-const CDate          = require("../Date");
 const urlparse       = require("url-parse");
-const vm = require("vm");
-
-
+const vm             = require("vm");
 
 
 var instrumenter = new istanbul.Instrumenter(),
@@ -20,11 +15,15 @@ var instrumenter = new istanbul.Instrumenter(),
 function Runtime (options) {
     options = options || {};
 
-    this.events = [];
-    this.progress_cb    = options.progress || (() => {});
-    this.emitter        = options.emitter  || new EventEmitter2({ wildcard: true });
-    this.epoch          = options.epoch    || new Date().getTime(),
+    this.events         = [];
     this.assembled_code = null;
+
+    this.ctx = new HostContext({
+        emitter : new EventEmitter2({ wildcard: true }),
+        epoch   : this.epoch,
+
+    });
+
 
     return this;
 }
@@ -56,11 +55,15 @@ Runtime.prototype.load = function(path_to_file, options) {
 
 Runtime.prototype._make_runnable = function () {
 
+    console.log("EMITTER");
+    console.log(this.ctx.emitter);
+
     let events            = this.events,
         assembled_code    = this.assembled_code,
         completed_fn_name = this.instrumented_code.completed_fn_name,
-        epoch             = this.epoch,
-        ee                = this.emitter;
+        epoch             = this.ctx.epoch,
+        ee                = this.ctx.emitter,
+        ctx               = this.ctx;
 
      ee.on("**", function (x) {
 
@@ -78,18 +81,6 @@ Runtime.prototype._make_runnable = function () {
     var self = this;
 
     return function (done) {
-
-        let date      = new CDate({ emitter: ee, epoch: epoch }),
-            date_inst = date();
-
-        // Create the context -- shared by all JScript APIs.
-        let context = { 
-            emitter: ee,
-            date:    date_inst
-        };
-
-        let WScript       = new CWScript(context);
-            ActiveXObject = new CActiveXObject(context);
 
         function script_finished(x) {
 
@@ -109,9 +100,9 @@ Runtime.prototype._make_runnable = function () {
         }
 
         var sandbox = {
-            Date: date,
-            WScript: WScript,
-            ActiveXObject: ActiveXObject,
+            Date          : ctx.JSAPI.Date,
+            WScript       : ctx.JSAPI.WScript,
+            ActiveXObject : ctx.JSAPI.ActiveXObject,
         };
         sandbox[completed_fn_name] = script_finished;
 

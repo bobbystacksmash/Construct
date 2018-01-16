@@ -5,18 +5,19 @@
  *
  */
 
-var Runtime = require("./runtime");
+const Runtime = require("./runtime");
 
 const vorpal          = require("vorpal")();
 const vorpal_autocomp = require("vorpal-autocomplete-fs");
 const path            = require("path");
 const table           = require("text-table");
-const evts           = require("./events");
-const fs             = require("fs");
-const Eval           = require("./Eval");
-const colors         = require("colors");
-const events         = require("./events");
-const _              = require("lodash");
+const evts            = require("./events");
+const fs              = require("fs");
+const Eval            = require("./Eval");
+const colors          = require("colors");
+const events          = require("./events");
+const _               = require("lodash");
+
 
 var runtime = new Runtime({ epoch: new Date().getTime() });
 
@@ -87,6 +88,8 @@ function cmd_load_file(args) {
         }
         catch (e) {
             self.log("Error with runnable:", e.message);
+            // TODO: Add a method for "method missing" -- include GH link.
+            // TODO: Handle this far, far better!
             reject(e);
         }
     });
