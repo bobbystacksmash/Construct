@@ -73,7 +73,7 @@ function WScript (ctx) {
     var WScript = {
         Sleep: Sleep,
         CreateObject: CreateObject,
-        Echo:  () => Echo,
+        Echo:  Echo,
     };
 
     return proxify2(WScript, "WScript", ctx);
