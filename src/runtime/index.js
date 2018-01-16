@@ -24,7 +24,6 @@ function Runtime (options) {
 
     });
 
-
     return this;
 }
 
@@ -54,9 +53,6 @@ Runtime.prototype.load = function(path_to_file, options) {
 
 
 Runtime.prototype._make_runnable = function () {
-
-    console.log("EMITTER");
-    console.log(this.ctx.emitter);
 
     let events            = this.events,
         assembled_code    = this.assembled_code,
