@@ -7,10 +7,9 @@ module.exports = function Date (opts) {
 
     opts = opts || {};
 
-    var epoch_ms = opts.epoch || new DATE().getTime();
-
-    var ee     = opts.emitter,
-        mkdate = () => new DATE(epoch_ms);
+    var epoch_ms = opts.epoch || new DATE().getTime(),
+        ee       = opts.emitter || { emit: () => {}, on: () => {} },
+        mkdate   = () => new DATE(epoch_ms);
 
     function getYear() {
         return 1900 + mkdate().getYear();
