@@ -1,0 +1,46 @@
+https://msdn.microsoft.com/en-us/library/6tkce7xa(v=vs.84).aspx
+
+Useful guide to FSO: https://msdn.microsoft.com/en-us/library/d6dw7aeh(v=vs.84).aspx
+
+FSO
+---
+#Add https://msdn.microsoft.com/en-us/library/zst29hfc(v=vs.84).aspx
+#BuildPath https://msdn.microsoft.com/en-us/library/z0z2z1zt(v=vs.84).aspx
+#Close https://msdn.microsoft.com/en-us/library/yb3tbdkw(v=vs.84).aspx
+#Copy https://msdn.microsoft.com/en-us/library/6973t06a(v=vs.84).aspx
+#CopyFile https://msdn.microsoft.com/en-us/library/e1wf9e7w(v=vs.84).aspx
+#CopyFolder https://msdn.microsoft.com/en-us/library/xbfwysex(v=vs.84).aspx
+#CreateFolder https://msdn.microsoft.com/en-us/library/7kby5ae3(v=vs.84).aspx
+#CreateTextFile https://msdn.microsoft.com/en-us/library/5t9b5c0c(v=vs.84).aspx
+#Delete https://msdn.microsoft.com/en-us/library/0k4wket3(v=vs.84).aspx
+#DeleteFile https://msdn.microsoft.com/en-us/library/thx0f315(v=vs.84).aspx
+#DeleteFolder https://msdn.microsoft.com/en-us/library/ca0at0xh(v=vs.84).aspx
+#DriveExists https://msdn.microsoft.com/en-us/library/t565x0f1(v=vs.84).aspx
+#FileExists https://msdn.microsoft.com/en-us/library/x23stk5t(v=vs.84).aspx
+#FolderExists https://msdn.microsoft.com/en-us/library/5xc78d8d(v=vs.84).aspx
+#GetAbsolutePathName https://msdn.microsoft.com/en-us/library/zx1xa64f(v=vs.84).aspx
+#GetBaseName https://msdn.microsoft.com/en-us/library/xhxzwwe1(v=vs.84).aspx
+#GetDrive https://msdn.microsoft.com/en-us/library/1z6e0fk3(v=vs.84).aspx
+#GetDriveName https://msdn.microsoft.com/en-us/library/48e3yfdw(v=vs.84).aspx
+#GetExtensionName https://msdn.microsoft.com/en-us/library/x0fxha2a(v=vs.84).aspx
+#GetFile https://msdn.microsoft.com/en-us/library/sheydkke(v=vs.84).aspx
+#GetFileName https://msdn.microsoft.com/en-us/library/a99s8akf(v=vs.84).aspx
+#GetFileVersion https://msdn.microsoft.com/en-us/library/b4e05k97(v=vs.84).aspx
+#GetFolder https://msdn.microsoft.com/en-us/library/f1xtf7ta(v=vs.84).aspx
+#GetParentFolderName https://msdn.microsoft.com/en-us/library/22dyy47c(v=vs.84).aspx
+#GetSpecialFolder https://msdn.microsoft.com/en-us/library/a72y2t1c(v=vs.84).aspx
+!GetStandardStream https://msdn.microsoft.com/en-us/library/y6hbz9es(v=vs.84).aspx
+#GetTempName https://msdn.microsoft.com/en-us/library/w0azsy9b(v=vs.84).aspx
+!Move https://msdn.microsoft.com/en-us/library/kxtftw67(v=vs.84).aspx
+#MoveFile https://msdn.microsoft.com/en-us/library/2wcf3ba6(v=vs.84).aspx
+#MoveFolder https://msdn.microsoft.com/en-us/library/465s5y8s(v=vs.84).aspx
+!OpenAsTextStream https://msdn.microsoft.com/en-us/library/hwfw5c59(v=vs.84).aspx
+!OpenTextFile https://msdn.microsoft.com/en-us/library/314cz14s(v=vs.84).aspx
+#Read https://msdn.microsoft.com/en-us/library/dhyx75w2(v=vs.84).aspx
+#ReadAll https://msdn.microsoft.com/en-us/library/t58aa4dd(v=vs.84).aspx
+#ReadLine https://msdn.microsoft.com/en-us/library/h7se9d4f(v=vs.84).aspx
+#Skip https://msdn.microsoft.com/en-us/library/08xz3c5a(v=vs.84).aspx
+#SkipLine https://msdn.microsoft.com/en-us/library/zbhhkawe(v=vs.84).aspx
+#Write https://msdn.microsoft.com/en-us/library/6ee7s9w2(v=vs.84).aspx
+#WriteBlankLines https://msdn.microsoft.com/en-us/library/eysctzwa(v=vs.84).aspx
+#WriteLine https://msdn.microsoft.com/en-us/library/t5399c99(v=vs.84).aspx
