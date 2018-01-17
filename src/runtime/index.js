@@ -99,6 +99,7 @@ Runtime.prototype._make_runnable = function () {
             Date          : ctx.JSAPI.Date,
             WScript       : ctx.JSAPI.WScript,
             ActiveXObject : ctx.JSAPI.ActiveXObject,
+            console       : console
         };
         sandbox[completed_fn_name] = script_finished;
 

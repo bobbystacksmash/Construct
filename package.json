@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "webpack",
-    "test": "node_modules/.bin/mocha -w",
+    "test": "node_modules/.bin/mocha -w ./test/**/*_test.js",
     "code": "node src/index.js ",
     "debug": "node --inspect --inspect-brk src/index.js "
   },
