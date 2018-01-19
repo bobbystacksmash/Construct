@@ -26,7 +26,8 @@ module.exports = function proxify2(target_obj, tag, opts) {
         get: (target, key) => {
 
             if (!target.hasOwnProperty(key)) {
-                ee.emit(evts.DEBUG.property.missing, {
+
+                ee.emit("$DEBUG::property-missing", {
                     type: "get",
                     tag: tag,
                     target: target,
@@ -37,7 +38,7 @@ module.exports = function proxify2(target_obj, tag, opts) {
                 return;
             }
 
-            ee.emit(evts.DEBUG.property.exists, {
+            ee.emit("$DEBUG::property-exists", {
                 type: "get",
                 tag: tag,
                 target: target,
@@ -55,7 +56,7 @@ module.exports = function proxify2(target_obj, tag, opts) {
          */
         construct: (target, args) => {
 
-            ee.emit(evts.DEBUG.constructed, {
+            ee.emit("$DEBUG::constructed", {
                 type: "constructed",
                 args: args,
                 tag:  tag
