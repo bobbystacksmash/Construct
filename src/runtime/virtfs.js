@@ -38,47 +38,35 @@ VirtualFileSystem.prototype.create = function (new_file_or_folder_path, type, fi
         $MFT         = this.volumes[volume_label].mft,
         this_dir     = $MFT;
 
-    var exists = (nf) => this_dir.filter((d) => { d.label === nf.label && d.type === nf.type });
+    function find_existing_file_or_folder_index (new_file) {
+        return this_dir.findIndex((x) => {
+            return x.label === new_file.label && x.type === new_file.type;
+        });
+    };
 
-    path_parts.forEach((path_part, i, arr) => {
-
-        console.log("MFT:");
-        console.log(JSON.stringify($MFT));
-        console.log("this_dir");
-        console.log(JSON.stringify(this_dir));
-        console.log("----");
-
-        console.log("")
-        console.log("Path part: ", path_part);
+    function update_mft (file_or_folder_part, i, arr) {
 
         let last_element = (i === (arr.length - 1));
 
         let new_file_or_folder = {
-            label    : path_part,
+            label    : file_or_folder_part,
             type     : last_element ? type : "folder",
             children : []
         };
 
-        // Does the label of the current path match any of the children?
-        this_dir.unshift(new_file_or_folder);
-        console.log("exists>>>");
-        console.log(exists(new_file_or_folder));
+        let existing_index = find_existing_file_or_folder_index(new_file_or_folder);
 
-        this_dir = this_dir[0].children
+        if (existing_index > -1) {
+            this_dir = this_dir[existing_index].children
+        }
+        else {
+            this_dir.unshift(new_file_or_folder);
+            this_dir = this_dir[0].children
+        }
 
-        console.log("#### END OF LOOP ####\n");
+    }
 
-        /*if (!$MFT.hasOwnProperty(path_part)) {
-
-            parent[path_part] = table_entry;
-            parent = table_entry.children;
-        }*/
-    });
-
-    ["users"].forEachkkkkkk
-
-    console.log("FINAL MFT:");
-    console.log(JSON.stringify($MFT, null, 1));
+    path_parts.forEach(update_mft);
 }
 
 VirtualFileSystem.prototype.folder_exists = function (folderpath) {
