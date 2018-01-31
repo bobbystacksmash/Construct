@@ -1,32 +1,109 @@
-const proxify2 = require("./proxify2");
-const evts     = require("./events");
 
-let DATE = Date;
+function Date (ctx) {
 
-module.exports = function Date (opts) {
+    this.epoch = ctx.epoch;
+    this.ee    = ctx.emitter;
+    this.date  = ctx.date;
 
-    opts = opts || {};
+    this._id = ctx.register("Date", this, ctx);
 
-    var epoch_ms = opts.epoch || new DATE().getTime(),
-        ee       = opts.emitter || { emit: () => {}, on: () => {} },
-        dt   = () => new DATE(epoch_ms);
-
-    function getYear() {
-        return 1900 + dt().getYear();
-    }
-
-    let dateobj = {
-        skew:       (m) => { epoch_ms += m },
-        getDate:    ( )  => { let x = dt().getDate();    ee.emit("@Date::getDate",    { fn: "getDate",    v: x }); return x },
-        getMonth:   ( )  => { let x = dt().getMonth();   ee.emit("@Date::getMonth",   { fn: "getMonth",   v: x }); return x },
-        getYear:    ( )  => { let x = getYear();         ee.emit("@Date::getYear",    { fn: "getYear",    v: x }); return x },
-        getHours:   ( )  => { let x = dt().getHours();   ee.emit("@Date::getHours",   { fn: "getHours",   v: x }); return x },
-        getMinutes: ( )  => { let x = dt().getMinutes(); ee.emit("@Date::getMinutes", { fn: "getMinutes", v: x }); return x },
-        getSeconds: ( )  => { let x = dt().getSeconds(); ee.emit("@Date::getSeconds", { fn: "getSeconds", v: x }); return x },
-        getTime:    ( )  => { let x = dt().getTime();    ee.emit("@Date::getTime",    { fn: "getTime",    v: x }); return x }
-    };
-
-    return function () {
-        return proxify2(dateobj, "Date", opts);
-    };
+    return this;
 }
+
+
+Date.prototype.skew = function (ms) {
+    this.epoch_ms += ms;
+};
+
+Date.prototype.getDate = function () {
+
+    let dt = this.date.getDate();
+
+    ee.emit("@Date::getDate", {
+	fn: "getDate",
+	v: dt
+    });
+
+    return dt;
+};
+
+
+Date.prototype.getMonth = function () {
+
+    let dt = this.date.getMonth();
+    
+    ee.emit("@Date::getMonth", {
+	fn: "getMonth",
+	v: dt
+    });
+
+    return dt;
+};
+
+
+Date.prototype.getYear = function () {
+
+    let dt = this.date.getYear() + 1900;
+
+    ee.emit("@Date::getYear", {
+	fn: "getYear",
+	v: dt
+    });
+
+    return dt;
+};
+
+
+Date.prototype.getHours = function () {
+
+    let dt = this.date.getHours();
+
+    ee.emit("@Date::getHours", {
+	fn: "getHours",
+	v: dt
+    });
+
+    return dt;
+};
+
+
+Date.prototype.getMinutes = function () {
+
+    let dt = this.date.getMinutes();
+
+    ee.emit("@Date::getMinutes", {
+	fn: "getMinutes",
+	v: dt
+    });
+
+    return dt;
+};
+
+
+Date.prototype.getSeconds = function () {
+
+    let dt = this.date.getSeconds();
+
+    ee.emit("@Date::getSeconds", {
+	fn: "getSeconds",
+	v: dt
+    });
+
+    return dt;
+};
+
+
+Date.prototype.getTime = function () {
+
+    let dt = this.date.getTime();
+
+    ee.emit("@Date::getTime", {
+	fn: "getTime",
+	v: dt
+    });
+
+    return dt;
+};
+
+
+module.exports = Date;
