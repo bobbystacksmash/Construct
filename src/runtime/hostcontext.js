@@ -8,11 +8,38 @@ function HostContext(opts) {
 
     opts = opts || {};
 
-    this.epoch       = opts.epoch   || new Date().getTime();
-    this.date        = opts.date    || new JS_Date(this.epoch)();
-    this.emitter     = opts.emitter || { on: () => {}, emit: () => {} };
-    this.vfs         = opts.vfs     || new VirtualFileSystem({ date: this.date, emitter: this.emitter });
+    var self = this;
 
+    this.mkid = function* () { var i = 0; while (true) yield i++; };    
+
+    this._id = this.mkid(); // HostContext is always id#0.
+    this.registry = [];
+
+    this.register = function (tag, instance, parent) {
+	if (parent === null || parent === undefined) parent = this;
+    
+	let new_registry_entry = {
+	    tag: tag,
+	    instance: instance,
+	    parent: parent._id
+	};
+
+	let reg_entry_idx =  self.registry.push(new_registry_entry) - 1;
+	
+	self.registry[reg_entry_idx].index = reg_entry_idx
+
+	self.emitter.emit("$DEBUG::component-registered", self.registry[reg_entry_idx]);
+	console.log(`REGISTERED ${reg_entry_idx}: ${tag}`);
+
+	return reg_entry_idx;
+    };
+
+    this.emitter = opts.emitter || { on: () => {}, emit: () => {} };
+    
+    this.epoch = opts.epoch || new Date().getTime();
+    this.date  = new JS_Date(this);
+    
+    this.vfs = new VirtualFileSystem(this);
 
     this.JSAPI = {
         Date              : this.date,
@@ -23,6 +50,5 @@ function HostContext(opts) {
 
     return this;
 }
-
 
 module.exports = HostContext;
