@@ -1,5 +1,11 @@
 const evts = require("./events");
 
+function Proxify(target_obj, ctx) {
+
+}
+
+
+
 
 module.exports = function proxify2(target_obj, tag, opts) {
 
