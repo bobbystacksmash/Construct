@@ -1,5 +1,100 @@
-module.exports = {
+const EventEmitter2  = require("eventemitter2").EventEmitter2;
 
+const EVENTS = {
+
+    "$DEBUG::property-exists": {},
+    "$DEBUG::property-missing": {},
+    "$DEBUG::constructed": {},
+    "$DEBUG::component-registered": {},
+
+    "!ERROR::UNKNOWN_EVENT": {},
+    "!ERROR::NOT_IMPLEMENTED": {},
+
+    "@FileSystemObject::GetFolder": {},
+   
+    
+    "@Date::new": {},
+    "@Date::getDate": {},
+    "@Date::getMonth": {},
+    "@Date::getYear": {},
+    "@Date::getHours": {},
+    "@Date::getMinutes": {},
+    "@Date::getSeconds": {},
+
+    "@ADODB::Stream::new": {},
+    "@ADODB::Stream::Open": {},
+    "@ADODB::Stream::Write": {},
+    "@ADODB::Stream::SaveToFile": {},
+    "@ADODB::Stream::Close": {},
+
+    "@ActiveXObject::new::Shell.Application": {},
+    "@ActiveXObject::new::WScript.Shell": {},
+    "@ActiveXObject::new::Scripting.FileSystemObject": {},
+    "@ActiveXObject::new::MSXML2.ServerXMLHttp": {},
+    "@ActiveXObject::new::MSXML2.XMLHttp": {},
+    "@ActiveXObject::new::ADODB.Stream": {},
+
+    "@ShellApplication::new": {},
+    "@ShellApplication::ShellExecute": {},
+
+    "@WScript::new": {},
+    "@WScript::Sleep": {},
+    "@WScript::Echo": {},
+    "@WScript::CreateObject::MSXML2.ServerXMLHttp": {},
+
+    "@WScript::WshNetwork::new": {},
+    "@WScript::WshNetwork::AddWindowsPrinterConnection": {},
+
+    "@WScript::WshShell::new": {},
+    "@WScript::WshShell::SpecialFolders": {},
+
+    "@XMLHttpRequest::new": {},
+    "@XMLHttpRequest::Open": {},
+    "@XMLHttpRequest::Send": {},
+};
+
+        
+
+function Eventer (opts) {
+    this.emitter = new EventEmitter2({ wildcard: true });
+    return this;
+}
+
+Eventer.prototype.emit = function (event, eobj) {
+
+    eobj = eobj || {};
+
+    if (!EVENTS.hasOwnProperty(event)) {
+
+        let failed_event_emit_info = {
+            help: "foo",
+            url: null,
+            orig_event: event
+        };
+        
+        this.emitter.emit(EVENTS["!ERROR::UNKNOWN_EVENT"], failed_emit_info);
+        return;
+    }
+
+    this.emitter.emit(event, EVENTS[event], eobj);
+}
+
+
+Eventer.prototype.on = function (...args) {
+    this.emitter.on(...args);
+};
+
+
+
+
+
+
+
+
+
+
+
+var events = {
     DEBUG: {
         error            : "DEBUG.error",
         constructed: "DEBUG.constructed",
@@ -130,4 +225,8 @@ module.exports = {
         },
 
     },
-};
+}
+
+
+
+module.exports = Eventer;
