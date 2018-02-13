@@ -44,12 +44,12 @@ function WScript (ctx) {
 
     function Echo () {
         let msg = Array.prototype.splice(arguments);
-        ee.emit(events.WINAPI.WScript.Echo, { msg: msg });
+        ee.emit("@WScript::Echo", { msg: msg }, arguments);
     };
 
     function Sleep (milliseconds) {
         dt.skew(milliseconds);
-        ee.emit(events.WINAPI.WScript.Sleep, { time: milliseconds });
+        ee.emit("@WScript::Sleep", { time: milliseconds }, arguments);
     };
 
     function CreateObject (prog_id, prefix) {
@@ -58,7 +58,7 @@ function WScript (ctx) {
 
         switch(prog_id) {
             case "msxml2.serverxmlhttp":
-                // TODO: emit that this is happening
+                ee.emit("@WScript::CreateObject::MSXML2.ServerXMLHttp", { prog_id: prog_id }, arguments);
                 var xhr = new XMLHttpRequest({ emitter: ee });
                 return xhr;
 

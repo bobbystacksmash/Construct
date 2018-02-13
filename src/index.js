@@ -37,7 +37,7 @@ function util_get_table_string(data, title) {
     let str_table = table(data)
         .split("\n")
         .map((row) => ` ${row}`)
-        .join("\n")
+        .join("\n");
 
     return `\n${str_table}\n`;
 }
@@ -48,8 +48,8 @@ function util_get_table_string(data, title) {
  * ==================
  */
 const help_load_file = 
-`Load a JScript file from the filesystem.  Once loaded, the code will be
-  analysed and preapred for inspection.`
+`Load a JScript file from the filesystem.  Once loaded, the code will be ` +
+      `analysed and preapred for inspection.`;
 
 function cmd_load_file(args) {
 
