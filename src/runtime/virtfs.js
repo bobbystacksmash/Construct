@@ -1,7 +1,8 @@
-const path       = require("path");
+const pathlib    = require("path").win32;
 const exceptions = require("../exceptions");
 const _          = require("lodash");
 const FolderObject = require("../winapi/FolderObject");
+const FileObject   = require("../winapi/FileObject");
 const AbsFileSystemObject = require("../absFileSystemObject");
 
 class VirtualFileSystem {
@@ -110,6 +111,8 @@ class VirtualFileSystem {
 
 	let src_file_name = pathlib.basename(src_file_path);
 
+	dest_file_path += `\\${src_file_name}`;
+
 	// First, make sure the source file actually exists...
 	let src_file = this.GetFile(src_file_path);
 
@@ -118,8 +121,9 @@ class VirtualFileSystem {
 			`to ${dest_file_path} - file not found.`);
 	    return false;
 	}
-	
-	return this.AddFile(dest_file_path, src_file.contents);
+
+	let result = this.AddFile(dest_file_path, src_file.contents);
+	return result;
     }
 }
 

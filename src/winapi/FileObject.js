@@ -6,7 +6,6 @@ class FileObject extends AbsFileSystemObject {
     // FileObject instances are ALWAYS leaf nodes.
     //
     constructor(context, path, args) {
-	console.log(`New FileObject(${path})`);
 	super(context, path, "File", args);
     }
 
@@ -14,3 +13,5 @@ class FileObject extends AbsFileSystemObject {
 	return this.__contents;
     }
 }
+
+module.exports = FileObject;

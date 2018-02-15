@@ -14,7 +14,7 @@ let mock_context = {
 
 describe("VirtualFileSystem Module", function () { 
 
-    describe("Registration", () => {
+    xdescribe("Registration", () => {
 
 	it("Should register itself.", (done) => {
 	    new VirtualFileSystem({
@@ -26,7 +26,7 @@ describe("VirtualFileSystem Module", function () {
 	});
     });
 
-    describe("Volumes", () => {
+    xdescribe("Volumes", () => {
 
 	it("Should be created with a volume: 'C:'.", (done) => {
 
@@ -43,16 +43,57 @@ describe("VirtualFileSystem Module", function () {
 	    let vfs = new VirtualFileSystem({ register: () => {} }),
 		vol = vfs.GetVolume("C:");
 
+	    assert.equal(vol.constructor.name, "FolderObject");
 	    assert.equal(vol.Type, "File Folder");
 	    done();
 	});
     });
 
-    describe("Folders", () => {
+    describe("Files", () => {
+
+	xdescribe("Adding", () => {
+
+	    it("Should support adding a new file.", (done) => {
+
+		let vfs  = new VirtualFileSystem({ register: () => {} }),
+		    newf = vfs.AddFile("C:\\foo.txt", "And did those feet in ancient times...");
+
+		assert.equal(newf.__contents, "And did those feet in ancient times...");
+		assert.equal(newf.Name, "foo.txt");
+		assert.equal(newf.constructor.name, "FileObject");
+		done();
+	    });
+	});
+
+	describe("Copying", () => {
+
+	    it("Should support copying a file.", (done) => {
+
+		let src_path = "C:\\foo\\bar\\baz\\test.txt",
+		    dst_path = "C:\\destination\\filedir";
+		
+		let vfs = new VirtualFileSystem({ register: () => {} }),
+		    src = vfs.AddFile(src_path, "Bring me my bow of burning gold."),
+		    dst_dir = vfs.AddFolder(dst_path);
+
+		let copied_file = vfs.CopyFileToFolder(src_path, dst_path);
+
+		assert.equal(copied_file.constructor.name, "FileObject");
+		assert.equal(src.Name, copied_file.Name);
+		assert.equal(copied_file.Path, "c:\\destination\\filedir\\test.txt");
+
+		done();
+		    
+		
+	    });
+	});
+    });
+    
+    xdescribe("Folders", () => {
 
 	describe("Adding", () => {
 
-	    it("Should let me add a folder.", (done) => {
+	    it("Should support adding a new folder.", (done) => {
 
 		let vfs = new VirtualFileSystem({ register: () => {} }),
 		    fld = vfs.AddFolder("C:\\foo\\bar\\baz");
@@ -69,6 +110,8 @@ describe("VirtualFileSystem Module", function () {
 		assert.equal(
 		    fld.ParentFolder.ParentFolder.ParentFolder.IsRootFolder, true
 		);
+
+		assert.equal(fld.constructor.name, "FolderObject");
 		
 		done();
 	    });

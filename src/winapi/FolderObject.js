@@ -54,8 +54,7 @@ class FolderObject extends AbsFileSystemObject {
 	if (!existing_file) {
 	    file.ParentFolder = this;
 	    this.Files.push(file);
-
-	    return this.Files[this.Files.length - 1];
+	    return file;
 	}
 	else {
 	    console.log("!!! FILE ALREADY EXISTS !!!");
