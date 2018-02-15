@@ -4,10 +4,11 @@
  *
  * METHODS
  * ~~~~~~~
- *  - Copy https://msdn.microsoft.com/en-us/library/6973t06a(v=vs.84).aspx
- *  - Delete
- *  - Move
- *  - CreateTextFile
+ * Copy https://msdn.microsoft.com/en-us/library/6973t06a(v=vs.84).aspx
+ * Delete https://msdn.microsoft.com/en-us/library/0k4wket3(v=vs.84).aspx
+ * Move https://msdn.microsoft.com/en-us/library/kxtftw67(v=vs.84).aspx
+ * CreateTextFile https://msdn.microsoft.com/en-us/library/5t9b5c0c(v=vs.84).aspx
+ *
  *
  * PROPERTIES
  * ~~~~~~~~~~
@@ -28,35 +29,56 @@
  *  - Type https://msdn.microsoft.com/en-us/library/y7k0wsxy(v=vs.84).aspx
  *
  */
-const proxify2 = require("../proxify2"),
-    events     = require("../events");
+const AbsFileSystemObject = require("../absFileSystemObject");
 
-function FolderObject (ctx) {
 
-    let ee  = ctx.emitter,
-        dt  = ctx.date,
-        mft = ctx.vfs;
+class FolderObject extends AbsFileSystemObject {
 
-    // https://msdn.microsoft.com/en-us/library/6973t06a(v=vs.84).aspx
-    function Copy (destination_path, overwrite) {
-    
+    constructor(context, path, isRoot) {
 
+	super(context, path, "File Folder");
+	this.context = context;
+	context.register("FolderObject", this, context);
+
+	this.Files        = [];
+	this.IsRootFolder = isRoot;
+	this.SubFolders   = [];
     }
 
+    AddFile (file) {
 
-    function Delete () {}
-    function Move () {}
-    function CreateTextFile () {}
+	let existing_file = this.Files.find((existing_file) => {
+	    return existing_file.Name.toLowerCase() === file.Name.toLowerCase();
+	});
 
-    var FolderObject = {
-        Copy           : Copy,
-        Delete         : Delete,
-        Move           : Move,
-        CreateTextFile : CreateTextFile
-    };
+	if (!existing_file) {
+	    file.ParentFolder = this;
+	    this.Files.push(file);
 
-    return proxify2(FolderObject, "FolderObject", ctx);
+	    return this.Files[this.Files.length - 1];
+	}
+	else {
+	    console.log("!!! FILE ALREADY EXISTS !!!");
+	    return existing_file;
+	}
+    }
 
+    AddSubFolder (folder) {
+
+	let existing_subfolder = this.SubFolders.find((sub_folder) => {
+	    return sub_folder.Name.toLowerCase() === folder.Name.toLowerCase();
+	});
+
+	if (!existing_subfolder) {
+	    folder.ParentFolder = this;
+	    this.SubFolders.push(folder);
+
+	    return this.SubFolders[this.SubFolders.length - 1];
+	}
+	else {
+	    return existing_subfolder;
+	}
+    }
 }
 
 module.exports = FolderObject;

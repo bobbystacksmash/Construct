@@ -1,91 +1,126 @@
 const path       = require("path");
-const Folder     = require("../winapi/FolderObject");
+const exceptions = require("../exceptions");
+const _          = require("lodash");
+const FolderObject = require("../winapi/FolderObject");
+const AbsFileSystemObject = require("../absFileSystemObject");
 
-function VirtualFileSystem(ctx) {
+class VirtualFileSystem {
 
-    ctx = ctx || {};
-
-    // TODO: We need the epoch to propegate through to here so we
-    //       create file MACE times that match the runtime environment.
-    //
-    //
-
-    this.epoch   = ctx.epoch   || ctx.date.getTime();
-    this.emitter = ctx.emitter,
-    this.volumes = { "c:": { mft: [], usn: {} } };
-
-    this.mft   = { "c:": {} };
-
-    return this;
-}
-
-
-VirtualFileSystem.prototype.create = function (new_file_or_folder_path, type, file_contents) {
-
-    if (type !== "folder" && type !== "file") {
-        throw {
-            name     : "VFS: Unknown file/folder type",
-            message  : `Unknown file or folder type: ${type}.`,
-            toString : () => `${this.name}: ${this.message}`
-        };
+    constructor(context) {
+	this.context    = context;
+	this.context.register("VirtualFileSystem", this, context);
+	this.register = context.register;
+	this.volume = {};
+	this.volume["c:"] = new FolderObject(context, "c:", true);
     }
 
-    new_file_or_folder_path = new_file_or_folder_path.toLowerCase();
-
-    let path_parts   = new_file_or_folder_path.replace("/", "\\").split("\\"),
-        filename     = path.basename(new_file_or_folder_path),
-        volume_label = path_parts.shift(),
-        $MFT         = this.volumes[volume_label].mft,
-        this_dir     = $MFT;
-
-    function find_existing_file_or_folder_index (new_file) {
-        return this_dir.findIndex((x) => {
-            return x.label === new_file.label && x.type === new_file.type;
-        });
-    };
-
-    function update_mft (file_or_folder_part, i, arr) {
-
-        let last_element = (i === (arr.length - 1));
-
-        let new_file_or_folder = {
-            label    : file_or_folder_part,
-            type     : last_element ? type : "folder",
-            children : []
-        };
-
-        let existing_index = find_existing_file_or_folder_index(new_file_or_folder);
-
-        if (existing_index > -1) {
-            this_dir = this_dir[existing_index].children
-        }
-        else {
-            this_dir.unshift(new_file_or_folder);
-            this_dir = this_dir[0].children
-        }
-
+    VolumeExists (volume_label) {
+	return this.volume.hasOwnProperty(volume_label.toLowerCase());
     }
 
-    path_parts.forEach(update_mft);
-}
+    GetVolume (volume_label) {
+	return this.volume[volume_label.toLowerCase()];
+    }
 
-VirtualFileSystem.prototype.folder_exists = function (folderpath) {
+    GetFile (path) {
 
-    console.log(folderpath);
+	var self = this;
+	
+	let parsed_path = AbsFileSystemObject.Parse(path);
 
-    let folderpath_parts = folderpath.split("\\");
+	if (!this.VolumeExists(parsed_path.volume)) {
+	    return false;
+	}
+
+	var cwd = this.GetVolume(parsed_path.volume),
+	    found_file = false;
+
+	var result = parsed_path.orig_path_parts_mv.every((path_part, i, all_path_parts) => {
+
+	    // Is this the last element?
+	    if (i === (parsed_path.orig_path_parts_mv.length - 1)) {
+		let find_result = cwd.Files.find((x) => x.Name === path_part);
+
+		if (!find_result) return false;
+		found_file = find_result;
+	    }
+
+	    // This isn't (yet) the last element, so let's see if
+	    // `path_part' exists as a subfolder at this level...
+	    var found = cwd.SubFolders.find((x) => x.Name === path_part);
+	    if (!found) return false;
+
+	    cwd = found;
+	    return true;
+	});
+
+	return found_file;
+    }
     
-    // FIXME: Windows is case-insensitive.
-    function find_folderpath (folderpath, mft) {
-        console.log(folderpath);
+    
+    AddFolder (path) {
+
+	var self = this;
+
+	let parsed_path = AbsFileSystemObject.Parse(path);
+
+	if (!this.VolumeExists(parsed_path.volume)) {
+	    console.log(`!-- UNKNOWN VOLUME "${parsed_path.volume}" --!`);
+	    return false;
+	}
+
+	var cwd  = this.GetVolume(parsed_path.volume),
+	    path = parsed_path.volume;
+
+	parsed_path.orig_path_parts_mv.some((path_part) => {
+
+	    path = `${path}\\${path_part}`;
+	    
+	    let fo = new FolderObject(self, path);
+	    cwd = cwd.AddSubFolder(fo);
+	    return false;
+	});
+
+	return cwd;
     }
 
-    return find_folderpath(folderpath_parts, this.mft);
-}
+    AddFile (path, contents) {
 
+	let parsed_path = AbsFileSystemObject.Parse(path),
+	    file_path   = parsed_path.orig_path_parts_mv.slice(0, -1);
 
-VirtualFileSystem.prototype.file_exists = function (filepath) {
-    let filepath_parts = filepath.split("\\");
+	contents = contents || "";
+
+	var cwd;
+
+	if (file_path.length === 0) {
+	    // This is located in the root-volume
+	    cwd = this.GetVolume(parsed_path.volume);
+	}
+	else {
+	    file_path = `${parsed_path.volume}\\${file_path.join("\\")}`;
+	    cwd       = this.AddFolder(file_path);
+	}
+
+	let fo = new FileObject(this, path, { contents: contents });
+	return cwd.AddFile(fo);
+    }
+
+    CopyFileToFolder (src_file_path, dest_file_path, overwrite) {
+
+	let src_file_name = pathlib.basename(src_file_path);
+
+	// First, make sure the source file actually exists...
+	let src_file = this.GetFile(src_file_path);
+
+	if (!src_file) {
+	    console.log(`Cannot copy ${src_file_path}`,
+			`to ${dest_file_path} - file not found.`);
+	    return false;
+	}
+	
+	return this.AddFile(dest_file_path, src_file.contents);
+    }
 }
 
 module.exports = VirtualFileSystem;
