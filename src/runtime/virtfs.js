@@ -85,7 +85,11 @@ class VirtualFileSystem {
 	return cwd;
     }
 
-    AddFile (path, contents) {
+    AddFile (path, contents, opts) {
+
+	opts = opts || {};
+	if (!opts.hasOwnProperty("overwrite")) opts.overwrite = false;
+	const overwrite = opts.overwrite;
 
 	let parsed_path = AbsFileSystemObject.Parse(path),
 	    file_path   = parsed_path.orig_path_parts_mv.slice(0, -1);
@@ -104,10 +108,13 @@ class VirtualFileSystem {
 	}
 
 	let fo = new FileObject(this, path, { contents: contents });
-	return cwd.AddFile(fo);
+	return cwd.AddFile(fo, opts);
     }
 
-    CopyFileToFolder (src_file_path, dest_file_path, overwrite) {
+    CopyFileToFolder (src_file_path, dest_file_path, opts) {
+
+	opts = opts || { overwrite: false };
+	const overwrite = opts.overwrite;
 
 	let src_file_name = pathlib.basename(src_file_path);
 
@@ -122,7 +129,15 @@ class VirtualFileSystem {
 	    return false;
 	}
 
-	let result = this.AddFile(dest_file_path, src_file.contents);
+	// Second, we shouldn't overwrite the file if it already exists..
+	if (this.GetFile(dest_file_path) && overwrite === false) {
+	    /*console.log(`Cannot copy ${src_file_path}`,
+			`to ${dest_file_path} - dst file exists and `,
+			`overwrite is ${overwrite}.`);*/
+	    return false;
+	}
+
+	let result = this.AddFile(dest_file_path, src_file.contents, opts);
 	return result;
     }
 }

@@ -45,20 +45,36 @@ class FolderObject extends AbsFileSystemObject {
 	this.SubFolders   = [];
     }
 
-    AddFile (file) {
+    AddFile (file, opts) {
 
-	let existing_file = this.Files.find((existing_file) => {
+	opts = opts || { overwrite: false };
+	const overwrite = opts.overwrite;
+
+	let existing_file_idx = this.Files.findIndex((existing_file) => {
 	    return existing_file.Name.toLowerCase() === file.Name.toLowerCase();
 	});
 
-	if (!existing_file) {
+	let existing_file =
+	    (existing_file_idx > -1)
+	    ? this.Files[existing_file_idx]
+	    : false;
+
+	if (existing_file) {
+
+	    if (overwrite === true) {
+		file.ParentFolder = this;
+		this.Files[existing_file_idx] = file;
+		return this.Files[existing_file_idx];
+	    }
+	    else {
+		return existing_file;
+	    }
+	}
+	else if (!existing_file) {
+	    // File does not exist!
 	    file.ParentFolder = this;
 	    this.Files.push(file);
 	    return file;
-	}
-	else {
-	    console.log("!!! FILE ALREADY EXISTS !!!");
-	    return existing_file;
 	}
     }
 

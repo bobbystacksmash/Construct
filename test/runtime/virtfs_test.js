@@ -14,7 +14,7 @@ let mock_context = {
 
 describe("VirtualFileSystem Module", function () { 
 
-    xdescribe("Registration", () => {
+    describe("Registration", () => {
 
 	it("Should register itself.", (done) => {
 	    new VirtualFileSystem({
@@ -26,7 +26,7 @@ describe("VirtualFileSystem Module", function () {
 	});
     });
 
-    xdescribe("Volumes", () => {
+    describe("Volumes", () => {
 
 	it("Should be created with a volume: 'C:'.", (done) => {
 
@@ -51,7 +51,7 @@ describe("VirtualFileSystem Module", function () {
 
     describe("Files", () => {
 
-	xdescribe("Adding", () => {
+	describe("Adding", () => {
 
 	    it("Should support adding a new file.", (done) => {
 
@@ -82,14 +82,47 @@ describe("VirtualFileSystem Module", function () {
 		assert.equal(src.Name, copied_file.Name);
 		assert.equal(copied_file.Path, "c:\\destination\\filedir\\test.txt");
 
-		done();
+		done();   
+	    });
+
+	    it("Should overwrite an existing file if configured.", (done) => {
+
+		let vfs = new VirtualFileSystem({ register: () => {} }),
+
+		    // Copy this...
+		    fl1 = vfs.AddFile("C:\\foo\\bar.txt",
+				      "Walk upon England's mountains green..."),
+
+		    // And overwrite this:
+		    fl2 = vfs.AddFile("C:\\baz\\bar.txt",
+				      "...among those dark satanic mills?"),
 		    
-		
+		    res = vfs.CopyFileToFolder("C:\\foo\\bar.txt",
+					       "C:\\baz",
+					       { overwrite: true });
+
+		assert.equal(res.contents, "Walk upon England's mountains green...");
+		assert.equal(res.ParentFolder.Path, "c:\\baz");
+
+		done();
+	    });
+
+	    it("Should fail when trying to overwrite an existing file.", (done) => {
+
+		let vfs = new VirtualFileSystem({ register: () => {} }),
+		    fl1 = vfs.AddFile("C:\\foo\\bar.txt"),
+		    fl2 = vfs.AddFile("C:\\baz\\bar.txt"),
+		    res = vfs.CopyFileToFolder("C:\\foo\\bar.txt",
+					       "C:\\baz",
+					       { overwrite: false });
+
+		assert.equal(res, false);
+		done();
 	    });
 	});
     });
     
-    xdescribe("Folders", () => {
+    describe("Folders", () => {
 
 	describe("Adding", () => {
 
