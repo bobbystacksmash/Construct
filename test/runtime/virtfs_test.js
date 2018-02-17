@@ -65,6 +65,26 @@ describe("VirtualFileSystem Module", function () {
 	    });
 	});
 
+	describe("Deleting", () => {
+
+	    it("Should support file deletion.", (done) => {
+		
+		let vfs  = new VirtualFileSystem({ register: () => {} });
+		var file = vfs.AddFile("C:\\a.txt", "Bring me my bow of burning gold.");
+		assert.equal(file.Name,  "a.txt");
+
+		var success = vfs.DeleteFile("C:\\a.txt");
+
+		assert.equal(success, true);
+
+		var no_file_here = vfs.GetFile("C:\\a.txt");
+		assert.equal(no_file_here, false);
+		
+		done();
+	    });
+	});
+		
+
 	describe("Copying", () => {
 
 	    it("Should support copying a file.", (done) => {

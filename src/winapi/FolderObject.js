@@ -78,6 +78,18 @@ class FolderObject extends AbsFileSystemObject {
 	}
     }
 
+    DeleteFile (filename) {
+
+	const filename_idx = this.Files.findIndex((f) => f.Name === filename);
+	
+	if (filename_idx > -1) {
+	    this.Files.splice(filename_idx, 1);
+	    return true;
+	}
+
+	return false;
+    }
+
     AddSubFolder (folder) {
 
 	let existing_subfolder = this.SubFolders.find((sub_folder) => {
