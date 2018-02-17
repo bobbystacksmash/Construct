@@ -23,6 +23,46 @@ class VirtualFileSystem {
 	return this.volume[volume_label.toLowerCase()];
     }
 
+    GetFolder (path) {
+
+	let parsed_path = AbsFileSystemObject.Parse(path);
+
+	if (!this.VolumeExists(parsed_path.volume)) {
+	    return false;
+	}
+
+	var cwd = this.GetVolume(parsed_path.volume),
+	    found_folder = false;
+
+	var result = parsed_path.orig_path_parts_mv.every((path_part, i, all_path_parts) => {
+	    // Is this the last element?
+	    if (i === (parsed_path.orig_path_parts_mv.length - 1)) {
+		// Does the cwd contain a subfolder that matches
+		// this element...
+		let existing_folder = cwd.SubFolders.find((x) => x.Name === path_part);
+
+		if (existing_folder) {
+		    cwd = existing_folder;
+		    return true;
+		}
+
+		return false;
+	    }
+
+	    // This isn't (yet) the last element, so let's see if
+	    // `path_part' exists as a subfolder at this level...
+	    var found = cwd.SubFolders.find((x) => x.Name === path_part);
+
+	    if (!found) return false;
+
+	    cwd = found;
+	    return true;
+	});
+
+	if (!result) return false;
+	return cwd;
+    }
+    
     GetFile (path) {
 
 	var self = this;
@@ -139,6 +179,29 @@ class VirtualFileSystem {
 
 	let result = this.AddFile(dest_file_path, src_file.contents, opts);
 	return result;
+    }
+
+    DeleteFile (path) {
+
+	let parsed_path = AbsFileSystemObject.Parse(path),
+	    file        = this.GetFile(path);
+
+	if (!file) return false; // nothing to delete.
+
+	return file.ParentFolder.DeleteFile(file.Name);
+    }
+
+    DeleteFolder (path) {
+
+	let parsed_path = AbsFileSystemObject.Parse(path),
+	    folder      = this.GetFolder(path);
+
+	if (!folder || !folder.ParentFolder) return false;
+
+	// Jump up to the parent folder, then we'll get the index
+	// of the folder-to-be-deleted's name, and remove it from
+	// the Subfolders array.
+	return folder.ParentFolder.DeleteSubFolder(folder.Name);
     }
 }
 

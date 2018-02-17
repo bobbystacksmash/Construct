@@ -90,6 +90,18 @@ class FolderObject extends AbsFileSystemObject {
 	return false;
     }
 
+    DeleteSubFolder (foldername) {
+
+	const foldername_idx = this.SubFolders.findIndex((f) => f.Name === foldername);
+
+	if (foldername_idx > -1) {
+	    this.SubFolders.splice(foldername_idx, 1);
+	    return true;
+	}
+
+	return false;
+    }
+
     AddSubFolder (folder) {
 
 	let existing_subfolder = this.SubFolders.find((sub_folder) => {
@@ -99,7 +111,6 @@ class FolderObject extends AbsFileSystemObject {
 	if (!existing_subfolder) {
 	    folder.ParentFolder = this;
 	    this.SubFolders.push(folder);
-
 	    return this.SubFolders[this.SubFolders.length - 1];
 	}
 	else {

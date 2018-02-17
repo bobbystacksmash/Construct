@@ -79,7 +79,6 @@ describe("VirtualFileSystem Module", function () {
 
 		var no_file_here = vfs.GetFile("C:\\a.txt");
 		assert.equal(no_file_here, false);
-		
 		done();
 	    });
 	});
@@ -102,7 +101,7 @@ describe("VirtualFileSystem Module", function () {
 		assert.equal(src.Name, copied_file.Name);
 		assert.equal(copied_file.Path, "c:\\destination\\filedir\\test.txt");
 
-		done();   
+		done();
 	    });
 
 	    it("Should overwrite an existing file if configured.", (done) => {
@@ -165,6 +164,40 @@ describe("VirtualFileSystem Module", function () {
 		);
 
 		assert.equal(fld.constructor.name, "FolderObject");
+		
+		done();
+	    });
+	});
+
+	xdescribe("Getting", () => {
+
+	    it("Should support getting an existing folder.", (done) => {
+
+		let vfs = new VirtualFileSystem({ register: () => {} }),
+		    fld = vfs.AddFolder("C:\\testing\\foo\\bar");
+
+		let get_folder = vfs.GetFolder("C:\\testing\\foo");
+
+		assert.equal(get_folder.Name, fld.ParentFolder.Name);
+		done();
+	    });
+	});
+
+	describe("Deleting", () => {
+
+	    it("Should support folder deletion.", (done) => {
+
+		let vfs = new VirtualFileSystem({ register: () => {} });
+
+		vfs.AddFolder("C:\\foo\\bar\\baz\\b0rk\\bark");
+		vfs.AddFolder("C:\\foo\\bar\\a\\b\\c\\d");
+
+		// We're going to delete folder 'baz' and all of its children.
+		let result = vfs.DeleteFolder("C:\\foo\\bar\\baz");
+
+		assert.equal(result, true);
+		assert.equal(vfs.GetFolder("C:\\foo\\bar").Name, "bar");
+		assert.equal(vfs.GetFolder("C:\\foo\\bar\\baz"), false);
 		
 		done();
 	    });
