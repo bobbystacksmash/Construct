@@ -151,6 +151,41 @@ class VirtualFileSystem {
 	return cwd.AddFile(fo, opts);
     }
 
+    // Copies the folder in `src_folder_path' in to
+    // `dest_folder_path'.  If you need to copy folder *contents*, use
+    // `CopyFolderContentsToFolder' instead.
+    CopyFolderToFolder (src_folder_path, dest_folder_path, opts) {
+
+	opts = opts || { merge: true };
+
+	var result = { success: false, reason: "Unknown" };
+
+	let src_folder = this.GetFolder(src_folder_path),
+	    dest_folder = this.GetFolder(dest_folder_path);
+
+	if (!src_folder) {
+	    result.reason = `The source path (${src_folder_path}) does not exist.`;
+	    return result;
+	}
+
+	if (!this.GetFolder(dest_folder_path)) {
+	    result.reson = `The dest path (${dest_folder_path}) does not exist.`;
+	    return result;
+	}
+
+	// First, let's see if the destination already contains a folder
+	// with the same name as `src'.
+	if (dest_folder.HasSubFolder(src_folder.Name)) {
+	    // This becomes a merge operation...
+	}
+	else {
+	    // This is a basic copy.
+	    let new_folder_obj = {};
+	    Object.assign(new_folder_obj, src_folder);
+	    return dest_folder.AddSubFolder(new_folder_obj);
+	}
+    }
+
     CopyFileToFolder (src_file_path, dest_file_path, opts) {
 
 	opts = opts || { overwrite: false };

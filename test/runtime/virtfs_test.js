@@ -218,6 +218,38 @@ describe("VirtualFileSystem Module", function () {
 		done();
 	    });
 	});
+
+	describe("Copying", () => {
+
+	    it("Should support copying a folder.", (done) => {
+
+		let vfs = new VirtualFileSystem({ register: () => {} });
+
+		// Let's create our folder that we'll copy, and put some files
+		// and subfolders inside of it.
+		let src_folder_path = "C:\\foo\\bar\\baz\\folderA";
+
+		vfs.AddFolder(src_folder_path);
+		vfs.AddFile(`${src_folder_path}\\foo.txt`, "Bring me my spear...");
+		vfs.AddFile(`${src_folder_path}\\things\\baz.txt`, "o clouds unfold");
+
+		const src_folder = vfs.GetFolder(src_folder_path);
+
+		let dst_folder_path = "C:\\dstfolder",
+		    dst_folder      = vfs.AddFolder(dst_folder_path),
+		    copy_result     = vfs.CopyFolderToFolder(src_folder_path,
+							     dst_folder_path);
+
+		assert.equal(dst_folder.SubFolders.length, 1);
+		assert.equal(dst_folder.SubFolders[0].Name, "foldera");
+		assert.equal(dst_folder.SubFolders[0].ParentFolder, dst_folder);
+		assert.equal(dst_folder.SubFolders[0].Files.length, 1);
+		assert.equal(dst_folder.SubFolders[0].Files[0].Name, "foo.txt");
+		assert.equal(dst_folder.SubFolders[0].Files[0].__contents,
+			     "Bring me my spear...");
+		done();
+	    });
+	});
     });
 
 });

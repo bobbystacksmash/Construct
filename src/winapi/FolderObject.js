@@ -102,6 +102,11 @@ class FolderObject extends AbsFileSystemObject {
 	return false;
     }
 
+    HasSubFolder (folder) {
+	let result = this.SubFolders.find((x) => x.Name === folder);
+	return (result) ? true : false;
+    }
+
     AddSubFolder (folder) {
 
 	let existing_subfolder = this.SubFolders.find((sub_folder) => {
