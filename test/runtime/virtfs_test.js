@@ -65,6 +65,22 @@ describe("VirtualFileSystem Module", function () {
 	    });
 	});
 
+	describe("Getting", () => {
+
+	    it("Should support getting a file if it exists.", (done) => {
+
+		let vfs = new VirtualFileSystem({ register: () => {} }),
+		    file = vfs.AddFile("C:\\a\\b.txt", "Bring me my charoit of fire.");
+
+		const the_file = vfs.GetFile("C:\\a\\b.txt");
+
+		assert.equal(file, the_file);
+		assert.equal(file.Name, the_file.Name);
+		assert.equal(file.__contents, the_file.__contents);
+		done();
+	    });
+	});
+
 	describe("Deleting", () => {
 
 	    it("Should support file deletion.", (done) => {
@@ -169,7 +185,7 @@ describe("VirtualFileSystem Module", function () {
 	    });
 	});
 
-	xdescribe("Getting", () => {
+	describe("Getting", () => {
 
 	    it("Should support getting an existing folder.", (done) => {
 
