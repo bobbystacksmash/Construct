@@ -237,7 +237,7 @@ describe("VirtualFileSystem Module", function () {
 
 		let dst_folder_path = "C:\\dstfolder",
 		    dst_folder      = vfs.AddFolder(dst_folder_path),
-		    copy_result     = vfs.CopyFolderToFolder(src_folder_path,
+		    copy_result     = vfs.CopyFolderInToFolder(src_folder_path,
 							     dst_folder_path);
 
 		assert.equal(dst_folder.SubFolders.length, 1);
@@ -247,6 +247,73 @@ describe("VirtualFileSystem Module", function () {
 		assert.equal(dst_folder.SubFolders[0].Files[0].Name, "foo.txt");
 		assert.equal(dst_folder.SubFolders[0].Files[0].__contents,
 			     "Bring me my spear...");
+		done();
+	    });
+
+	    it("Should not overwrite elements if any file or folder names clash.", (done) => {
+
+		let vfs = new VirtualFileSystem({ register: () => {} });
+
+		// Source.
+		vfs.AddFolder("C:\\alpha\\bravo");
+		vfs.AddFile("C:\\alpha\\bravo\\foo.txt");
+		vfs.AddFile("C:\\alpha\\bravo\\charlie\\bar.txt");
+
+		// Destination.
+		let dst_root = vfs.AddFolder("C:\\trycopy");
+		vfs.AddFolder("C:\\trycopy\\bravo");
+		vfs.AddFile("C:\\trycopy\\bravo\\blah.txt", "test");
+
+		let result = vfs.CopyFolderInToFolder(
+		    "C:\\alpha\\bravo", // We copy the folder 'bravo'...
+		    "C:\\trycopy",      // in to 'trycopy'.
+		    { overwrite: false });
+
+		assert.equal(result, false);
+		assert.equal(vfs.GetFile("C:\\trycopy\\bravo\\foo.txt"), false);
+		assert.equal(vfs.GetFile("C:\\trycopy\\bravo\\charlie\\bar.txt"), false);
+		assert.equal(vfs.GetFolder("C:\\trycopy\\bravo\\charlie"), false);
+		done();
+	    });
+
+	    // TODO: Figure out what Windows does when a copy is made and
+	    //       eventually a collision happens.  Do all affected files
+	    //       get rolled back?
+	    
+	    it("Should overwrite existing destination files if overwrite:true.", (done) => {
+
+		let vfs = new VirtualFileSystem({ register: () => {} });
+
+		// Source folder.
+		vfs.AddFolder("C:\\stage\\src");
+		vfs.AddFile("C:\\stage\\src\\alpha.txt", "src:alpha contents");
+		vfs.AddFile("C:\\stage\\src\\charlie.txt", "src:charlie contents");
+		vfs.AddFile("C:\\stage\\src\\blah\\test.txt", "src:blah-test.txt");
+
+		// Dest folder
+		vfs.AddFolder("C:\\stage\\dst");
+		vfs.AddFile("C:\\stage\\dst\\alpha.txt", "dst:alpha contents");
+		vfs.AddFile("C:\\stage\\dst\\bravo.txt", "dst:bravo contents");
+		vfs.AddFile("C:\\stage\\dst\\charlie.txt", "dst:charlie contents");
+
+		vfs.CopyFolderContentsToFolder(
+		    "C:\\stage\\src",
+		    "C:\\stage\\dst",
+		    { overwrite: true }
+		);
+
+		/*
+		 * We expect that `dst' will contain the following files:
+		 *
+		 *  - alpha.txt(src)
+		 *  - bravo.txt(dst)
+		 *  - charlie.txt(src)
+		 */
+		assert.equal(
+		    vfs.GetFile("C:\\stage\\dst\\alpha.txt").__contents,
+		    "src:alpha contents"
+		);
+
 		done();
 	    });
 	});
