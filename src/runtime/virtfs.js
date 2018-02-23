@@ -151,10 +151,99 @@ class VirtualFileSystem {
 	return cwd.AddFile(fo, opts);
     }
 
+    /*
+     * Given a source folder path and a folder destination, this method
+     * copies the contents of src in to the destination.  For example, consider
+     * the src dir to be called `foo', and it contains one file `bar.txt', and 
+     * our destination -- `baz.txt'.  Calling CopyFolderContentsToFolder(src, dst)
+     * will copy `bar.txt' in to `baz'.
+     */
+    CopyFolderContentsToFolder (src_folder_path, dest_folder_path, opts) {
+
+	opts = opts || { merge: true };
+
+	let src_folder = this.GetFolder(src_folder_path),
+	    dst_folder = this.GetFolder(dest_folder_path);
+	
+	var result     = { success: false, reason: "Unknown" };
+
+	// TODO: Need to handle the case where src_folder is the root volume.
+	if (!src_folder) {
+	    result.reason = `Folder ${src_folder_path} does not exist.`;
+	    return result;
+	}
+
+	if (!dst_folder) {
+	    result.reason = `Folder ${dest_folder_path} does not exist.`;
+	    return result;
+	}
+
+	if (src_folder.IsRootFolder) {
+	    console.log(`==== uuggghhh, complexity! ====`);
+	    return false;
+	}
+
+	// Here?  Great!  This means we have a src and dst folders.
+	// Let's begin trying to copy between 'em.
+	/*var src_cwd = src_folder,
+	  dst_cwd = dst_folder;*/
+
+	var self = this;
+	
+	(function walk(src_cwd, dst_cwd) {
+
+	    // Copy files first...
+	    var file_copy_result = src_cwd.Files.every((f) => {
+
+		// Does this file exist in dst?
+		let dst_existing_file = dst_cwd.Files.findIndex((x) => x.Name === f.Name);
+
+		if (dst_existing_file > -1 && opts.overwrite === false) {
+		    // Cannot continue - we have a name collision but are told not
+		    // to overwrite.
+		    result.reason = `Destination dir (${dst_cwd.Path}) contains ` +
+			`source file name already: ${f.Name}`;
+		    return false;
+		}
+
+		let src_file_copy = {};
+		Object.assign(src_file_copy, f);
+		src_file_copy.ParentFolder = dst_cwd;
+		dst_cwd.Files[dst_existing_file] = src_file_copy;
+		return true;
+	    });
+
+	    if (!file_copy_result) {
+		// Something went wrong :x
+	    }
+
+	    // Let's now loop through all sub folders, applying copies to them...
+	    src_cwd.SubFolders.every((f) => {
+
+		// Does this subfolder exist in dst?
+		let dst_existing_subfolder =
+		    dst_cwd.SubFolders.find((x) => x.Name === f.Name);
+
+		if (dst_existing_subfolder && opts.overwrite === false) {
+		    result.reason = `Destination (${dst_cwd.Path}) contains ` +
+			`subfolder already: ${x.Name}.`;
+		    return false;
+		}
+
+		if (!dst_existing_subfolder) {
+		    dst_existing_subfolder = self.AddFolder(`${dst_cwd.Path}\\${f.Name}`);
+		}
+
+		return walk(f, dst_existing_subfolder);
+	    });
+	    
+	}(src_folder, dst_folder));
+    }
+
     // Copies the folder in `src_folder_path' in to
     // `dest_folder_path'.  If you need to copy folder *contents*, use
     // `CopyFolderContentsToFolder' instead.
-    CopyFolderToFolder (src_folder_path, dest_folder_path, opts) {
+    CopyFolderInToFolder (src_folder_path, dest_folder_path, opts) {
 
 	opts = opts || { merge: true };
 
@@ -173,17 +262,73 @@ class VirtualFileSystem {
 	    return result;
 	}
 
-	// First, let's see if the destination already contains a folder
-	// with the same name as `src'.
-	if (dest_folder.HasSubFolder(src_folder.Name)) {
-	    // This becomes a merge operation...
-	}
-	else {
-	    // This is a basic copy.
+	// Easy - the destination doesn't contain a folder with this name.
+	if (!dest_folder.HasSubFolder(src_folder.Name)) {
 	    let new_folder_obj = {};
 	    Object.assign(new_folder_obj, src_folder);
 	    return dest_folder.AddSubFolder(new_folder_obj);
 	}
+
+	// Is the destination folder the root volume?
+	if (dest_folder.IsRootFolder) {
+
+	    if (cwd_dst.SubFolders.some((x) => x.Name === cwd_dst.Name)) {
+		// Fail! We can't add the sub folder as one already exists.
+		console.log("=== root volume subfolder clash ===");
+		return false;
+	    }
+	    
+	    // Let's add the folder!
+	    let new_folder_obj = {};
+	    Object.assign(new_folder_obj, src_folder);
+	    return dest_folder.AddSubFolder(new_folder_obj);
+	}
+
+	// And now for the messy bit...
+	var cwd_src = src_folder,
+	    cwd_dst = dest_folder,
+	    cont    = true;
+
+	(function walk () {
+
+	    // Do any files in src match any in dst?
+	    let src_dst_files_uniq = cwd_src.Files.every((src_file) => {
+		return cwd_dst.Files.every((dst_file) => {
+		    console.log(`Does ${dst_file.Name} ===`,
+				`${src_file.Name}`);
+		    return dst_file.Name === src_file.Name;
+		});
+	    });
+
+	    if (src_dst_files_uniq === false) {
+		// This means that a file with the same name exists
+		// in the same directory.
+		cont = false;
+		return false;
+	    }
+
+	    // Does the current `cwd_src' exist at this level?
+	    let src_dir_name_exists_in_dst = cwd_dst.SubFolders.every(
+		(dst_folder) => dst_folder.Name === cwd_src.Name
+	    );
+
+	    if (src_dir_name_exists_in_dst && opts.overwrite === false) {
+		// Cannot continue - the `cwd_src' directory name was
+		// found to clash with an existing foldername, and the
+		// overwrite flag means we must not alter or replace it.
+		cont = false;
+		return false;
+	    }
+
+	    // TODO - here is where we overwrite..
+    
+	    if (cont) {
+		// Do the hard bit of figure out how we prep the src/dst folders
+		// for the next cycle.  Likely recursive.
+	    }
+	}());
+
+	return cont;
     }
 
     CopyFileToFolder (src_file_path, dest_file_path, opts) {
