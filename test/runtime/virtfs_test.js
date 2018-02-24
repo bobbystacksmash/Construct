@@ -314,6 +314,22 @@ describe("VirtualFileSystem Module", function () {
 		    "src:alpha contents"
 		);
 
+		assert.equal(
+		    vfs.GetFile("C:\\stage\\dst\\bravo.txt").__contents,
+		    "dst:bravo contents"
+		);
+
+		assert.equal(
+		    vfs.GetFile("C:\\stage\\dst\\charlie.txt").__contents,
+		    "src:charlie contents"
+		);
+
+		assert.equal(
+		    vfs.GetFile("C:\\stage\\dst\\blah\\test.txt").__contents,
+		    "src:blah-test.txt"
+		);
+		    
+
 		done();
 	    });
 	});

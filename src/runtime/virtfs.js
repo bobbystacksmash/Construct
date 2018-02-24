@@ -190,10 +190,11 @@ class VirtualFileSystem {
 
 	var self = this;
 	
-	(function walk(src_cwd, dst_cwd) {
+	let res = (function walk(src_cwd, dst_cwd) {
 
 	    // Copy files first...
 	    var file_copy_result = src_cwd.Files.every((f) => {
+		console.log(`Copying file from ${f.Path} to ${dst_cwd.Path}`);
 
 		// Does this file exist in dst?
 		let dst_existing_file = dst_cwd.Files.findIndex((x) => x.Name === f.Name);
@@ -203,23 +204,37 @@ class VirtualFileSystem {
 		    // to overwrite.
 		    result.reason = `Destination dir (${dst_cwd.Path}) contains ` +
 			`source file name already: ${f.Name}`;
+		    console.log(`!! -- ${result.reason}`);
 		    return false;
 		}
-
+		
+		// No file found in dst? Let's create a new slot in
+		// dst and move src in to it.
 		let src_file_copy = {};
 		Object.assign(src_file_copy, f);
 		src_file_copy.ParentFolder = dst_cwd;
-		dst_cwd.Files[dst_existing_file] = src_file_copy;
+		src_file_copy.Path = `${dst_cwd.Path}\\${src_file_copy.Name}`;
+
+		if (dst_existing_file > -1) {
+		    dst_cwd.Files[dst_existing_file] = src_file_copy;
+		}
+		else {
+		    dst_cwd.Files.push(src_file_copy);
+		}
+		
 		return true;
 	    });
 
 	    if (!file_copy_result) {
-		// Something went wrong :x
+		console.log("Filename collision while overwrite is false. Aborting copy.");
+		return false;
 	    }
 
 	    // Let's now loop through all sub folders, applying copies to them...
-	    src_cwd.SubFolders.every((f) => {
+	    let sf_copy_result = src_cwd.SubFolders.every((f) => {
 
+		console.log(`For-Eaching sf: ${f.Path}`);
+		
 		// Does this subfolder exist in dst?
 		let dst_existing_subfolder =
 		    dst_cwd.SubFolders.find((x) => x.Name === f.Name);
@@ -231,13 +246,19 @@ class VirtualFileSystem {
 		}
 
 		if (!dst_existing_subfolder) {
+		    console.log(`Adding subfolder ${dst_cwd.Path}\\${f.Name}`);
 		    dst_existing_subfolder = self.AddFolder(`${dst_cwd.Path}\\${f.Name}`);
+		    console.log("++ ADDED", dst_existing_subfolder.Path);
 		}
-
+		
 		return walk(f, dst_existing_subfolder);
 	    });
+
+	    return sf_copy_result;
 	    
 	}(src_folder, dst_folder));
+
+	return res;
     }
 
     // Copies the folder in `src_folder_path' in to
@@ -251,6 +272,9 @@ class VirtualFileSystem {
 
 	let src_folder = this.GetFolder(src_folder_path),
 	    dest_folder = this.GetFolder(dest_folder_path);
+
+	console.log(`CopyFolderInToFolder, src:${src_folder.Name}`,
+		    `dst:${dest_folder.Name}.`);
 
 	if (!src_folder) {
 	    result.reason = `The source path (${src_folder_path}) does not exist.`;
@@ -291,6 +315,8 @@ class VirtualFileSystem {
 
 	(function walk () {
 
+	    console.log(`w: src:${cwd_src.Name}, dst:${cwd_dst.Name}`);
+	    
 	    // Do any files in src match any in dst?
 	    let src_dst_files_uniq = cwd_src.Files.every((src_file) => {
 		return cwd_dst.Files.every((dst_file) => {
@@ -304,6 +330,7 @@ class VirtualFileSystem {
 		// This means that a file with the same name exists
 		// in the same directory.
 		cont = false;
+		console.log("=== filename collision ===");
 		return false;
 	    }
 
@@ -317,6 +344,9 @@ class VirtualFileSystem {
 		// found to clash with an existing foldername, and the
 		// overwrite flag means we must not alter or replace it.
 		cont = false;
+		console.log("=== subfolder collision ===");
+		console.log(`'${cwd_dst.Name}' contains a subfolder with the name:`,
+			    `'${cwd_src.Name}'.`);
 		return false;
 	    }
 
