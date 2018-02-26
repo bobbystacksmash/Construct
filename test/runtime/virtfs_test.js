@@ -276,10 +276,7 @@ describe("VirtualFileSystem Module", function () {
 		done();
 	    });
 
-	    // TODO: Figure out what Windows does when a copy is made and
-	    //       eventually a collision happens.  Do all affected files
-	    //       get rolled back?
-	    
+
 	    it("Should overwrite existing destination files if overwrite:true.", (done) => {
 
 		let vfs = new VirtualFileSystem({ register: () => {} });
@@ -329,7 +326,42 @@ describe("VirtualFileSystem Module", function () {
 		    "src:blah-test.txt"
 		);
 		    
+		done();
+	    });
 
+	    //
+	    // TODO
+	    // ====
+	    //
+	    // Need to check that we can copy in to the root volume.
+	    //
+	    //
+	    
+
+	    
+	    it("should support copying in to the root volume.", (done) => {
+
+		let vfs = new VirtualFileSystem({ register: () => {} });
+
+		// Create some files/folders which will serve as our 'src'.
+		vfs.AddFolder("C:\\foo\\bar\\baz\\byte\\b0rk");
+		vfs.AddFolder("C:\\foo\\hand\\chair\\welcome");
+		vfs.AddFolder("C:\\foo\\boom\\seven\\seventy");
+		vfs.AddFile("C:\\foo\\boom\\seven\\seventy\\x.txt", "test");
+		vfs.AddFile("C:\\foo\\hand\\excel.txt", "formula");
+
+		assert.equal(vfs.GetFolder("C:\\bar"), false);
+		assert.equal(vfs.GetFile("C:\\hand\\excel.txt"), false);
+
+		// Now we do the copy...
+		vfs.CopyFolderContentsToFolder("C:\\foo", "C:");
+
+		assert.equal(vfs.GetFolder("C:\\bar").Name, "bar");
+		assert.equal(vfs.GetFolder("C:\\hand").Name, "hand");
+		assert.equal(vfs.GetFolder("C:\\boom").Name, "boom");
+		
+		assert.equal(vfs.GetFile("C:\\hand\\excel.txt").__contents, "formula");
+		
 		done();
 	    });
 	});
