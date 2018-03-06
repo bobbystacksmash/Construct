@@ -33,6 +33,7 @@
     "lodash": "^4.17.4",
     "minimist": "^1.2.0",
     "npm": "^5.6.0",
+    "stack-trace": "0.0.10",
     "text-table": "^0.2.0",
     "url-parse": "^1.2.0",
     "vorpal": "^1.12.0",
