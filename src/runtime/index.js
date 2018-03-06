@@ -18,10 +18,9 @@ function Runtime (options) {
     this.events         = [];
     this.assembled_code = null;
 
-    this.ctx = new HostContext({
+    this.context = new HostContext({
         emitter : new EventEmitter2({ wildcard: true }),
-        epoch   : this.epoch,
-
+        epoch   : this.epoch
     });
 
     return this;
@@ -49,7 +48,7 @@ Runtime.prototype.load = function(path_to_file, options) {
     // in order to do so, it needs its support scaffolding (the real magic).  Let's
     // add all of that now...
     return this._make_runnable();
-}
+};
 
 
 Runtime.prototype._make_runnable = function () {
@@ -57,9 +56,9 @@ Runtime.prototype._make_runnable = function () {
     let events            = this.events,
         assembled_code    = this.assembled_code,
         completed_fn_name = this.instrumented_code.completed_fn_name,
-        epoch             = this.ctx.epoch,
-        ee                = this.ctx.emitter,
-        ctx               = this.ctx;
+        epoch             = this.context.epoch,
+        ee                = this.context.emitter,
+        context           = this.context;
 
      ee.on("**", function (x) {
 
@@ -96,9 +95,9 @@ Runtime.prototype._make_runnable = function () {
         }
 
         var sandbox = {
-            Date          : ctx.JSAPI.Date,
-            WScript       : ctx.JSAPI.WScript,
-            ActiveXObject : ctx.JSAPI.ActiveXObject,
+            Date          : context.get_component("Date"),
+            WScript       : context.get_component("WScript"),
+            ActiveXObject : context.get_component("ActiveXObject"),
             console       : console
         };
         sandbox[completed_fn_name] = script_finished;
@@ -133,7 +132,7 @@ Runtime.prototype._filter_interesting_events  = function () {
                 esrc: e.event,
                 summary: "Summary for why this event is bad...",
                 link_to_docs: "http://msdn.com/link/to/docs"
-            }
+            };
         });
 
     // Collect URLs

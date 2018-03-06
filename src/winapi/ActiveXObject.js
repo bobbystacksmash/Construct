@@ -2,6 +2,56 @@
  * https://docs.microsoft.com/en-us/scripting/javascript/reference/activexobject-object-javascript
  */
 
+const Component = require("../Component");
+
+const JScript_ShellApplication = require("../winapi/ShellApplication");
+
+
+class JS_ActiveXObject extends Component {
+
+    constructor (context, type, location) {
+
+	console.log("========================");
+	console.log("new ActiveXObject: " + type);
+	console.log("========================");
+
+	super(context);
+	this.ee = this.context.emitter;
+	
+	type = type.toLowerCase();
+
+	switch (type) {
+
+	case "shell.application":
+	    this.ee.emit("@ActiveXObject::new::Shell.Application");
+	    let shell_application = new JScript_ShellApplication(context);
+	    return shell_application;
+
+	default:
+	    console.log("ERROR: Unknown action type for ActiveXObject: " + type);
+	    break;
+	}
+    };
+};
+
+
+module.exports = function create (context) {
+
+    let activex = class ActiveXObject extends JS_ActiveXObject {
+	constructor (type, location) {
+	    super(context, type, location);
+	}
+    };
+
+    return activex;
+};
+
+
+
+
+
+
+/*
 var proxify2 = require("../proxify2");
 var evts     = require("../events");
 var WshShell = require("./WshShell");
@@ -10,7 +60,7 @@ var ShellApplication = require("./ShellApplication");
 var FileSystemObject = require("./FileSystemObject");
 var XMLHttpRequest   = require("./XMLHttpRequest");
 
-function ActiveXObject (opts) {
+function AActiveXObject (opts) {
 
     var ee      = opts.emitter,
         modules = opts.modules || {},
@@ -66,3 +116,4 @@ function ActiveXObject (opts) {
 
 
 module.exports = ActiveXObject;
+*/

@@ -1,5 +1,4 @@
-const proxify2 = require("../proxify2");
-const events   = require("../events");
+
 
 /*
  * https://msdn.microsoft.com/en-us/library/windows/desktop/bb774094(v=vs.85).aspx
@@ -53,7 +52,103 @@ const events   = require("../events");
  * [ ] Parent      https://msdn.microsoft.com/en-us/library/windows/desktop/bb774089(v=vs.85).aspx
  *
  */
- 
+
+class ShellApplication extends Component {
+
+    constructor (context) {
+	super(context);
+	this.ee = this.context.emitter;
+    }
+
+
+    // Adds a file to the most recently used (MRU) list.
+    //  https://msdn.microsoft.com/en-us/library/windows/desktop/gg537735(v=vs.85).aspx
+    AddToRecent (path_to_file, category) {
+	// TODO
+	// ====
+	//   * If we ever support Vista (unlikely), treat `path_to_file==null' as a reset.
+	//   * Currently `category' is not supported.
+	this.ee.emit("@ShellApplication.AddToRecent", arguments);
+	this.context.ENVIRONMENT.MRU.push(path_to_file);
+    }
+
+
+    BrowseForFolder () {
+	this.ee.emit("!ERROR::NOT_IMPLEMENTED" "ShellApplication.BrowseForFolder");
+	return true;
+    }
+
+
+    CanStartStopService (svc_name) {
+	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.CanStartStopService");
+	return true;
+    }
+
+    
+    CascadeWindows () {
+	this.ee.emit("@ShellApplication::CascadeWindows", arguments);
+    }
+
+
+    ControlPanelItem (cpi) {
+	this.ee.emit("@ShellApplication::ControlPanelItem", arguments);
+    }
+
+
+    EjectPC () {
+	this.ee.emit("@ShellApplication::EjectPC", arguments);
+    }
+
+
+    Explore () {
+	this.ee.emit("@ShellApplication::Explore", arguments);
+    }
+
+
+    ExplorerPolicy (policy_name) {
+	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.ExplorerPolicy");
+    }
+
+
+    FileRun () {
+	this.ee.emit("@ShellApplication::FileRun", arguments);
+    }
+
+
+    FindComputer () {
+	this.ee.emit("@ShellApplication::FindComputer", arguments);
+    }
+
+
+    FindFiles () {
+	this.ee.emit("@ShellApplication::FindFiles", arguments);
+    }
+
+
+    FindPrinter (name, location, model) {
+	this.ee.emit("@ShellApplication::FindPrinter", arguments);
+    }
+	
+
+    GetSetting (setting) {
+	// https://msdn.microsoft.com/en-us/library/windows/desktop/gg537739(v=vs.85).aspx
+	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.GetSetting");
+    }
+
+
+    GetSystemInformation (system_info_name) {
+	// https://msdn.microsoft.com/en-us/library/windows/desktop/gg537740(v=vs.85).aspx
+	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.GetSystemInformation");
+    }
+	
+	
+    
+}
+
+
+
+
+/*
 module.exports = function ShellApplication (opts) {
 
     let ee = opts.emitter;
@@ -74,3 +169,4 @@ module.exports = function ShellApplication (opts) {
 
     return proxify2(ShellApplication, "ShellApplication", opts);
 }
+*/

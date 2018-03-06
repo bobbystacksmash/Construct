@@ -122,6 +122,10 @@ class FolderObject extends AbsFileSystemObject {
 	    return existing_subfolder;
 	}
     }
+
+    Add (folder) {
+	return this.AddSubFolder(folder);
+    }
 }
 
 module.exports = FolderObject;

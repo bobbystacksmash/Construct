@@ -1,12 +1,12 @@
-const proxify2 = require("../proxify2");
+// https://msdn.microsoft.com/en-us/library/2z9ffy99(v=vs.84).aspx
 
 /*
  * https://msdn.microsoft.com/en-us/library/hww8txat(v=vs.84).aspx
  *
  * METHODS
  * =======
- *
- * [ ] GetFolder   - https://msdn.microsoft.com/en-us/library/f1xtf7ta(v=vs.84).aspx       
+ * Add https://msdn.microsoft.com/en-us/library/zst29hfc(v=vs.84).aspx
+ * 
  *
  *
  * PROPERTIES
@@ -14,32 +14,35 @@ const proxify2 = require("../proxify2");
  *
  */
 
-var CTX;
+class FileSystemObject {
 
-/*
- * Returns a Folder object corresponding to the folder in `folder_spec'.
- */
-function GetFolder(folder_spec) {
+    constructor() {
+	// Do setup stuff...
+    }
 
+
+    /* =======
+     * METHODS
+     * =======
+     */
+
+    Add (folder_name) {
+	
+    }
+
+
+
+    
+
+    /*
+     * Add Method (Folders)
+     *  - Adds a new folder to a Folders collection.
+     */
+    GetFolder  (path) {
+
+	
+    }
 }
 
 
-function FolderExists(path) {
-    // TODO: Need to update this to use VFS.
-    // TODO: Maybe this should be toggle-able?
-    // IDEA: Maybe we could include this check as part of the "fuzzer"?
-    return isNaN(path);
-}
-
-module.exports = function FileSystemObject (ctx) {
-
-    CTX = ctx;
-
-    let ee = ctx.emitter;
-
-    let FileSystemObject = {
-        GetFolder: GetFolder
-    };
-
-    return proxify2(FileSystemObject, "FileSystemObject", ctx);
-};
+module.exports = FileSystemObject;

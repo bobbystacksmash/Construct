@@ -1,83 +1,178 @@
-var proxify2       = require("../proxify2"),
-    XMLHttpRequest = require("./XMLHttpRequest"),
-    events         = require("../events");
+const Component = require("../Component");
 
-/*
- * WScript Object Properties and Methods
- * =====================================
+/* MSDN: https://msdn.microsoft.com/en-us/library/at5ydy31(v=vs.84).aspx
  *
- * https://msdn.microsoft.com/en-us/library/2795740w(v=vs.84).aspx
- *
- * PROPERTIES
- * ==========
- *
- * [ ] Arguments         https://msdn.microsoft.com/en-us/library/z2b05k8s(v=vs.84).aspx
- * [ ] BuildVersion      https://msdn.microsoft.com/en-us/library/kt8ycte6(v=vs.84).aspx
- * [ ] FullName          https://msdn.microsoft.com/en-us/library/z00t383b(v=vs.84).aspx
- * [ ] Interactive       https://msdn.microsoft.com/en-us/library/b48sxsw0(v=vs.84).aspx
- * [ ] Name              https://msdn.microsoft.com/en-us/library/3ktf76t1(v=vs.84).aspx
- * [ ] Path              https://msdn.microsoft.com/en-us/library/sw3e6ehs(v=vs.84).aspx
- * [ ] ScriptFullName    https://msdn.microsoft.com/en-us/library/cc5ywscw(v=vs.84).aspx
- * [ ] ScriptName        https://msdn.microsoft.com/en-us/library/3faf1xkh(v=vs.84).aspx
- * [ ] StdErr            https://msdn.microsoft.com/en-us/library/hyez2k48(v=vs.84).aspx
- * [ ] StdIn             https://msdn.microsoft.com/en-us/library/1y8934a7(v=vs.84).aspx
- * [ ] StdOut            https://msdn.microsoft.com/en-us/library/c61dx86d(v=vs.84).aspx
- * [ ] Version           https://msdn.microsoft.com/en-us/library/kaw07b53(v=vs.84).aspx
- *
- * METHODS
+ * WScript
  * =======
  *
- * [ ] Echo              https://msdn.microsoft.com/en-us/library/h8f603s7(v=vs.84).aspx
- * [ ] GetObject         https://msdn.microsoft.com/en-us/library/8ywk619w(v=vs.84).aspx
- * [ ] Quit              https://msdn.microsoft.com/en-us/library/fw0fx1aw(v=vs.84).aspx
- * [ ] Sleep             https://msdn.microsoft.com/en-us/library/6t81adfd(v=vs.84).aspx
- * [ ] CreateObject      https://msdn.microsoft.com/en-us/library/xzysf6hc(v=vs.84).aspx
- * [ ] ConnectObject     https://msdn.microsoft.com/en-us/library/ccxe0xe6(v=vs.84).aspx
- * [ ] DisconnectObject  https://msdn.microsoft.com/en-us/library/2d26y0c1(v=vs.84).aspx
+ * The WScript object is the root object of the Windows Script Host
+ * object model hierarchy. It never needs to be instantiated before
+ * invoking its properties and methods, and it is always available
+ * from any script file. The WScript object provides access to
+ * information such as:
+ * 
+ *  > command-line arguments,
+ *  > the name of the script file,
+ *  > the host file name,
+ *  >  and host version information.
  *
- */
+ * The WScript object allows you to:
+ *
+ *  > create objects,
+ *  > connect to objects,
+ *  >  disconnect from objects,
+ *  > sync events,
+ *  > stop a script's execution programmatically,
+ *  > output information to the default output device (either a Windows
+ *    dialog box or the command console).
+ *
+ * The WScript object can be used to set the mode in which the script
+ * runs (either interactive or batch).
+*/
 
-function WScript (ctx) {
+class JS_WScript extends Component {
 
-    var ee = ctx.emitter,
-        dt = ctx.date;
+    constructor (context) {
+	super(context);
+	this.ee = this.context.emitter;
+    }
 
-    function Echo () {
-        let msg = Array.prototype.splice(arguments);
-        ee.emit("@WScript::Echo", { msg: msg }, arguments);
-    };
+    // 
+    // PROPERTIES
+    // ==========
 
-    function Sleep (milliseconds) {
-        dt.skew(milliseconds);
-        ee.emit("@WScript::Sleep", { time: milliseconds }, arguments);
-    };
+    // WScript.Arguments: https://msdn.microsoft.com/en-us/library/z2b05k8s(v=vs.84).aspx
+    get Arguments () {
+	let args = this.context.ENVIRONMENT.Arguments;
+	this.ee.emit("@WScript::Arguments", args);
+	return args;
+    }
 
-    function CreateObject (prog_id, prefix) {
-
-        prog_id = prog_id.toLowerCase();
-
-        switch(prog_id) {
-            case "msxml2.serverxmlhttp":
-                ee.emit("@WScript::CreateObject::MSXML2.ServerXMLHttp", { prog_id: prog_id }, arguments);
-                var xhr = new XMLHttpRequest({ emitter: ee });
-                return xhr;
-
-            default:
-                process.exit();
-                break;
-        }
+    // WScript.BuildVersion      https://msdn.microsoft.com/en-us/library/kt8ycte6(v=vs.84).aspx
+    get BuildVersion () {
+	let build_version = this.context.ENVIRONMENT.BuildVersion;
+	this.ee.emit("@WScript::BuildVersion", build_version);
+	return build_version;
     }
 
 
+    // FullName https://msdn.microsoft.com/en-us/library/z00t383b(v=vs.84).aspx
+    get FullName () {
+	let full_name = this.context.ENVIRONMENT.FullName;
+	this.ee.emit("@WScript::FullName", full_name);
+	return full_name;
+    }
 
-    var WScript = {
-        Sleep: Sleep,
-        CreateObject: CreateObject,
-        Echo:  Echo,
-    };
+    
+    // Interactive https://msdn.microsoft.com/en-us/library/b48sxsw0(v=vs.84).aspx
+    get Interactive () {
+	let interactive = this.context.ENVIRONMENT.Interactive;
+	this.ee.emit("@WScript::Interactive", interactive);
+	return interactive;
+    }
 
-    return proxify2(WScript, "WScript", ctx);
+
+    // Name https://msdn.microsoft.com/en-us/library/3ktf76t1(v=vs.84).aspx
+    get Name () {
+	let name = this.context.ENVIRONMENT.Name;
+	this.ee.emit("@WScript::Name", name);
+	return name;
+    }
+
+    
+    // Path              https://msdn.microsoft.com/en-us/library/sw3e6ehs(v=vs.84).aspx
+    get Path () {
+	let path = this.context.ENVIRONMENT.Path;
+	this.ee.emit("@WScript::Path", path);
+	return path;
+    }
+    
+    
+    // ScriptFullName    https://msdn.microsoft.com/en-us/library/cc5ywscw(v=vs.84).aspx
+    get ScriptFullName () {
+	let script_full_name = this.context.ENVIRONMENT.ScriptFullName;
+	this.ee.emit("@WScript::ScriptFullName", script_full_name);
+	return script_full_name;
+    }
+
+
+    // ScriptName        https://msdn.microsoft.com/en-us/library/3faf1xkh(v=vs.84).aspx
+    get ScriptName () {
+	let script_name = this.context.ENVIRONMENT.ScriptName;
+	this.ee.emit("@WScript::ScriptName", script_name);
+	return script_name;
+    }
+
+
+    // StdErr            https://msdn.microsoft.com/en-us/library/hyez2k48(v=vs.84).aspx
+    get StdErr () {
+	this.ee.emit("@WScript::StdErr", "ERROR: NOT IMPLEMENTED!");
+	return null;
+    }
+
+    // StdIn             https://msdn.microsoft.com/en-us/library/1y8934a7(v=vs.84).aspx
+    get StdIn () {
+	this.ee.emit("@WScript::StdIn", "ERROR: NOT IMPLEMENTED!");
+	return null;
+    }
+
+    // StdOut            https://msdn.microsoft.com/en-us/library/c61dx86d(v=vs.84).aspx
+    get StdOut () {
+	this.ee.emit("@WScript::StdOut", "ERROR: NOT IMPLEMENTED!");
+	return null;
+    }
+    
+
+    // Version           https://msdn.microsoft.com/en-us/library/kaw07b53(v=vs.84).aspx
+    get Version () {
+	let version = this.context.ENVIRONMENT.Version;
+	this.ee.emit("@WScript.Version", version);
+	return version;
+    }
+
+
+    //
+    // METHODS
+    // =======
+    Echo (...args) {
+	let msg = args.join(" ");
+	this.ee.emit("@WScript::Echo", { msg: msg }, arguments);
+    }
+
+
+    GetObject () {
+	this.ee.emit("@WScript::GetObject", "ERROR: NOT IMPLEMENTED!");
+    }
+
+
+    Quit () {
+	this.ee.emit("@WScript::Quit", "ERROR: NOT IMPLEMENTED!");
+	// TODO
+    }
+
+
+    Sleep () {
+	this.ee.emit("@WScript::Sleep", "ERROR: NOT IMPLEMENTED!");
+    }
+
+    CreateObject () {
+	this.ee.emit("@WScript::CreateObject", "ERROR: NOT IMPLEMENTED!");
+    }
+
+
+    ConnectObject () {
+	this.ee.emit("@WScript::ConnectObject", "ERROR: NOT IMPLEMENTED!");
+    }
+
+
+    DisconnectObject () {
+	this.ee.emit("@WScript::DisconnectObject", "ERROR: NOT IMPLEMENTED!");
+    }
 }
 
 
-module.exports = WScript;
+module.exports = function create(context) {
+    let wscript = new JS_WScript(context);
+    return wscript;
+};
+
