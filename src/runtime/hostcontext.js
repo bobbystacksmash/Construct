@@ -13,6 +13,8 @@ class HostContext {
 
 	this.ENVIRONMENT = {
 	    UserLevel: "SYSTEM",
+	    Variables: {},
+	    CurrentDirectory: "C:\\Windows\\Temp",
 	    Services: [],
 	    MRU: [], // Most-recently used list; maybe move this to vfs?
 	    Arguments: [],
