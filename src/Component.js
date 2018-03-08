@@ -1,6 +1,6 @@
 class Component {
 
-    constructor (context) {
+    constructor (context, tag) {
 
 	// All validation is done here!  For now, let's just assume
 	// everything has worked correctly...
@@ -14,6 +14,8 @@ class Component {
 	}
 
 	this.context = context;
+
+	this.context.emitter.emit(`@${tag}::new`, arguments);
     }
 
     get emitter () {
