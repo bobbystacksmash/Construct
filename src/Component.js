@@ -5,6 +5,10 @@ class Component {
 	// All validation is done here!  For now, let's just assume
 	// everything has worked correctly...
 
+	if (!tag || tag === "") {
+	    throw new Error("Component creation failed - no 'tag' value defined.");
+	}
+	
 	if (! context.epoch) {
 	    throw new Error("Component creation failed - no epoch defined.");
 	}
