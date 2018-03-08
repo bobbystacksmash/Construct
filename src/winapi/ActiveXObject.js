@@ -4,6 +4,8 @@
 
 const Component = require("../Component");
 
+//const JScript_WScript          = require("../winapi/WScript");
+const JScript_WshShell         = require("../winapi/WshShell");
 const JScript_ShellApplication = require("../winapi/ShellApplication");
 
 
@@ -12,7 +14,7 @@ class JS_ActiveXObject extends Component {
     constructor (context, type, location) {
 
 	console.log("========================");
-	console.log("new ActiveXObject: " + type);
+	console.log(`new ActiveXObject: ${type}`);
 	console.log("========================");
 
 	super(context);
@@ -26,6 +28,11 @@ class JS_ActiveXObject extends Component {
 	    this.ee.emit("@ActiveXObject::new::Shell.Application");
 	    let shell_application = new JScript_ShellApplication(context);
 	    return shell_application;
+
+	case "wscript.shell":
+	    this.ee.emit("@ActiveXObject::new::WScript.Shell");
+	    return new JScript_WshShell(context);
+
 
 	default:
 	    console.log("ERROR: Unknown action type for ActiveXObject: " + type);

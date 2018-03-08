@@ -33,8 +33,9 @@ const Component = require("../Component");
 class JS_WScript extends Component {
 
     constructor (context) {
-	super(context);
+	super(context, "WScript");
 	this.ee = this.context.emitter;
+	console.log("NEW WScript");
     }
 
     // 
@@ -104,26 +105,26 @@ class JS_WScript extends Component {
     }
 
 
-    // StdErr            https://msdn.microsoft.com/en-us/library/hyez2k48(v=vs.84).aspx
+    // StdErr https://msdn.microsoft.com/en-us/library/hyez2k48(v=vs.84).aspx
     get StdErr () {
 	this.ee.emit("@WScript::StdErr", "ERROR: NOT IMPLEMENTED!");
 	return null;
     }
 
-    // StdIn             https://msdn.microsoft.com/en-us/library/1y8934a7(v=vs.84).aspx
+    // StdIn https://msdn.microsoft.com/en-us/library/1y8934a7(v=vs.84).aspx
     get StdIn () {
 	this.ee.emit("@WScript::StdIn", "ERROR: NOT IMPLEMENTED!");
 	return null;
     }
 
-    // StdOut            https://msdn.microsoft.com/en-us/library/c61dx86d(v=vs.84).aspx
+    // StdOut https://msdn.microsoft.com/en-us/library/c61dx86d(v=vs.84).aspx
     get StdOut () {
 	this.ee.emit("@WScript::StdOut", "ERROR: NOT IMPLEMENTED!");
 	return null;
     }
     
 
-    // Version           https://msdn.microsoft.com/en-us/library/kaw07b53(v=vs.84).aspx
+    // Version https://msdn.microsoft.com/en-us/library/kaw07b53(v=vs.84).aspx
     get Version () {
 	let version = this.context.ENVIRONMENT.Version;
 	this.ee.emit("@WScript.Version", version);
