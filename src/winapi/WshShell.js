@@ -7,7 +7,7 @@ class JS_WshShell extends Component {
 	super(context, "WshShell");
 	this.ee = this.context.emitter;
 
-	var special_folders = [
+	this.special_folders = [
             "AllUsersDesktop",
             "AllUsersStartMenu",
             "AllUsersPrograms",
@@ -54,6 +54,7 @@ class JS_WshShell extends Component {
 	this.context.ENVIRONMENT.CurrentDirectory = new_cwd;
     }
 
+
     // MSDN: https://msdn.microsoft.com/en-gb/library/0ea7b5xe(v=vs.84).aspx
     //
     // SYNOPSIS
@@ -85,12 +86,16 @@ class JS_WshShell extends Component {
     get SpecialFolders () {
 	this.ee.emit("@WshShell.SpecialFolders [GET]");
 
+	let folders = this.special_folders,
+	    emitter = this.ee;
+	
 	return {
-	    item: (n) => this._folders[n]
+	    item: function (n) {
+		emitter.emit("@WshShell.SpecialFolders::item", folders[n]);
+		return folders[n];
+	    }
 	};
     }
-    
-    
     
 
     // MSDN: https://msdn.microsoft.com/fr-fr/library/fd7hxfdd(v=vs.84).aspx
@@ -120,10 +125,109 @@ class JS_WshShell extends Component {
 	return env;
     }
 
+
+    // MSDN: https://msdn.microsoft.com/en-us/subscriptions/wzcddbek(v=vs.84).aspx
+    //
+    // SYNOPSIS
+    // ========
+    //
+    // This method changes the focus to the named application or
+    // window. The window must be attached to the calling thread's
+    // message queue. It does not affect whether it is maximized or
+    // minimized. Focus moves from the activated application window
+    // when the user takes action to change the focus (or closes the
+    // window).
+    //
+    //
+    // USAGE
+    // =====
+    //
+    //   var WshShell = WScript.CreateObject("WScript.Shell");
+    //   WshShell.Run("calc");
+    //   WScript.Sleep(100);
+    //   WshShell.AppActivate("Calculator");
+    //
+    AppActivate(todo) {
+	// TODO
+    }
+
+
+    // MSDN: https://msdn.microsoft.com/en-us/subscriptions/xsy6k3ys(v=vs.84).aspx
+    //
+    // SYNOPSIS
+    // ========
+    //
+    // The `CreateShortcut' method returns either a WshShortcut object
+    // or a WshURLShortcut object. Simply calling the CreateShortcut
+    // method does not result in the creation of a shortcut. The
+    // shortcut object and changes you may have made to it are stored
+    // in memory until you save it to disk with the Save method. To
+    // create a shortcut, you must:
+    //
+    //   1. Create an instance of a WshShortcut object.
+    //   2. Initialize its properties.
+    //   3. Save it to disk with the Save method.
+    //
+    // ARGUMENTS
+    // =========
+    //
+    //   - pathname
+    //     String value indicating the path name of the shortcut to
+    //     create.
+    //
+    // USAGE
+    // =====
+    //
+    //   var WshShell = WScript.CreateObject("WScript.Shell");
+    //   strDesktop = WshShell.SpecialFolders("Desktop");
+    //   var oShellLink = WshShell.CreateShortcut(strDesktop + "\\Shortcut Script.lnk");
+    //   oShellLink.TargetPath = WScript.ScriptFullName;
+    //   oShellLink.WindowStyle = 1;
+    //   oShellLink.Hotkey = "CTRL+SHIFT+F";
+    //   oShellLink.IconLocation = "notepad.exe, 0";
+    //   oShellLink.Description = "Shortcut Script";
+    //   oShellLink.WorkingDirectory = strDesktop;
+    //   oShellLink.Save();
+    //   var oUrlLink = WshShell.CreateShortcut(strDesktop + "\\Microsoft Web Site.url");
+    //   oUrlLink.TargetPath = "http://www.microsoft.com";
+    //   oUrlLink.Save();
+    //
+    CreateShortcut() {
+    }
+
+    // MSDN: https://msdn.microsoft.com/en-us/subscriptions/ateytk4a(v=vs.84).aspx
+    //
+    // SYNOPSIS
+    // ========
+    //
+    // Runs an application in a child command-shell, providing access
+    // to the StdIn/StdOut/StdErr streams.
+    //
+    // ARGUMENTS
+    // =========
+    //
+    //   - command
+    //     String value indicating the command line used to run the
+    //     script.  The command line should appear exactly as it
+    //     would if you type it at the command prompt.
+    //
+    // RETURNS
+    // =======
+    //   I assume the exit status?
+    //
+    Exec () {
+
+    }
+
+
+    
+    
+    
+	       
 }
 
 module.exports = function (context) {
     let wsh = new JS_WshShell(context);
     return wsh;
-}
+};
     
