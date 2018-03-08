@@ -4,7 +4,7 @@ const Component = require("../Component");
 class JS_Date extends Component {
 
     constructor (context) {
-	super(context);
+	super(context, "Date");
 	this.date = new Date(this.context.epoch);
 	this.ee   = this.context.emitter;
     }
