@@ -13,15 +13,15 @@ class JS_ActiveXObject extends Component {
 
     constructor (context, type, location) {
 
+	type = type.toLowerCase();
+	
 	console.log("========================");
 	console.log(`new ActiveXObject: ${type}`);
 	console.log("========================");
 
-	super(context);
+	super(context, `ActiveXObject(${type})`);
 	this.ee = this.context.emitter;
 	
-	type = type.toLowerCase();
-
 	switch (type) {
 
 	case "shell.application":
