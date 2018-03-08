@@ -88,6 +88,8 @@ function cmd_load_file(args) {
         }
         catch (e) {
             self.log("Error with runnable:", e.message);
+	    console.trace(e);
+	    
             // TODO: Add a method for "method missing" -- include GH link.
             // TODO: Handle this far, far better!
             reject(e);
