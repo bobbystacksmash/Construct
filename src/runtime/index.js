@@ -5,6 +5,7 @@ const istanbul       = require("istanbul");
 const EventEmitter2  = require("eventemitter2").EventEmitter2;
 const urlparse       = require("url-parse");
 const vm             = require("vm");
+const stacktrace     = require('stack-trace');
 
 
 var instrumenter = new istanbul.Instrumenter(),
@@ -100,15 +101,20 @@ Runtime.prototype._make_runnable = function () {
             ActiveXObject : context.get_component("ActiveXObject"),
             console       : console
         };
-        sandbox[completed_fn_name] = script_finished;
+
+	sandbox[completed_fn_name] = script_finished;
 
         vm.createContext(sandbox);
-        vm.runInContext(assembled_code, sandbox);
 
-        /*let fn = new Function("Array", "Date", "WScript", "ActiveXObject", completed_fn_name, assembled_code);
-        fn(Array, date, WScript, ActiveXObject, script_finished);*/
+	try {
+            vm.runInContext(assembled_code, sandbox);
+	}
+	catch (e) {
+	    let stack = stacktrace.parse(e);
+	    console.log(e.message, stack[0]);
+	}
     };
-}
+};
 
 
 Runtime.prototype._filter_interesting_events  = function () {
