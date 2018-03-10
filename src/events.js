@@ -6,6 +6,7 @@ const EVENTS = {
     "$DEBUG::property-missing": {},
     "$DEBUG::constructed": {},
     "$DEBUG::component-registered": {},
+    "$DEBUG::proxy-translate": {},
 
     "!ERROR::UNKNOWN_EVENT": {},
     "!ERROR::NOT_IMPLEMENTED": {},
