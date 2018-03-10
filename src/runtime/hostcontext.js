@@ -1,6 +1,8 @@
 const VirtualFileSystem = require("./virtfs");
 const EventEmitter2     = require("eventemitter2").EventEmitter2;
 
+const ExceptionHandler = require("../ExceptionHandler");
+
 const JScript_Date          = require("../winapi/Date");
 const JScript_WScript       = require("../winapi/WScript");
 const JScript_ActiveXObject = require("../winapi/ActiveXObject");
@@ -13,7 +15,45 @@ class HostContext {
 
 	this.ENVIRONMENT = {
 	    UserLevel: "SYSTEM",
-	    Variables: {},
+	    Variables: {
+		SYSTEM: {
+		    // TODO -- These need to be set via a config option.
+		    ALLUSERSPROFILE: "C:\\\\ProgramData",
+		    APPDATA:"C:\\Users\\User\\AppData\\Roaming",
+		    CommonProgramFiles:"C:\\Program Files\\Common Files",
+		    COMPUTERNAME:"USR11WIN7",
+		    ComSpec: "C:\\Windows\\system32\\cmd.exe",
+		    FP_NO_HOST_CHECK:"NO",
+		    HOMEDRIVE:"C:",
+		    HOMEPATH:"\\Users\\User",
+		    LOCALAPPDATA:"C:\\Users\\User\\AppData\\Local",
+		    LOGONSERVER:"\\\\USR11WIN7",
+		    NUMBER_OF_PROCESSORS:"1",
+		    OS:"Windows_NT",
+		    Path:"C:\\Python27\\;C:\\Python27\\Scripts;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\" +
+			"System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\",
+		    PATHEXT:".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC",
+		    PROCESSOR_ARCHITECTURE:"x86",
+		    PROCESSOR_IDENTIFIER:"x86 Family 6 Model 158 Stepping 9, GenuineIntel",
+		    PROCESSOR_LEVEL:"6",
+		    PROCESSOR_REVISION:"9e09",
+		    ProgramData:"C:\\ProgramData",
+		    ProgramFiles:"C:\\Program Files",
+		    PROMPT:"$P$G",
+		    PSModulePath:"C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules\\",
+		    PUBLIC:"C:\\Users\\Public",
+		    SESSIONNAME:"Console",
+		    SystemDrive:"C:",
+		    SystemRoot:"C:\\Windows",
+		    TEMP:"C:\\Users\\User\\AppData\\Local\\Temp",
+		    TMP:"C:\\Users\\User\\AppData\\Local\\Temp",
+		    USERDOMAIN:"IE11WIN7",
+		    USERNAME:"User",
+		    USERPROFILE:"C:\\Users\\User",
+		    windir:"C:\\Windows"
+		},
+		USER: {}
+	    },
 	    CurrentDirectory: "C:\\Windows\\Temp",
 	    Services: [],
 	    MRU: [], // Most-recently used list; maybe move this to vfs?
@@ -69,6 +109,20 @@ class HostContext {
 
     _setup_components () {
 
+	// The exception-thrower is an guard against VM code throwing
+	// exceptions without providing sufficient documentation that
+	// will help when investigating a sample.  It's accessable
+	// from all components, and ensures we get exceptions with
+	// vital information, including:
+	//
+	//   * the component which threw the exception,
+	//   * a summary of WHY the exception was thrown,
+	//   * and a detailed description to give context.
+	//
+	this.components["Exceptions"] = new ExceptionHandler(this);
+	this.register("Exceptions", this.components["Exceptions"]);
+	this.exceptions = this.components["Exceptions"];
+	
 	// =============
 	// ActiveXObject
 	// =============

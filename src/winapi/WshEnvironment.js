@@ -1,4 +1,4 @@
-const Component = require("../Component");
+const Component  = require("../Component");
 
 // https://msdn.microsoft.com/en-gb/library/6s7w15a0(v=vs.84).aspx
 
@@ -11,91 +11,75 @@ const Component = require("../Component");
  * collection, use the environment variable name as the index.
  */
 
-class JS_WshEnvironment extends Component {
+function JS_WshEnvironment (context, type) {
 
-    constructor (context) {
-	super(context, "WshEnvironment");
-	this.ee = this.context.emitter;
+    let component = new Component(context, "WshEnvironment");
+
+    this.context = component.context;
+    this.ee      = component.context.emitter;
+
+    // Valid types for the Environment variables collection are:
+    //
+    //  * SYSTEM
+    //  * USER
+    //
+    // It's a case-insensitive search; we up the case of any
+    // incoming `type', which matches what Windows does.
+    //
+    // If we cannot find a match for our given type, we throw.
+    //    
+    if (!type) {
+	this.context.exceptions.throw_invalid_fn_arg(
+	    `WshEnvironment`,
+	    `An undefined value is not a valid environment variable container.`,
+	    `Environment variables can be accessed via SYSTEM or USER, and ` +
+		`in this instance, we've been given undefined.`);
     }
 
-    //
-    // PROPERTIES
-    // ==========
-    //
+    type = type.toUpperCase();
     
-    // MSDN: https://msdn.microsoft.com/en-gb/library/6kz722cz(v=vs.84).aspx
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // Returns the number of Windows environment variables on the
-    // local computer system (the number of items in an Environment
-    // collection).
-    //
-    get length () {
-	let num_env_vars = Object.keys(this.context.ENVIRONMENT.Variables).length;
-	ee.emit("@WshEnvironment.length", num_env_vars);
-	return num_env_vars;
+    if (type !== "SYSTEM" && type !== "USER") {
+	this.context.exceptions.throw_invalid_fn_arg(
+	    `WshEnvironment`,
+	    `Variable container ${type} is not 'SYSTEM' or 'USER'.`,
+	    `Environment variables can be accessed via 'SYSTEM' or 'USER', and ` +
+		`in this instance, calling code has requested ${type}, for which ` +
+		`we have no environment variables.`);
     }
 
+    let env_vars     = this.context.ENVIRONMENT.Variables[type],
+	num_env_vars = Object.keys(env_vars);
 
-    //
-    // METHODS
-    // =======
-    //
+    function get_var_by_index (var_name) {
 
-    // MSDN: https://msdn.microsoft.com/en-gb/library/218yba97(v=vs.84).aspx
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // The Remove method removes environment variables from the
-    // following types of environments: PROCESS, USER, SYSTEM, and
-    // VOLATILE. Environment variables removed with the Remove method
-    // are not removed permanently; they are only removed for the
-    // current session.
-    //
-    // ARGUMENTS
-    // =========
-    //
-    //   - name
-    //     String value indicating the name of the environment
-    //     variable you want to remove.
-    //
-    // USAGE
-    // =====
-    //
-    //   var WshShell = WScript.CreateObject("WScript.Shell");
-    //   var WshEnv = WshShell.Environment("PROCESS");
-    //   WshEnv("TestVar") = "Windows Script Host";
-    //   WScript.Echo(WshShell.ExpandEnvironmentStrings("The value of the test variable is: '%TestVar%'"));
-    //   WshEnv.Remove("TestVar");
-    //   WScript.Echo(WshShell.ExpandEnvironmentStrings("The value of the test variable is: '%TestVar%'"));
-    Remove (name) {
+	let ENV_vars      = context.ENVIRONMENT.Variables[type],
+	    env_var_value = "",
+	    found_var     = false;
+	
+	// Does our variable exist?
+	if (ENV_vars[var_name]) {
+	    env_var_value = ENV_vars[var_name];
+	    found_var = true;
+	}
 
-	this.ee.emit("@WshEnvironment::Remove", {
-	    name: name,
-	    env_vars: this.context.ENVIRONMENT.Variables
+	context.emitter.emit("@WshEnvironment::get_var", {
+	    env_var_name:  var_name,
+	    env_var_value: env_var_value,
+	    found_var:     found_var
 	});
 
-	try {
-	    delete this.context.ENVIRONMENT.Variables[name];
-	}
-	catch (e) {}
-    }
+	return env_var_value;
+    };
 
+    get_var_by_index.Length = num_env_vars.length;
+    get_var_by_index.Item   = (var_name) => {
+	context.emitter.emit("@WshEnvironment::Item", { var_name: var_name });
+	return get_var_by_index(var_name);
+    };
 
-    Item (index) {
-
-	let items = this.context.ENVIRONMENT.Variables;
-	this.ee.emit("@WshEnvironment::Item", { index: index, items: [] });
-    }
-
+    return get_var_by_index;
 }
 
 
-module.exports = function create(context) {
-    let wshenv = new JS_WshEnvironment(context);
-    return wshenv;
-};
+module.exports = JS_WshEnvironment;
 

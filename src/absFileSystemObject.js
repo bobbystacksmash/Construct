@@ -1,5 +1,4 @@
 const events     = require("./events"),
-      exceptions = require("./exceptions"),
       pathlib    = require("path").win32,
       util       = require("util");
 

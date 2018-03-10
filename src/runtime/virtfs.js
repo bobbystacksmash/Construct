@@ -1,5 +1,4 @@
 const pathlib    = require("path").win32;
-const exceptions = require("../exceptions");
 const _          = require("lodash");
 const FolderObject = require("../winapi/FolderObject");
 const FileObject   = require("../winapi/FileObject");

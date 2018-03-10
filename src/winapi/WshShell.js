@@ -1,5 +1,7 @@
 const Component         = require("../Component");
 const JS_WshEnvironment = require("./WshEnvironment");
+const JS_WshShortcut    = require("./WshShortcut");
+
 
 class JS_WshShell extends Component {
 
@@ -120,9 +122,8 @@ class JS_WshShell extends Component {
     //   WScript.Echo(WshSysEnv("NUMBER_OF_PROCESSORS"));
     //
     Environment (type) {
-	this.ee.emit("@WshShell.Environment", arguments);	
-	let env = new JS_WshEnvironment(this.context);
-	return env;
+	this.ee.emit("@WshShell.Environment", { env_type: type, args: arguments });	
+	return new JS_WshEnvironment(this.context, type);
     }
 
 
@@ -138,6 +139,14 @@ class JS_WshShell extends Component {
     // when the user takes action to change the focus (or closes the
     // window).
     //
+    // ARGUMENTS
+    // =========
+    //
+    //   - `title'
+    //     Specifies which application to activate. This can
+    //     be a string containing the title of the application (as it
+    //     appears in the title bar) or the application's Process ID.
+    //
     //
     // USAGE
     // =====
@@ -147,8 +156,9 @@ class JS_WshShell extends Component {
     //   WScript.Sleep(100);
     //   WshShell.AppActivate("Calculator");
     //
-    AppActivate(todo) {
-	// TODO
+    AppActivate(title) {
+	this.ee.emit("@WshShell.AppActivate", arguments);
+	return true;
     }
 
 
