@@ -1,4 +1,5 @@
 const Component = require("../Component");
+const proxify   = require("../proxify2");
 
 /* MSDN: https://msdn.microsoft.com/en-us/library/at5ydy31(v=vs.84).aspx
  *
@@ -135,38 +136,38 @@ class JS_WScript extends Component {
     //
     // METHODS
     // =======
-    Echo (...args) {
+    echo (...args) {
 	let msg = args.join(" ");
 	this.ee.emit("@WScript::Echo", { msg: msg }, arguments);
     }
 
 
-    GetObject () {
+    getobject () {
 	this.ee.emit("@WScript::GetObject", "ERROR: NOT IMPLEMENTED!");
     }
 
 
-    Quit () {
+    quit () {
 	this.ee.emit("@WScript::Quit", "ERROR: NOT IMPLEMENTED!");
 	// TODO
     }
 
 
-    Sleep () {
+    sleep () {
 	this.ee.emit("@WScript::Sleep", "ERROR: NOT IMPLEMENTED!");
     }
 
-    CreateObject () {
+    createobject () {
 	this.ee.emit("@WScript::CreateObject", "ERROR: NOT IMPLEMENTED!");
     }
 
 
-    ConnectObject () {
+    connectobject () {
 	this.ee.emit("@WScript::ConnectObject", "ERROR: NOT IMPLEMENTED!");
     }
 
 
-    DisconnectObject () {
+    disconnectobject () {
 	this.ee.emit("@WScript::DisconnectObject", "ERROR: NOT IMPLEMENTED!");
     }
 }
@@ -174,6 +175,6 @@ class JS_WScript extends Component {
 
 module.exports = function create(context) {
     let wscript = new JS_WScript(context);
-    return wscript;
+    return proxify(context, wscript);
 };
 

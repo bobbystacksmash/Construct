@@ -1,3 +1,4 @@
+const proxify           = require("../proxify2");
 const Component         = require("../Component");
 const JS_WshEnvironment = require("./WshEnvironment");
 const JS_WshShortcut    = require("./WshShortcut");
@@ -98,8 +99,11 @@ class JS_WshShell extends Component {
 	    }
 	};
     }
-    
 
+    //
+    // Environment
+    // ~~~~~~~~~~~
+    //
     // MSDN: https://msdn.microsoft.com/fr-fr/library/fd7hxfdd(v=vs.84).aspx
     //
     // SYNOPSIS
@@ -121,12 +125,15 @@ class JS_WshShell extends Component {
     //   var WshSysEnv = WshShell.Environment("SYSTEM");
     //   WScript.Echo(WshSysEnv("NUMBER_OF_PROCESSORS"));
     //
-    Environment (type) {
-	this.ee.emit("@WshShell.Environment", { env_type: type, args: arguments });	
+    environment (type) {
+	this.ee.emit("@WshShell.Environment", { env_type: type, args: arguments });
 	return new JS_WshEnvironment(this.context, type);
     }
 
-
+    //
+    // AppActivate
+    // ~~~~~~~~~~~
+    //
     // MSDN: https://msdn.microsoft.com/en-us/subscriptions/wzcddbek(v=vs.84).aspx
     //
     // SYNOPSIS
@@ -156,12 +163,15 @@ class JS_WshShell extends Component {
     //   WScript.Sleep(100);
     //   WshShell.AppActivate("Calculator");
     //
-    AppActivate(title) {
+    appactivate(title) {
 	this.ee.emit("@WshShell.AppActivate", arguments);
 	return true;
     }
 
-
+    //
+    // CreateShortcut
+    // ~~~~~~~~~~~~~~
+    //
     // MSDN: https://msdn.microsoft.com/en-us/subscriptions/xsy6k3ys(v=vs.84).aspx
     //
     // SYNOPSIS
@@ -202,9 +212,13 @@ class JS_WshShell extends Component {
     //   oUrlLink.TargetPath = "http://www.microsoft.com";
     //   oUrlLink.Save();
     //
-    CreateShortcut() {
+    createshortcut() {
     }
 
+    //
+    // Exec
+    // ~~~~
+    //
     // MSDN: https://msdn.microsoft.com/en-us/subscriptions/ateytk4a(v=vs.84).aspx
     //
     // SYNOPSIS
@@ -228,16 +242,10 @@ class JS_WshShell extends Component {
     Exec () {
 
     }
-
-
-    
-    
-    
-	       
 }
 
 module.exports = function (context) {
-    let wsh = new JS_WshShell(context);
-    return wsh;
+    var wsh_shell = new JS_WshShell(context);
+    return proxify(context, wsh_shell);
 };
     

@@ -31,7 +31,9 @@ class JS_ActiveXObject extends Component {
 
 	case "wscript.shell":
 	    this.ee.emit("@ActiveXObject::new::WScript.Shell");
-	    return new JScript_WshShell(context);
+
+	    let wsh = new JScript_WshShell(context);
+	    return wsh;
 
 
 	default:
