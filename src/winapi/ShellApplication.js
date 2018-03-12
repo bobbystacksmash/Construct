@@ -1,4 +1,4 @@
-const proxify   = require("../proxify");
+const proxify   = require("../proxify2");
 const Component = require("../Component");
 
 class JS_ShellApplication extends Component {
