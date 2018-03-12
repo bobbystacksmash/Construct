@@ -2,3 +2,4 @@
 *.swo
 MALWARE/
 node_modules/
+*.js~
