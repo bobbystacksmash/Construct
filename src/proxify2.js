@@ -9,12 +9,17 @@ module.exports = function proxify(context, instance) {
 		prop_from: propKey,
 		prop_to:   actual_propkey
 	    });
-	    
+
 	    const original_method = target[actual_propkey];
-	    return function (...args) {
-		let result = instance[actual_propkey](...args);
-		return result;
-	    };
+
+	    if (typeof original_method === "function") {
+		return function (...args) {
+		    let result = instance[actual_propkey](...args);
+		    return result;
+		};
+	    }
+
+	    return original_method;
 	}
     });
 };
