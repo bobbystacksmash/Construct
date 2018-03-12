@@ -1,10 +1,10 @@
-
+const proxify   = require("../proxify");
 const Component = require("../Component");
 
 class JS_ShellApplication extends Component {
 
     constructor (context) {
-	super(context);
+	super(context, "Shell.Application");
 	this.ee = this.context.emitter;
     }
 
@@ -12,13 +12,13 @@ class JS_ShellApplication extends Component {
     // PROPERTIES
     // ==========
     //
-    get Application () {
+    get application () {
 	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.Application");
 	return null;
     }
 
 
-    get Parent () {
+    get parent () {
 	this.ee.emit("@ShellApplication.Parent", arguments);
 	return null;
     }
@@ -31,7 +31,7 @@ class JS_ShellApplication extends Component {
 
     // Adds a file to the most recently used (MRU) list.
     //  https://msdn.microsoft.com/en-us/library/windows/desktop/gg537735(v=vs.85).aspx
-    AddToRecent (path_to_file, category) {
+    addtorecent (path_to_file, category) {
 	// TODO
 	// ====
 	//   * If we ever support Vista (unlikely), treat `path_to_file==null' as a reset.
@@ -41,87 +41,87 @@ class JS_ShellApplication extends Component {
     }
 
 
-    BrowseForFolder () {
+    browseforfolder () {
 	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.BrowseForFolder");
 	return true;
     }
 
 
-    CanStartStopService (svc_name) {
+    canstartstopservice (svc_name) {
 	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.CanStartStopService");
 	return true;
     }
 
     
-    CascadeWindows () {
+    cascadewindows () {
 	this.ee.emit("@ShellApplication::CascadeWindows", arguments);
     }
 
 
-    ControlPanelItem (cpi) {
+    controlpanelitem (cpi) {
 	this.ee.emit("@ShellApplication::ControlPanelItem", arguments);
     }
 
 
-    EjectPC () {
+    ejectpc () {
 	this.ee.emit("@ShellApplication::EjectPC", arguments);
     }
 
 
-    Explore () {
+    explore () {
 	this.ee.emit("@ShellApplication::Explore", arguments);
     }
 
 
-    ExplorerPolicy (policy_name) {
+    explorerpolicy (policy_name) {
 	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.ExplorerPolicy");
     }
 
 
-    FileRun () {
+    filerun () {
 	this.ee.emit("@ShellApplication::FileRun", arguments);
     }
 
 
-    FindComputer () {
+    findcomputer () {
 	this.ee.emit("@ShellApplication::FindComputer", arguments);
     }
 
 
-    FindFiles () {
+    findfiles () {
 	this.ee.emit("@ShellApplication::FindFiles", arguments);
     }
 
 
-    FindPrinter (name, location, model) {
+    findprinter (name, location, model) {
 	this.ee.emit("@ShellApplication::FindPrinter", arguments);
     }
 	
 
-    GetSetting (setting) {
+    getsetting (setting) {
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/gg537739(v=vs.85).aspx
 	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.GetSetting", arguments);
     }
 
 
-    GetSystemInformation (system_info_name) {
+    getsysteminformation (system_info_name) {
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/gg537740(v=vs.85).aspx
 	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.GetSystemInformation", arguments);
     }
 
 
-    Help () {
+    help () {
 	this.ee.emit("@ShellApplication::Help", arguments);
     }
 
     
-    IsRestricted (group, restriction) {
+    isrestricted (group, restriction) {
 	this.ee.emit("@ShellApplication::IsRestricted", arguments);
 	return true;
     }
 
 
-    IsServiceRunning (service_name) {
+    isservicerunning (service_name) {
 
 	this.ee.emit("@ShellApplication::IsServiceRunning", arguments);
 	
@@ -130,29 +130,29 @@ class JS_ShellApplication extends Component {
     }
 
 
-    MinimizeAll () {
+    minimizeall () {
 	this.ee.emit("@ShellApplication::MinimizeAll", arguments);
     }
 
 
-    NameSpace (dir) {
+    namespace (dir) {
 	//https://msdn.microsoft.com/en-us/library/windows/desktop/bb774085(v=vs.85).aspx
 	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.NameSpace", arguments);
     }
 
     
-    Open (dir) {
+    open (dir) {
 	//https://msdn.microsoft.com/en-us/library/windows/desktop/bb774085(v=vs.85).aspx
 	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.Open", arguments);
     }
 
 
-    RefreshMenu () {
+    refreshmenu () {
 	this.ee.emit("@ShellApplication::RefreshMenu", arguments);
     }
 
 
-    SearchCommand () {
+    searchcommand () {
 	this.ee.emit("@ShellApplication::SearchCommand", arguments);
     }
 
@@ -167,7 +167,7 @@ class JS_ShellApplication extends Component {
     //     Set to true to have the service started automatically by the
     //     service control manager during system startup. Set to false
     //     to leave the service configuration unchanged.
-    ServiceStart (service_name, make_persistent) {
+    servicestart (service_name, make_persistent) {
 	this.ee.emit("@ShellApplication::ServiceStart", arguments);
 	return true; // Of course, your new service will always be created. ;-)
     }
@@ -184,13 +184,13 @@ class JS_ShellApplication extends Component {
     //     control manager when ServiceStart is called. To leave
     //     the service configuration unchanged, set 'make_persistent'
     //     to false.
-    ServiceStop (service_name, make_persistent) {
+    servicestop (service_name, make_persistent) {
 	this.ee.emit("@ShellApplication::ServiceStop", arguments);
 	return true;
     }
 
 
-    SetTime () {
+    settime () {
 	this.ee.emit("@ShellApplication::SetTime", arguments);
     }
 
@@ -243,7 +243,7 @@ class JS_ShellApplication extends Component {
     //   var objShell = new ActiveXObject("shell.application");
     //   objShell.ShellExecute("notepad.exe", "", "", "open", 1);
     //
-    ShellExecute (file, args, dir, operation, show) {
+    shellexecute (file, args, dir, operation, show) {
 	this.ee.emit("@ShellApplication::ShellExecute", arguments);
     }
 
@@ -272,52 +272,52 @@ class JS_ShellApplication extends Component {
     //  var objShell = new ActiveXObject("shell.application");
     //  objShell.ShowBrowserBar("{EFA24E61-B078-11d0-89E4-00C04FC9E26E}", true);
     //
-    ShowBrowserBar () {
+    showbrowserbar () {
 	this.ee.emit("@ShellApplication::ShowBrowserBar", arguments);
     }
 
 
-    ShutdownWindows () {
+    shutdownwindows () {
 	this.ee.emit("@ShellApplication::ShutdownWindows", arguments);
     }
 
 
-    TileHorizontally () {
+    tilehorizontally () {
 	this.ee.emit("@ShellApplication::TileHorizontally", arguments);
     }
 
     
-    TileVertically () {
+    tilevertically () {
 	this.ee.emit("@ShellApplication::TileVertically", arguments);
     }
 
 
-    ToggleDesktop () {
+    toggledesktop () {
 	this.ee.emit("@ShellApplication::ToggleDesktop", arguments);
     }
 
 
-    TrayProperties () {
+    trayproperties () {
 	this.ee.emit("@ShellApplication::TrayProperties", arguments);
     }
 
 
-    UndoMinimizeALL () {
+    undominimizeall () {
 	this.ee.emit("@ShellApplication::UndoMinimizeALL", arguments);
     }
 
 
-    Windows () {
+    windows () {
 	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.Windows", arguments);
     }
 
 
-    WindowsSecurity () {
+    windowssecurity () {
 	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.WindowsSecurity", arguments);
     }
 
 
-    WindowSwitcher () {
+    windowswitcher () {
 	this.ee.emit("@ShellApplication::WindowSwitcher", arguments);	
     }
 }
@@ -325,5 +325,5 @@ class JS_ShellApplication extends Component {
 
 module.exports = function create(context) {
     let shell_application = new JS_ShellApplication(context);
-    return shell_application;
+    return proxify(context, shell_application);
 };
