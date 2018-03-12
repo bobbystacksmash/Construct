@@ -45,13 +45,13 @@ class JS_WshShell extends Component {
     // qualified path of the current working directory of the active
     // process.
     // 
-    get CurrentDirectory () {
+    get currentdirectory () {
 	let cwd = this.context.ENVIRONMENT.CurrentDirectory;
 	this.ee.emit("@WshShell.CurrentDirectory [GET]", cwd);
 	return cwd;
     }
 
-    set CurrentDirectory (new_cwd) {
+    set currentdirectory (new_cwd) {
 	let old_cwd = this.context.ENVIRONMENT.CurrentDirectory;
 	this.ee.emit("@WshShell.CurrentDirectory [SET]", { new_cwd: new_cwd, old_cwd: old_cwd });
 	this.context.ENVIRONMENT.CurrentDirectory = new_cwd;
@@ -86,12 +86,11 @@ class JS_WshShell extends Component {
     //   strDesktop = WshShell.SpecialFolders("Desktop");
     //   var oShellLink = WshShell.CreateShortcut(strDesktop + "\\Shortcut Script.lnk");
     //
-    get SpecialFolders () {
+    get specialfolders () {
 	this.ee.emit("@WshShell.SpecialFolders [GET]");
 
 	let folders = this.special_folders,
 	    emitter = this.ee;
-	
 	return {
 	    item: function (n) {
 		emitter.emit("@WshShell.SpecialFolders::item", folders[n]);
@@ -239,8 +238,7 @@ class JS_WshShell extends Component {
     // =======
     //   I assume the exit status?
     //
-    Exec () {
-
+    exec () {
     }
 }
 
