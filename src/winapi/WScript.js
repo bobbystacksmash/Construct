@@ -36,7 +36,6 @@ class JS_WScript extends Component {
     constructor (context) {
 	super(context, "WScript");
 	this.ee = this.context.emitter;
-	console.log("NEW WScript");
     }
 
     // 
