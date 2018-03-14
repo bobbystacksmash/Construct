@@ -43,14 +43,14 @@ class JS_WScript extends Component {
     // ==========
 
     // WScript.Arguments: https://msdn.microsoft.com/en-us/library/z2b05k8s(v=vs.84).aspx
-    get Arguments () {
+    get arguments () {
 	let args = this.context.ENVIRONMENT.Arguments;
 	this.ee.emit("@WScript::Arguments", args);
 	return args;
     }
 
     // WScript.BuildVersion      https://msdn.microsoft.com/en-us/library/kt8ycte6(v=vs.84).aspx
-    get BuildVersion () {
+    get buildversion () {
 	let build_version = this.context.ENVIRONMENT.BuildVersion;
 	this.ee.emit("@WScript::BuildVersion", build_version);
 	return build_version;
@@ -58,7 +58,7 @@ class JS_WScript extends Component {
 
 
     // FullName https://msdn.microsoft.com/en-us/library/z00t383b(v=vs.84).aspx
-    get FullName () {
+    get fullname () {
 	let full_name = this.context.ENVIRONMENT.FullName;
 	this.ee.emit("@WScript::FullName", full_name);
 	return full_name;
@@ -66,7 +66,7 @@ class JS_WScript extends Component {
 
     
     // Interactive https://msdn.microsoft.com/en-us/library/b48sxsw0(v=vs.84).aspx
-    get Interactive () {
+    get interactive () {
 	let interactive = this.context.ENVIRONMENT.Interactive;
 	this.ee.emit("@WScript::Interactive", interactive);
 	return interactive;
@@ -74,7 +74,7 @@ class JS_WScript extends Component {
 
 
     // Name https://msdn.microsoft.com/en-us/library/3ktf76t1(v=vs.84).aspx
-    get Name () {
+    get name () {
 	let name = this.context.ENVIRONMENT.Name;
 	this.ee.emit("@WScript::Name", name);
 	return name;
@@ -82,7 +82,7 @@ class JS_WScript extends Component {
 
     
     // Path              https://msdn.microsoft.com/en-us/library/sw3e6ehs(v=vs.84).aspx
-    get Path () {
+    get path () {
 	let path = this.context.ENVIRONMENT.Path;
 	this.ee.emit("@WScript::Path", path);
 	return path;
@@ -90,7 +90,7 @@ class JS_WScript extends Component {
     
     
     // ScriptFullName    https://msdn.microsoft.com/en-us/library/cc5ywscw(v=vs.84).aspx
-    get ScriptFullName () {
+    get scriptfullname () {
 	let script_full_name = this.context.ENVIRONMENT.ScriptFullName;
 	this.ee.emit("@WScript::ScriptFullName", script_full_name);
 	return script_full_name;
@@ -98,7 +98,7 @@ class JS_WScript extends Component {
 
 
     // ScriptName        https://msdn.microsoft.com/en-us/library/3faf1xkh(v=vs.84).aspx
-    get ScriptName () {
+    get scriptname () {
 	let script_name = this.context.ENVIRONMENT.ScriptName;
 	this.ee.emit("@WScript::ScriptName", script_name);
 	return script_name;
@@ -106,26 +106,26 @@ class JS_WScript extends Component {
 
 
     // StdErr https://msdn.microsoft.com/en-us/library/hyez2k48(v=vs.84).aspx
-    get StdErr () {
+    get stderr () {
 	this.ee.emit("@WScript::StdErr", "ERROR: NOT IMPLEMENTED!");
 	return null;
     }
 
     // StdIn https://msdn.microsoft.com/en-us/library/1y8934a7(v=vs.84).aspx
-    get StdIn () {
+    get stdin () {
 	this.ee.emit("@WScript::StdIn", "ERROR: NOT IMPLEMENTED!");
 	return null;
     }
 
     // StdOut https://msdn.microsoft.com/en-us/library/c61dx86d(v=vs.84).aspx
-    get StdOut () {
+    get stdout () {
 	this.ee.emit("@WScript::StdOut", "ERROR: NOT IMPLEMENTED!");
 	return null;
     }
     
 
     // Version https://msdn.microsoft.com/en-us/library/kaw07b53(v=vs.84).aspx
-    get Version () {
+    get version () {
 	let version = this.context.ENVIRONMENT.Version;
 	this.ee.emit("@WScript.Version", version);
 	return version;
