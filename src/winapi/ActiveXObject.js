@@ -5,10 +5,9 @@
 const Component = require("../Component");
 const proxify   = require("../proxify2");
 
-
-const JScript_MSXML2XMLHTTP    = require("../winapi/MSXML2_XMLHTTP");
-const JScript_WshShell         = require("../winapi/WshShell");
-const JScript_ShellApplication = require("../winapi/ShellApplication");
+const JScript_XMLHttpRequestBase = require("../winapi/XMLHttpRequestBase");
+const JScript_WshShell           = require("../winapi/WshShell");
+const JScript_ShellApplication   = require("../winapi/ShellApplication");
 
 
 class JS_ActiveXObject extends Component {
@@ -36,10 +35,20 @@ class JS_ActiveXObject extends Component {
 	    let wsh = new JScript_WshShell(context);
 	    return wsh;
 
+	// =================
+        // XML HTTP Requests
+	// =================
+	case "msxml2.ServerXMLHTTP.6.0":
+	case "msxml2.ServerXMLHTTP.6.0":
+	case "msxml2.ServerXMLHTTP.6.0":
+	case "msxml2.xmlhttp.6.0":
+	case "msxml2.xmlhttp.5.0":
+	case "msxml2.xmlhttp.4.0":
+	case "msxml2.xmlhttp.3.0":
 	case "msxml2.xmlhttp":
 	    this.ee.emit("@ActiveXObject::new::MSXML2.XMLHTTP");
-	    let xhr = new JScript_MSXML2XMLHTTP(context);
-	    return xhr;
+	    let xhr = new JScript_XMLHttpRequestBase(context, type);
+	    return xhr;	    
 
 
 	default:

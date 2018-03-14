@@ -13,6 +13,30 @@ class HostContext {
 
 	opts = opts || {};
 
+	this.user_agent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows " +
+	    "NT 6.1; Trident/7.0; SLCC2; .NET CLR 2.0.50727; " +
+	    ".NET CLR 3.5.30729; .NET CLR 3.0.30729; " +
+	    "Media Center PC 6.0; .NET4.0C)";
+	
+	this.http_routes = {
+	    OPTIONS: [],
+	    GET:     [],
+	    HEAD:    [],
+	    POST:    [],
+	    PUT:     [],
+	    DELETE:  [],
+	    TRACE:   [],
+	    CONNECT: []
+	};
+
+	this.default_http_route = {
+	    src: "[DEFAULT]",
+	    response_body: "EICAR STRING",
+	    status: 200
+	};
+
+	this.add_route("GET", /hookerdeepseafishing/, "blah.txt", 200);
+
 	this.ENVIRONMENT = {
 	    UserLevel: "SYSTEM",
 	    Variables: {
@@ -158,6 +182,46 @@ class HostContext {
 
 	// Return the index of the registered component.
 	return (this.component_register.push(component_register_entry) - 1);
+    }
+
+
+    add_route(method, src, response_body, status, headers) {
+
+	console.log("add rt", method);
+	
+	this.http_routes[method].push({
+	    src: src,
+	    response_body: response_body,
+	    status: status
+	});
+    }
+
+
+    get_route (method, uri) {
+
+	method = method.toUpperCase();
+	
+	let default_route = {};
+	Object.assign(default_route, this.default_http_route);
+	default_route.uri    = uri;
+	default_route.method = method;
+	
+	if (!this.http_routes.hasOwnProperty(method)) {
+	    return default_route;
+	}
+	
+	let route = this.http_routes[method].find((r) => {
+	    return (r.src instanceof RegExp) ? r.src.test(uri): uri === r.src;
+	});
+
+	if (!route) {
+	    return default_route;
+	}
+
+	route.uri    = uri;
+	route.method = method;
+	
+	return route;
     }
 
     get_component(name) {
