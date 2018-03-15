@@ -11,6 +11,8 @@ const EVENTS = {
     "!ERROR::UNKNOWN_EVENT": {},
     "!ERROR::NOT_IMPLEMENTED": {},
 
+    "~url": {},
+
     "@FileSystemObject::GetFolder": {},
    
     
