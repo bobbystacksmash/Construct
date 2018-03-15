@@ -90,7 +90,7 @@ Runtime.prototype._make_runnable = function () {
             };
 
             self.coverage           = coverage_report;
-            self.interesting_events = self._filter_interesting_events();
+            //self.interesting_events = self._filter_interesting_events();
 
             done();
         }
@@ -107,11 +107,22 @@ Runtime.prototype._make_runnable = function () {
         vm.createContext(sandbox);
 
 	try {
-            vm.runInContext(assembled_code, sandbox);
+            vm.runInContext(assembled_code,
+			    sandbox,
+			    {
+				"timeout": 2000
+			    });
+
 	}
 	catch (e) {
-	    let stack = stacktrace.parse(e);
-	    console.log(e.message, stack[0]);
+
+	    if (e.message === "Script execution timed out.") {
+		// TODO...
+	    }
+	    else {
+		let stack = stacktrace.parse(e);
+		console.log(e.message, stack[0]);
+	    }
 	}
     };
 };
