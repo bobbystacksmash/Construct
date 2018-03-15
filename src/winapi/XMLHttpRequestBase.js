@@ -63,7 +63,7 @@ class XMLHttpRequestBase extends Component {
     //   var xhr = new ActiveXObject(""Msxml2.XMLHTTP.6.0");
     //   xhr.setRequestHeader("User-Agent", "MyUA" );
     //
-    setrequestheade (header, val) {
+    setrequestheader (header, val) {
 	this.ee.emit(`${this.event_id}::SetRequestHeader`, { header: header, value: val });
 	this.request.headers.push(`${header}: ${val}`);
     }
