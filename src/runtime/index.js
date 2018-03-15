@@ -6,7 +6,8 @@ const EventEmitter2  = require("eventemitter2").EventEmitter2;
 const urlparse       = require("url-parse");
 const vm             = require("vm");
 const stacktrace     = require('stack-trace');
-
+const glob           = require("glob");
+const path           = require("path");
 
 var instrumenter = new istanbul.Instrumenter(),
     cover_utils  = istanbul.utils,
@@ -23,6 +24,9 @@ function Runtime (options) {
         emitter : new EventEmitter2({ wildcard: true }),
         epoch   : this.epoch
     });
+
+    // Load routes
+    this.load_plugins("./routes");
 
     return this;
 }
@@ -49,6 +53,30 @@ Runtime.prototype.load = function(path_to_file, options) {
     // in order to do so, it needs its support scaffolding (the real magic).  Let's
     // add all of that now...
     return this._make_runnable();
+};
+
+
+Runtime.prototype.load_plugins = function (path_to_routes_dir) {
+
+    let routes_load_path    = path_to_routes_dir.replace(/\/*$/, ""),
+	routes_glob_pathpat = `${routes_load_path}/**/*.js`,
+	found_routes_files  = glob.sync(routes_glob_pathpat),
+	route_load_info     = {}; // So we can report fail|ok route load msgs.
+
+    function network_hook (description, method, addr, response_fn) {
+	this.context.add_network_hook(description, method, addr, response_fn);
+    };
+
+    const hooks = {
+	network: network_hook.bind(this)
+    };
+
+    found_routes_files.forEach((route_file) => {
+	let tmp = require(path.resolve(route_file));
+	tmp(hooks);
+    }, this);
+    
+
 };
 
 
