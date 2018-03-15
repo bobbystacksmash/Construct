@@ -25,6 +25,8 @@ class XMLHttpRequestBase extends Component {
     _lookup_route (method, uri) {
 	this.route = this.context.get_route(method, uri);
 	this.request.method = method;
+	this.request.ua     = this.context.user_agent;
+	this.setrequestheader("User-Agent", this.request.ua);
     }
 
 
@@ -64,8 +66,28 @@ class XMLHttpRequestBase extends Component {
     //   xhr.setRequestHeader("User-Agent", "MyUA" );
     //
     setrequestheader (header, val) {
+
 	this.ee.emit(`${this.event_id}::SetRequestHeader`, { header: header, value: val });
-	this.request.headers.push(`${header}: ${val}`);
+
+	// Does the current set of request headers contain this one?
+	let existing_hdr_idx = this.request.headers.findIndex(
+	    h => h.toLowerCase().startsWith(header.toLowerCase())
+	);
+
+	let hdr = `${header}: ${val}`;
+
+	if (existing_hdr_idx > -1) {
+	    this.ee.emit(`${this.event_id}::SetRequestHeader!hdr_overwritten`, {
+		old: this.request.headers[existing_hdr_idx],
+		new: hdr,
+		idx: existing_hdr_idx,
+		headers_old: this.request.headers
+	    });
+	    this.request.headers[existing_hdr_idx] = hdr;
+	}
+	else {
+	    this.request.headers.push(`${header}: ${val}`);
+	}
     }
     
 
@@ -93,14 +115,23 @@ class XMLHttpRequestBase extends Component {
     }
 
 
-    send () {
+    send (body) {
 
-	this.ee.emit(`${this.event_id}::Send`, this.request);
+	if (!body) body = "";
+	this.request.body = body;
+
+	this.ee.emit(`${this.event_id}::Send`, arguments, { req: this.request });
+
+	let data = `''`;
+	if (/^POST$/i.test(this.request.method)) {
+	    data = JSON.stringify(this.request.body);
+	}
 	
 	let headers = this.request.headers.map((h) => `-H '${h}'`).join(" ");
 	let parts_of_cmd = [
 	    `curl`,
 	    `--request ${this.request.method}`,
+	    `--data ${data}`,
 	    headers,
 	    this.route.uri
 	];
