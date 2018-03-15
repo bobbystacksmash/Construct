@@ -18,24 +18,9 @@ class HostContext {
 	    ".NET CLR 3.5.30729; .NET CLR 3.0.30729; " +
 	    "Media Center PC 6.0; .NET4.0C)";
 	
-	this.http_routes = {
-	    OPTIONS: [],
-	    GET:     [],
-	    HEAD:    [],
-	    POST:    [],
-	    PUT:     [],
-	    DELETE:  [],
-	    TRACE:   [],
-	    CONNECT: []
+	this.hooks = {
+	    network: []
 	};
-
-	this.default_http_route = {
-	    src: "[DEFAULT]",
-	    response_body: "EICAR STRING",
-	    status: 200
-	};
-
-	this.add_route("GET", /***REMOVED***/, "blah.txt", 200);
 
 	this.ENVIRONMENT = {
 	    UserLevel: "SYSTEM",
@@ -185,49 +170,49 @@ class HostContext {
     }
 
 
-    add_route(method, src, response_body, status, headers) {
+    add_network_hook(description, method, addr, response_handler) {
 
-	console.log("add rt", method);
+	if (! this.hooks.network.hasOwnProperty(method)) {
+	    this.hooks.network[method] = [];
+	}
 	
-	this.http_routes[method].push({
-	    src: src,
-	    response_body: response_body,
-	    status: status
+	this.hooks.network[method].push({
+	    match: (a) => (addr instanceof RegExp) ? addr.test(a) : a.includes(addr),
+	    desc: description,
+	    handle: response_handler
 	});
     }
 
 
-    get_route (method, uri) {
+    get_network_hook(method, addr) {
 
 	method = method.toUpperCase();
 	
-	let default_route = {};
-	Object.assign(default_route, this.default_http_route);
-	default_route.uri    = uri;
-	default_route.method = method;
-	
-	if (!this.http_routes.hasOwnProperty(method)) {
-	    return default_route;
-	}
-	
-	let route = this.http_routes[method].find((r) => {
-	    return (r.src instanceof RegExp) ? r.src.test(uri): uri === r.src;
-	});
-
-	if (!route) {
-	    return default_route;
+	if (!this.hooks.network.hasOwnProperty(method)) {
+	    console.log("Cannot find any hooks using method:", method);
+	    console.log("Returning default net route.");
+	    // TODO
+	    return {};
 	}
 
-	route.uri    = uri;
-	route.method = method;
-	
-	return route;
+	let hook = this.hooks.network[method].find((hook) => hook.match(addr));
+
+	if (!hook) {
+	    console.log(`Unable to find any hooks matching ${addr}`);
+	    console.log("Returning default net route.");
+	    hook = {};
+	}
+	else {
+	    console.log("Success! Found hook:", hook.desc);
+	}
+
+	return hook;
     }
+
 
     get_component(name) {
 	return this.components[name];
     }
-    
 }
 
 module.exports = HostContext;

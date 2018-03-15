@@ -14,6 +14,8 @@ class XMLHttpRequestBase extends Component {
 	this.tag = tag;
 	this.event_id = `@${tag}`;
 
+	this.request = {};
+
 	this.route = null;
 	this.request = {
 	    method: "GET",
@@ -25,6 +27,8 @@ class XMLHttpRequestBase extends Component {
     _lookup_route (method, uri) {
 	this.route = this.context.get_route(method, uri);
 	this.request.method = method;
+	this.request.ua     = this.context.user_agent;
+	this.setrequestheader("User-Agent", this.request.ua);
     }
 
 
@@ -35,15 +39,24 @@ class XMLHttpRequestBase extends Component {
 
 
     get responsebody () {
-	console.log(`${this.event_id}.responsebody`, this.route.response_body);
-	this.ee.emit(`${this.event_id}.responsebody`, this.route.response_body);	
+
+	let response_body = this.response.body;
+	
+	console.log(`${this.event_id}.responsebody`, response_body);
+	this.ee.emit(`${this.event_id}.responsebody`, response_body);
+
+	return response_body;
     }
 
     
     get responsetext () {
-	console.log(`${this.event_id}.responsetext`, this.route.response_body);
-	this.ee.emit(`${this.event_id}.responsetext`, this.route.response_body);
-	return this.route.response_body;
+
+	let response_text = this.response.body;
+
+	console.log(`${this.event_id}.responsetext`, response_text);
+	this.ee.emit(`${this.event_id}.responsetext`, response_text);
+	
+	return response_text;
     }
 
     //
@@ -64,8 +77,28 @@ class XMLHttpRequestBase extends Component {
     //   xhr.setRequestHeader("User-Agent", "MyUA" );
     //
     setrequestheader (header, val) {
+
 	this.ee.emit(`${this.event_id}::SetRequestHeader`, { header: header, value: val });
-	this.request.headers.push(`${header}: ${val}`);
+
+	// Does the current set of request headers contain this one?
+	let existing_hdr_idx = this.request.headers.findIndex(
+	    h => h.toLowerCase().startsWith(header.toLowerCase())
+	);
+
+	let hdr = `${header}: ${val}`;
+
+	if (existing_hdr_idx > -1) {
+	    this.ee.emit(`${this.event_id}::SetRequestHeader!hdr_overwritten`, {
+		old: this.request.headers[existing_hdr_idx],
+		new: hdr,
+		idx: existing_hdr_idx,
+		headers_old: this.request.headers
+	    });
+	    this.request.headers[existing_hdr_idx] = hdr;
+	}
+	else {
+	    this.request.headers.push(`${header}: ${val}`);
+	}
     }
     
 
@@ -73,34 +106,46 @@ class XMLHttpRequestBase extends Component {
 
 	console.log(`XHR.Open(${method}, ${url})`);
 
-	this._lookup_route(method, url);
+	this.request.method        = method;
+	this.request.address       = url;
+	this.request.address_parts = urlparser(url);
+	this.request.asyn          = asyn;
+	this.request.user          = user;
+	this.request.password      = password;
+	this.request.sent          = false;
 
-	let parsed_url   = urlparser(url),
-	    emitter_args = {
-		args: {
-		    method: method,
-		    url: url,
-		    asyn: asyn,
-		    user: user,
-		    password: password
-		}
-	    };
-
-
-	emitter_args = Object.assign(parsed_url, emitter_args);
-
-	this.ee.emit(`${this.event_id}::Open`, emitter_args);
+	this.ee.emit(`${this.event_id}::Open`, this.request);
     }
 
 
-    send () {
+    send (body) {
 
-	this.ee.emit(`${this.event_id}::Send`, this.request);
+	if (!body) body = "";
+	this.request.body = body;
+
+	let nethook = this.context.get_network_hook(
+	    this.request.method.toUpperCase(),
+	    this.request.address
+	);
+
+	let response = nethook.handle(this.request, this.ee);
+	this.response = Object.assign({}, this.response, response);
+
+	this.ee.emit(`${this.event_id}::Send`, arguments, { req: this.request });
+    }
+
+    _make_curl_request () {
+
+	let data = `''`;
+	if (/^POST$/i.test(this.request.method)) {
+	    data = JSON.stringify(this.request.body);
+	}
 	
 	let headers = this.request.headers.map((h) => `-H '${h}'`).join(" ");
 	let parts_of_cmd = [
 	    `curl`,
 	    `--request ${this.request.method}`,
+	    `--data ${data}`,
 	    headers,
 	    this.route.uri
 	];
@@ -131,5 +176,5 @@ class XMLHttpRequestBase extends Component {
 module.exports = function (context, type) {
     let xhr = new XMLHttpRequestBase(context, type);
     return proxify(context, xhr);
-}
+};
 
