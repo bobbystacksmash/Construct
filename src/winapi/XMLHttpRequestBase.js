@@ -1,5 +1,6 @@
 const proxify   = require("../proxify2");
 const Component = require("../Component");
+const urlparser = require("../url-parser");
 
 class XMLHttpRequestBase extends Component {
 
@@ -74,31 +75,21 @@ class XMLHttpRequestBase extends Component {
 
 	this._lookup_route(method, url);
 
-	let safe_url = url.replace(/\./g, "[.]").replace(/^http/i, "hxxp");
+	let parsed_url   = urlparser(url),
+	    emitter_args = {
+		args: {
+		    method: method,
+		    url: url,
+		    asyn: asyn,
+		    user: user,
+		    password: password
+		}
+	    };
 
-	this.ee.emit(`${this.event_id}::Open`, {
-	    args: {
-		method: method,
-		url: url,
-		asyn: asyn,
-		user: user,
-		password: password
-	    },
-	    url: url,
-	    safe_url: safe_url
-	});
 
-	this.ee.emit("-url", {
-	    source: `${this.event_id}::Open`,
-	    url: url,
-	    args: {
-		method: method,
-		url: url,
-		asyn: asyn,
-		user: user,
-		password: password
-	    }
-	});
+	emitter_args = Object.assign(parsed_url, emitter_args);
+
+	this.ee.emit(`${this.event_id}::Open`, emitter_args);
     }
 
 
@@ -115,10 +106,8 @@ class XMLHttpRequestBase extends Component {
 	];
 
 	let cmd_actual = parts_of_cmd.join(" ");
-
 	this.ee.emit("-curl", cmd_actual);
-	
-    }
+   }
 
 
     abort () {

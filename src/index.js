@@ -120,71 +120,75 @@ function CMD_net (args, callback) {
 
     args.options = args.options || {};
 
-    let safety_first = args.options.safe    || false,
+    // TODO: Add an option to show which route handler was invoked
+    //       for any given URL.
+    
+    let safety       = args.options.safe    || false,
         show_domains = args.options.domains || false,
         show_event   = args.options.event   || false,
         show_uniq    = args.options.uniq    || false,
+	show_curl    = args.options.curl    || false,
         self         = this;
-
-    var domains, urls;
 
     if (!runtime.events || !runtime.events.length) {
         self.log("No events were found -- did you run `load FILE` beforehand?");
         return callback();
     }
 
-    if (!runtime.interesting_events || runtime.interesting_events.url.length === 0) {
-
-        let stmt_coverage_pct = runtime.coverage.report.statements.pct,
-            output_message    = [];
-
+    let net_requests = runtime.events.filter((e) => /.*XMLHTTP.*::Open$/i.test(e.event));
+    
+    if (net_requests.length === 0) {
         console.log(``);
         console.log(` Zero runtime events known to establish network connections were `);
         console.log(` detected during script execution.  Perhaps try the \`deceive\` command, `);
         console.log(` it's designed to coax code in to execution.`);
-
-        const STMT_COVERAGE_HWMARK = 30;
-
-        if (stmt_coverage_pct <= STMT_COVERAGE_HWMARK) {
-            console.log(``);
-            console.log(` Also, the loaded script only executed ${stmt_coverage_pct}% of `);
-            console.log(` it's total statements.  This highly suggests something is preventing `);
-            console.log(` comprehensive script execution (and you should try \`deceive\`).`);
-        }
-
         console.log(``);
-
         return callback();
     }
 
-    domains = runtime.interesting_events.url
-        .map((url) => {
-            let result = [(safety_first) ? url.safe_domain : url.domain];
-            if (show_event) result.push(url.esrc)
-            return result;
-        })
+    //
+    // F I L T E R I N G
+    // =================
+    //
+    // TODO: Move the generation of the ALL|UNIQ lists in to a block
+    //       where they're only evaluated when needed.  This could get
+    //       slow if we have a HEAP of events to churn through.
+    //
+    let all_hostnames  = net_requests.map(
+	(e) => [(safety)     ? e.args.safe_hostname : e.args.hostname, (show_event) ? e.event : ""]
+    );
 
-    urls = runtime.interesting_events.url.map((url) => {
-        let result = [(safety_first) ? url.safe_url : url.url];
-        if (show_event) result.push(url.esrc);
-        return result;
-    });
+    let all_hrefs  = net_requests.map(
+	(e) => [(safety)     ? e.args.safe_href : e.args.href, (show_event) ? e.event : ""]
+    );
 
-    if (show_uniq) {
-        urls = _.uniqBy(urls, x => x[0]);
-    }
+    let uniq_hostnames = _.uniqBy(all_hostnames, x => x[0]),
+	uniq_hrefs     = _.uniqBy(all_hrefs, x => x[0]);
+
+    // cURL
+    let curl_events = runtime.events.filter(e => "-curl" === e.event).map(e => e.args);
 
     console.log(``);
 
     if (show_domains) {
-        domains = _.uniqBy(domains, x => x[0]);
-        console.log(` Found ${urls.domains} domains:`);
-        console.log(util_get_table_string(domains));
+        console.log(` Found ${uniq_hostnames.length} domains:`);
+	let table = util_get_table_string(uniq_hostnames);
+        console.log(table);
     }
     else {
         // Just show full urls...
-        console.log(` Found ${urls.length} URLs:`);
-        console.log(util_get_table_string(urls));
+        console.log(` Found ${all_hrefs.length} URLs:`);
+	let table = util_get_table_string(all_hrefs);
+        console.log(table);
+    }
+
+    console.log(``);
+
+    if (show_curl) {
+	console.log(` cURL`);
+	console.log(` ====`);
+	let table = util_get_table_string(_.uniq(curl_events.map(e => [e, ""])));
+	console.log(table);
     }
 
     callback();
@@ -196,6 +200,7 @@ vorpal
     .option("-d, --domains", "Display only cpatured domains.")
     .option("-e, --event",   "Display the event which produced this network entry.")
     .option("-u, --uniq",    "Display only unique rows.")
+    .option("-c, --curl",    "Display a cURL command to fetch the given href.")
     .description(CMDHELP_net)
     .action(CMD_net);
 
