@@ -25,6 +25,7 @@
     "esprima": "^4.0.0",
     "eventemitter2": "^5.0.0",
     "falafel": "^2.1.0",
+    "hexy": "^0.2.10",
     "install": "^0.10.4",
     "istanbul": "^0.4.5",
     "js-beautify": "^1.7.4",
