@@ -138,6 +138,10 @@ class JS_WScript extends Component {
     echo (...args) {
 	let msg = args.join(" ");
 	this.ee.emit("@WScript::Echo", { msg: msg }, arguments);
+
+	if (this.context.output_behaviour === "repl") {
+	    console.log(" > ", ...args);
+	}
     }
 
 

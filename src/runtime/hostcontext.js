@@ -22,6 +22,10 @@ class HostContext {
 	    network: []
 	};
 
+	// TODO
+	// This is hacky. Need to fix it.
+	this.output_behaviour = "repl";
+
 	this.ENVIRONMENT = {
 	    UserLevel: "SYSTEM",
 	    Variables: {
@@ -151,6 +155,13 @@ class HostContext {
 	// =======
 	this.components["WScript"] = new JScript_WScript(this);
 	this.register("WScript", this.components["WScript"]);
+    }
+
+
+    get_opt (name) {
+	// TODO: Add code here which lets runtime code ask questions
+	// of the Construct config.
+	
     }
 
 

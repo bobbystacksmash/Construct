@@ -1,6 +1,7 @@
 const proxify   = require("../proxify2");
 const Component = require("../Component");
 const urlparser = require("../url-parser");
+const hexy      = require("hexy");
 
 class XMLHttpRequestBase extends Component {
 
@@ -123,6 +124,11 @@ class XMLHttpRequestBase extends Component {
 	if (!body) body = "";
 	this.request.body = body;
 
+	console.log("");
+	console.log("Post Request Contents");
+	console.log(hexy.hexy(body));
+	console.log("");
+
 	let nethook = this.context.get_network_hook(
 	    this.request.method.toUpperCase(),
 	    this.request.address
@@ -131,7 +137,7 @@ class XMLHttpRequestBase extends Component {
 	let response = nethook.handle(this.request, this.ee);
 	this.response = Object.assign({}, this.response, response);
 
-	this.ee.emit(`${this.event_id}::Send`, arguments, { req: this.request });
+	this.ee.emit(`${this.event_id}::Send`, this.request);
     }
 
     _make_curl_request () {

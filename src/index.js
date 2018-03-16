@@ -134,7 +134,7 @@ function CMD_net (args, callback) {
         return callback();
     }
 
-    let net_requests = runtime.events.filter((e) => /.*XMLHTTP.*::Open$/i.test(e.event));
+    let net_requests = runtime.events.filter((e) => /.*XMLHTTP.*::Send$/i.test(e.event));
     
     if (net_requests.length === 0) {
         console.log(``);
@@ -154,11 +154,13 @@ function CMD_net (args, callback) {
     //       slow if we have a HEAP of events to churn through.
     //
     let all_hostnames  = net_requests.map(
-	(e) => [(safety)     ? e.args.safe_hostname : e.args.hostname, (show_event) ? e.event : ""]
+	(e) => [(safety)     ? e.args.address_parts.safe_hostname : e.args.address_parts.hostname,
+		(show_event) ? e.event : ""]
     );
 
     let all_hrefs  = net_requests.map(
-	(e) => [(safety)     ? e.args.safe_href : e.args.href, (show_event) ? e.event : ""]
+	(e) => [(safety)     ? e.args.address_parts.safe_href : e.args.address,
+		(show_event) ? e.event        : ""]
     );
 
     let uniq_hostnames = _.uniqBy(all_hostnames, x => x[0]),
@@ -176,19 +178,27 @@ function CMD_net (args, callback) {
     }
     else {
         // Just show full urls...
-        console.log(` Found ${all_hrefs.length} URLs:`);
+        console.log(` Found ${all_hrefs.length} URL(s):`);
 	let table = util_get_table_string(all_hrefs);
         console.log(table);
     }
 
     console.log(``);
 
-    if (show_curl) {
+    /*if (show_curl) {
 	console.log(` cURL`);
 	console.log(` ====`);
-	let table = util_get_table_string(_.uniq(curl_events.map(e => [e, ""])));
-	console.log(table);
-    }
+
+	console.log(curl_events);
+
+	if (curl_events.length) {
+	    let table = util_get_table_string(_.uniq(curl_events.map(e => [e, ""])));
+	    console.log(table);
+	}
+	else {
+	    console.log("Unable to find any cURL requests.");
+	}
+    }*/
 
     callback();
 }
