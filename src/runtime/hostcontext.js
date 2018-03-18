@@ -197,24 +197,34 @@ class HostContext {
 
     get_network_hook(method, addr) {
 
+	//
+	// Default hook
+	// ============
+	//
+	// We return the default hook if no user-supplied hook can be found.
+	//
+	let default_nethook = {
+	    match: () => true,
+	    desc:  "Construct's default nethook response handler.",
+	    handle: (req, ee) => {
+		return {
+		    status: 200, // TODO: Fetch this value from the config.
+		    body: `<!DOCTYPE html><html><head></head><body>Construct.</body></html>`
+		};
+	    }
+	};
+
 	method = method.toUpperCase();
 	
 	if (!this.hooks.network.hasOwnProperty(method)) {
-	    console.log("Cannot find any hooks using method:", method);
-	    console.log("Returning default net route.");
-	    // TODO
-	    return {};
+	    return default_nethook;
 	}
 
+	
 	let hook = this.hooks.network[method].find((hook) => hook.match(addr));
 
 	if (!hook) {
-	    console.log(`Unable to find any hooks matching ${addr}`);
-	    console.log("Returning default net route.");
-	    hook = {};
-	}
-	else {
-	    console.log("Success! Found hook:", hook.desc);
+	    return default_nethook;
 	}
 
 	return hook;

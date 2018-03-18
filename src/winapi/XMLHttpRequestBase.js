@@ -9,13 +9,12 @@ class XMLHttpRequestBase extends Component {
 
 	super(context, tag);
 
-	console.log("NEW XMLTTHPREQUEST BASE");
-
 	this.ee  = this.context.emitter;
 	this.tag = tag;
 	this.event_id = `@${tag}`;
 
-	this.request = {};
+	this.request  = {};
+	this.response = {};
 
 	this.route = null;
 	this.request = {
@@ -40,23 +39,15 @@ class XMLHttpRequestBase extends Component {
 
 
     get responsebody () {
-
 	let response_body = this.response.body;
-	
-	console.log(`${this.event_id}.responsebody`, response_body);
 	this.ee.emit(`${this.event_id}.responsebody`, response_body);
-
 	return response_body;
     }
 
     
     get responsetext () {
-
 	let response_text = this.response.body;
-
-	console.log(`${this.event_id}.responsetext`, response_text);
 	this.ee.emit(`${this.event_id}.responsetext`, response_text);
-	
 	return response_text;
     }
 
@@ -122,12 +113,7 @@ class XMLHttpRequestBase extends Component {
     send (body) {
 
 	if (!body) body = "";
-	this.request.body = body;
-
-	console.log("");
-	console.log("Post Request Contents");
-	console.log(hexy.hexy(body));
-	console.log("");
+	this.response.body = body;
 
 	let nethook = this.context.get_network_hook(
 	    this.request.method.toUpperCase(),
@@ -166,8 +152,11 @@ class XMLHttpRequestBase extends Component {
     }
 
 
-    getresponseheader () {
+    getresponseheader (header) {
 
+	
+
+	
     }
 
 

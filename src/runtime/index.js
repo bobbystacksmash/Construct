@@ -26,7 +26,8 @@ function Runtime (options) {
     });
 
     // Load routes
-    this.load_plugins("./routes");
+    // TODO: Read this from a config file.
+    this.load_plugins("./plugins");
 
     return this;
 }
@@ -56,12 +57,15 @@ Runtime.prototype.load = function(path_to_file, options) {
 };
 
 
-Runtime.prototype.load_plugins = function (path_to_routes_dir) {
+Runtime.prototype.load_plugins = function (path_to_plugins_dir) {
 
-    let routes_load_path    = path_to_routes_dir.replace(/\/*$/, ""),
-	routes_glob_pathpat = `${routes_load_path}/**/*.js`,
-	found_routes_files  = glob.sync(routes_glob_pathpat),
-	route_load_info     = {}; // So we can report fail|ok route load msgs.
+    let plugins_load_path    = path_to_plugins_dir.replace(/\/*$/, ""),
+	plugins_glob_pathpat = `${plugins_load_path}/**/index.js`,
+	found_plugins_files  = glob.sync(plugins_glob_pathpat);
+
+    console.log(`Plugin loader will attempt to read plugins from "${path_to_plugins_dir}".`);
+    console.log(`Plugin loader found ${found_plugins_files.length}`,
+		`${found_plugins_files.length === 1 ? "plugin" : "plugins"}.`);
 
     function network_hook (description, method, addr, response_fn) {
 	this.context.add_network_hook(description, method, addr, response_fn);
@@ -71,12 +75,41 @@ Runtime.prototype.load_plugins = function (path_to_routes_dir) {
 	network: network_hook.bind(this)
     };
 
-    found_routes_files.forEach((route_file) => {
-	let tmp = require(path.resolve(route_file));
-	tmp(hooks);
-    }, this);
-    
+    // Loop-over all of the 
+    found_plugins_files.forEach((plugin_file) => {
 
+	let this_plugin = require(path.resolve(plugin_file)),
+	    plugin_dir  = path.basename(path.parse(plugin_file).dir);
+
+	let plugin_info = {};
+	
+	plugin_info.description = this_plugin.description || "No description.",
+	plugin_info.author      = this_plugin.author      || "Unknown author.",
+	plugin_info.version     = this_plugin.version     || "0.0.0";
+
+	if (!this_plugin.onload || ! this_plugin.onload instanceof Function) {
+	    console.log(`Plugin loader failed to load ${plugin_dir} plugin ("${plugin_info.description}")`,
+			`plugin does not export an 'onload' function.`);
+	    return;
+	}
+
+	try {
+	    this_plugin.onload(hooks);
+	}
+	catch (e) {
+	    console.log(`Plugin loader failed to load ${plugin_dir}: ${e.message}`);
+	    return;
+	}
+
+	//
+	// Success! Plugin has been registered.
+	//
+	console.log(`Plugin loader loaded "${plugin_dir}" (${plugin_info.version})`,
+		    `-- "${plugin_info.description}"`);
+	
+    }, this);
+
+    console.log("\n");
 };
 
 
@@ -195,7 +228,7 @@ Runtime.prototype._filter_interesting_events  = function () {
                 domain:      url.host,
                 safe_domain: safeish_domain,
                 esrc:        e.event 
-            }
+            };
         });
 
     return {
@@ -204,7 +237,7 @@ Runtime.prototype._filter_interesting_events  = function () {
             medium: [],
             low:    []
         },
-        url: url_based_events,
+        url: url_based_events
     };
 }
 
