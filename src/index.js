@@ -17,14 +17,14 @@ const colors          = require("colors");
 const events          = require("./events");
 const _               = require("lodash");
 
-
-var runtime = new Runtime({ epoch: new Date().getTime() });
-
 console.log(`Construct version 0.1.0 (alpha)`);
-console.log(`GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007.`);
+console.log(`GNU GENERAL PUBLIC LICENSE Version 3`);
 console.log(`Please report bugs to: https://github.com/bobbystacksmash/Construct/issues`);
 console.log(`For help, type "help"`);
 console.log(``);
+
+var runtime = new Runtime({ epoch: new Date().getTime() });
+
 
 // Vorpal mixed mode:
 //
