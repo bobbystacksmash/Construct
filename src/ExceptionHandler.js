@@ -28,53 +28,76 @@ class ExceptionHandler extends Component {
 		`addressed.`);
     }
 
-    _throw (source, type, name, message, summary, detailed) {
+    _throw (name, message, number, description, _source, _summary, _description) {
 	
-	if (!summary)  this._lazy_throw_protect(type, "Summary is not defined.");
-	if (!detailed) this._lazy_throw_protect(type, "Detailed description is not defined.");
+	if (!_summary)     this._lazy_throw_protect(_source, "Summary is not defined.");
+	if (!_description) this._lazy_throw_protect(_source, "Detailed description is not defined.");
 
-	let throw_obj = { 
-	    name: name,
-	    source: source,
-	    message: message,
-	    summary: summary,
-	    detailed: detailed
+	let throw_obj = {
+	    // MSFT properties
+	    name:         name,
+	    message:      message,
+	    number:       number,
+	    description:  description,
+	    // Construct informational properties
+	    _source:      _source,
+	    _summary:     _summary,
+	    _description: _description
 	};
 
-	console.log(throw_obj);
-
-	this.ee.emit(`!Exception::${type}`, throw_obj);
+	this.ee.emit(`!Exception::${name}`, throw_obj);
 	throw throw_obj;
     }
 
     
-    throw_path_not_found (source, summary, detailed) {
-	this._throw(source,
-	       "path_not_found",
-	       "Error",
-	       "Path not found",
-	       summary,
-	       detailed);
+    throw_path_not_found (source, summary, details) {
+	this._throw(
+	    "Error",
+	    "Path not found",
+	    -0, // TODO
+	    "Path not found",
+	    source,
+	    summary,
+	    details
+	);
     }
 
 
-    throw_invalid_fn_arg (source, summary, detailed) {
-	this._throw(source,
-	       "invalid_fn_arg",
-	       "TypeError",
-	       "Invalid procedure call or argument",
-	       summary,
-	       detailed);
+    throw_invalid_fn_arg (source, summary, details) {
+	this._throw(
+	    "TypeError",
+	    "Invalid procedure call or argument",
+	    -0, // TODO
+	    "Invalid procedure call or argument",
+	    source,
+	    summary,
+	    details
+	);
     }
 
 
-    throw_unsupported_prop_or_method (source, summary, detailed) {
-	this._throw(source,
-		    "unsupported_prop_or_method",
-		    "TypeError",
-		    "Object doesn't support this property or method",
-		    summary,
-		    detailed);
+    throw_unsupported_prop_or_method (source, summary, details) {
+	this._throw(
+	    "TypeError",
+	    "Object doesn't support this property or method",
+	    -0, // TODO
+	    "Object doesn't support this property or method",
+	    source,
+	    summary,
+	    details
+	);
+    }
+
+    throw_wrong_argc_or_invalid_prop_assign (source, summary, details) {
+	this._throw(
+	    "TypeError",                                                // name
+	    "Wrong number of arguments or invalid property assignment", // message
+	    -2146827838,                                                // number
+	    "Wrong number of arguments or invalid property assignment", // description
+	    source,
+	    summary,
+	    details
+	);
     }
 }
 
