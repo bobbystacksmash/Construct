@@ -1,14 +1,19 @@
 module.exports = function proxify(context, instance) {
 
     return new Proxy(instance, {
-	get (target, propKey, receiver) {
+	get (target, prop_key, receiver) {
 	    
-	    let actual_propkey = propKey.toLowerCase();
+	    let actual_propkey = prop_key.toLowerCase();
 
 	    context.emitter.emit("$DEBUG::proxy-translate", {
-		prop_from: propKey,
+		prop_from: prop_key,
 		prop_to:   actual_propkey
 	    });
+
+	    if (context.DEBUG) {
+		console.log(`PROXDBG> ${prop_key}`);
+	    }
+		
 
 	    const original_method = target[actual_propkey];
 

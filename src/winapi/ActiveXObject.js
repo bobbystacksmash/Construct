@@ -8,7 +8,7 @@ const proxify   = require("../proxify2");
 const JScript_XMLHttpRequestBase = require("../winapi/XMLHttpRequestBase");
 const JScript_WshShell           = require("../winapi/WshShell");
 const JScript_ShellApplication   = require("../winapi/ShellApplication");
-
+const JScript_ADODBStream        = require("../winapi/ADODBStream");
 
 class JS_ActiveXObject extends Component {
 
@@ -48,9 +48,13 @@ class JS_ActiveXObject extends Component {
 	case "msxml2.xmlhttp":
 	    this.ee.emit("@ActiveXObject::new::MSXML2.XMLHTTP");
 	    let xhr = new JScript_XMLHttpRequestBase(context, type);
-	    return xhr;	    
+	    return xhr;
 
-
+	case "adodb.stream":
+	    this.ee.emit("@ActiveXObject::new::ADODB.Stream");
+	    let ado = new JScript_ADODBStream(context);
+	    return ado;
+	    
 	default:
 	    console.log("ERROR: Unknown action type for ActiveXObject: " + type);
 	    break;

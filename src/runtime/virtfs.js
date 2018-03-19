@@ -8,7 +8,7 @@ class VirtualFileSystem {
 
     constructor(context) {
 	this.context    = context;
-	this.context.register("VirtualFileSystem", this, context);
+	//this.context.register("VirtualFileSystem", this, context);
 	this.register = context.register;
 	this.volume = {};
 	this.volume["c:"] = new FolderObject(context, "c:", true);
@@ -178,7 +178,6 @@ class VirtualFileSystem {
 	}
 
 	if (src_folder.IsRootFolder) {
-	    console.log(`==== uuggghhh, complexity! ====`);
 	    return false;
 	}
 

@@ -15,6 +15,7 @@ const evts            = require("./events");
 const fs              = require("fs");
 const colors          = require("colors");
 const events          = require("./events");
+const hexy            = require("hexy");
 const _               = require("lodash");
 
 console.log(`Construct version 0.1.0 (alpha)`);
@@ -154,15 +155,29 @@ function CMD_net (args, callback) {
     //       slow if we have a HEAP of events to churn through.
     //
     let all_hostnames  = net_requests.map(
-	(e) => [(safety)     ? e.args.address_parts.safe_hostname : e.args.address_parts.hostname,
+	(e) => [(safety)     ? e.args.request.address_parts.safe_hostname : e.args.request.address_parts.hostname,
 		(show_event) ? e.event : ""]
     );
 
     let all_hrefs  = net_requests.map(
-	(e) => [(safety)     ? e.args.address_parts.safe_href : e.args.address,
+	(e) => [(safety)     ? e.args.request.address_parts.safe_href : e.args.request.address,
 		(show_event) ? e.event        : ""]
     );
 
+    let all_remote_requests = net_requests.map(
+	(e) => [`${e.args.request.method} ${e.args.request.address}`,
+		e.args.request.body || ""]);
+
+
+    console.log("\nRemote Requests");
+    console.log(   "--------------\n");
+    all_remote_requests.forEach(req => {
+	console.log(req[0]);
+	console.log(hexy.hexy(req[1]));
+    });
+
+    
+    
     let uniq_hostnames = _.uniqBy(all_hostnames, x => x[0]),
 	uniq_hrefs     = _.uniqBy(all_hrefs, x => x[0]);
 
@@ -209,7 +224,7 @@ vorpal
     .option("-d, --domains", "Display only cpatured domains.")
     .option("-e, --event",   "Display the event which produced this network entry.")
     .option("-u, --uniq",    "Display only unique rows.")
-    .option("-c, --curl",    "Display a cURL command to fetch the given href.")
+    //.option("-c, --curl",    "Display a cURL command to fetch the given href.")
     .description(CMDHELP_net)
     .action(CMD_net);
 

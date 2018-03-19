@@ -1,19 +1,19 @@
-const proxify2 = require("../proxify2");
-const events   = require("../events");
+const Component = require("../Component");
+const proxify   = require("../proxify2");
 
 /*
  * ============
  * ADODB Stream
  * ============
  *
- * N.B.
- * ====
+ * Notes
+ * =====
+ * 
  * A.D.O. =  Microsoft [A]ctiveX [D]ata [O]bjects.
  *
  * Represents a stream of binary data or text.
  *
  * https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/stream-object-ado
- * 
  *
  * API
  * ===
@@ -52,56 +52,53 @@ const events   = require("../events");
  *
  */
 
-module.exports = function ADODBStream (opts) {
+class JS_ADODBStream extends Component {
 
-    let ee = opts.emitter;
-
-    function Open (source, mode, opts, user, password) {
-        ee.emit(events.WINAPI.ADODB.Stream.Open, {
-            source: source,
-            mode: mode,
-            opts: opts,
-            user: user,
-            password: password
-        });
-
-        /*console.log(`ADODBStream.Open ` + source);
-        console.log(`ADODBStream.Open OPTS: ${JSON.stringify(opts)}`);*/
+    constructor (context) {
+	super(context, "ADODBStream");
+	this.ee  = this.context.emitter;
+	this.vfs = this.context.vfs;
     }
 
 
-    function Write (buffer) {
+    //
+    // PROPERTIES
+    // ==========
+    //
 
-        ee.emit(events.WINAPI.ADODB.Stream.Write, {
-            buffer: buffer
-        });
+    //
+    // METHODS
+    // =======
+    //
 
-        //console.log("MOCK_WRITE: " + buffer);
+    //
+    // Open
+    // ====
+    //
+    // MSDN: https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/open-method-ado-stream
+    //
+    // SYNOPSIS
+    // ========
+    //
+    // Opens a Stream object to manipulate streams of binary or text
+    // data.
+    //
+    // PARAMETERS
+    // ==========
+    //
+    // source - Optional. 
+    open () {
+	console.log("ADODBSTREAM: OPEN CALLED, args:", arguments);
     }
 
-
-    function SaveToFile (filename, save_opts) {
-
-        ee.emit(events.WINAPI.ADODB.Stream.SaveToFile, {
-            filename: filename,
-            save_opts: save_opts
-        });
-
-        /*console.log("ADODB: Save to file: " + filename);
-        console.log(save_opts, "<-- save opts (saveTofile)");*/
+    write () {
+	console.log("ADODBSTREAM: WRITE CALLED, args:", arguments);
     }
-
-
-    function Close () {
-        //console.log("ADODB :: Close (mark this obj as closed)");
-    }
-
-    let ADODBStream = {
-        Open: Open,
-        Write: Write,
-        SaveToFile: SaveToFile,
-        Close: Close
-    };
-
-    return proxify2(ADODBStream, "ADODBStream", opts);
+    
 }
+
+
+module.exports = function create(context) {
+    let adodbstream = new JS_ADODBStream(context);
+    return proxify(context, adodbstream);
+};

@@ -17,6 +17,8 @@ class HostContext {
 	    "NT 6.1; Trident/7.0; SLCC2; .NET CLR 2.0.50727; " +
 	    ".NET CLR 3.5.30729; .NET CLR 3.0.30729; " +
 	    "Media Center PC 6.0; .NET4.0C)";
+
+	this.DEBUG = false;
 	
 	this.hooks = {
 	    network: []
@@ -117,10 +119,13 @@ class HostContext {
 	this.epoch = opts.epoch || new Date().getTime();
 
 	this._setup_components();
-	
     }
 
     _setup_components () {
+
+	this.components["VirtualFileSystem"] = new VirtualFileSystem(this);
+	this.register("VirtualFileSystem", this.components["VirtualfileSystem"]);
+	this.vfs = this.components["VirtualFileSystem"];
 
 	// The exception-thrower is an guard against VM code throwing
 	// exceptions without providing sufficient documentation that
@@ -155,6 +160,11 @@ class HostContext {
 	// =======
 	this.components["WScript"] = new JScript_WScript(this);
 	this.register("WScript", this.components["WScript"]);
+    }
+
+
+    get_vfs () {
+	return this.vfs;
     }
 
 
