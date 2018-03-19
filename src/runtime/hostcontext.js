@@ -203,15 +203,19 @@ class HostContext {
 	//
 	// We return the default hook if no user-supplied hook can be found.
 	//
-	let default_nethook = {
-	    match: () => true,
-	    desc:  "Construct's default nethook response handler.",
-	    handle: (req, ee) => {
-		return {
-		    status: 200, // TODO: Fetch this value from the config.
-		    body: `<!DOCTYPE html><html><head></head><body>Construct.</body></html>`
-		};
-	    }
+	let default_body = `<!DOCTYPE html><html><head></head><body>Construct.</body></html>`,
+	    default_nethook = {
+		match: () => true,
+		desc:  "Construct's default nethook response handler.",
+		handle: (req, ee) => {
+		    return {
+			status: 200, // TODO: Fetch this value from the config.
+			headers: {
+			    "content-length": default_body.length
+			},
+			body: default_body
+		    };
+		}
 	};
 
 	method = method.toUpperCase();
