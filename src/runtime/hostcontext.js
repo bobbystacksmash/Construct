@@ -18,7 +18,7 @@ class HostContext {
 	    ".NET CLR 3.5.30729; .NET CLR 3.0.30729; " +
 	    "Media Center PC 6.0; .NET4.0C)";
 
-	this.DEBUG = false;
+	this.DEBUG = true;
 	
 	this.hooks = {
 	    network: []
@@ -172,6 +172,10 @@ class HostContext {
 	// TODO: Add code here which lets runtime code ask questions
 	// of the Construct config.
 	
+    }
+
+    skew_time_ahead_by (ms) {
+	this.epoch += ms;
     }
 
 
