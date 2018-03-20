@@ -8,7 +8,7 @@ const proxify   = require("../proxify2");
  *
  * Notes
  * =====
- * 
+ *
  * A.D.O. =  Microsoft [A]ctiveX [D]ata [O]bjects.
  *
  * Represents a stream of binary data or text and provides methods and
@@ -26,7 +26,7 @@ const proxify   = require("../proxify2");
  * ==========
  *
  * [ ] - Charset       https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/charset-property-ado
- * [ ] - EOS           https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/eos-property 
+ * [ ] - EOS           https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/eos-property
  * [ ] - LineSeparator https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/lineseparator-property-ado
  * [ ] - Mode          https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/mode-property-ado
  * [ ] - Position      https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/position-property-ado
@@ -57,45 +57,57 @@ const proxify   = require("../proxify2");
 class JS_ADODBStream extends Component {
 
     constructor (context) {
-	super(context, "ADODBStream");
-	this.ee  = this.context.emitter;
-	this.vfs = this.context.vfs;
+        super(context, "ADODBStream");
+        this.ee  = this.context.emitter;
+        this.vfs = this.context.vfs;
 
 
-	// Open
-	this.CONNECT_MODE_ENUM = {
-	    Unknown        : 0,
-	    Read           : 1,
-	    Write          : 2,
-	    ReadWrite      : 3,
-	    ShareDenyRead  : 4,
-	    ShareDenyWrite : 8,
-	    ShareExclusive : 12,
-	    ShareDenyNone  : 16,
-	    Recursive      : 0x400000
-	};
+        // Open
+        this.CONNECT_MODE_ENUM = {
+            Unknown        : 0,
+            Read           : 1,
+            Write          : 2,
+            ReadWrite      : 3,
+            ShareDenyRead  : 4,
+            ShareDenyWrite : 8,
+            ShareExclusive : 12,
+            ShareDenyNone  : 16,
+            Recursive      : 0x400000
+        };
 
-	this.OPEN_OPTIONS_ENUM = {
-	    OpenStreamAsync: 1,
-	    OpenStreamFromRecord: 4,
-	    OpenStreamUnspecified: -1
-	};
+        this.OPEN_OPTIONS_ENUM = {
+            OpenStreamAsync: 1,
+            OpenStreamFromRecord: 4,
+            OpenStreamUnspecified: -1
+        };
 
-	// Stream-specific properties
-	this.at_end_of_stream = false;
-	this.eos_marker       = -1;
-	this.pos              = 0;
-	this.stream_is_open   = false;
-	this.buffer           = Buffer.alloc(0, 0);
+        this.STREAM_READ_ENUM = {
+            ReadAll: -1, // Default. Reads all bytes from the stream,
+                         // from the current position onwards to the
+                         // EOS marker. This is the only valid
+                         // StreamReadEnum value with binary streams
+                         // (Type is adTypeBinary).
+            ReadLine: -2 // Reads the next line from the stream
+                         // (designated by the LineSeparator
+                         // property).
+        };
+
+
+        // Stream-specific properties
+        this.at_end_of_stream = false;
+        this.eos_marker       = -1;
+        this.pos              = 0;
+        this.stream_is_open   = false;
+        this.buffer           = null;
     }
 
 
     _update_buffer (newbuf) {
 
-	this.buffer = new ArrayBuffer(512); // TODO: figure this bit out.
-	this.buffer_view = new UInt8Array(this.buffer_view);
+        this.buffer = new ArrayBuffer(512); // TODO: figure this bit out.
+        this.buffer_view = new UInt8Array(this.buffer_view);
 
-	
+
     }
 
 
@@ -107,15 +119,15 @@ class JS_ADODBStream extends Component {
 
     }
     set charset (charset) {
-	console.log("CHARSET:", arguments);
+        console.log("CHARSET:", arguments);
     }
 
 
     get lineseparator () {
-	console.log("LINESEP!");
+        console.log("LINESEP!");
     }
     set lineseparator (lsep)  {
-	console.log("SET LINE SEP!");
+        console.log("SET LINE SEP!");
     }
 
 
@@ -123,17 +135,49 @@ class JS_ADODBStream extends Component {
 
     }
     set mode (mode) {
-	console.log("SET MODE:", arguments);
+        console.log("SET MODE:", arguments);
 
     }
-    
+
+    //
+    // Size
+    // ====
+    //
+    // MSDN: https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/size-property-ado-stream
+    //
+    // SYNOPSIS
+    // ========
+    //
+    // Indicates the size of the stream in number of bytes.  Returns a
+    // Long value that specifies the size of the stream in number of
+    // bytes. The default value is the size of the stream, or -1 if
+    // the size of the stream is not known.
+    //
     get size () {
-	let size = this.buffer.length;
-	this.ee.emit("@ADODBStream.size", size);
-	return size;
+
+        if (! this.stream_is_open) {
+            this.context.exceptions.throw_operation_not_allowed_when_closed(
+                "ADODB.Stream",
+                `A Stream's ".size" property was requested before the stream was open.`,
+                `This exception has been thrown because calling code has attempted to ` +
+                    `request an unopened Stream instance's ".size" property.`
+            );
+        }
+
+        var buffer_size = 0;
+
+        if (this.buffer === null) {
+            buffer_size = 0;
+        }
+        else {
+            buffer_size = this.buffer.length + 2;
+        }
+
+        this.ee.emit("@ADODBStream.size", buffer_size);
+        return buffer_size;
     }
 
-    
+
 
     //
     // Position
@@ -155,21 +199,21 @@ class JS_ADODBStream extends Component {
     // accordingly. Any new bytes added in this way will be null.
     //
     get position () {
-	this.ee.emit("@ADODBStream.position (get)", this.pos);
-	return this.pos;
+        this.ee.emit("@ADODBStream.position (get)", this.pos);
+        return this.pos;
     }
     set position (p) {
-	this.ee.emit("@ADODBStream.position (set)", p);
+        this.ee.emit("@ADODBStream.position (set)", p);
 
-	if (p > this.buffer.length) {
-	    let delta = p - this.buffer.length;
-	    this.buffer = Buffer.concat([this.buffer, Buffer.alloc(delta, 0x00)]);
-	}
+        if (p > this.buffer.length) {
+            let delta = p - this.buffer.length;
+            this.buffer = Buffer.concat([this.buffer, Buffer.alloc(delta, 0x00)]);
+        }
 
-	this.pos = this.buffer.length;
+        this.pos = p;
     }
-    
-    
+
+
     //
     // METHODS
     // =======
@@ -187,7 +231,7 @@ class JS_ADODBStream extends Component {
     // Cancels execution of a pending asynchronous method call.
     //
     cancel () {
-	this.ee.emit("@ADODBStream::Cancel()", arguments);
+        this.ee.emit("@ADODBStream::Cancel()", arguments);
     }
 
 
@@ -203,8 +247,8 @@ class JS_ADODBStream extends Component {
     // Closes an open object and any dependent objects.
     //
     close () {
-	this.ee.emit("@ADODBStream::Close", arguments);
-	this.stream_is_open = false;
+        this.ee.emit("@ADODBStream::Close", arguments);
+        this.stream_is_open = false;
     }
 
     //
@@ -236,25 +280,25 @@ class JS_ADODBStream extends Component {
     //
     copyto (dest_stream, num_bytes) {
 
-	if (num_bytes === -1 || num_bytes === 0) {
-	    num_bytes = this.buffer.length;
-	}
+        if (num_bytes === -1 || num_bytes === 0) {
+            num_bytes = this.buffer.length;
+        }
 
-	console.log("Copying from s1 pos:", this.pos);
+        console.log("Copying from s1 pos:", this.pos);
 
-	let source_buf = this.buffer.slice(this.pos, num_bytes);
-	dest_stream.write(source_buf);
+        let source_buf = this.buffer.slice(this.pos, num_bytes);
+        dest_stream.write(source_buf);
 
-	this.ee.emit("@ADODBStream::CopyTo", {
-	    dest      : dest_stream,
-	    num_bytes : num_bytes,
-	    src_buf   : source_buf
-	});
+        this.ee.emit("@ADODBStream::CopyTo", {
+            dest      : dest_stream,
+            num_bytes : num_bytes,
+            src_buf   : source_buf
+        });
     }
 
-    
 
-    
+
+
     //
     // Open
     // ====
@@ -311,32 +355,29 @@ class JS_ADODBStream extends Component {
     //
     open (source, mode, opt, username, password) {
 
-	console.log("OPEN>", arguments);
+        this.ee.emit("@ADODBStream::Open", arguments);
 
-	this.ee.emit("@ADODBStream::Open", arguments);
-	
-	if (source) {
-	    this.context.exceptions.throw_not_yet_implemented(
-		"ADODBStream",
-		"ADODBStream.Open does not support a truthy 'source' value.",
-		"Calling code has attempted to call ADODBStream.Open with a truthy "  +
-		    "value passed as the 'source' parameter.  At this time, this "    +
-		    "is not yet supported.  Please update Construct -- this feature " +
-		    "may have been added.  If not, please raise this as a bug on "    +
-		    "GitHub, here: https://github.com/bobbystacksmash/Construct/issues."
-	    );
-	}
+        if (source) {
+            this.context.exceptions.throw_not_yet_implemented(
+                "ADODBStream",
+                "ADODBStream.Open does not support a truthy 'source' value.",
+                "Calling code has attempted to call ADODBStream.Open with a truthy "  +
+                    "value passed as the 'source' parameter.  At this time, this "    +
+                    "is not yet supported.  Please update Construct -- this feature " +
+                    "may have been added.  If not, please raise this as a bug on "    +
+                    "GitHub, here: https://github.com/bobbystacksmash/Construct/issues."
+            );
+        }
 
-	if (this.stream_is_open) {
-	    this.context.exceptions.throw_not_allowed(
-		"ADODBStream",
-		"ADODBStream.Open() cannot be called when the stream is already open.",
-		"Calling code has called 'Open()' twice -- this exception is thrown when " +
-		    "open is called more than once.");
-	}
+        if (this.stream_is_open) {
+            this.context.exceptions.throw_not_allowed(
+                "ADODBStream",
+                "ADODBStream.Open() cannot be called when the stream is already open.",
+                "Calling code has called 'Open()' twice -- this exception is thrown when " +
+                    "open is called more than once.");
+        }
 
-	this.stream_is_open = true;
-	debugger;
+        this.stream_is_open = true;
     }
 
     //
@@ -366,33 +407,75 @@ class JS_ADODBStream extends Component {
     //       textStream objects, use the WriteText method.
     //
     write (buf) {
-	console.log("WRITE>", buf);
 
-	// What's the length of the incoming buffer?
-	let incoming_buf_len = buf.length;
+        if (this.stream_is_open === false) {
+            throw new Error("TODO: Update this with the correct exception.");
+        }
 
-	if (this.buffer.byteLength === 0) {
-	    this.buffer = Buffer.from(buf);
-	}
-	else {
-	    this.buffer = Buffer.concat([this.buffer, Buffer.from(buf)]);
-	}
+        // What's the length of the incoming buffer?
+        let incoming_buf_len = buf.length;
 
-	this.eos_marker = this.buffer.length;
-	this.pos        = this.buffer.length;
+        if (this.buffer.byteLength === 0) {
+            this.buffer = Buffer.from(buf);
+        }
+        else {
+            this.buffer = Buffer.concat([this.buffer, Buffer.from(buf)]);
+        }
 
-	this.ee.emit("@ADODBStream::Write", { buffer: buf });
+        this.eos_marker = this.buffer.length;
+        this.pos        = this.buffer.length;
+
+        this.ee.emit("@ADODBStream::Write", { buffer: buf });
     }
-    
+
+    //
+    // WriteText
+    // =========
+    //
+    // MSDN: https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/writetext-method
+    //
+    // SYNOPSIS
+    // ========
+    //
+    // Writes a specified text string to a Stream object.
+    //
+    writetext (txt, add_line_sep) {
+
+        txt = txt || "";
+
+        if (!this.stream_is_open) {
+            this.context.exceptions.throw_operation_not_allowed_when_closed(
+                "ADODB.Stream",
+                `The following textual data was attempted to be written ` +
+                    `to this stream, however the stream is not open. Text data: ` +
+                    `"${txt}".`,
+                `All streams must be OPEN before data can be written to them. ` +
+                    `Calling code has attempted to write the following to this ` +
+                    `stream instance without first calling 'open()': "${txt}".`
+            );
+        }
+
+        if (txt === "") {
+            this.buffer = new Buffer("", "utf-8");
+        }
+    }
 
     read (len) {
 
-	if (len >= this.buffer.length) {
-	    len = this.buffer.length;
-	}
+        if (len >= this.buffer.length) {
+            len = this.buffer.length;
+        }
 
-	let buf = this.buffer.slice(0, len);
-	return [...buf];
+        let buf;
+
+        if (len === -1 || len === undefined || len === null) {
+            buf = this.buffer.slice(0);
+        }
+        else {
+            buf = this.buffer.slice(0, len);
+        }
+
+        return [...buf];
     }
 
 
@@ -411,17 +494,17 @@ class JS_ADODBStream extends Component {
     //
     seteos (offset) {
 
-	let old_buf = this.buffer,
-	    new_buf = this.buffer.slice(0, offset);
-	
-	this.buffer = new_buf;
-	this.eos_marker = offset;
+        let old_buf = this.buffer,
+            new_buf = this.buffer.slice(0, offset);
 
-	this.ee.emit("@ADODBStream::SetEOS", {
-	    offset: offset,
-	    old_buf: old_buf,
-	    new_buf: new_buf
-	});
+        this.buffer = new_buf;
+        this.eos_marker = offset;
+
+        this.ee.emit("@ADODBStream::SetEOS", {
+            offset: offset,
+            old_buf: old_buf,
+            new_buf: new_buf
+        });
     }
 
     //
@@ -454,12 +537,12 @@ class JS_ADODBStream extends Component {
     //
     savetofile (filename, option) {
 
-	console.log("ADODBSTREAM.SAVE->", filename, "opt", option);
+        console.log("ADODBSTREAM.SAVE->", filename, "opt", option);
     }
 
 
     close () {
-	console.log("ADODBSTREAm.CLOSE()");
+        console.log("ADODBSTREAm.CLOSE()");
     }
 
 }

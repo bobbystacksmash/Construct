@@ -7,10 +7,10 @@ const JS_WshShortcut    = require("./WshShortcut");
 class JS_WshShell extends Component {
 
     constructor (context) {
-	super(context, "WshShell");
-	this.ee = this.context.emitter;
+        super(context, "WshShell");
+        this.ee = this.context.emitter;
 
-	this.special_folders = [
+        this.special_folders = [
             "AllUsersDesktop",
             "AllUsersStartMenu",
             "AllUsersPrograms",
@@ -27,14 +27,14 @@ class JS_WshShell extends Component {
             "StartMenu",
             "Startup",
             "Templates"
-	];
+        ];
     }
 
     //
     // PROPERTIES
     // ==========
     //
-    
+
     // MSDN: https://msdn.microsoft.com/en-us/subscriptions/3cc5edzd(v=vs.84).aspx
     //
     // SYNOPSIS
@@ -44,17 +44,17 @@ class JS_WshShell extends Component {
     // CurrentDirectory returns a string that contains the fully
     // qualified path of the current working directory of the active
     // process.
-    // 
+    //
     get currentdirectory () {
-	let cwd = this.context.ENVIRONMENT.CurrentDirectory;
-	this.ee.emit("@WshShell.CurrentDirectory [GET]", cwd);
-	return cwd;
+        let cwd = this.context.ENVIRONMENT.CurrentDirectory;
+        this.ee.emit("@WshShell.CurrentDirectory [GET]", cwd);
+        return cwd;
     }
 
     set currentdirectory (new_cwd) {
-	let old_cwd = this.context.ENVIRONMENT.CurrentDirectory;
-	this.ee.emit("@WshShell.CurrentDirectory [SET]", { new_cwd: new_cwd, old_cwd: old_cwd });
-	this.context.ENVIRONMENT.CurrentDirectory = new_cwd;
+        let old_cwd = this.context.ENVIRONMENT.CurrentDirectory;
+        this.ee.emit("@WshShell.CurrentDirectory [SET]", { new_cwd: new_cwd, old_cwd: old_cwd });
+        this.context.ENVIRONMENT.CurrentDirectory = new_cwd;
     }
 
 
@@ -87,16 +87,16 @@ class JS_WshShell extends Component {
     //   var oShellLink = WshShell.CreateShortcut(strDesktop + "\\Shortcut Script.lnk");
     //
     get specialfolders () {
-	this.ee.emit("@WshShell.SpecialFolders [GET]");
+        this.ee.emit("@WshShell.SpecialFolders [GET]");
 
-	let folders = this.special_folders,
-	    emitter = this.ee;
-	return {
-	    item: function (n) {
-		emitter.emit("@WshShell.SpecialFolders::item", folders[n]);
-		return folders[n];
-	    }
-	};
+        let folders = this.special_folders,
+            emitter = this.ee;
+        return {
+            item: function (n) {
+                emitter.emit("@WshShell.SpecialFolders::item", folders[n]);
+                return folders[n];
+            }
+        };
     }
 
     //
@@ -119,14 +119,14 @@ class JS_WshShell extends Component {
     //
     // USAGE
     // =====
-    // 
+    //
     //   var WshShell = WScript.CreateObject("WScript.Shell");
     //   var WshSysEnv = WshShell.Environment("SYSTEM");
     //   WScript.Echo(WshSysEnv("NUMBER_OF_PROCESSORS"));
     //
     environment (type) {
-	this.ee.emit("@WshShell.Environment", { env_type: type, args: arguments });
-	return new JS_WshEnvironment(this.context, type);
+        this.ee.emit("@WshShell.Environment", { env_type: type, args: arguments });
+        return new JS_WshEnvironment(this.context, type);
     }
 
     //
@@ -163,8 +163,8 @@ class JS_WshShell extends Component {
     //   WshShell.AppActivate("Calculator");
     //
     appactivate(title) {
-	this.ee.emit("@WshShell.AppActivate", arguments);
-	return true;
+        this.ee.emit("@WshShell.AppActivate", arguments);
+        return true;
     }
 
     //
@@ -240,10 +240,13 @@ class JS_WshShell extends Component {
     //
     exec () {
     }
+
+    regread (key) {
+        console.log("WshShell.RegRead", arguments);
+    }
 }
 
 module.exports = function (context) {
     var wsh_shell = new JS_WshShell(context);
     return proxify(context, wsh_shell);
 };
-    
