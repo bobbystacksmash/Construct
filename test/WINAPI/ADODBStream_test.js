@@ -13,6 +13,67 @@ describe("ADODBStream", () => {
 
     describe("PROPERTIES", () => {
 
+        describe(".type", () => {
+
+            describe("SET", () => {
+
+                xit("Should throw if the type is not '1' or '2'", (done) => {
+
+                    let context = Object.assign({}, mock_context, {
+                        exceptions: {
+                            throw_args_wrong_type_or_out_of_range_or_conflicted: (type) => {
+                                throw new Error(`OBJ THREW: ${type}`);
+                            }
+                        }
+                    });
+
+                    let stream = new JS_ADODBStream(context);
+                    function chuckA () { stream.type = 0; };
+
+                    assert.throws(chuckA, "OBJ THREW");
+                    done();
+
+                });
+
+                it("Should throw if type is 'binary' and 'writetext' is used.", (done) => {
+
+                    let context = Object.assign({}, mock_context, {
+                        exceptions: {
+                            throw_operation_not_permitted_in_context: (type) => {
+                                throw new Error(`OBJ THREW: ${type}`);
+                            }
+                        }
+                    });
+
+                    let stream = new JS_ADODBStream(context);
+                    stream.open();
+                    stream.type = 1;
+                    function chuck () { stream.writetext("testing"); }
+                    assert.throws(chuck, "OBJ THREW");
+                    done();
+                });
+
+                it("Should throw if type is 'text' and 'write' is used.", (done) => {
+
+                    let context = Object.assign({}, mock_context, {
+                        exceptions: {
+                            throw_operation_not_permitted_in_context: (type) => {
+                                throw new Error(`OBJ THREW: ${type}`);
+                            }
+                        }
+                    });
+
+                    let stream = new JS_ADODBStream(context);
+                    stream.open();
+                    stream.type = 2;
+                    function chuck () { stream.write("testing"); }
+
+                    assert.throws(chuck, "OBJ THREW");
+                    done();
+                });
+            });
+        });
+
         // X'd out until a new method for writing to the stream is used.
         // Using `write' is not possible.
         xdescribe(".position", () => {
@@ -64,7 +125,7 @@ describe("ADODBStream", () => {
         });
     });
 
-    describe("METHODS", () => {
+    xdescribe("METHODS", () => {
         describe("#Open", () => {
 
             it("Should open a new Stream when Open is called.", (done) => {
@@ -102,9 +163,7 @@ describe("ADODBStream", () => {
         });
 
 
-
-
-        describe("#WriteText", () => {
+        xdescribe("#WriteText", () => {
 
             it("Should throw when trying to write to an unopened stream.", (done) => {
 
@@ -124,6 +183,7 @@ describe("ADODBStream", () => {
                 done();
             });
 
+
             it("Should report a length of '2' when an empty string is written", (done) => {
                 let stream = new JS_ADODBStream(mock_context);
                 stream.type = 2;
@@ -133,8 +193,6 @@ describe("ADODBStream", () => {
                 assert.equal(stream.size, 2);
                 done();
             });
-
-
 
             it("Should not throw when trying to write to an open stream.", (done) => {
 

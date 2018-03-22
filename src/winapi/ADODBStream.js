@@ -1,6 +1,9 @@
 const Component = require("../Component");
 const proxify   = require("../proxify2");
 
+const STREAM_TYPE_BINARY = 1;
+const STREAM_TYPE_TEXT   = 2;
+
 /*
  * ============
  * ADODB Stream
@@ -94,6 +97,7 @@ class JS_ADODBStream extends Component {
 
 
         // Stream-specific properties
+        this.stream_type      = STREAM_TYPE_TEXT;
         this.at_end_of_stream = false;
         this.eos_marker       = -1;
         this.pos              = 0;
@@ -138,6 +142,51 @@ class JS_ADODBStream extends Component {
         console.log("SET MODE:", arguments);
 
     }
+
+
+    //
+    // Type
+    // ====
+    //
+    // MSDN: https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/type-property-ado-stream
+    //
+    // SYNOPSIS
+    // ========
+    //
+    // Indicates the type of data contained in the Stream (binary or
+    // text).  Sets or returns a StreamTypeEnum value that specifies
+    // the type of data contained in the Stream object. The default
+    // value is adTypeText. However, if binary data is initially
+    // written to a new, empty Stream, the Type will be changed to
+    // adTypeBinary.
+    //
+    // The Type property determines which methods should be used for
+    // reading and writing the Stream.  If the Stream's type is
+    // "text", use ReadText and WriteText.  For binary streams, use
+    // Read and Write.
+    //
+    get type () {
+        this.ee.emit("@ADODBStream.Type", this.stream_type);
+        return this.stream_type;
+    }
+    set type(stream_type) {
+
+        if (stream_type != STREAM_TYPE_BINARY && stream_type != STREAM_TYPE_TEXT) {
+            this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
+                "ADODB.Stream",
+                "A Stream has been assigned a 'type' which is not '1' or '2'.",
+                `Streams must be either binary streams (type = 1), or textual ` +
+                    `streams (type = 2).  This exception has been thrown because ` +
+                    `calling code has attempted to assign an unknown stream type.`
+            );
+        }
+
+        this.ee.emit("@ADODBStream.Type", { old: this.stream_type, new: stream_type });
+        this.stream_type = stream_type;
+    }
+
+
+
 
     //
     // Size
@@ -409,7 +458,20 @@ class JS_ADODBStream extends Component {
     write (buf) {
 
         if (this.stream_is_open === false) {
+            // TODO
             throw new Error("TODO: Update this with the correct exception.");
+        }
+
+        if (this.stream_!== STREAM_TYPE_BINARY) {
+            this.context.exceptions.throw_operation_not_permitted_in_context(
+                "ADODB.Stream",
+                `Write() was called while the stream is in textual mode -- ` +
+                    `should call WriteText() instead.`,
+                `A stream can be in one of two modes: binary (mode 1), and text (mode 2). ` +
+                    `The stream mode depicts which 'write' method can be called -- ` +
+                    `'Write' is used for binary streams, while 'WriteText' is for text streams. ` +
+                    `It appears that code has attempted to call 'write' on a text stream.`
+            );
         }
 
         // What's the length of the incoming buffer?
@@ -455,10 +517,26 @@ class JS_ADODBStream extends Component {
             );
         }
 
+        if (this.stream_type === 1) {
+            // This is a binary stream, and you can't call `writetext'
+            // from a binary stream.
+            this.context.exceptions.throw_operation_not_permitted_in_context(
+                "ADODB.Stream",
+                `WriteText() was called while the stream is in binary mode -- ` +
+                    `should call Write() instead.`,
+                `A stream can be in one of two modes: binary (mode 1), and text (mode 2). ` +
+                    `The stream mode depicts which 'write' method can be called -- ` +
+                    `'Write' is used for binary streams, while 'WriteText' is for text streams. ` +
+                    `It appears that code has attempted to call 'writetext' on a binary stream.`
+            );
+        }
+
+
         if (txt === "") {
             this.buffer = new Buffer("", "utf-8");
         }
     }
+
 
     read (len) {
 
