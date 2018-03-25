@@ -139,6 +139,28 @@ class ExceptionHandler extends Component {
             source, summary, details
         );
     }
+
+
+    throw_operation_not_permitted_in_context (source, summary, details) {
+        this.throw(
+            "Error",
+            "Operation is not allowed in this context.",
+            -2146825069,
+            "Operation is not allowed in this context.",
+            source, summary, details
+        );
+    }
+
+
+    throw_args_wrong_type_or_out_of_range_or_conflicted (source, summary, details) {
+        this.throw(
+            "Error",
+            "Arguments are of the wrong type, are out of acceptable range, or are in conflict with one another.",
+            -2146825287,
+            "Arguments are of the wrong type, are out of acceptable range, or are in conflict with one another.",
+            source, summary, details
+        );
+    }
 }
 
 module.exports = ExceptionHandler;
