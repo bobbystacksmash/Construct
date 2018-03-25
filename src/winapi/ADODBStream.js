@@ -1,5 +1,6 @@
 const Component = require("../Component");
 const proxify   = require("../proxify2");
+const iconv     = require("iconv-lite");
 
 const STREAM_TYPE_BINARY = 1;
 const STREAM_TYPE_TEXT   = 2;
@@ -102,6 +103,7 @@ class JS_ADODBStream extends Component {
         this.eos_marker       = -1;
         this.pos              = 0;
         this.stream_is_open   = false;
+        this.stream_is_fresh  = true;
         this.buffer           = null;
     }
 
@@ -181,7 +183,12 @@ class JS_ADODBStream extends Component {
             );
         }
 
-        this.ee.emit("@ADODBStream.Type", { old: this.stream_type, new: stream_type });
+        this.buffer = Buffer.from(
+            (stream_type === STREAM_TYPE_BINARY) ? "B" : "T",
+            "ucs-2"
+        );
+
+        this.ee.emit("@ADODBStream.Type", stream_type);
         this.stream_type = stream_type;
     }
 
@@ -215,11 +222,14 @@ class JS_ADODBStream extends Component {
 
         var buffer_size = 0;
 
-        if (this.buffer === null) {
+        console.log("GET SIZE", this.buffer, this.stream_is_fresh);
+
+        if (this.buffer === null || this.stream_is_fresh) {
             buffer_size = 0;
         }
         else {
-            buffer_size = this.buffer.length + 2;
+            buffer_size = this.buffer.byteLength;
+            console.log("BUFFER SIZE:", buffer_size);
         }
 
         this.ee.emit("@ADODBStream.size", buffer_size);
@@ -254,11 +264,15 @@ class JS_ADODBStream extends Component {
     set position (p) {
         this.ee.emit("@ADODBStream.position (set)", p);
 
-        if (p > this.buffer.length) {
+        // TODO: this is broken and should check the mode type...
+        // if (this.stream_type === binary stream) {
+        /*if (p > this.buffer.length) {
             let delta = p - this.buffer.length;
             this.buffer = Buffer.concat([this.buffer, Buffer.alloc(delta, 0x00)]);
-        }
+         }*/
 
+        // IF TEXT STREAM:
+          // TODO: add a bounds check for lengths > this text stream
         this.pos = p;
     }
 
@@ -430,6 +444,66 @@ class JS_ADODBStream extends Component {
     }
 
     //
+    // ReadText
+    // ========
+    //
+    // MSDN: https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/readtext-method
+    //
+    // SYNOPSIS
+    // ========
+    //
+    // Reads specified number of characters from a text Stream object.
+    //
+    // PARAMETERS
+    // ==========
+    //
+    // num_chars - Optional. An integer value that specifies the
+    //             number of characters to read. The default value is
+    //             to read all.
+    //
+    //  NOTE: If NumChar is more than the number of characters left in
+    //        the stream, only the characters remaining are
+    //        returned. The string read is not padded to match the
+    //        length specified by NumChar. If there are no characters
+    //        left to read, a variant whose value is null is
+    //        returned. ReadText cannot be used to read backwards.
+    //
+    readtext (num_chars) {
+
+        this.ee.emit("ADODBStream::ReadText", arguments);
+
+        //
+        // NOTE
+        // ====
+        //
+        // The first TWO bytes of `this.buffer' are ALWAYS the
+        // encoding bytes and should not be returned to the user.
+        //
+        // Code from this point on should use `outbuf', which is a
+        // Buffer containing the *actual* text chars, without the
+        // header.
+        //
+        console.log("#READ TEXT");
+
+        console.log("POS:", this.pos, "(corrected: " + (this.pos + 2) + ")");
+
+        let outbuf = Buffer.alloc(this.buffer.byteLength - 2);
+        this.buffer.copy(outbuf, 0, this.pos + 2, this.buffer.byteLength - 1);
+
+        if (this.pos % 2) {
+            console.log("This stream is mangled", this.size/2);
+        }
+
+        console.log("BUFFER:", this.buffer);
+        console.log("OUTBUF:", outbuf);
+
+        console.log("---------------");
+
+        return iconv.decode(outbuf, "utf-16");
+    }
+
+
+    //
     // Write
     // =====
     //
@@ -470,7 +544,7 @@ class JS_ADODBStream extends Component {
                 `A stream can be in one of two modes: binary (mode 1), and text (mode 2). ` +
                     `The stream mode depicts which 'write' method can be called -- ` +
                     `'Write' is used for binary streams, while 'WriteText' is for text streams. ` +
-                    `It appears that code has attempted to call 'write' on a text stream.`
+                    `It appears that code has attempted to call 'write' on a stream.`
             );
         }
 
@@ -484,8 +558,8 @@ class JS_ADODBStream extends Component {
             this.buffer = Buffer.concat([this.buffer, Buffer.from(buf)]);
         }
 
-        this.eos_marker = this.buffer.length;
-        this.pos        = this.buffer.length;
+        this.eos_marker = this.buffer.byteLength;
+        this.pos        = this.buffer.byteLength;
 
         this.ee.emit("@ADODBStream::Write", { buffer: buf });
     }
@@ -531,10 +605,31 @@ class JS_ADODBStream extends Component {
             );
         }
 
+        if (txt === undefined || txt === null || ! txt instanceof String) {
+            return;
+        }
+
+        this.stream_is_fresh = false;
 
         if (txt === "") {
-            this.buffer = new Buffer("", "utf-8");
+            return;
         }
+
+        console.log(`ENCODING INCOMING TXT: '${txt}'`);
+        let encoded_txt = iconv.encode(txt, "ucs-2");
+        console.log(`ENCODED FORM:`, encoded_txt);
+
+        if (this.buffer === null) {
+            this.buffer = encoded_txt;
+        }
+        else {
+            this.buffer = Buffer.concat([this.buffer, encoded_txt]);
+        }
+
+        console.log("THIS BUF:", this.buffer);
+
+        this.eos_marker = this.buffer.byteLength;
+        this.pos        = this.buffer.byteLength;
     }
 
 
