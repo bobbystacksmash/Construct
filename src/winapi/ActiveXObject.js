@@ -35,17 +35,22 @@ class JS_ActiveXObject extends Component {
 	    let wsh = new JScript_WshShell(context);
 	    return wsh;
 
+
+	case "WbemScripting.SWbemLocator":
+	    console.log("TODO: Add WMI Scripting.");
+	    break;
+
 	// =================
         // XML HTTP Requests
 	// =================
-	case "msxml2.ServerXMLHTTP.6.0":
-	case "msxml2.ServerXMLHTTP.6.0":
-	case "msxml2.ServerXMLHTTP.6.0":
+	case "msxml2.serverxmlhttp.6.0":
+	case "msxml2.serverxmlhttp":
 	case "msxml2.xmlhttp.6.0":
 	case "msxml2.xmlhttp.5.0":
 	case "msxml2.xmlhttp.4.0":
 	case "msxml2.xmlhttp.3.0":
 	case "msxml2.xmlhttp":
+	case "microsoft.xmlhttp":
 	    this.ee.emit("@ActiveXObject::new::MSXML2.XMLHTTP");
 	    let xhr = new JScript_XMLHttpRequestBase(context, type);
 	    return xhr;
