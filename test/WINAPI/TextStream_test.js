@@ -34,6 +34,20 @@ describe("TextStream", () => {
             done();
         });
 
+        it("Should add \r\n when options == 1.", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+
+            ts.put("", 1);
+            assert.equal(ts.size, 4);
+
+            ts.put("abc", 1);
+            assert.equal(ts.size, 14);
+
+            done();
+        });
+
 
 
     });
