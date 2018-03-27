@@ -8,11 +8,18 @@ class TextStream {
         this.buffer         = null;
         this.pos            = 0;
         this.stream_is_open = false;
+        this.linesep        = Buffer.from("\r\n", "utf16le");
+
 
         // https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/streamwriteenum
         this.STREAM_WRITE_ENUM = {
             WriteChar: 0, // DEFAULT, writes a string to (as-is) to the buffer.
             WriteLine: 1  // Writes `concat(string, LINE_SEP)' to the buffer.
+        };
+
+        this.STREAM_READ_ENUM = {
+            ReadAll: -1,
+            ReadLine: -2
         };
 
         // https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/lineseparatorsenum
@@ -21,6 +28,13 @@ class TextStream {
             CRLF: -1, // Default. Carriage return + line feed.
             LF:   10  // Line feed.
         };
+
+    }
+
+    get EOS () {
+        if (!this.buffer) return false;
+        if (this.buffer.byteLength === this.pos) return true;
+        return false;
     }
 
     set position (p) {
@@ -55,11 +69,46 @@ class TextStream {
     }
 
 
-    // ReadText and WriteText are for text streams, while Read and
-    // Write are for binary streams.  To simply the Stream API, both
-    // BinaryStream and TextStream instances will use `put' and
-    // `fetch' -- deliberately different from the ADODBStream API
-    // names to avoid confusion.
+    skipline (line_sep_val) {
+
+        let read_until_sep;
+
+        switch (line_sep_val) {
+        case this.LINE_SEPARATOR_ENUM.CR:
+            read_until_sep = Buffer.from("\r", "utf16le");
+            break;
+        case this.LINE_SEPARATOR_ENUM.LF:
+            read_until_sep = Buffer.from("\n", "utf16le");
+            break;
+
+        case this.LINE_SEPARATOR_ENUM.CR:
+        default:
+            read_until_sep = Buffer.from("\r\n", "utf16le");
+            break;
+        }
+
+        console.log("thisbuf", this.buffer);
+        console.log("thissep", read_until_sep);
+
+        let index_of_next_line = this.buffer.indexOf(read_until_sep, this.pos);
+
+        if (index_of_next_line === -1) {
+            index_of_next_line = this.buffer.byteLength;
+        }
+        else {
+            index_of_next_line += read_until_sep.byteLength;
+        }
+
+        this.pos = index_of_next_line;
+    }
+
+
+    fetch (readopt) {
+
+        if (options === this.STREAM_READ_ENUM.ReadLine) {
+
+        }
+    }
 
     //
     // Put

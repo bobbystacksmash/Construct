@@ -48,9 +48,71 @@ describe("TextStream", () => {
             done();
         });
 
+    });
+
+
+    describe("#skipline", () => {
+
+        it("Should default to CRLF without changing LineSep (default)", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.type = 2;
+            ts.put("abc\r\ndef\r\nghi");
+
+            ts.position = 0;
+            ts.skipline();
+
+            assert.equal(ts.position, 10);
+            done();
+        });
+
+        it("Should continue skipping lines until there are no more lef to skip", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.type = 2;
+            ts.put("abc\r\ndef\r\nghi\r\n");
+
+            ts.position = 0;
+
+            ts.skipline();
+            assert.equal(ts.position, 10);
+
+            ts.skipline();
+            assert.equal(ts.position, 20);
+
+            ts.skipline();
+            assert.equal(ts.position, 30);
+
+            ts.skipline();
+            ts.skipline();
+            ts.skipline();
+            ts.skipline();
+            assert.equal(ts.position, 30);
+
+            done();
+
+        });
+
+        // TODO: multiple calls to skipline should do something...
+
+        it("Should read up to LF if set", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.type = 2;
+            ts.put("abc\ndef");
+            ts.position = 0;
+            ts.skipline(10); /* 10 = enum value for LF */
+            assert.equal(ts.position, 8);
+            done();
+        });
+
 
 
     });
+
 
     describe(".position", () => {
 
