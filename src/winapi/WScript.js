@@ -156,7 +156,9 @@ class JS_WScript extends Component {
     }
 
 
-    sleep () {
+    sleep (ms) {
+	this.context.skew_time_ahead_by(ms);
+	console.log("@WScript::Sleep", "ERROR: NOT IMPLEMENTED!", arguments);
 	this.ee.emit("@WScript::Sleep", "ERROR: NOT IMPLEMENTED!");
     }
 
