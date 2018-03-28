@@ -87,9 +87,6 @@ class TextStream {
             break;
         }
 
-        console.log("thisbuf", this.buffer);
-        console.log("thissep", read_until_sep);
-
         let index_of_next_line = this.buffer.indexOf(read_until_sep, this.pos);
 
         if (index_of_next_line === -1) {
@@ -103,11 +100,13 @@ class TextStream {
     }
 
 
-    fetch (readopt) {
+    fetch (numchars) {
 
-        if (options === this.STREAM_READ_ENUM.ReadLine) {
-
+        if (numchars > 0) {
+            // TODO
         }
+
+
     }
 
     //

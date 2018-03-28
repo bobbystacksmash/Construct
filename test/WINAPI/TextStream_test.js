@@ -50,6 +50,19 @@ describe("TextStream", () => {
 
     });
 
+    describe("#fetch", () => {
+
+        it("Should fetch bytes when position is 0, stream is open, and contains text", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.put("abcd");
+            ts.position = 0;
+            assert.equal(ts.fetch(), "abcd");
+            done();
+        });
+    });
+
 
     describe("#skipline", () => {
 
@@ -95,8 +108,6 @@ describe("TextStream", () => {
 
         });
 
-        // TODO: multiple calls to skipline should do something...
-
         it("Should read up to LF if set", (done) => {
 
             let ts = new TextStream();
@@ -108,8 +119,6 @@ describe("TextStream", () => {
             assert.equal(ts.position, 8);
             done();
         });
-
-
 
     });
 
