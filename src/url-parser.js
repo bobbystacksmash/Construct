@@ -12,8 +12,8 @@ module.exports = function (url) {
 	parsed_parts = urlparse(url, true);
 
     // Let's also make the hostname safe.
-    parsed_parts.safe_hostname = parsed_parts.hostname.replace(".", "[.]");
-    parsed_parts.safe_host     = parsed_parts.host.replace(".", "[.]");
+    parsed_parts.safe_hostname = parsed_parts.hostname.replace(/\./g, "[.]");
+    parsed_parts.safe_host     = parsed_parts.host.replace(/\./g, "[.]");
     parsed_parts.safe_href     = safe_version;
 
     return parsed_parts;
