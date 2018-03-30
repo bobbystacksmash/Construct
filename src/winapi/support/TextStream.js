@@ -38,6 +38,13 @@ class TextStream {
     }
 
     set position (p) {
+
+        if (p > this.buffer.byteLength) {
+            throw new Error("Position cannot be set to " +
+                            "an index beyond the bounds of "+
+                            "the internal buffer.");
+        }
+
         this.pos = p;
     }
     get position () {
@@ -68,12 +75,15 @@ class TextStream {
         this.stream_is_open = false;
     }
 
+    getsep (type) {
 
-    skipline (line_sep_val) {
+        if (type === undefined || type === null) {
+            type = this.linesep;
+        }
 
-        let read_until_sep;
+        var read_until_sep;
 
-        switch (line_sep_val) {
+        switch (type) {
         case this.LINE_SEPARATOR_ENUM.CR:
             read_until_sep = Buffer.from("\r", "utf16le");
             break;
@@ -87,7 +97,14 @@ class TextStream {
             break;
         }
 
-        let index_of_next_line = this.buffer.indexOf(read_until_sep, this.pos);
+        return read_until_sep;
+    }
+
+
+    skipline (line_sep_val) {
+
+        let read_until_sep = this.getsep(line_sep_val),
+            index_of_next_line = this.buffer.indexOf(read_until_sep, this.pos);
 
         if (index_of_next_line === -1) {
             index_of_next_line = this.buffer.byteLength;
@@ -100,14 +117,22 @@ class TextStream {
     }
 
 
-    fetch (numchars) {
-
-        if (numchars > 0) {
-            // TODO
-        }
-
+    fetch_upto (sep) {
 
     }
+
+    fetch_all () {
+
+        let num_bytes_to_read = (this.buffer.byteLength - this.pos),
+            outbuf = Buffer.alloc(num_bytes_to_read);
+        this.buffer.copy(outbuf, 0, this.pos);
+        return outbuf.toString("utf16le");
+    }
+
+    fetch_n_chars (n_chars) {
+
+    }
+
 
     //
     // Put
