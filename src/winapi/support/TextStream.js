@@ -39,6 +39,15 @@ class TextStream {
 
     set position (p) {
 
+        if (p === 0) {
+            this.pos = 0;
+            return;
+        }
+        else if (! this.buffer || this.buffer === null || this.buffer === undefined) {
+            throw new Error("Cannot set position to a positive value " +
+                            "while the buffer is empty.");
+        }
+
         if (p > this.buffer.byteLength) {
             throw new Error("Position cannot be set to " +
                             "an index beyond the bounds of "+
@@ -123,6 +132,10 @@ class TextStream {
 
     fetch_all () {
 
+        if (! this.buffer || this.buffer.byteLength === 0) {
+            return "";
+        }
+
         let num_bytes_to_read = (this.buffer.byteLength - this.pos),
             outbuf = Buffer.alloc(num_bytes_to_read);
         this.buffer.copy(outbuf, 0, this.pos);
@@ -131,6 +144,28 @@ class TextStream {
 
     fetch_n_chars (n_chars) {
 
+        if (! this.buffer || this.buffer === null || this.buffer.byteLength === 0) {
+            return "";
+        }
+
+        let num_bytes_to_read = (n_chars * 2);
+
+        // If the n_chars to read is greater than the length
+        // of the available buffer, we just read up to the
+        // end of buffer.
+        let num_bytes_available = (this.buffer.byteLength - this.pos),
+            max_bytes_to_read   = Math.min(num_bytes_to_read, num_bytes_available),
+            read_upto_index     = this.pos + num_bytes_to_read;
+
+        if (read_upto_index > this.buffer.byteLength - 1) {
+            read_upto_index = (this.buffer.byteLength - 1);
+        }
+
+        const outbuf = Buffer.alloc(Math.min(num_bytes_to_read, num_bytes_available));
+
+        this.buffer.copy(outbuf, 0, this.pos, read_upto_index);
+        this.pos += 2;
+        return outbuf.toString("utf16le");
     }
 
 
