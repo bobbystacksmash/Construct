@@ -76,6 +76,140 @@ describe("TextStream", () => {
         });
     });
 
+    describe("#fetch_line", () => {
+
+        it("Default should fetch up to the first CRLF", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.put("abcd\r\nefgh\r\n");
+            ts.position = 0;
+
+            assert.equal(ts.fetch_line(), "abcd");
+            assert.equal(ts.position, 12);
+
+            assert.equal(ts.fetch_line(), "efgh");
+            assert.equal(ts.position, 24);
+
+            assert.equal(ts.fetch_line(), "");
+            assert.equal(ts.position, 24);
+
+            ts.position = 0;
+            assert.equal(ts.fetch_all(), "abcd\r\nefgh\r\n");
+
+            done();
+        });
+
+        it("Should return an empty string when at the end of the buffer", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.put("abcd\r\n");
+
+            assert.equal(ts.fetch_line(), "");
+            assert.equal(ts.position, 12);
+            done();
+        });
+
+        it("Should return the whole string when CRLF cannot be found", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.put("abcd");
+
+            ts.position = 0;
+            assert.equal(ts.fetch_line(), "abcd");
+            assert.equal(ts.position, 8);
+
+            done();
+        });
+
+        it("Should handle the case where the whole string is CRLF pairs", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.put("\r\n\r\n\r\n\r\n");
+            ts.separator = -1;
+            ts.position = 0;
+
+            assert.equal(ts.fetch_line(), "");
+            assert.equal(ts.position, 4);
+
+            assert.equal(ts.fetch_line(), "");
+            assert.equal(ts.position, 8);
+
+            assert.equal(ts.fetch_line(), "");
+            assert.equal(ts.position, 12);
+
+            assert.equal(ts.fetch_line(), "");
+            assert.equal(ts.position, 16);
+
+            assert.equal(ts.fetch_line(), "");
+            assert.equal(ts.position, 16);
+
+            done();
+        });
+
+        describe("line separator specific", () => {
+
+            it("Should throw if the sep value isn't CR, CRLF, or LF", (done) => {
+
+                let ts = new TextStream();
+                ts.open();
+
+                assert.throws(() => ts.separator = "\r\n");
+                assert.throws(() => ts.separator = "\n");
+                assert.throws(() => ts.separator = "\r");
+                assert.throws(() => ts.separator = 0);
+                assert.throws(() => ts.separator = 1);
+
+                assert.doesNotThrow(() => ts.separator = -1);
+                assert.doesNotThrow(() => ts.separator = 13);
+                assert.doesNotThrow(() => ts.separator = 10);
+
+                done();
+            });
+
+            it("Should change to LF", (done) => {
+
+                let ts = new TextStream();
+                ts.open();
+                ts.put("abcd\r\nefgh\r\n");
+
+                ts.separator = 10; // LF
+                ts.position = 0;
+                assert.equal(ts.fetch_line(), "abcd\r");
+                assert.equal(ts.fetch_line(), "efgh\r");
+
+                assert.equal(ts.position, 24);
+
+                done();
+
+            });
+
+            it("Should change to CR", (done) => {
+
+                let ts = new TextStream();
+                ts.open();
+                ts.put("abcd\rdefg\r\r");
+
+                ts.position = 0;
+                ts.separator = 13; // CR
+
+                assert.equal(ts.fetch_line(), "abcd");
+                assert.equal(ts.position, 10);
+
+                assert.equal(ts.fetch_line(), "defg");
+                assert.equal(ts.position, 20);
+
+                assert.equal(ts.fetch_line(), "");
+                assert.equal(ts.position, 22);
+
+                done();
+            });
+        });
+    });
+
     describe("#fetch_all", () => {
 
         it("Should fetch all chars from pos to EOB (end-of-buffer)", (done) => {
@@ -85,6 +219,7 @@ describe("TextStream", () => {
             ts.put("abcd");
             ts.position = 0;
             assert.equal(ts.fetch_all(), "abcd");
+            assert.equal(ts.position, 8);
             done();
         });
 
@@ -96,6 +231,7 @@ describe("TextStream", () => {
             ts.position = 6;
 
             assert.equal(ts.fetch_all(), "def");
+            assert.equal(ts.position, 12);
             done();
         });
 
@@ -113,6 +249,8 @@ describe("TextStream", () => {
                 assert.equal(output_str.charCodeAt(i), expected[i]);
             }
 
+            assert.equal(ts.position, 8);
+
             done();
         });
 
@@ -121,6 +259,7 @@ describe("TextStream", () => {
             let ts = new TextStream();
             ts.open();
             assert.equal(ts.fetch_all(), "");
+            assert.equal(ts.position, 0);
 
             done();
         });

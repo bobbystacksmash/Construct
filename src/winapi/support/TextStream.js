@@ -65,6 +65,17 @@ class TextStream {
         return this.pos;
     }
 
+    set separator (opt) {
+
+        if (opt !== this.LINE_SEPARATOR_ENUM.CR &&
+            opt !== this.LINE_SEPARATOR_ENUM.CRLF &&
+            opt !== this.LINE_SEPARATOR_ENUM.LF) {
+            throw new Error(`Line separator value "${opt}" is not recognised.`);
+        }
+
+        this.linesep = this.getsep(opt);
+    }
+
     get size () {
 
         if (!this.stream_is_open) {
@@ -100,7 +111,7 @@ class TextStream {
             read_until_sep = Buffer.from("\n", "utf16le");
             break;
 
-        case this.LINE_SEPARATOR_ENUM.CR:
+        case this.LINE_SEPARATOR_ENUM.CRLF:
         default:
             read_until_sep = Buffer.from("\r\n", "utf16le");
             break;
@@ -126,8 +137,23 @@ class TextStream {
     }
 
 
-    fetch_upto (sep) {
+    fetch_line () {
 
+        if (! this.buffer || this.buffer.byteLength === 0) {
+            return "";
+        }
+
+        let sep_index  = this.buffer.indexOf(this.linesep, this.pos),
+            outbuf_len = (this.pos === 0) ? sep_index : (sep_index - this.pos);
+
+        if (sep_index === -1) {
+            return this.fetch_all();
+        }
+
+        const outbuf = Buffer.alloc(outbuf_len);
+        this.buffer.copy(outbuf, 0, this.pos, this.pos + outbuf_len);
+        this.pos = (sep_index + this.linesep.byteLength);
+        return outbuf.toString("utf16le");
     }
 
     fetch_all () {
@@ -139,6 +165,7 @@ class TextStream {
         let num_bytes_to_read = (this.buffer.byteLength - this.pos),
             outbuf = Buffer.alloc(num_bytes_to_read);
         this.buffer.copy(outbuf, 0, this.pos);
+        this.pos = this.buffer.byteLength;
         return outbuf.toString("utf16le");
     }
 
