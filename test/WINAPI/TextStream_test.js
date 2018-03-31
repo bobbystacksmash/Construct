@@ -34,7 +34,7 @@ describe("TextStream", () => {
             done();
         });
 
-        it("Should add \r\n when options == 1.", (done) => {
+        it("Should add CRLF when options == 1.", (done) => {
 
             let ts = new TextStream();
             ts.open();
@@ -50,19 +50,81 @@ describe("TextStream", () => {
 
     });
 
-    describe("#fetch", () => {
+    describe("#fetch_n_chars", () => {
 
-        it("Should fetch bytes when position is 0, stream is open, and contains text", (done) => {
+        it("Should fetch the correct number of chars", (done) => {
 
             let ts = new TextStream();
             ts.open();
             ts.put("abcd");
             ts.position = 0;
-            assert.equal(ts.fetch(), "abcd");
+
+            assert.equal(ts.fetch_n_chars(1), "a");
+            assert.equal(ts.fetch_n_chars(1), "b");
+            assert.equal(ts.fetch_n_chars(1), "c");
+            assert.equal(ts.fetch_n_chars(5), "d");
+            done();
+        });
+
+        it("Should return an empty string if there are no chars to read", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.position = 0;
+            assert.equal(ts.fetch_n_chars(2), "");
             done();
         });
     });
 
+    describe("#fetch_all", () => {
+
+        it("Should fetch all chars from pos to EOB (end-of-buffer)", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.put("abcd");
+            ts.position = 0;
+            assert.equal(ts.fetch_all(), "abcd");
+            done();
+        });
+
+        it("Should fetch all chars from pos to EOB (when pos != 0)", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.put("abcdef");
+            ts.position = 6;
+
+            assert.equal(ts.fetch_all(), "def");
+            done();
+        });
+
+        it("Should return encoded chars forward from pos", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.put("abcd");
+            ts.position = 1;
+
+            let output_str = ts.fetch_all(),
+                expected   = [ 25088, 25344, 25600 ];
+
+            for (let i = 0; i < expected.length; i++) {
+                assert.equal(output_str.charCodeAt(i), expected[i]);
+            }
+
+            done();
+        });
+
+        it("Should return an empty string if the buffer is empty", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            assert.equal(ts.fetch_all(), "");
+
+            done();
+        });
+    });
 
     describe("#skipline", () => {
 
@@ -80,7 +142,7 @@ describe("TextStream", () => {
             done();
         });
 
-        it("Should continue skipping lines until there are no more lef to skip", (done) => {
+        it("Should continue skipping lines until there are no more left to skip", (done) => {
 
             let ts = new TextStream();
             ts.open();
@@ -115,7 +177,7 @@ describe("TextStream", () => {
             ts.type = 2;
             ts.put("abc\ndef");
             ts.position = 0;
-            ts.skipline(10); /* 10 = enum value for LF */
+            ts.skipline(10); // 10 = enum value for LF
             assert.equal(ts.position, 8);
             done();
         });
@@ -125,7 +187,29 @@ describe("TextStream", () => {
 
     describe(".position", () => {
 
-        it("Should throw when .position is called on an unopened stream.", (done) => {
+        // TODO: what happens if I do this:
+        //
+        // ts.open();
+        // ts.put("abc");
+        // ts.position = 2;
+        // ts.put("xyz");
+        // ts.fetch_all() => ?
+        //
+        //
+        it("Should overwrite chars when position is changed", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.put("abcd");
+            ts.position = 2;
+            ts.put("123456");
+
+            ts.position = 0;
+            assert.equal(ts.fetch_all(), "a123456");
+            done();
+        });
+
+        it("Should throw when .position is called on an unopened stream", (done) => {
 
             let ts = new TextStream();
             assert.throws(function () { ts.position; });
@@ -155,7 +239,7 @@ describe("TextStream", () => {
             done();
         });
 
-        it("Should advance 'position' by two bytes for a single char written to the stream.", (done) => {
+        it("Should advance 'position' by 2 bytes for a single char written to the stream.", (done) => {
 
             let ts = new TextStream();
             ts.open();
@@ -168,6 +252,23 @@ describe("TextStream", () => {
 
             ts.put("cdef");
             assert(ts.position === 12, "Position is now 12");
+
+            ts.position = 0;
+            assert.equal(ts.fetch_all(), "abcdef");
+
+            done();
+        });
+
+        it("Should throw if position is set higher than string len", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+
+            ts.put("abc");
+
+            assert.equal(ts.position, 6);
+            assert.doesNotThrow(() => ts.position = 6);
+            assert.throws(() => ts.position = 7);
 
             done();
         });
