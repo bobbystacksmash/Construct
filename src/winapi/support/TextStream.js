@@ -228,6 +228,21 @@ class TextStream {
         this.buffer = Buffer.concat([existing_buf_slice, data_buf]);
         this.pos    = this.buffer.byteLength;
     }
+
+    copyto (dest_stream, num_chars) {
+
+        var stream_contents;
+
+        if (num_chars === undefined || num_chars === null || num_chars === -1) {
+            stream_contents = this.fetch_all();
+        }
+        else {
+            stream_contents = this.fetch_n_chars(num_chars);
+        }
+
+        dest_stream.put(stream_contents);
+
+    }
 }
 
 module.exports = TextStream;

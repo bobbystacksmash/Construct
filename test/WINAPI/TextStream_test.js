@@ -456,4 +456,43 @@ describe("TextStream", () => {
             done();
         });
     });
+
+    describe("#copyto", () => {
+
+        it("Should copy from one stream to another", (done) => {
+
+            let srcstream = new TextStream();
+            srcstream.open();
+            srcstream.put("abc");
+            srcstream.position = 0;
+
+            let deststream = new TextStream();
+            deststream.open();
+            deststream.put("xyz");
+
+            srcstream.copyto(deststream);
+
+            deststream.position = 0;
+            assert.equal(deststream.fetch_all(), "xyzabc");
+            done();
+        });
+
+        it("Should copy from one stream to another when src stream's pos isn't EOS", (done) => {
+
+            let srcstream = new TextStream();
+            srcstream.open();
+            srcstream.put("abc");
+            srcstream.position = 2;
+
+            let deststream = new TextStream();
+            deststream.open();
+            deststream.put("xyz");
+
+            srcstream.copyto(deststream);
+
+            deststream.position = 0;
+            assert.equal(deststream.fetch_all(), "xyzbc");
+            done();
+        });
+    });
 });
