@@ -1,8 +1,15 @@
+
+
 class Stream {
 
-    constructor () {
+    constructor (context) {
 
-        this.buffer = null;
+        context = context || { register: () => {} };
+
+        this.context = context;
+        this.vfs = context.vfs;
+
+        this.buffer = Buffer.alloc(0);
         this.pos    = 0;
         this.stream_is_open = false;
     }
@@ -94,7 +101,22 @@ class Stream {
 
         this.buffer.copy(outbuf, 0, this.pos, read_upto_index);
         this.pos += 2;
+
         return outbuf;
+
+    }
+
+    save_to_file (path, save_opt) {
+
+        if (this.stream_is_open === false) {
+            throw new Error("Unable to save to file -- the stream is not open.");
+        }
+
+        let fsbuf = Buffer.alloc(this.buffer.byteLength || 0);
+        this.buffer.copy(fsbuf, 0);
+
+        this.vfs.AddFile(path, fsbuf);
+        this.position = 0;
     }
 
 }

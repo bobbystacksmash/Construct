@@ -1,4 +1,4 @@
-/* 
+/*
  * "Provides access to all the properties of a folder."
  *  - https://msdn.microsoft.com/en-us/library/1c87day3(v=vs.84).aspx
  *
@@ -38,7 +38,6 @@ class FolderObject extends AbsFileSystemObject {
 
 	super(context, path, "File Folder");
 	this.context = context;
-	context.register("FolderObject", this, context);
 
 	this.Files        = [];
 	this.IsRootFolder = isRoot;
@@ -81,7 +80,7 @@ class FolderObject extends AbsFileSystemObject {
     DeleteFile (filename) {
 
 	const filename_idx = this.Files.findIndex((f) => f.Name === filename);
-	
+
 	if (filename_idx > -1) {
 	    this.Files.splice(filename_idx, 1);
 	    return true;

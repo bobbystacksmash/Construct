@@ -7,11 +7,10 @@ const AbsFileSystemObject = require("../absFileSystemObject");
 class VirtualFileSystem {
 
     constructor(context) {
-	this.context    = context;
-	//this.context.register("VirtualFileSystem", this, context);
-	this.register = context.register;
+	this.context = context;
 	this.volume = {};
-	this.volume["c:"] = new FolderObject(context, "c:", true);
+
+        this.volume["c:"] = new FolderObject(context, "c:", true);
     }
 
     VolumeExists (volume_label) {
@@ -61,11 +60,11 @@ class VirtualFileSystem {
 	if (!result) return false;
 	return cwd;
     }
-    
+
     GetFile (path) {
 
 	var self = this;
-	
+
 	let parsed_path = AbsFileSystemObject.Parse(path);
 
 	if (!this.VolumeExists(parsed_path.volume)) {
@@ -96,8 +95,8 @@ class VirtualFileSystem {
 
 	return found_file;
     }
-    
-    
+
+
     AddFolder (path) {
 
 	var self = this;
@@ -115,7 +114,7 @@ class VirtualFileSystem {
 	parsed_path.orig_path_parts_mv.some((path_part) => {
 
 	    path = `${path}\\${path_part}`;
-	    
+
 	    let fo = new FolderObject(self, path);
 	    cwd = cwd.AddSubFolder(fo);
 	    return false;
@@ -153,7 +152,7 @@ class VirtualFileSystem {
     /*
      * Given a source folder path and a folder destination, this method
      * copies the contents of src in to the destination.  For example, consider
-     * the src dir to be called `foo', and it contains one file `bar.txt', and 
+     * the src dir to be called `foo', and it contains one file `bar.txt', and
      * our destination -- `baz.txt'.  Calling CopyFolderContentsToFolder(src, dst)
      * will copy `bar.txt' in to `baz'.
      */
@@ -163,7 +162,7 @@ class VirtualFileSystem {
 
 	let src_folder = this.GetFolder(src_folder_path),
 	    dst_folder = this.GetFolder(dest_folder_path);
-	
+
 	var result     = { success: false, reason: "Unknown" };
 
 	// TODO: Need to handle the case where src_folder is the root volume.
@@ -187,7 +186,7 @@ class VirtualFileSystem {
 	  dst_cwd = dst_folder;*/
 
 	var self = this;
-	
+
 	let res = (function walk(src_cwd, dst_cwd) {
 
 	    // Copy files first...
@@ -205,7 +204,7 @@ class VirtualFileSystem {
 		    console.log(`!! -- ${result.reason}`);
 		    return false;
 		}
-		
+
 		// No file found in dst? Let's create a new slot in
 		// dst and move src in to it.
 		let src_file_copy = {};
@@ -219,7 +218,7 @@ class VirtualFileSystem {
 		else {
 		    dst_cwd.Files.push(src_file_copy);
 		}
-		
+
 		return true;
 	    });
 
@@ -232,7 +231,7 @@ class VirtualFileSystem {
 	    let sf_copy_result = src_cwd.SubFolders.every((f) => {
 
 		console.log(`For-Eaching sf: ${f.Path}`);
-		
+
 		// Does this subfolder exist in dst?
 		let dst_existing_subfolder =
 		    dst_cwd.SubFolders.find((x) => x.Name === f.Name);
@@ -248,12 +247,12 @@ class VirtualFileSystem {
 		    dst_existing_subfolder = self.AddFolder(`${dst_cwd.Path}\\${f.Name}`);
 		    console.log("++ ADDED", dst_existing_subfolder.Path);
 		}
-		
+
 		return walk(f, dst_existing_subfolder);
 	    });
 
 	    return sf_copy_result;
-	    
+
 	}(src_folder, dst_folder));
 
 	return res;
@@ -299,7 +298,7 @@ class VirtualFileSystem {
 		console.log("=== root volume subfolder clash ===");
 		return false;
 	    }
-	    
+
 	    // Let's add the folder!
 	    let new_folder_obj = {};
 	    Object.assign(new_folder_obj, src_folder);
@@ -314,7 +313,7 @@ class VirtualFileSystem {
 	(function walk () {
 
 	    console.log(`w: src:${cwd_src.Name}, dst:${cwd_dst.Name}`);
-	    
+
 	    // Do any files in src match any in dst?
 	    let src_dst_files_uniq = cwd_src.Files.every((src_file) => {
 		return cwd_dst.Files.every((dst_file) => {
@@ -349,7 +348,7 @@ class VirtualFileSystem {
 	    }
 
 	    // TODO - here is where we overwrite..
-    
+
 	    if (cont) {
 		// Do the hard bit of figure out how we prep the src/dst folders
 		// for the next cycle.  Likely recursive.

@@ -2,11 +2,10 @@ const Stream = require("./Stream");
 
 class TextStream extends Stream {
 
-    constructor () {
+    constructor (context) {
 
-        super();
+        super(context);
 
-        this.buffer         = null;
         this.pos            = 0;
         this.stream_is_open = false;
         this.linesep        = Buffer.from("\r\n", "utf16le");

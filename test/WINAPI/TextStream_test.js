@@ -1,5 +1,6 @@
 const assert = require("chai").assert;
 const TextStream = require("../../src/winapi/support/TextStream");
+const VirtualFileSystem = require("../../src/runtime/virtfs");
 
 describe("TextStream", () => {
 
@@ -494,5 +495,73 @@ describe("TextStream", () => {
             assert.equal(deststream.fetch_all(), "xyzbc");
             done();
         });
+    });
+
+    describe("#savetofile", () => {
+
+        it("Should save to a file when the stream is open", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} });
+            let ts = new TextStream({ vfs: vfs });
+
+            ts.open();
+            ts.put("abcdef");
+
+            const save_file_path = "C:\\hello.txt";
+            ts.save_to_file(save_file_path);
+            assert.deepEqual(vfs.GetFile(save_file_path).__contents, Buffer.from("abcdef", "utf16le"));
+
+            done();
+        });
+
+        it("Should throw when attempting to save a file when the stream is not open", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} });
+            let ts = new TextStream({ vfs: vfs });
+
+            ts.open();
+            ts.put("abcdef");
+            ts.close();
+
+            const save_file_path = "C:\\hello.txt";
+
+            assert.throws(function () { ts.save_to_file(save_file_path); });
+
+            done();
+        });
+
+        it("Should write an empty buffer to the file system if the buffer is empty or null", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} });
+            let ts = new TextStream({ vfs: vfs });
+
+            ts.open();
+            const save_file_path = "C:\\hello.txt";
+
+            ts.save_to_file(save_file_path);
+
+            assert.deepEqual(vfs.GetFile(save_file_path).__contents, Buffer.alloc(0));
+
+            done();
+        });
+
+        it("Should set position to 0 after a successful write", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} });
+            let ts = new TextStream({ vfs: vfs });
+
+            ts.open();
+            ts.put("abcd");
+            const save_file_path = "C:\\hello.txt";
+
+            assert.equal(ts.position, 8);
+            ts.save_to_file(save_file_path);
+            assert.equal(ts.position, 0);
+
+            done();
+        });
+
+        // TODO: what about an unsuccessful write?
+        //       ANS: that would throw.
     });
 });
