@@ -4,7 +4,7 @@ const VirtualFileSystem = require("../../src/runtime/virtfs");
 
 describe("BinaryStream", () => {
 
-    describe(".charset", () => {
+    xdescribe(".charset", () => {
 
         it("Should throw if '.charset' is assigned-to", (done) => {
 
@@ -18,45 +18,54 @@ describe("BinaryStream", () => {
 
         it("Should throw if an unopened stream is written to.", (done) => {
             let bs = new BinaryStream();
-            assert.throws(function () { bs.put("testing..."); });
+            assert.throws(function () { bs.load_from_file("C:\\foo\\bar.txt"); });
             done();
         });
 
         it("Should throw if an opened stream has been closed and is written to.", (done) => {
-            let bs = new BinaryStream();
+
+            let vfs = new VirtualFileSystem({ register: () => {} });
+            let bs  = new BinaryStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\foo\\bar.txt", "abcd");
+            vfs.AddFile("C:\\baz.txt",      "efgh");
+
             bs.open();
-            assert.doesNotThrow(function () { bs.put("testing..."); });
+            assert.doesNotThrow(function () { bs.load_from_file("C:\\foo\\bar.txt"); });
             bs.close();
-            assert.throws(function () { bs.put("testing..."); });
+            assert.throws(function () { bs.load_from_file("C:\\baz.txt"); });
             done();
         });
     });
 
     xdescribe("#put", () => {
 
-        it("Should allow writing to an opened stream.", (done) => {
+        it("Should throw if 'put' is called - not allowed in BinaryStreams.", (done) => {
 
             let bs = new BinaryStream();
             bs.open();
-            assert.doesNotThrow(function () { bs.put("testing..."); });
+            assert.throws(function () { bs.put("testing..."); });
             done();
         });
 
     });
 
-    xdescribe("#fetch_n_bytes", () => {
+    describe("#fetch_n_bytes", () => {
 
         it("Should fetch the correct number of bytes", (done) => {
 
-            let bs = new BinaryStream();
-            bs.open();
-            bs.put([0xA, 0xB, 0xC, 0xD]);
-            bs.position = 0;
+            let vfs = new VirtualFileSystem({ register: () => {} });
+            let bs  = new BinaryStream({ vfs: vfs });
 
-            assert.equal(bs.fetch_n_bytes(1), 0xa);
-            assert.equal(bs.fetch_n_bytes(1), 0xb);
-            assert.equal(bs.fetch_n_bytes(1), 0xc);
-            assert.equal(bs.fetch_n_bytes(5), 0xd);
+            vfs.AddFile("C:\\foo\\bar.txt", "abcd");
+
+            bs.open();
+            bs.load_from_file("C:\\foo\\bar.txt");
+
+            assert.deepEqual(bs.fetch_n_bytes(1), Buffer.from("a"));
+            assert.deepEqual(bs.fetch_n_bytes(1), Buffer.from("b"));
+            assert.deepEqual(bs.fetch_n_bytes(1), Buffer.from("c"));
+            assert.deepEqual(bs.fetch_n_bytes(5), Buffer.from("d"));
             done();
         });
 
@@ -204,47 +213,36 @@ describe("BinaryStream", () => {
         });
     });
 
-    xdescribe("#fetch_all", () => {
+    describe("#fetch_all", () => {
 
         it("Should fetch all chars from pos to EOB (end-of-buffer)", (done) => {
 
-            let bs = new BinaryStream();
+            let vfs = new VirtualFileSystem({ register: () => {} });
+            let bs  = new BinaryStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\foo\\bar.txt", "abcd");
+
             bs.open();
-            bs.put("abcd");
-            bs.position = 0;
+            bs.load_from_file("C:\\foo\\bar.txt");
+
             assert.equal(bs.fetch_all(), "abcd");
-            assert.equal(bs.position, 8);
+            assert.equal(bs.position, 4);
             done();
         });
 
         it("Should fetch all chars from pos to EOB (when pos != 0)", (done) => {
 
-            let bs = new BinaryStream();
+            let vfs = new VirtualFileSystem({ register: () => {} });
+            let bs  = new BinaryStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\foo\\bar.txt", "abcdefghi");
+
             bs.open();
-            bs.put("abcdef");
+            bs.load_from_file("C:\\foo\\bar.txt");
             bs.position = 6;
 
-            assert.equal(bs.fetch_all(), "def");
-            assert.equal(bs.position, 12);
-            done();
-        });
-
-        it("Should return encoded chars forward from pos", (done) => {
-
-            let bs = new BinaryStream();
-            bs.open();
-            bs.put("abcd");
-            bs.position = 1;
-
-            let output_str = bs.fetch_all(),
-                expected   = [ 25088, 25344, 25600 ];
-
-            for (let i = 0; i < expected.length; i++) {
-                assert.equal(output_str.charCodeAt(i), expected[i]);
-            }
-
-            assert.equal(bs.position, 8);
-
+            assert.equal(bs.fetch_all(), "ghi");
+            assert.equal(bs.position, 9);
             done();
         });
 
@@ -259,6 +257,7 @@ describe("BinaryStream", () => {
         });
     });
 
+    // TODO ...
     xdescribe("#skipline", () => {
 
         it("Should default to CRLF without changing LineSep (default)", (done) => {
@@ -493,7 +492,7 @@ describe("BinaryStream", () => {
         });
     });
 
-    describe("load_from_file", () => {
+    xdescribe("load_from_file", () => {
 
         it("Should load from a file, if that file exists", (done) => {
 

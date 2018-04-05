@@ -94,16 +94,14 @@ class Stream {
             read_upto_index     = this.pos + num_bytes_to_read;
 
         if (read_upto_index > this.buffer.byteLength - 1) {
-            read_upto_index = (this.buffer.byteLength - 1);
+            read_upto_index = (this.buffer.byteLength);
         }
 
         const outbuf = Buffer.alloc(Math.min(num_bytes_to_read, num_bytes_available));
 
         this.buffer.copy(outbuf, 0, this.pos, read_upto_index);
-        this.pos += 2;
-
+        this.pos += max_bytes_to_read;
         return outbuf;
-
     }
 
     save_to_file (path, save_opt) {

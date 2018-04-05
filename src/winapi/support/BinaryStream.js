@@ -38,7 +38,6 @@ class BinaryStream extends Stream {
     load_from_file (path) {
 
         let file_contents = this._load_from_file(path);
-
         this.buffer   = Buffer.from(file_contents);
         this.position = 0;
     }
