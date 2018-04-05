@@ -11,6 +11,10 @@ class BinaryStream extends Stream {
         this.stream_is_open = false;
     }
 
+    set charset (_) {
+        throw new Error("Cannot set '.charset' property on a Binary Stream.");
+    }
+
     put () {
         throw new Error("Cannot write directly in to a binary stream. Use 'load_from_file' instead.");
     }
@@ -38,9 +42,6 @@ class BinaryStream extends Stream {
         this.buffer   = Buffer.from(file_contents);
         this.position = 0;
     }
-
-             // TODO: Add a test which makes sure that the BinaryStream throws when ".charset" is called.
-// TODO: Add a test which throws if ".position" is set to anything other than '0', BEFORE the stream contains anything.
 }
 
 module.exports = BinaryStream;

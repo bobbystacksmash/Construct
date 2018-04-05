@@ -4,6 +4,16 @@ const VirtualFileSystem = require("../../src/runtime/virtfs");
 
 describe("BinaryStream", () => {
 
+    describe(".charset", () => {
+
+        it("Should throw if '.charset' is assigned-to", (done) => {
+
+            let bs = new BinaryStream();
+            assert.throws(() => { bs.charset = "ascii"; });
+            done();
+        });
+    });
+
     xdescribe("#open", () => {
 
         it("Should throw if an unopened stream is written to.", (done) => {
