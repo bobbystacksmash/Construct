@@ -119,6 +119,23 @@ class Stream {
         this.position = 0;
     }
 
+    _load_from_file (path) {
+
+        if (this.stream_is_open === false) {
+            throw new Error("Unable to load from file -- the stream is not open.");
+        }
+
+        // Does the file even exist?
+        let file = this.vfs.GetFile(path);
+
+        if (! file) {
+            throw new Error(`Unable to load file ${path} - this does not exist.`);
+        }
+
+        this.position = 0;
+        return file.__contents;
+    }
+
 }
 
 module.exports = Stream;

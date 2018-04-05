@@ -163,6 +163,14 @@ class TextStream extends Stream {
         dest_stream.put(stream_contents);
 
     }
+
+    load_from_file (path) {
+
+        let file_contents = this._load_from_file(path);
+
+        this.buffer   = Buffer.from(file_contents, "utf16le");
+        this.position = 0;
+    }
 }
 
 module.exports = TextStream;

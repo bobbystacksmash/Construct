@@ -561,7 +561,41 @@ describe("TextStream", () => {
             done();
         });
 
-        // TODO: what about an unsuccessful write?
-        //       ANS: that would throw.
     });
+
+    describe("load_from_file", () => {
+
+        it("Should load from a file, if that file exists", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} });
+            let ts  = new TextStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\foo\\bar.txt", "abcd");
+
+            ts.open();
+            const file_path = "C:\\foo\\bar.txt";
+
+            ts.load_from_file(file_path);
+
+            assert.equal(ts.position, 0);
+            assert.equal(ts.fetch_all(), "abcd");
+
+            done();
+        });
+
+        it("Should throw if the file does not exist", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} });
+            let ts  = new TextStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\foo\\bar.txt", "abcd");
+
+            ts.open();
+            const file_path = "C:\\foo.txt";
+
+            assert.throws(() => ts.load_from_file(file_path));
+            done();
+        });
+    });
+
 });
