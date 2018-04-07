@@ -1,5 +1,6 @@
 const assert = require("chai").assert;
 const BinaryStream = require("../../src/winapi/support/BinaryStream");
+const TextStream = require("../../src/winapi/support/TextStream");
 const VirtualFileSystem = require("../../src/runtime/virtfs");
 
 describe("BinaryStream", () => {
@@ -50,7 +51,7 @@ describe("BinaryStream", () => {
 
     });
 
-    describe("#fetch_n_bytes", () => {
+    xdescribe("#fetch_n_bytes", () => {
 
         it("Should fetch the correct number of bytes", (done) => {
 
@@ -213,7 +214,7 @@ describe("BinaryStream", () => {
         });
     });
 
-    describe("#fetch_all", () => {
+    xdescribe("#fetch_all", () => {
 
         it("Should fetch all chars from pos to EOB (end-of-buffer)", (done) => {
 
@@ -453,27 +454,52 @@ describe("BinaryStream", () => {
         });
     });
 
-    xdescribe("#copyto", () => {
+    describe("#copyto", () => {
 
-        it("Should copy from one stream to another", (done) => {
+        xit("Should throw when trying to copy bin -> txt streams", (done) => {
 
-            let srcstream = new BinaryStream();
+            let vfs       = new VirtualFileSystem({ register: () => {} });
+            let srcstream = new BinaryStream({ vfs: vfs }),
+                dststream = new TextStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\foo\\bar.txt", "abcd");
+
             srcstream.open();
-            srcstream.put("abc");
-            srcstream.position = 0;
+            dststream.open();
 
-            let deststream = new BinaryStream();
-            deststream.open();
-            deststream.put("xyz");
+            srcstream.open();
+            srcstream.load_from_file("C:\\foo\\bar.txt");
 
-            srcstream.copyto(deststream);
-
-            deststream.position = 0;
-            assert.equal(deststream.fetch_all(), "xyzabc");
+            assert.throws(() => srcstream.copyto(dststream));
             done();
         });
 
-        it("Should copy from one stream to another when src stream's pos isn't EOS", (done) => {
+        it("Should copy from bin -> bin streams", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} });
+
+            vfs.AddFile("C:\\foo\\bar.txt", "abcd");
+
+            let srcstream = new BinaryStream({ vfs: vfs }),
+                dststream = new BinaryStream({ vfs: vfs });
+
+            srcstream.open();
+            dststream.open();
+
+            srcstream.load_from_file("C:\\foo\\bar.txt");
+            //assert.equal(srcstream.position, 0);
+            assert.deepEqual(srcstream.fetch_all(), Buffer.from("abcd"));
+            srcstream.position = 0;
+
+            srcstream.copyto(dststream);
+
+            assert.equal(srcstream.position, 4);
+            assert.equal(dststream.position, 4);
+
+            done();
+        });
+
+        xit("Should copy from one stream to another when src stream's pos isn't EOS", (done) => {
 
             let srcstream = new BinaryStream();
             srcstream.open();
