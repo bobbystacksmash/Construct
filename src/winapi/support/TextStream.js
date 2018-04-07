@@ -149,7 +149,7 @@ class TextStream extends Stream {
         this.pos    = this.buffer.byteLength;
     }
 
-    copyto (dest_stream, num_chars) {
+    copy_to (dest_stream, num_chars) {
 
         var stream_contents;
 

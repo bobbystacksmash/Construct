@@ -454,7 +454,7 @@ describe("BinaryStream", () => {
         });
     });
 
-    describe("#copyto", () => {
+    describe("#copy_to", () => {
 
         xit("Should throw when trying to copy bin -> txt streams", (done) => {
 
@@ -470,7 +470,7 @@ describe("BinaryStream", () => {
             srcstream.open();
             srcstream.load_from_file("C:\\foo\\bar.txt");
 
-            assert.throws(() => srcstream.copyto(dststream));
+            assert.throws(() => srcstream.copy_to(dststream));
             done();
         });
 
@@ -491,7 +491,7 @@ describe("BinaryStream", () => {
             assert.deepEqual(srcstream.fetch_all(), Buffer.from("abcd"));
             srcstream.position = 0;
 
-            srcstream.copyto(dststream);
+            srcstream.copy_to(dststream);
 
             assert.equal(srcstream.position, 4);
             assert.equal(dststream.position, 4);
@@ -510,7 +510,7 @@ describe("BinaryStream", () => {
             deststream.open();
             deststream.put("xyz");
 
-            srcstream.copyto(deststream);
+            srcstream.copy_to(deststream);
 
             deststream.position = 0;
             assert.equal(deststream.fetch_all(), "xyzbc");

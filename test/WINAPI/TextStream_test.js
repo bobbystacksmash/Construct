@@ -458,7 +458,7 @@ describe("TextStream", () => {
         });
     });
 
-    describe("#copyto", () => {
+    describe("#copy_to", () => {
 
         it("Should copy from one stream to another", (done) => {
 
@@ -471,7 +471,7 @@ describe("TextStream", () => {
             deststream.open();
             deststream.put("xyz");
 
-            srcstream.copyto(deststream);
+            srcstream.copy_to(deststream);
 
             deststream.position = 0;
             assert.equal(deststream.fetch_all(), "xyzabc");
@@ -489,7 +489,7 @@ describe("TextStream", () => {
             deststream.open();
             deststream.put("xyz");
 
-            srcstream.copyto(deststream);
+            srcstream.copy_to(deststream);
 
             deststream.position = 0;
             assert.equal(deststream.fetch_all(), "xyzbc");

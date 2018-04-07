@@ -55,10 +55,10 @@ class BinaryStream extends Stream {
         this.pos    = this.buffer.byteLength;
     }
 
-    copyto (dest_stream, num_bytes) {
+    copy_to (dest_stream, num_bytes) {
 
         // Can you put text data in to a binary stream and opposite?
-        // text can go txt.copyto(bin) but not the other way.
+        // text can go txt.copy_to(bin) but not the other way.
         // bin can go bin.copto(bin2)
         //
         if (dest_stream.constructor.name === "TextStream") {
