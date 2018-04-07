@@ -487,33 +487,49 @@ describe("BinaryStream", () => {
             dststream.open();
 
             srcstream.load_from_file("C:\\foo\\bar.txt");
-            //assert.equal(srcstream.position, 0);
+            assert.equal(srcstream.position, 0);
             assert.deepEqual(srcstream.fetch_all(), Buffer.from("abcd"));
             srcstream.position = 0;
 
             srcstream.copy_to(dststream);
 
+            assert.deepEqual(srcstream.fetch_all(), dststream.fetch_all());
             assert.equal(srcstream.position, 4);
             assert.equal(dststream.position, 4);
 
             done();
         });
 
-        xit("Should copy from one stream to another when src stream's pos isn't EOS", (done) => {
+        xit("Should copy bin -> bin streams when the src stream's pos isn't EOS", (done) => {
 
-            let srcstream = new BinaryStream();
+            let vfs = new VirtualFileSystem({ register: () => {} });
+
+            vfs.AddFile("C:\\foo\\bar.txt", "abcdef");
+            vfs.AddFile("C:\\baz.txt",      "ABCDEF");
+
+            let srcstream = new BinaryStream({ vfs: vfs }),
+                dststream = new BinaryStream({ vfs: vfs });
+
             srcstream.open();
-            srcstream.put("abc");
-            srcstream.position = 2;
+            dststream.open();
 
-            let deststream = new BinaryStream();
-            deststream.open();
-            deststream.put("xyz");
+            srcstream.load_from_file("C:\\foo\\bar.txt");
 
-            srcstream.copy_to(deststream);
+            dststream.load_from_file("C:\\baz.txt");
+            dststream.position = 0;
 
-            deststream.position = 0;
-            assert.equal(deststream.fetch_all(), "xyzbc");
+            assert.equal(srcstream.position, 0);
+            assert.equal(dststream.position, 0);
+
+            // TODO...
+
+            assert.deepEqual(srcstream.fetch_n_bytes(3), Buffer.from("abc"));
+            assert.equal(srcstream.position, 3);
+
+            srcstream.copy_to(dststream);
+
+            assert.deepEqual(dststream.fetch_all(), srcstream);
+
             done();
         });
     });

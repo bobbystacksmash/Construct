@@ -57,10 +57,6 @@ class BinaryStream extends Stream {
 
     copy_to (dest_stream, num_bytes) {
 
-        // Can you put text data in to a binary stream and opposite?
-        // text can go txt.copy_to(bin) but not the other way.
-        // bin can go bin.copto(bin2)
-        //
         if (dest_stream.constructor.name === "TextStream") {
             throw new Error("Cannot copy from a BinaryStream in to a TextStream");
         }
