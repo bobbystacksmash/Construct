@@ -500,7 +500,7 @@ describe("BinaryStream", () => {
             done();
         });
 
-        xit("Should copy bin -> bin streams when the src stream's pos isn't EOS", (done) => {
+        it("Should copy bin -> bin streams when the src & dst streams pos' != 0", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
 
@@ -514,21 +514,17 @@ describe("BinaryStream", () => {
             dststream.open();
 
             srcstream.load_from_file("C:\\foo\\bar.txt");
-
             dststream.load_from_file("C:\\baz.txt");
-            dststream.position = 0;
 
-            assert.equal(srcstream.position, 0);
-            assert.equal(dststream.position, 0);
-
-            // TODO...
-
-            assert.deepEqual(srcstream.fetch_n_bytes(3), Buffer.from("abc"));
-            assert.equal(srcstream.position, 3);
+            dststream.position = 4;
+            srcstream.position = 0;
 
             srcstream.copy_to(dststream);
 
-            assert.deepEqual(dststream.fetch_all(), srcstream);
+            dststream.position = 0;
+            srcstream.position = 0;
+
+            assert.deepEqual(dststream.fetch_all(), Buffer.from("ABCDabcdef"));
 
             done();
         });
