@@ -134,7 +134,7 @@ class VirtualFileSystem {
 
 
         if (typeof contents === "String" || contents instanceof String) {
-            contents = Buffer.from(contents, "ascii");
+            contents = Buffer.from(contents, "utf16le");
         }
         else if (!contents instanceof Buffer) {
             throw new Error("Cannot add file contents that " +

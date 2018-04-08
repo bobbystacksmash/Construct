@@ -340,6 +340,8 @@ describe("BinaryStream", () => {
         });
     });
 
+    // TODO: Type Type is writable only when pos = 0, all other times
+    // it's read only.  Need a test for this.
 
     describe("#copy_to", () => {
 
@@ -452,4 +454,65 @@ describe("BinaryStream", () => {
         });
     });
 
+    describe("#to_text_stream", () => {
+
+        it("Should return a copy as a text stream", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} });
+            let bs  = new BinaryStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\foo\\bar.txt", "Hello, World!");
+
+            bs.open();
+            bs.load_from_file("C:\\foo\\bar.txt");
+
+            let ts = bs.to_text_stream();
+
+            assert.equal(ts.type, 2);
+            assert.equal(ts.size, 13);
+
+            // TODO: what if we load an ascii file -- does it report size at Unicode?
+            done();
+        });
+
+        it("Should convert to a binary stream, copying across position", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} });
+            let bs  = new BinaryStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\foo\\bar.txt", "Hello, World!");
+
+            bs.open();
+            bs.load_from_file("C:\\foo\\bar.txt");
+            bs.position = 5;
+
+            let ts = bs.to_text_stream();
+
+            assert.equal(ts.type, 2);
+            assert.equal(ts.position, 5);
+
+            done();
+        });
+
+        it("Should convert to a binary stream, copying across open/closed status", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} });
+            let bs  = new BinaryStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\foo\\bar.txt", "Hello, World!");
+
+            bs.open();
+            bs.load_from_file("C:\\foo\\bar.txt");
+            bs.position = 5;
+
+            bs.close();
+
+            let ts = bs.to_text_stream();
+
+            assert.equal(ts.type, 2);
+            assert.isTrue(ts.is_closed);
+
+            done();
+        });
+    });
 });

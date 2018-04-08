@@ -1,4 +1,5 @@
-const Stream = require("./Stream");
+const Stream       = require("./Stream");
+const BinaryStream = require("./BinaryStream");
 
 class TextStream extends Stream {
 
@@ -29,8 +30,19 @@ class TextStream extends Stream {
             LF:   10  // Line feed.
         };
 
+        this._charset = "Unicode";
     }
 
+    get charset () {
+        return this._charset;
+    }
+    set charset (x) {
+        throw new Error("Error: setting the charset of a TextStream is not yet supported.");
+    }
+
+    get type () {
+        return 2;
+    }
 
     set separator (opt) {
 
@@ -161,7 +173,6 @@ class TextStream extends Stream {
         }
 
         dest_stream.put(stream_contents);
-
     }
 
     load_from_file (path) {
@@ -170,6 +181,24 @@ class TextStream extends Stream {
 
         this.buffer   = Buffer.from(file_contents, "utf16le");
         this.position = 0;
+    }
+
+    to_binary_stream () {
+
+        let bs = new BinaryStream(this.context);
+
+        bs.open();
+        bs.put(this.buffer);
+        bs.position = this.pos; // TODO: int division?
+
+        if (this.stream_is_open) {
+            bs.open();
+        }
+        else {
+            bs.close();
+        }
+
+        return bs;
     }
 }
 
