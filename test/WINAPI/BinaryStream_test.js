@@ -451,24 +451,89 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("Should report the size as zero for an empty string written to the stream.", (done) => {
+        it("Should not advance position when empty files are read-in", (done) => {
 
-            let bs = new BinaryStream();
+            let vfs = new VirtualFileSystem({ register: () => {} }),
+                bs  = new BinaryStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\file_1.txt", "");
+
             bs.open();
-            bs.put("");
-            assert(bs.size === 0, "Size is equal to zero for empty string");
+            bs.load_from_file("C:\\file_1.txt");
+
+            assert.equal(bs.position, 0);
+            assert.equal(bs.size, 0);
+
             done();
         });
 
-        it("Should report the size correctly for UTF16LE strings.", (done) => {
+        it("Should report the size correctly for a binary file.", (done) => {
 
-            let bs = new BinaryStream();
+            let vfs = new VirtualFileSystem({ register: () => {} }),
+                bs  = new BinaryStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\file_1.txt", Buffer.alloc(8, 0xFF));
+
             bs.open();
-            bs.put("abc");
-            assert.equal(bs.size, 6);
+            bs.load_from_file("C:\\file_1.txt");
+
+            assert.equal(bs.position, 0);
+            assert.equal(bs.size, 8);
+
             done();
         });
     });
+
+    describe("#set_EOS", () => {
+
+        it("Should clear the stream when 'set_EOS' is called when pos = 0", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} });
+            let bs  = new BinaryStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\foo\\bar.txt", "abcd");
+
+            bs.open();
+            bs.load_from_file("C:\\foo\\bar.txt");
+            assert.equal(bs.position, 0);
+            assert.equal(bs.size, 4);
+
+            bs.position = 0;
+
+            assert.doesNotThrow(() => bs.set_EOS());
+
+            assert.equal(bs.size,     0);
+            assert.equal(bs.position, 0);
+
+            done();
+        });
+
+        it("Should trunace existing bytes when called and .pos is not EOS", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} });
+            let bs  = new BinaryStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\foo\\bar.txt", "abcdef");
+
+            bs.open();
+            bs.load_from_file("C:\\foo\\bar.txt");
+            assert.equal(bs.position, 0);
+            assert.equal(bs.size, 6);
+
+            bs.position = 4;
+
+            assert.doesNotThrow(() => bs.set_EOS());
+
+            assert.equal(bs.size,     4);
+            assert.equal(bs.position, 4);
+
+            bs.position = 0;
+            assert.deepEqual(bs.fetch_all(), Buffer.from("abcd", "ascii"));
+
+            done();
+        });
+    });
+
 
     describe("#copy_to", () => {
 
