@@ -1,62 +1,13 @@
-const Component = require("../Component");
-const proxify   = require("../proxify2");
-const iconv     = require("iconv-lite");
+const Component        = require("../Component");
+const proxify          = require("../proxify2");
+const TextStream       = require("./support/TextStream");
+const BinaryStream     = require("./support/BinaryStream");
+const ExceptionHandler = require("../ExceptionHandler");
 
-const STREAM_TYPE_BINARY = 1;
-const STREAM_TYPE_TEXT   = 2;
-
-/*
- * ============
- * ADODB Stream
- * ============
- *
- * Notes
- * =====
- *
- * A.D.O. =  Microsoft [A]ctiveX [D]ata [O]bjects.
- *
- * Represents a stream of binary data or text and provides methods and
- * properties to manage this binary data.
- *
- * https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/stream-object-ado
- * https://www.w3schools.com/asp/ado_ref_stream.asp
- *
- * API
- * ===
- *
- * https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/stream-object-properties-methods-and-events
- *
- * PROPERTIES
- * ==========
- *
- * [ ] - Charset       https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/charset-property-ado
- * [ ] - EOS           https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/eos-property
- * [ ] - LineSeparator https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/lineseparator-property-ado
- * [ ] - Mode          https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/mode-property-ado
- * [ ] - Position      https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/position-property-ado
- * [ ] - Size          https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/size-property-ado-stream
- * [ ] - State         https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/state-property-ado
- * [ ] - Type          https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/type-property-ado-stream
- *
- *
- * METHODS
- * =======
- *
- * [ ] - Cancel        https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/cancel-method-ado
- * [ ] - Close         https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/close-method-ado
- * [ ] - CopyTo        https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/copyto-method-ado
- * [ ] - Flush         https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/flush-method-ado
- * [ ] - LoadFromFile  https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/loadfromfile-method-ado
- * [ ] - Open          https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/open-method-ado-stream
- * [ ] - Read          https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/read-method
- * [ ] - SaveToFile    https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/savetofile-method
- * [ ] - SetEOS        https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/seteos-method
- * [ ] - SkipLine      https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/skipline-method
- * [ ] - Stat          https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/stat-method
- * [ ] - Write         https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/write-method
- * [ ] - WriteText     https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/writetext-method
- *
- */
+const STREAM_TYPE_ENUM = {
+    adTypeBinary: 1,
+    adTypeText:   2
+};
 
 class JS_ADODBStream extends Component {
 
@@ -65,659 +16,97 @@ class JS_ADODBStream extends Component {
         this.ee  = this.context.emitter;
         this.vfs = this.context.vfs;
 
-
-        // Open
-        this.CONNECT_MODE_ENUM = {
-            Unknown        : 0,
-            Read           : 1,
-            Write          : 2,
-            ReadWrite      : 3,
-            ShareDenyRead  : 4,
-            ShareDenyWrite : 8,
-            ShareExclusive : 12,
-            ShareDenyNone  : 16,
-            Recursive      : 0x400000
-        };
-
-        this.OPEN_OPTIONS_ENUM = {
-            OpenStreamAsync: 1,
-            OpenStreamFromRecord: 4,
-            OpenStreamUnspecified: -1
-        };
-
-        this.STREAM_READ_ENUM = {
-            ReadAll: -1, // Default. Reads all bytes from the stream,
-                         // from the current position onwards to the
-                         // EOS marker. This is the only valid
-                         // StreamReadEnum value with binary streams
-                         // (Type is adTypeBinary).
-            ReadLine: -2 // Reads the next line from the stream
-                         // (designated by the LineSeparator
-                         // property).
-        };
-
-
-        // Stream-specific properties
-        this.stream_type      = STREAM_TYPE_TEXT;
-        this.at_end_of_stream = false;
-        this.eos_marker       = -1;
-        this.pos              = 0;
-        this.stream_is_open   = false;
-        this.stream_is_fresh  = true;
-        this.buffer           = null;
+        this.stream = new TextStream(context);
     }
 
-
-    _update_buffer (newbuf) {
-
-        this.buffer = new ArrayBuffer(512); // TODO: figure this bit out.
-        this.buffer_view = new UInt8Array(this.buffer_view);
-
-
-    }
-
-
-    //
-    // PROPERTIES
-    // ==========
-    //
-    get charset () {
-
-    }
-    set charset (charset) {
-        console.log("CHARSET:", arguments);
-    }
-
-
-    get lineseparator () {
-        console.log("LINESEP!");
-    }
-    set lineseparator (lsep)  {
-        console.log("SET LINE SEP!");
-    }
-
-
-    get mode () {
-
-    }
-    set mode (mode) {
-        console.log("SET MODE:", arguments);
-
-    }
-
-
-    //
-    // Type
-    // ====
-    //
-    // MSDN: https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/type-property-ado-stream
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // Indicates the type of data contained in the Stream (binary or
-    // text).  Sets or returns a StreamTypeEnum value that specifies
-    // the type of data contained in the Stream object. The default
-    // value is adTypeText. However, if binary data is initially
-    // written to a new, empty Stream, the Type will be changed to
-    // adTypeBinary.
-    //
-    // The Type property determines which methods should be used for
-    // reading and writing the Stream.  If the Stream's type is
-    // "text", use ReadText and WriteText.  For binary streams, use
-    // Read and Write.
-    //
     get type () {
-        this.ee.emit("@ADODBStream.Type", this.stream_type);
-        return this.stream_type;
+        return this.stream.type;
     }
-    set type(stream_type) {
+    set type(x) {
 
-        if (stream_type != STREAM_TYPE_BINARY && stream_type != STREAM_TYPE_TEXT) {
-            this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
-                "ADODB.Stream",
-                "A Stream has been assigned a 'type' which is not '1' or '2'.",
-                `Streams must be either binary streams (type = 1), or textual ` +
-                    `streams (type = 2).  This exception has been thrown because ` +
-                    `calling code has attempted to assign an unknown stream type.`
-            );
+        if (this.stream.can_change_stream_type) {
+
+            if (this.stream.constructor.name === "TextStream") {
+                this.stream = this.stream.to_binary_stream();
+            }
+            else {
+                this.stream = this.stream.to_text_stream();
+            }
+
+            return;
         }
 
-        this.buffer = Buffer.from(
-            (stream_type === STREAM_TYPE_BINARY) ? "B" : "T",
-            "ucs-2"
+        this.context.exceptions.throw_operation_not_permitted_in_context(
+            "ADODB.Stream",
+            "Cannot change type when .position is not 0 (zero).",
+            "Exception thrown because ADODB Stream instances cannot " +
+                "change their type UNLESS the '.position' property is " +
+                "set to 0 (zero) first.  This goes for streams which are " +
+                "empty, or which contain data."
         );
-
-        this.ee.emit("@ADODBStream.Type", stream_type);
-        this.stream_type = stream_type;
     }
 
 
-
-
-    //
-    // Size
-    // ====
-    //
-    // MSDN: https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/size-property-ado-stream
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // Indicates the size of the stream in number of bytes.  Returns a
-    // Long value that specifies the size of the stream in number of
-    // bytes. The default value is the size of the stream, or -1 if
-    // the size of the stream is not known.
-    //
     get size () {
-
-        if (! this.stream_is_open) {
-            this.context.exceptions.throw_operation_not_allowed_when_closed(
-                "ADODB.Stream",
-                `A Stream's ".size" property was requested before the stream was open.`,
-                `This exception has been thrown because calling code has attempted to ` +
-                    `request an unopened Stream instance's ".size" property.`
-            );
-        }
-
-        var buffer_size = 0;
-
-        console.log("GET SIZE", this.buffer, this.stream_is_fresh);
-
-        if (this.buffer === null || this.stream_is_fresh) {
-            buffer_size = 0;
-        }
-        else {
-            buffer_size = this.buffer.byteLength;
-            console.log("BUFFER SIZE:", buffer_size);
-        }
-
-        this.ee.emit("@ADODBStream.size", buffer_size);
-        return buffer_size;
+        return this.stream.size + 2;
+    }
+    set size (x) {
     }
 
-
-
-    //
-    // Position
-    // ========
-    //
-    // MSDN: https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/position-property-ado
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // Sets or returns a value that specifies the offset, in number of
-    // bytes, of the current position from the beginning of the
-    // stream. The default is 0, which represents the first byte in
-    // the stream.
-    //
-    // The current position can be moved to a point after the end of
-    // the stream. If you specify the current position beyond the end
-    // of the stream, the Size of the Stream object will be increased
-    // accordingly. Any new bytes added in this way will be null.
-    //
     get position () {
-        this.ee.emit("@ADODBStream.position (get)", this.pos);
-        return this.pos;
-    }
-    set position (p) {
-        this.ee.emit("@ADODBStream.position (set)", p);
-
-        // TODO: this is broken and should check the mode type...
-        // if (this.stream_type === binary stream) {
-        /*if (p > this.buffer.length) {
-            let delta = p - this.buffer.length;
-            this.buffer = Buffer.concat([this.buffer, Buffer.alloc(delta, 0x00)]);
-         }*/
-
-        // IF TEXT STREAM:
-          // TODO: add a bounds check for lengths > this text stream
-        this.pos = p;
+        return this.stream.position;
     }
 
+    open () {
+        this.stream.open();
+    }
 
-    //
-    // METHODS
-    // =======
-    //
+    close () {
 
-    //
-    // Cancel
-    // ======
-    //
-    // MSDN: https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/cancel-method-ado
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // Cancels execution of a pending asynchronous method call.
-    //
+    }
+
+    read () {
+
+    }
+
+    readtext () {
+
+    }
+
+    write () {
+    }
+
+    writetext (text) {
+        this.stream.put(text);
+    }
+
+    flush () {
+
+    }
+
+    copyto () {
+
+    }
+
+    skipline () {
+
+    }
+
+    seteos () {
+
+    }
+
+    savetofile () {
+
+    }
+
+    loadfromfile () {
+
+    }
+
     cancel () {
-        this.ee.emit("@ADODBStream::Cancel()", arguments);
+
     }
-
-
-    //
-    // Close
-    // =====
-    //
-    // MSDN: https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/close-method-ado
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // Closes an open object and any dependent objects.
-    //
-    close () {
-        this.ee.emit("@ADODBStream::Close", arguments);
-        this.stream_is_open = false;
-    }
-
-    //
-    // CopyTo
-    // ======
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // Copies the specified number of characters or bytes (depending
-    // on Type) in the Stream to another Stream object.
-    //
-    // PARAMETERS
-    // ==========
-    //
-    //   dest_stream ~ An object variable value that contains a
-    //                 reference to an open Stream object. The current
-    //                 Stream is copied to the destination Stream
-    //                 specified by DestStream. The destination Stream
-    //                 must already be open. If not, a run-time error
-    //                 occurs.
-    //
-    //   num_chars  ~ Optional. An Integer value that specifies the
-    //                number of bytes or characters to be copied from
-    //                the current position in the source Stream to the
-    //                destination Stream. The default value is –1,
-    //                which specifies that all characters or bytes are
-    //                copied from the current position to EOS.
-    //
-    copyto (dest_stream, num_bytes) {
-
-        if (num_bytes === -1 || num_bytes === 0) {
-            num_bytes = this.buffer.length;
-        }
-
-        console.log("Copying from s1 pos:", this.pos);
-
-        let source_buf = this.buffer.slice(this.pos, num_bytes);
-        dest_stream.write(source_buf);
-
-        this.ee.emit("@ADODBStream::CopyTo", {
-            dest      : dest_stream,
-            num_bytes : num_bytes,
-            src_buf   : source_buf
-        });
-    }
-
-
-
-
-    //
-    // Open
-    // ====
-    //
-    // MSDN: https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/open-method-ado-stream
-    // W3:   https://www.w3schools.com/asp/met_stream_open.asp
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // Opens a Stream object to manipulate streams of binary or text
-    // data.
-    //
-    // PARAMETERS
-    // ==========
-    //
-    // source  ~ Optional. The data source for the Stream object (a URL
-    //           that points to an existing node in a tree structure,
-    //           like an e-mail or file system or a reference to an
-    //           already opened Record object). If source is not
-    //           specified, a new Stream object, with a size of zero,
-    //           will be created and opened.
-    //
-    // mode    ~ Optional. A ConnectModeEnum value that specifies the
-    //           access mode for a Stream object. Default is
-    //           adModeUnknown.
-    //
-    // opt      ~ Optional. A StreamOpenOptionsEnum value that specifies
-    //            options for opening a Stream object. Default is
-    //            adOpenStreamUnspecified.
-    //
-    // username ~ Optional. A name of a user who can access the Stream
-    //            object. If Source is an already opened Record, this
-    //            parameter is not specified.
-    //
-    // password ~ Optional. A password that validates the username.
-    //            If Source is an already opened Record, this arameter
-    //            is not specified.
-    //
-    // MODE ENUM
-    // =========
-    //
-    // | Name           | Value    | Description                                                     |
-    // |----------------|----------|-----------------------------------------------------------------|
-    // | Unknown        | 0        | Default. Permissions have not been set or cannot be determined. |
-    // | Read           | 1        | Read only.                                                      |
-    // | Write          | 2        | Write only.                                                     |
-    // | ReadWrite      | 3        | Read / Write.                                                   |
-    // | ShareDenyRead  | 4        | Prevents others from opening a connection with read perms.      |
-    // | ShareDenyWrite | 8        | Prevents others from opening a connection with write perms.     |
-    // | ShareExclusive | 12       | Prevents others from opening a connection.                      |
-    // | ShareDenyNone  | 16       | Allows others to open a connection with any permissions.        |
-    // | Recursive      | 0x400000 | Used to set perms on all sub-recs of the current record.        |
-    //
-    open (source, mode, opt, username, password) {
-
-        this.ee.emit("@ADODBStream::Open", arguments);
-
-        if (source) {
-            this.context.exceptions.throw_not_yet_implemented(
-                "ADODBStream",
-                "ADODBStream.Open does not support a truthy 'source' value.",
-                "Calling code has attempted to call ADODBStream.Open with a truthy "  +
-                    "value passed as the 'source' parameter.  At this time, this "    +
-                    "is not yet supported.  Please update Construct -- this feature " +
-                    "may have been added.  If not, please raise this as a bug on "    +
-                    "GitHub, here: https://github.com/bobbystacksmash/Construct/issues."
-            );
-        }
-
-        if (this.stream_is_open) {
-            this.context.exceptions.throw_not_allowed(
-                "ADODBStream",
-                "ADODBStream.Open() cannot be called when the stream is already open.",
-                "Calling code has called 'Open()' twice -- this exception is thrown when " +
-                    "open is called more than once.");
-        }
-
-        this.stream_is_open = true;
-    }
-
-    //
-    // ReadText
-    // ========
-    //
-    // MSDN: https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/readtext-method
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // Reads specified number of characters from a text Stream object.
-    //
-    // PARAMETERS
-    // ==========
-    //
-    // num_chars - Optional. An integer value that specifies the
-    //             number of characters to read. The default value is
-    //             to read all.
-    //
-    //  NOTE: If NumChar is more than the number of characters left in
-    //        the stream, only the characters remaining are
-    //        returned. The string read is not padded to match the
-    //        length specified by NumChar. If there are no characters
-    //        left to read, a variant whose value is null is
-    //        returned. ReadText cannot be used to read backwards.
-    //
-    readtext (num_chars) {
-
-        this.ee.emit("ADODBStream::ReadText", arguments);
-
-        //
-        // NOTE
-        // ====
-        //
-        // The first TWO bytes of `this.buffer' are ALWAYS the
-        // encoding bytes and should not be returned to the user.
-        //
-        // Code from this point on should use `outbuf', which is a
-        // Buffer containing the *actual* text chars, without the
-        // header.
-        //
-        console.log("#READ TEXT");
-
-        console.log("POS:", this.pos, "(corrected: " + (this.pos + 2) + ")");
-
-        let outbuf = Buffer.alloc(this.buffer.byteLength - 2);
-        this.buffer.copy(outbuf, 0, this.pos + 2, this.buffer.byteLength - 1);
-
-        if (this.pos % 2) {
-            console.log("This stream is mangled", this.size/2);
-        }
-
-        console.log("BUFFER:", this.buffer);
-        console.log("OUTBUF:", outbuf);
-
-        console.log("---------------");
-
-        return iconv.decode(outbuf, "utf-16");
-    }
-
-
-    //
-    // Write
-    // =====
-    //
-    // W3: https://www.w3schools.com/asp/met_stream_write.asp
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // The Write method is used to write binary data to a binary
-    // Stream object.
-    //
-    // If there is data in the Stream object and the current position
-    // is EOS, the new data will be appended beyond the existing
-    // data. If the current position is not EOS, the existing data
-    // will be overwritten.
-    //
-    // If you write past EOS, the size of the Stream will
-    // increase. EOS will be set to the last byte in the Stream. If
-    // you don't write past EOS, the current position will be set to
-    // the next byte after the newly added data. Previously existing
-    // data will not be truncated. Call the SetEOS method to truncate.
-    //
-    // NOTE: This method is used only with binary Stream objects, for
-    //       textStream objects, use the WriteText method.
-    //
-    write (buf) {
-
-        if (this.stream_is_open === false) {
-            // TODO
-            throw new Error("TODO: Update this with the correct exception.");
-        }
-
-        if (this.stream_!== STREAM_TYPE_BINARY) {
-            this.context.exceptions.throw_operation_not_permitted_in_context(
-                "ADODB.Stream",
-                `Write() was called while the stream is in textual mode -- ` +
-                    `should call WriteText() instead.`,
-                `A stream can be in one of two modes: binary (mode 1), and text (mode 2). ` +
-                    `The stream mode depicts which 'write' method can be called -- ` +
-                    `'Write' is used for binary streams, while 'WriteText' is for text streams. ` +
-                    `It appears that code has attempted to call 'write' on a stream.`
-            );
-        }
-
-        // What's the length of the incoming buffer?
-        let incoming_buf_len = buf.length;
-
-        if (this.buffer.byteLength === 0) {
-            this.buffer = Buffer.from(buf);
-        }
-        else {
-            this.buffer = Buffer.concat([this.buffer, Buffer.from(buf)]);
-        }
-
-        this.eos_marker = this.buffer.byteLength;
-        this.pos        = this.buffer.byteLength;
-
-        this.ee.emit("@ADODBStream::Write", { buffer: buf });
-    }
-
-    //
-    // WriteText
-    // =========
-    //
-    // MSDN: https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/writetext-method
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // Writes a specified text string to a Stream object.
-    //
-    writetext (txt, add_line_sep) {
-
-        txt = txt || "";
-
-        if (!this.stream_is_open) {
-            this.context.exceptions.throw_operation_not_allowed_when_closed(
-                "ADODB.Stream",
-                `The following textual data was attempted to be written ` +
-                    `to this stream, however the stream is not open. Text data: ` +
-                    `"${txt}".`,
-                `All streams must be OPEN before data can be written to them. ` +
-                    `Calling code has attempted to write the following to this ` +
-                    `stream instance without first calling 'open()': "${txt}".`
-            );
-        }
-
-        if (this.stream_type === 1) {
-            // This is a binary stream, and you can't call `writetext'
-            // from a binary stream.
-            this.context.exceptions.throw_operation_not_permitted_in_context(
-                "ADODB.Stream",
-                `WriteText() was called while the stream is in binary mode -- ` +
-                    `should call Write() instead.`,
-                `A stream can be in one of two modes: binary (mode 1), and text (mode 2). ` +
-                    `The stream mode depicts which 'write' method can be called -- ` +
-                    `'Write' is used for binary streams, while 'WriteText' is for text streams. ` +
-                    `It appears that code has attempted to call 'writetext' on a binary stream.`
-            );
-        }
-
-        if (txt === undefined || txt === null || ! txt instanceof String) {
-            return;
-        }
-
-        this.stream_is_fresh = false;
-
-        if (txt === "") {
-            return;
-        }
-
-        console.log(`ENCODING INCOMING TXT: '${txt}'`);
-        let encoded_txt = iconv.encode(txt, "ucs-2");
-        console.log(`ENCODED FORM:`, encoded_txt);
-
-        if (this.buffer === null) {
-            this.buffer = encoded_txt;
-        }
-        else {
-            this.buffer = Buffer.concat([this.buffer, encoded_txt]);
-        }
-
-        console.log("THIS BUF:", this.buffer);
-
-        this.eos_marker = this.buffer.byteLength;
-        this.pos        = this.buffer.byteLength;
-    }
-
-
-    read (len) {
-
-        if (len >= this.buffer.length) {
-            len = this.buffer.length;
-        }
-
-        let buf;
-
-        if (len === -1 || len === undefined || len === null) {
-            buf = this.buffer.slice(0);
-        }
-        else {
-            buf = this.buffer.slice(0, len);
-        }
-
-        return [...buf];
-    }
-
-
-    //
-    // SetEOS
-    // ======
-    //
-    // MSDN: https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/seteos-method
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // When called, it sets the current EOS value to be the end of the
-    // stream.  Any bytes which exist BEYOND the new EOS value are
-    // truncated.
-    //
-    seteos (offset) {
-
-        let old_buf = this.buffer,
-            new_buf = this.buffer.slice(0, offset);
-
-        this.buffer = new_buf;
-        this.eos_marker = offset;
-
-        this.ee.emit("@ADODBStream::SetEOS", {
-            offset: offset,
-            old_buf: old_buf,
-            new_buf: new_buf
-        });
-    }
-
-    //
-    // SaveToFile
-    // ==========
-    //
-    // The SaveToFile method is used to save the binary contents of an
-    // open Stream object to a local file.
-    //
-    // Note: After a call to this method, the current position in the
-    // stream is set to the beginning of the stream (Position=0).
-    //
-    // PARAMETERS
-    // ==========
-    //
-    // filename ~ Required. The name of the file to save the contents
-    //            of the Stream object.
-    //
-    // options ~ Optional. An enum value that specifies whether a file
-    //           should be created if it does not exist, or
-    //           overwritten. Default is `SaveCreateNotExist'.
-    //
-    // SAVE ENUM
-    // =========
-    //
-    // | Name                | Value | Description                                        |
-    // |---------------------|-------|----------------------------------------------------|
-    // | SaveCreateNotExist  | 1     | Default. Creates a new file if file ! exists.      |
-    // | SaveCreateOverwrite | 2     | Overwrites the file with the data from the stream. |
-    //
-    savetofile (filename, option) {
-
-        console.log("ADODBSTREAM.SAVE->", filename, "opt", option);
-    }
-
-
-    close () {
-        console.log("ADODBSTREAm.CLOSE()");
-    }
-
 }
 
 
