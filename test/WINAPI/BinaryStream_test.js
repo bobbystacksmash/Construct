@@ -5,7 +5,7 @@ const VirtualFileSystem = require("../../src/runtime/virtfs");
 
 describe("BinaryStream", () => {
 
-    xdescribe(".charset", () => {
+    describe(".charset", () => {
 
         it("Should throw if '.charset' is assigned-to", (done) => {
 
@@ -15,7 +15,7 @@ describe("BinaryStream", () => {
         });
     });
 
-    xdescribe("#open", () => {
+    describe("#open", () => {
 
         it("Should throw if an unopened stream is written to.", (done) => {
             let bs = new BinaryStream();
@@ -39,19 +39,19 @@ describe("BinaryStream", () => {
         });
     });
 
-    xdescribe("#put", () => {
+    describe("#put", () => {
 
-        it("Should throw if 'put' is called - not allowed in BinaryStreams.", (done) => {
-
-            let bs = new BinaryStream();
-            bs.open();
-            assert.throws(function () { bs.put("testing..."); });
-            done();
-        });
+        //
+        // PUT SHOULD NOT BE USED
+        //
+        // This method has been added only because it is needed for
+        // Stream->Stream copies.  There are not tests for it because
+        // it should not be exposed further upstream.  For 'put'
+        // specific tests, see the 'copy_to' tests.
 
     });
 
-    xdescribe("#fetch_n_bytes", () => {
+    describe("#fetch_n_bytes", () => {
 
         it("Should fetch the correct number of bytes", (done) => {
 
@@ -80,141 +80,7 @@ describe("BinaryStream", () => {
         });
     });
 
-    xdescribe("#fetch_line", () => {
-
-        it("Default should fetch up to the first CRLF", (done) => {
-
-            let bs = new BinaryStream();
-            bs.open();
-            bs.put("abcd\r\nefgh\r\n");
-            bs.position = 0;
-
-            assert.equal(bs.fetch_line(), "abcd");
-            assert.equal(bs.position, 12);
-
-            assert.equal(bs.fetch_line(), "efgh");
-            assert.equal(bs.position, 24);
-
-            assert.equal(bs.fetch_line(), "");
-            assert.equal(bs.position, 24);
-
-            bs.position = 0;
-            assert.equal(bs.fetch_all(), "abcd\r\nefgh\r\n");
-
-            done();
-        });
-
-        it("Should return an empty string when at the end of the buffer", (done) => {
-
-            let bs = new BinaryStream();
-            bs.open();
-            bs.put("abcd\r\n");
-
-            assert.equal(bs.fetch_line(), "");
-            assert.equal(bs.position, 12);
-            done();
-        });
-
-        it("Should return the whole string when CRLF cannot be found", (done) => {
-
-            let bs = new BinaryStream();
-            bs.open();
-            bs.put("abcd");
-
-            bs.position = 0;
-            assert.equal(bs.fetch_line(), "abcd");
-            assert.equal(bs.position, 8);
-
-            done();
-        });
-
-        it("Should handle the case where the whole string is CRLF pairs", (done) => {
-
-            let bs = new BinaryStream();
-            bs.open();
-            bs.put("\r\n\r\n\r\n\r\n");
-            bs.separator = -1;
-            bs.position = 0;
-
-            assert.equal(bs.fetch_line(), "");
-            assert.equal(bs.position, 4);
-
-            assert.equal(bs.fetch_line(), "");
-            assert.equal(bs.position, 8);
-
-            assert.equal(bs.fetch_line(), "");
-            assert.equal(bs.position, 12);
-
-            assert.equal(bs.fetch_line(), "");
-            assert.equal(bs.position, 16);
-
-            assert.equal(bs.fetch_line(), "");
-            assert.equal(bs.position, 16);
-
-            done();
-        });
-
-        describe("line separator specific", () => {
-
-            it("Should throw if the sep value isn't CR, CRLF, or LF", (done) => {
-
-                let bs = new BinaryStream();
-                bs.open();
-
-                assert.throws(() => bs.separator = "\r\n");
-                assert.throws(() => bs.separator = "\n");
-                assert.throws(() => bs.separator = "\r");
-                assert.throws(() => bs.separator = 0);
-                assert.throws(() => bs.separator = 1);
-
-                assert.doesNotThrow(() => bs.separator = -1);
-                assert.doesNotThrow(() => bs.separator = 13);
-                assert.doesNotThrow(() => bs.separator = 10);
-
-                done();
-            });
-
-            it("Should change to LF", (done) => {
-
-                let bs = new BinaryStream();
-                bs.open();
-                bs.put("abcd\r\nefgh\r\n");
-
-                bs.separator = 10; // LF
-                bs.position = 0;
-                assert.equal(bs.fetch_line(), "abcd\r");
-                assert.equal(bs.fetch_line(), "efgh\r");
-
-                assert.equal(bs.position, 24);
-
-                done();
-
-            });
-
-            it("Should change to CR", (done) => {
-
-                let bs = new BinaryStream();
-                bs.open();
-                bs.put("abcd\rdefg\r\r");
-
-                bs.position = 0;
-                bs.separator = 13; // CR
-
-                assert.equal(bs.fetch_line(), "abcd");
-                assert.equal(bs.position, 10);
-
-                assert.equal(bs.fetch_line(), "defg");
-                assert.equal(bs.position, 20);
-
-                assert.equal(bs.fetch_line(), "");
-                assert.equal(bs.position, 22);
-
-                done();
-            });
-        });
-    });
-
-    xdescribe("#fetch_all", () => {
+    describe("#fetch_all", () => {
 
         it("Should fetch all chars from pos to EOB (end-of-buffer)", (done) => {
 
@@ -258,69 +124,9 @@ describe("BinaryStream", () => {
         });
     });
 
-    // TODO ...
-    xdescribe("#skipline", () => {
-
-        it("Should default to CRLF without changing LineSep (default)", (done) => {
-
-            let bs = new BinaryStream();
-            bs.open();
-            bs.type = 2;
-            bs.put("abc\r\ndef\r\nghi");
-
-            bs.position = 0;
-            bs.skipline();
-
-            assert.equal(bs.position, 10);
-            done();
-        });
-
-        it("Should continue skipping lines until there are no more left to skip", (done) => {
-
-            let bs = new BinaryStream();
-            bs.open();
-            bs.type = 2;
-            bs.put("abc\r\ndef\r\nghi\r\n");
-
-            bs.position = 0;
-
-            bs.skipline();
-            assert.equal(bs.position, 10);
-
-            bs.skipline();
-            assert.equal(bs.position, 20);
-
-            bs.skipline();
-            assert.equal(bs.position, 30);
-
-            bs.skipline();
-            bs.skipline();
-            bs.skipline();
-            bs.skipline();
-            assert.equal(bs.position, 30);
-
-            done();
-
-        });
-
-        it("Should read up to LF if set", (done) => {
-
-            let bs = new BinaryStream();
-            bs.open();
-            bs.type = 2;
-            bs.put("abc\ndef");
-            bs.position = 0;
-            bs.skipline(10); // 10 = enum value for LF
-            assert.equal(bs.position, 8);
-            done();
-        });
-
-    });
-
-
     describe(".position", () => {
 
-        xit("Should allow .position to be updated, so long as it is within acceptable range", (done) => {
+        it("Should allow .position to be updated, so long as it is within acceptable range", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} }),
                 bs  = new BinaryStream({ vfs: vfs });
@@ -339,7 +145,7 @@ describe("BinaryStream", () => {
             done();
         });
 
-        xit("Should update acceptable range values for .position when used with #set_EOS", (done) => {
+        it("Should update acceptable range values for .position when used with #set_EOS", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} }),
                 bs  = new BinaryStream({ vfs: vfs });
@@ -435,7 +241,7 @@ describe("BinaryStream", () => {
         });
     });
 
-    xdescribe(".size", () => {
+    describe(".size", () => {
 
         it("Should throw when size is requested on an unopened stream.", (done) => {
             let bs = new BinaryStream();
@@ -537,7 +343,7 @@ describe("BinaryStream", () => {
 
     describe("#copy_to", () => {
 
-        xit("Should throw when trying to copy bin -> txt streams", (done) => {
+        it("Should throw when trying to copy bin -> txt streams", (done) => {
 
             let vfs       = new VirtualFileSystem({ register: () => {} });
             let srcstream = new BinaryStream({ vfs: vfs }),
@@ -611,7 +417,7 @@ describe("BinaryStream", () => {
         });
     });
 
-    xdescribe("load_from_file", () => {
+    describe("load_from_file", () => {
 
         it("Should load from a file, if that file exists", (done) => {
 
