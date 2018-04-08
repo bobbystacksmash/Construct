@@ -17,7 +17,78 @@ describe("ADODBStream", () => {
 
     describe("properties", () => {
 
-        describe(".type", () => {
+        describe(".LineSeparator", () => {
+
+            xdescribe("in binary mode", () => {
+
+                it("Should throw when '.LineSeparator' is set", (done) => {
+
+                    let num_linesep_values_tried = 0;
+
+                    function assert_correct_throw_msg () {
+                        throw new Error("X");
+                        assert.isTrue(true);
+                    }
+
+                    let this_context = {};
+                    Object.assign(this_context, context, {
+                        exceptions: {
+                            throw_args_wrong_type_or_out_of_range_or_conflicted: assert_correct_throw_msg
+                        }
+                    });
+
+                    let ado = new ADODBStream(this_context);
+                    ado.type = BINARY_STREAM;
+                    ado.open();
+
+
+                    for (let i = 15; i > -10; i--) {
+                        try {
+                            ado.lineseparator = i;
+                        }
+                        catch (e) {
+                            num_linesep_values_tried++;
+                        }
+                    }
+
+                    assert.equal(num_linesep_values_tried, 25);
+                    done();
+                });
+            });
+
+            describe("in text mode", () => {
+
+                it("Should allow only LineSeparatorsEnum values", (done) => {
+
+                    function assert_correct_throw_msg () {
+                        throw new Error("X");
+                    }
+
+                    let this_context = {};
+                    Object.assign(this_context, context, {
+                        exceptions: {
+                            throw_args_wrong_type_or_out_of_range_or_conflicted: assert_correct_throw_msg
+                        }
+                    });
+
+                    let ado = new ADODBStream(this_context);
+                    ado.open();
+                    ado.type = TEXT_STREAM;
+
+                    assert.doesNotThrow(() => ado.linesep = 13); // CR
+                    assert.doesNotThrow(() => ado.linesep = -1); // CRLF
+                    assert.doesNotThrow(() => ado.linesep = 10); // LF
+
+                    assert.throws(() => ado.lineseparator = 'a');
+                    assert.throws(() => ado.lineseparator = 0xF);
+
+                    done();
+                });
+
+            });
+        });
+
+        xdescribe(".Type", () => {
 
             it("Should create a text stream", (done) => {
 
@@ -37,9 +108,8 @@ describe("ADODBStream", () => {
 
             it("Should throw if trying to change types without position at 0", (done) => {
 
-                function assert_correct_throw_msg (source, summary) {
+                function assert_correct_throw_msg () {
                     assert.isTrue(true);
-                    // If this is called, then we threw the correct error.
                     done();
                 }
 

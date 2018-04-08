@@ -9,6 +9,12 @@ const STREAM_TYPE_ENUM = {
     adTypeText:   2
 };
 
+const LINE_SEPARATOR_ENUM = {
+    adCR:    13,
+    adCRLF: -1, // DEFAULT
+    adLF:    10
+};
+
 class JS_ADODBStream extends Component {
 
     constructor (context) {
@@ -17,6 +23,44 @@ class JS_ADODBStream extends Component {
         this.vfs = this.context.vfs;
 
         this.stream = new TextStream(context);
+    }
+
+    _is_text_stream () {
+        return this.stream.constructor.name === "TextStream";
+    }
+
+    _is_binary_stream () {
+        return this.stream.constructor.name === "BinaryStream";
+    }
+
+    get lineseparator () {
+
+    }
+    set lineseparator (line_sep_opt) {
+
+        if (this._is_binary_stream) {
+
+            this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
+                "ADODB.Stream",
+                "Cannot set '.LineSeparator' when stream is in binary mode.",
+                "A binary stream dies not support the '.LineSeparator' property " +
+                    "and throws accordingly.  Please switch to a TextStream (mode 2) " +
+                    "if you require line separator / line skip modes."
+            );
+        }
+
+        if (line_sep_opt !== LINE_SEPARATOR_ENUM.adCR ||
+            line_sep_opt !== LINE_SEPARATOR_ENUM.adCRLF ||
+            line_sep_opt !== LINE_SEPARATOR_ENUM.adLF) {
+
+            this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
+                "ADODB.Stream",
+                "Cannot set '.LineSeparator' to unknown value.",
+                "The only permitted values for the '.LineSeparator' are defined within the " +
+                    "LineSeparatorsEnum, here: https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/lineseparatorsenum. " +
+                    "Accepted values are: 13 (CR), -1 (CRLF), or 10 (LF)."
+            );
+        }
     }
 
     get type () {
