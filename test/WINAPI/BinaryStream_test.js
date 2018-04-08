@@ -318,102 +318,118 @@ describe("BinaryStream", () => {
     });
 
 
-    xdescribe(".position", () => {
+    describe(".position", () => {
 
-        it("Should overwrite chars when position is changed", (done) => {
+        xit("Should allow .position to be updated, so long as it is within acceptable range", (done) => {
 
-            let bs = new BinaryStream();
+            let vfs = new VirtualFileSystem({ register: () => {} }),
+                bs  = new BinaryStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\file_1.txt", "abcdef");
+
             bs.open();
-            bs.put("abcd");
-            bs.position = 2;
-            bs.put("123456");
+            bs.load_from_file("C:\\file_1.txt");
 
-            bs.position = 0;
-            assert.equal(bs.fetch_all(), "a123456");
+            for (let i = 0; i < "abcdef".length; i++) {
+                assert.doesNotThrow(() => bs.position = i);
+            }
+
+            assert.throws(() => bs.position = "abcdef".length + 1);
+
+            done();
+        });
+
+        xit("Should update acceptable range values for .position when used with #set_EOS", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} }),
+                bs  = new BinaryStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\file_1.txt", "abcdef");
+
+            bs.open();
+            bs.load_from_file("C:\\file_1.txt");
+
+            for (let i = 0; i < "abcdef".length; i++) {
+                assert.doesNotThrow(() => bs.position = i);
+            }
+            assert.throws(() => bs.position = "abcdef".length + 1);
+
+            // Set pos, then update EOS to truncate stream...
+            bs.position = 3;
+            bs.set_EOS();
+
+            assert.throws(() => bs.position = bs.size + 1);
+            assert.equal(bs.position, 3);
+            assert.equal(bs.size, 3);
+            done();
+        });
+
+        it("Should clear the buffer each time 'load_from_file' is called", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} }),
+                bs  = new BinaryStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\file_1.txt", "abcd");
+            vfs.AddFile("C:\\file_2.txt", "1234567890");
+
+            bs.open();
+
+            bs.load_from_file("C:\\file_1.txt");
+            assert.equal(bs.size, 4);
+            bs.position = 4;
+            assert.equal(bs.position, 4);
+            assert.deepEqual(bs.fetch_all(), Buffer.alloc(0));
+
+            bs.load_from_file("C:\\file_2.txt");
+            assert.equal(bs.size, 10);
+            assert.equal(bs.position, 0);
+            assert.deepEqual(bs.fetch_all(), Buffer.from("1234567890", "ascii"));
+
             done();
         });
 
         it("Should throw when .position is called on an unopened stream", (done) => {
-
             let bs = new BinaryStream();
             assert.throws(function () { bs.position; });
             done();
         });
 
         it("Should report a position of zero when stream is open but not written to.", (done) => {
-
             let bs = new BinaryStream();
             bs.open();
             assert(bs.position === 0, "Position is zero when not written to.");
             done();
         });
 
-        it("Should not advance position when empty strings are written.", (done) => {
+        it("Should not advance position when empty files are read-in", (done) => {
 
-            let bs = new BinaryStream();
+            let vfs = new VirtualFileSystem({ register: () => {} }),
+                bs  = new BinaryStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\file_1.txt", "");
+
             bs.open();
-            assert(bs.position === 0, "Position is zero when stream is not written to.");
+            bs.load_from_file("C:\\file_1.txt");
 
-            bs.put("");
-            assert(bs.position === 0, "Position remains at zero when a blank string is written.");
-
-            bs.put("");
-            assert(bs.position === 0, "Position remains at zero when another blank string is written.");
-
-            done();
-        });
-
-        it("Should advance 'position' by 2 bytes for a single char written to the stream.", (done) => {
-
-            let bs = new BinaryStream();
-            bs.open();
-
-            bs.put("a");
-            assert(bs.position === 2, "Position is 2");
-
-            bs.put("b");
-            assert(bs.position === 4, "Position is now 4");
-
-            bs.put("cdef");
-            assert(bs.position === 12, "Position is now 12");
-
-            bs.position = 0;
-            assert.equal(bs.fetch_all(), "abcdef");
+            assert.equal(bs.position, 0);
+            assert.equal(bs.size, 0);
 
             done();
         });
 
         it("Should throw if position is set higher than string len", (done) => {
 
-            let bs = new BinaryStream();
+            let vfs = new VirtualFileSystem({ register: () => {} }),
+                bs  = new BinaryStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\file_1.txt", "abcdef");
             bs.open();
+            bs.load_from_file("C:\\file_1.txt");
 
-            bs.put("abc");
-
-            assert.equal(bs.position, 6);
+            assert.equal(bs.position, 0);
             assert.doesNotThrow(() => bs.position = 6);
             assert.throws(() => bs.position = 7);
-
-            done();
-        });
-
-        it("Should put in to the correct position when position is changed.", (done) => {
-
-            let bs = new BinaryStream();
-            bs.open();
-
-            bs.put("abcd");
-            assert(bs.position === 8, `Expected bs.position is: ${bs.position}, expected 8`);
-
-            bs.position = 2;
-            bs.put("efgh");
-            assert.equal(bs.position, 10);
-
-            bs.position = 0;
-            assert.equal(bs.position, 0);
-
-            bs.put("blah");
-            assert.equal(bs.position, 8);
+            assert.throws(() => bs.position = -1);
 
             done();
         });

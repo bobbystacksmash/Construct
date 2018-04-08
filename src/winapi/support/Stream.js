@@ -26,6 +26,9 @@ class Stream {
             this.pos = 0;
             return;
         }
+        else if (p < 0) {
+            throw new Error("Cannot set position to a negative value.");
+        }
         else if (! this.buffer || this.buffer === null || this.buffer === undefined) {
             throw new Error("Cannot set position to a positive value " +
                             "while the buffer is empty.");
@@ -64,6 +67,17 @@ class Stream {
 
     close () {
         this.stream_is_open = false;
+    }
+
+    set_EOS () {
+
+        if (this.position < 0) {
+            throw new Error("Cannot call EOS on a negative position value.");
+        }
+
+        let tmpbuf = Buffer.alloc(this.position);
+        this.buffer.copy(tmpbuf, 0, 0, this.position);
+        this.buffer = tmpbuf;
     }
 
 
