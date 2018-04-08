@@ -20,6 +20,18 @@ class Stream {
         return false;
     }
 
+    get can_change_stream_type () {
+        return (this.pos === 0);
+    }
+
+    get is_open () {
+        return this.stream_is_open;
+    }
+
+    get is_closed () {
+        return this.stream_is_open === false;
+    }
+
     set position (p) {
 
         if (p === 0) {

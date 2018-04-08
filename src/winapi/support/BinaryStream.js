@@ -1,4 +1,3 @@
-
 const Stream     = require("./Stream");
 const TextStream = require("./TextStream");
 
@@ -16,8 +15,8 @@ class BinaryStream extends Stream {
         throw new Error("Cannot set '.charset' property on a Binary Stream.");
     }
 
-    put () {
-        throw new Error("Cannot write directly in to a binary stream. Use 'load_from_file' instead.");
+    get type () {
+        return 1;
     }
 
     open () {
@@ -78,6 +77,25 @@ class BinaryStream extends Stream {
         let file_contents = this._load_from_file(path);
         this.buffer   = Buffer.from(file_contents);
         this.position = 0;
+    }
+
+    to_text_stream () {
+
+        let ts = new TextStream(this.context);
+
+        ts.open();
+        ts.put(this.buffer);
+        ts.position = this.pos; // TODO: int division?
+
+        if (this.stream_is_open) {
+            ts.open();
+        }
+        else {
+            ts.close();
+        }
+
+        return ts;
+
     }
 }
 

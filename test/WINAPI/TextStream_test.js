@@ -322,6 +322,29 @@ describe("TextStream", () => {
     });
 
 
+    describe(".charset", () => {
+
+        // This is not implemented fully.  Currently, the only
+        // supported charset is "Unicode", or "utf16le" with buffers.
+        // This is known to be wrong, but it's also very low on the
+        // list of features needed for an alpha release.
+        it("Should return 'Unicode' charset by default", (done) => {
+
+            let ts = new TextStream();
+
+            assert.equal(ts.charset, "Unicode");
+            done();
+        });
+
+        it("Should throw if '.charset' is assigned to", (done) => {
+
+            let ts = new TextStream();
+            assert.throws(() => ts.charset = "UTF-8");
+            done();
+        });
+    });
+
+
     describe(".position", () => {
 
         it("Should overwrite chars when position is changed", (done) => {
@@ -594,6 +617,62 @@ describe("TextStream", () => {
             const file_path = "C:\\foo.txt";
 
             assert.throws(() => ts.load_from_file(file_path));
+            done();
+        });
+    });
+
+    describe("#to_binary_stream", () => {
+
+        it("Should return a copy as a binary stream", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.put("Hello, world!");
+            ts.position = 0;
+
+            assert.equal(ts.size, 26);
+
+            let bs = ts.to_binary_stream();
+
+            assert.equal(bs.type, 1);
+            assert.equal(bs.size, 26);
+
+            done();
+        });
+
+        it("Should return a copy as a binary stream, copying across position", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.put("Hello, world!");
+            ts.position = 5
+
+            assert.equal(ts.size, 26);
+
+            let bs = ts.to_binary_stream();
+
+            assert.equal(bs.type, 1);
+            assert.equal(bs.size, 26);
+            assert.equal(bs.position, 5);
+
+            done();
+        });
+
+        it("Should return a copy as a binary stream, copying across open/closed status", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.put("Hello, world!");
+
+            assert.equal(ts.size, 26);
+            assert.equal(ts.position, 26);
+
+            ts.close();
+            let bs = ts.to_binary_stream();
+
+            assert.equal(bs.type, 1);
+            assert.equal(bs.is_closed, true);
+
             done();
         });
     });
