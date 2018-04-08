@@ -132,7 +132,17 @@ class VirtualFileSystem {
 	let parsed_path = AbsFileSystemObject.Parse(path),
 	    file_path   = parsed_path.orig_path_parts_mv.slice(0, -1);
 
-	contents = contents || "";
+
+        if (typeof contents === "String" || contents instanceof String) {
+            contents = Buffer.from(contents, "ascii");
+        }
+        else if (!contents instanceof Buffer) {
+            throw new Error("Cannot add file contents that " +
+                            "isn't either a String or Buffer.");
+        }
+        else if (contents === null || contents === undefined) {
+            contents = Buffer.alloc(0);
+        }
 
 	var cwd;
 
