@@ -99,16 +99,45 @@ class JS_ADODBStream extends Component {
 
 
     get size () {
-        return this.stream.size + 2;
+        return (this.stream.size > 0)
+            ? this.stream.size + 2
+            : 0;
     }
     set size (x) {
     }
 
     get position () {
-        return this.stream.position;
+
+        try {
+            return this.stream.position;
+        }
+        catch (e) {
+            this.context.exceptions.throw_operation_not_allowed_when_closed(
+                "ADODB.Stream",
+                "Cannot fetch '.position' when stream is closed.",
+                "Calling code has attempted to access the `.position' property " +
+                    "of an ADODB Stream instance while the stream was 'closed'. " +
+                    "ADODB Stream instances have two states: open and closed -- " +
+                    "ensure the stream is open before calling '.position'."
+            );
+            return false;
+        }
     }
     set position (p) {
-        this.stream.position = p;
+
+        try {
+            this.stream.position = p;
+        }
+        catch (e) {
+            this.context.exceptions.throw_operation_not_allowed_when_closed(
+                "ADODB.Stream",
+                "Cannot fetch '.position' when stream is closed.",
+                "Calling code has attempted to alter the `.position' property " +
+                    "of an ADODB Stream instance while the stream was 'closed'. " +
+                    "ADODB Stream instances have two states: open and closed -- " +
+                    "ensure the stream is open before calling '.position'."
+            );
+        }
     }
 
     open () {
@@ -147,15 +176,15 @@ class JS_ADODBStream extends Component {
     }
 
     seteos () {
-
+        this.stream.set_EOS();
     }
 
     savetofile () {
 
     }
 
-    loadfromfile () {
-
+    loadfromfile (file) {
+        this.stream.load_from_file(file);
     }
 
     cancel () {

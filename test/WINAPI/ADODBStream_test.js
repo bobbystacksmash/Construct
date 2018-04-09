@@ -1,5 +1,6 @@
 const assert = require("chai").assert;
 const ADODBStream = require("../../src/winapi/ADODBStream");
+const VirtualFileSystem = require("../../src/runtime/virtfs");
 
 let context = {
     epoch: 1234567890,
@@ -17,7 +18,7 @@ describe("ADODBStream", () => {
 
     describe("properties", () => {
 
-        describe(".LineSeparator", () => {
+        xdescribe(".LineSeparator", () => {
 
             xdescribe("in binary mode", () => {
 
@@ -88,7 +89,7 @@ describe("ADODBStream", () => {
             });
         });
 
-        describe(".EOS", () => {
+        xdescribe(".EOS", () => {
 
             it("Should indicate when at the end of the stream", (done) => {
 
@@ -105,6 +106,165 @@ describe("ADODBStream", () => {
                 done();
             });
 
+        });
+
+        xdescribe(".charset", () => {
+
+            // This feature is not fully implemented.
+
+            it("Should allow setting the charset to any value", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.open();
+                ado.charset = "UTF-16";
+
+                assert.equal(ado.charset, "UTF-16");
+                done();
+            });
+        });
+
+        xdescribe(".size", () => {
+
+            it("Should correctly return the number of bytes in a string (text stream)", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.open();
+                ado.writetext("Hello, World!");
+                assert.equal(ado.size, 28);
+
+                done();
+            });
+
+            it("Should correctly return the number of bytes in a binary stream", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.open();
+                ado.writetext("Hello, World!");
+                ado.position = 0;
+                ado.type = 1;
+
+                // All strings are UTF-16 by default, so the bin size
+                // should be 28 (2-bytes per codepoint).
+                assert.equal(ado.size, 28);
+
+                done();
+            });
+
+            it("Should correctly return the number of bytes loaded from a file", (done) => {
+
+                let vfs = new VirtualFileSystem({ register: () => {} }),
+                    ctx = Object.assign({}, context, { vfs: vfs });
+
+                let ado = new ADODBStream(ctx);
+                ado.open();
+
+                vfs.AddFile("C:\\blah.txt", Buffer.from("Hello, World!"));
+                ado.loadfromfile("C:\\blah.txt");
+
+                assert.equal(ado.size, "Hello, World!".length + 2);
+                done();
+            });
+
+            it("Should report a size of '0' (zero) for an empty file", (done) => {
+
+                let vfs = new VirtualFileSystem({ register: () => {} }),
+                    ctx = Object.assign({}, context, { vfs: vfs });
+
+                let ado = new ADODBStream(ctx);
+                ado.open();
+
+                vfs.AddFile("C:\\empty.txt", Buffer.alloc(0));
+                ado.loadfromfile("C:\\empty.txt");
+
+                assert.equal(ado.size, 0);
+                done();
+            });
+
+            it("Should report size correctly after truncation (via SetEOS)", (done) => {
+
+                let vfs = new VirtualFileSystem({ register: () => {} }),
+                    ctx = Object.assign({}, context, { vfs: vfs });
+
+                let ado = new ADODBStream(ctx);
+                ado.open();
+
+                vfs.AddFile("C:\\blah.txt", Buffer.from("Hello, World!"));
+                ado.loadfromfile("C:\\blah.txt");
+
+                assert.equal(ado.size, 15);
+                ado.position = 3;
+                ado.setEOS();
+                assert.equal(ado.size, 5);
+
+                done();
+            });
+        });
+
+        describe(".Position", () => {
+
+            describe("when the stream is opened", () => {
+
+                describe("in text mode", () => {
+
+                    it("Should throw if '.position' is updated beyond the available size", (done) => {
+
+                        function assert_correct_throw_msg () {
+                            done();
+                        }
+
+                        let this_context = {};
+                        Object.assign(this_context, context, {
+                            exceptions: {
+                                throw_operation_not_allowed_when_closed: assert_correct_throw_msg
+                            }
+                        });
+
+                        let ado = new ADODBStream(this_context);
+                        ado.open();
+                        ado.writetext("Hello, World!");
+                        assert.equal(ado.size, 28);
+
+                        ado.position = ado.size + 1;
+                    });
+                });
+            });
+
+            xdescribe("when the stream is closed", () => {
+
+                it("Should throw if .position is accessed", (done) => {
+
+                    function assert_correct_throw_msg () {
+                        done();
+                    }
+
+                    let this_context = {};
+                    Object.assign(this_context, context, {
+                        exceptions: {
+                            throw_operation_not_allowed_when_closed: assert_correct_throw_msg
+                        }
+                    });
+
+                    let ado = new ADODBStream(this_context);
+                    assert.throws(() => ado.position);
+                });
+
+                it("Should throw if .position is assigned-to", (done) => {
+
+                    function assert_correct_throw_msg () {
+                        done();
+                    }
+
+                    let this_context = {};
+                    Object.assign(this_context, context, {
+                        exceptions: {
+                            throw_operation_not_allowed_when_closed: assert_correct_throw_msg
+                        }
+                    });
+
+                    let ado = new ADODBStream(this_context);
+                    assert.throws(() => ado.position = 1);
+                });
+            });
         });
 
         xdescribe(".Type", () => {
