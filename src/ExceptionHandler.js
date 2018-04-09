@@ -161,6 +161,17 @@ class ExceptionHandler extends Component {
             source, summary, details
         );
     }
+
+
+    throw_parameter_is_incorrect (source, summary, details) {
+        this.throw(
+            "Error",
+            "The parameter is incorrect.",
+            -2147024809,
+            "The parameter is incorrect.",
+            source, summary, details
+        );
+    }
 }
 
 module.exports = ExceptionHandler;
