@@ -88,6 +88,24 @@ describe("ADODBStream", () => {
             });
         });
 
+        describe(".EOS", () => {
+
+            it("Should indicate when at the end of the stream", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.open();
+                ado.writetext("Hello, World!");
+
+                assert.equal(ado.position, 26);
+                assert.equal(ado.eos, true);
+
+                ado.position = 10;
+                assert.isFalse(ado.eos);
+
+                done();
+            });
+
+        });
 
         xdescribe(".Type", () => {
 

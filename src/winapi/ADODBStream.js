@@ -63,6 +63,13 @@ class JS_ADODBStream extends Component {
         }
     }
 
+    get eos () {
+        return this.stream.EOS;
+    }
+    set eos (_) {
+        // TODO: does this throw?
+    }
+
     get type () {
         return this.stream.type;
     }
@@ -99,6 +106,9 @@ class JS_ADODBStream extends Component {
 
     get position () {
         return this.stream.position;
+    }
+    set position (p) {
+        this.stream.position = p;
     }
 
     open () {
