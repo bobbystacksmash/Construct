@@ -88,6 +88,7 @@ describe("ADODBStream", () => {
             });
         });
 
+
         xdescribe(".Type", () => {
 
             it("Should create a text stream", (done) => {
