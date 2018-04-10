@@ -108,18 +108,24 @@ class JS_ADODBStream extends Component {
 
     get position () {
 
+
+
+
         try {
             return this.stream.position;
         }
         catch (e) {
-            this.context.exceptions.throw_operation_not_allowed_when_closed(
-                "ADODB.Stream",
-                "Cannot fetch '.position' when stream is closed.",
-                "Calling code has attempted to access the `.position' property " +
-                    "of an ADODB Stream instance while the stream was 'closed'. " +
-                    "ADODB Stream instances have two states: open and closed -- " +
-                    "ensure the stream is open before calling '.position'."
-            );
+
+            if (this.stream.is_closed) {
+                this.context.exceptions.throw_operation_not_allowed_when_closed(
+                    "ADODB.Stream",
+                    "Cannot fetch '.position' when stream is closed.",
+                    "Calling code has attempted to access the `.position' property " +
+                        "of an ADODB Stream instance while the stream was 'closed'. " +
+                        "ADODB Stream instances have two states: open and closed -- " +
+                        "ensure the stream is open before calling '.position'."
+                );
+            }
             return false;
         }
     }
@@ -129,14 +135,34 @@ class JS_ADODBStream extends Component {
             this.stream.position = p;
         }
         catch (e) {
-            this.context.exceptions.throw_operation_not_allowed_when_closed(
-                "ADODB.Stream",
-                "Cannot fetch '.position' when stream is closed.",
-                "Calling code has attempted to alter the `.position' property " +
-                    "of an ADODB Stream instance while the stream was 'closed'. " +
-                    "ADODB Stream instances have two states: open and closed -- " +
-                    "ensure the stream is open before calling '.position'."
-            );
+
+            if (this.stream.is_closed) {
+                this.context.exceptions.throw_operation_not_allowed_when_closed(
+                    "ADODB.Stream",
+                    "Cannot fetch '.position' when stream is closed.",
+                    "Calling code has attempted to alter the `.position' property " +
+                        "of an ADODB Stream instance while the stream was 'closed'. " +
+                        "ADODB Stream instances have two states: open and closed -- " +
+                        "ensure the stream is open before calling '.position'."
+                );
+            }
+            else if (p > this.stream.size) {
+                this.context.exceptions.throw_parameter_is_incorrect(
+                    "ADODB.Stream",
+                    "Cannot set '.position' beyond the size of the stream.",
+                    "Calling code has attempted to set the '.position' property " +
+                        "to a value which is beyond the bounds of the stream's " +
+                        "internal buffer."
+                );
+            }
+            else if (p < 0) {
+                this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
+                    "ADODB.Stream",
+                    "Cannot set '.position' to a negative value.",
+                    "Calling code has attempted to set the ADODB Stream's '.position' " +
+                        "property to a negative value.  This is not allowed."
+                );
+            }
         }
     }
 

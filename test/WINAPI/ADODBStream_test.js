@@ -209,13 +209,14 @@ describe("ADODBStream", () => {
                     it("Should throw if '.position' is updated beyond the available size", (done) => {
 
                         function assert_correct_throw_msg () {
+                            assert.isTrue(true);
                             done();
                         }
 
                         let this_context = {};
                         Object.assign(this_context, context, {
                             exceptions: {
-                                throw_operation_not_allowed_when_closed: assert_correct_throw_msg
+                                throw_parameter_is_incorrect: assert_correct_throw_msg
                             }
                         });
 
@@ -225,6 +226,27 @@ describe("ADODBStream", () => {
                         assert.equal(ado.size, 28);
 
                         ado.position = ado.size + 1;
+                    });
+
+                    it("Should throw if '.position' is set to a negative number", (done) => {
+
+                        function assert_correct_throw_msg () {
+                            assert.isTrue(true);
+                            done();
+                        }
+
+                        let this_context = {};
+                        Object.assign(this_context, context, {
+                            exceptions: {
+                                throw_args_wrong_type_or_out_of_range_or_conflicted: assert_correct_throw_msg
+                            }
+                        });
+
+                        let ado = new ADODBStream(this_context);
+                        ado.open();
+                        ado.writetext("Hello, World!");
+                        assert.equal(ado.size, 28);
+                        ado.position = -10;
                     });
                 });
             });
