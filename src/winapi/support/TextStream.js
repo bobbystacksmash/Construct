@@ -11,6 +11,7 @@ class TextStream extends Stream {
         this.stream_is_open = false;
         this.linesep        = Buffer.from("\r\n", "utf16le");
 
+        this.has_encoding_bytes = false;
 
         // https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/streamwriteenum
         this.STREAM_WRITE_ENUM = {
@@ -144,7 +145,37 @@ class TextStream extends Stream {
             throw new Error("Stream is not open for writing.");
         }
 
+        // Windows adds two bytes to the beginning of TextStreams
+        // written to via ADODBStream's 'writetext' method.
+        //
+        // These two bytes signify the encoding scheme of the text
+        // which follows.
+        //
+        // Rather than strictly following what Windows does, we will
+        // just alloc two null bytes to the beginning of each string
+        // so the `ADODB.Stream' instances can report the correct
+        // sizes.  If this becomes a problem, and we start suffering
+        // encoding issues, then we can use those bytes to *actually*
+        // signify the encoding type, but for now -- they're null.
+        //
+        // Read more here:
+        //   https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/loadfromfile-method-ado
+        //
+        // > Because 2 bytes may be added to the beginning of the
+        // > stream for encoding, the size of the stream may not
+        // > exactly match the size of the file from which it was
+        // > loaded.
+        //
+        // My tests suggest that for a text file which contains only
+        // ASCII chars, Windows uses an ASCII encoding scheme.
+        //
+
         let data_buf = Buffer.from(data, "utf16le");
+
+        if (this.has_encoding_bytes === false) {
+            data_buf = Buffer.concat([Buffer.alloc(2, 0x00), data_buf]);
+            this.has_encoding_bytes = true;
+        }
 
         if (options === this.STREAM_WRITE_ENUM.WriteLine) {
             data_buf = Buffer.concat([data_buf, Buffer.from("\r\n", "utf16le")]);
