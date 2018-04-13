@@ -126,7 +126,7 @@ class Stream {
         const outbuf = Buffer.alloc(Math.min(num_bytes_to_read, num_bytes_available));
 
         this.buffer.copy(outbuf, 0, this.pos, read_upto_index);
-        this.pos += max_bytes_to_read;
+        this.pos = read_upto_index;
         return outbuf;
     }
 

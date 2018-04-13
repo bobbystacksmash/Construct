@@ -1,5 +1,8 @@
 const Stream       = require("./Stream");
 const BinaryStream = require("./BinaryStream");
+const iconv = require("iconv-lite");
+
+const ENCODING_BYTES_WIDTH = 2;
 
 class TextStream extends Stream {
 
@@ -10,6 +13,7 @@ class TextStream extends Stream {
         this.pos            = 0;
         this.stream_is_open = false;
         this.linesep        = Buffer.from("\r\n", "utf16le");
+        this.encoding       = Buffer.from([0xFF, 0xFE]);
 
         this.has_encoding_bytes = false;
 
@@ -101,7 +105,11 @@ class TextStream extends Stream {
 
     fetch_line () {
 
-        if (! this.buffer || this.buffer.byteLength === 0) {
+        if (this.pos === 0) {
+            this.pos = 2;
+        }
+
+        if (! this.buffer || this.buffer.byteLength === 0 || this.pos === this.buffer.byteLength) {
             return "";
         }
 
@@ -120,12 +128,27 @@ class TextStream extends Stream {
 
 
     fetch_all () {
+
+        if (this.buffer.byteLength === 0) {
+            return 0;
+        }
+
+        if (this.pos === 0) {
+            this.pos = 2;
+        }
+
         return this._fetch_all().toString("utf16le");
     }
 
 
     fetch_n_chars (n_chars) {
-        return this._fetch_n_bytes(n_chars * 2).toString("utf16le");
+
+        if (this.pos === 0) {
+            this.pos = 2;
+        }
+
+        let buf = this._fetch_n_bytes(n_chars * 2);
+        return buf.toString("utf16le");
     }
 
 
@@ -145,36 +168,25 @@ class TextStream extends Stream {
             throw new Error("Stream is not open for writing.");
         }
 
-        // Windows adds two bytes to the beginning of TextStreams
-        // written to via ADODBStream's 'writetext' method.
+        // Sizes of Text Streams contain an additional 2 bytes:
         //
-        // These two bytes signify the encoding scheme of the text
-        // which follows.
-        //
-        // Rather than strictly following what Windows does, we will
-        // just alloc two null bytes to the beginning of each string
-        // so the `ADODB.Stream' instances can report the correct
-        // sizes.  If this becomes a problem, and we start suffering
-        // encoding issues, then we can use those bytes to *actually*
-        // signify the encoding type, but for now -- they're null.
-        //
-        // Read more here:
         //   https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/loadfromfile-method-ado
         //
         // > Because 2 bytes may be added to the beginning of the
         // > stream for encoding, the size of the stream may not
         // > exactly match the size of the file from which it was
         // > loaded.
-        //
-        // My tests suggest that for a text file which contains only
-        // ASCII chars, Windows uses an ASCII encoding scheme.
-        //
 
-        let data_buf = Buffer.from(data, "utf16le");
+        let data_buf = (this.has_encoding_bytes === false)
+            ? Buffer.from(iconv.encode(data, "utf16le", { addBOM: true }))
+            : Buffer.from(data, "utf16le");
 
         if (this.has_encoding_bytes === false) {
-            data_buf = Buffer.concat([Buffer.alloc(2, 0x00), data_buf]);
             this.has_encoding_bytes = true;
+        }
+
+        if (this.has_encoding_bytes && this.pos === 0) {
+            this.pos = 2;
         }
 
         if (options === this.STREAM_WRITE_ENUM.WriteLine) {
@@ -208,10 +220,12 @@ class TextStream extends Stream {
 
     load_from_file (path) {
 
-        let file_contents = this._load_from_file(path);
+        let file_contents    = this._load_from_file(path);
 
-        this.buffer   = Buffer.from(file_contents, "utf16le");
-        this.position = 0;
+        this.buffer = Buffer.concat([this.encoding, Buffer.from(iconv.encode(file_contents, "ascii"))]);
+
+        this.pos = 0;
+
     }
 
     to_binary_stream () {

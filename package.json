@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node_modules/.bin/mocha -w ./test/WINAPI/*_test.js",
+    "test": "node_modules/.bin/mocha -w ./test/WINAPI/TextStream_test.js",
     "code": "node src/index.js ",
     "debug": "node --inspect --inspect-brk src/index.js "
   },
@@ -27,7 +27,7 @@
     "falafel": "^2.1.0",
     "hexy": "^0.2.10",
     "http-status": "^1.0.1",
-    "iconv-lite": "^0.4.19",
+    "iconv-lite": "^0.4.21",
     "install": "^0.10.4",
     "istanbul": "^0.4.5",
     "js-beautify": "^1.7.4",
