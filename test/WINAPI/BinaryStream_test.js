@@ -288,6 +288,22 @@ describe("BinaryStream", () => {
 
             done();
         });
+
+        it("Should load files into buffer as UTF-16", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} }),
+                bs  = new BinaryStream({ vfs: vfs });
+
+            vfs.AddFile("C:\\file_1.txt", "Hello, World!");
+
+            bs.open();
+            bs.load_from_file("C:\\file_1.txt");
+
+            assert.equal(bs.position, 0);
+            assert.equal(bs.size, 13);
+
+            done();
+        });
     });
 
     describe("#set_EOS", () => {
@@ -456,6 +472,32 @@ describe("BinaryStream", () => {
 
     describe("#to_text_stream", () => {
 
+        it("Should maintain the correct size while being converted from bin -> txt", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} });
+            let ts  = new TextStream({ vfs: vfs });
+
+            const msg = "abcd";
+
+            ts.open();
+            vfs.AddFile("C:\\some_file.txt", msg);
+
+            // First, create a new text stream and put our message in it.
+            ts.put(msg);
+            assert.equal(ts.size, 10); // Using UTF16-LE encoding.
+
+            let bs = ts.to_binary_stream();
+
+
+            assert.equal(ts.type, 2);
+            assert.equal(bs.type, 1);
+
+            assert.equal(ts.size, 10);
+            assert.equal(bs.size, 10);
+
+            done();
+        });
+
         it("Should return a copy as a text stream", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
@@ -469,9 +511,8 @@ describe("BinaryStream", () => {
             let ts = bs.to_text_stream();
 
             assert.equal(ts.type, 2);
-            assert.equal(ts.size, 13);
+            assert.equal(ts.size, 28);
 
-            // TODO: what if we load an ascii file -- does it report size at Unicode?
             done();
         });
 

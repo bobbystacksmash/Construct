@@ -1,8 +1,5 @@
 const Stream       = require("./Stream");
-const BinaryStream = require("./BinaryStream");
 const iconv = require("iconv-lite");
-
-const ENCODING_BYTES_WIDTH = 2;
 
 class TextStream extends Stream {
 
@@ -229,6 +226,8 @@ class TextStream extends Stream {
     }
 
     to_binary_stream () {
+
+        const BinaryStream = require("./BinaryStream");
 
         let bs = new BinaryStream(this.context);
 
