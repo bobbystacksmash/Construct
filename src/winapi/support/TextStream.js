@@ -161,8 +161,20 @@ class TextStream extends Stream {
     //
     put (data, options) {
 
+        options = options || {};
+
         if (!this.stream_is_open) {
             throw new Error("Stream is not open for writing.");
+        }
+
+        // TODO:
+        //
+        // Check `options' and figure out based on first two bytes if
+        // the incoming data has a BOM or not.
+        //
+        if (options.fromBinaryStream) {
+
+
         }
 
         // Sizes of Text Streams contain an additional 2 bytes:
