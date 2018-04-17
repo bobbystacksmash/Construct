@@ -70,7 +70,7 @@ class Stream {
 
         if (this.buffer === null ||  this.buffer.length === 0) return 0;
 
-        return Buffer.byteLength(this.buffer, "utf16le");
+        return Buffer.byteLength(this.buffer);
     }
 
     open () {
@@ -78,6 +78,7 @@ class Stream {
     }
 
     close () {
+        this.pos = 0;
         this.stream_is_open = false;
     }
 
@@ -127,6 +128,7 @@ class Stream {
 
         this.buffer.copy(outbuf, 0, this.pos, read_upto_index);
         this.pos = read_upto_index;
+
         return outbuf;
     }
 

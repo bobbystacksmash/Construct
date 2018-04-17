@@ -25,6 +25,11 @@ class TextStream extends Stream {
             ReadLine: -2
         };
 
+        this.CHARSETS = {
+            "unicode" : { encoding: "utf16le",      bytes_width: 2 },
+            "ascii"   : { encoding: "windows-1252", bytes_width: 1 },
+        };
+
         // https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/lineseparatorsenum
         this.LINE_SEPARATOR_ENUM = {
             CR:   13, // Carriage return
@@ -32,14 +37,32 @@ class TextStream extends Stream {
             LF:   10  // Line feed.
         };
 
-        this._charset = "Unicode";
+        this._charset_name = "Unicode";
+        this._charset = this.CHARSETS.unicode;
+
     }
 
     get charset () {
-        return this._charset;
+        return this._charset_name;
     }
-    set charset (x) {
-        throw new Error("Error: setting the charset of a TextStream is not yet supported.");
+    set charset (charset) {
+
+        if (this.pos !== 0) {
+            /*
+             name Error
+             number -2146825069
+             description Operation is not allowed in this context.
+             message Operation is not allowed in this context.
+            */
+            throw new Error("Cannot change charset when position is not zero");
+        }
+
+        if (Object.keys(this.CHARSETS).includes(charset.toLowerCase())) {
+            this._charset_name = charset;
+            this._charset = this.CHARSETS[charset.toLowerCase()];
+        }
+
+        // TODO throw if charset is unknown...
     }
 
     get type () {
@@ -130,22 +153,20 @@ class TextStream extends Stream {
             return 0;
         }
 
-        if (this.pos === 0) {
+        // TODO - fix this...
+        /*if (this.pos === 0) {
             this.pos = 2;
-        }
+        }*/
 
-        return this._fetch_all().toString("utf16le");
+        return iconv.decode(this._fetch_all(), this._charset.encoding);
     }
 
 
     fetch_n_chars (n_chars) {
 
-        if (this.pos === 0) {
-            this.pos = 2;
-        }
+        let buf = this._fetch_n_bytes(n_chars * this._charset.bytes_width);
 
-        let buf = this._fetch_n_bytes(n_chars * 2);
-        return buf.toString("utf16le");
+        return iconv.decode(buf, this._charset.encoding);
     }
 
 
@@ -167,15 +188,15 @@ class TextStream extends Stream {
             throw new Error("Stream is not open for writing.");
         }
 
-        // TODO:
-        //
-        // Check `options' and figure out based on first two bytes if
-        // the incoming data has a BOM or not.
-        //
-        if (options.fromBinaryStream) {
-
-
+        if (typeof data === "string") {
+            data = Buffer.from(data);
         }
+
+        // Ignore current buffer contents for now...
+        this.buffer = iconv.encode(data, this._charset.encoding, { addBOM: true });
+
+        // Will cause tests to fail during integration period...
+        this.pos = this.buffer.byteLength;
 
         // Sizes of Text Streams contain an additional 2 bytes:
         //
@@ -186,7 +207,7 @@ class TextStream extends Stream {
         // > exactly match the size of the file from which it was
         // > loaded.
 
-        let data_buf = (this.has_encoding_bytes === false)
+        /*let data_buf = (this.has_encoding_bytes === false)
             ? Buffer.from(iconv.encode(data, "utf16le", { addBOM: true }))
             : Buffer.from(data, "utf16le");
 
@@ -210,7 +231,7 @@ class TextStream extends Stream {
 
         let existing_buf_slice = this.buffer.slice(0, this.pos);
         this.buffer = Buffer.concat([existing_buf_slice, data_buf]);
-        this.pos    = this.buffer.byteLength;
+        this.pos    = this.buffer.byteLength;*/
     }
 
     copy_to (dest_stream, num_chars) {
