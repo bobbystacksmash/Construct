@@ -9,7 +9,8 @@ class TextStream extends Stream {
 
         this.pos            = 0;
         this.stream_is_open = false;
-        this.linesep        = Buffer.from("\r\n", "utf16le");
+        //this.linesep        = Buffer.from("\r\n", "utf16le");
+        this.linesep        = "\r\n";
         this.encoding       = Buffer.from([0xFF, 0xFE]);
 
         this.has_encoding_bytes = false;
@@ -35,6 +36,12 @@ class TextStream extends Stream {
             CR:   13, // Carriage return
             CRLF: -1, // Default. Carriage return + line feed.
             LF:   10  // Line feed.
+        };
+
+        this.LINE_SEPARATORS = {
+            CR:   "\r",
+            CRLF: "\r\n",
+            LF:   "\n"
         };
 
         this._charset_name = "Unicode";
@@ -192,20 +199,28 @@ class TextStream extends Stream {
             data = Buffer.from(data);
         }
 
-        // Ignore current buffer contents for now...
-        this.buffer = iconv.encode(data, this._charset.encoding, { addBOM: true });
+        if (options === this.STREAM_WRITE_ENUM.WriteLine) {
+            data = Buffer.concat([data, Buffer.from("\r\n")]);
+        }
+
+        // TODO: figure out if we would overwrite the existing BOM if a position was zero.
+
+
+        let incoming_buf = iconv.encode(data, this._charset.encoding, { addBOM: true });
+
+        // TODO: need to figure out if BUF already contains the BOM,
+        // and use 'addBom' depending upon it.  Behaviour of
+        // iconv-lite means it won't add a BOM for ascii.
+
+        console.log("position", this.pos);
+        console.log("existing", this.buffer);
+        console.log("incoming", incoming_buf);
+        console.log("----");
+
+        this.buffer = incoming_buf;
 
         // Will cause tests to fail during integration period...
         this.pos = this.buffer.byteLength;
-
-        // Sizes of Text Streams contain an additional 2 bytes:
-        //
-        //   https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/loadfromfile-method-ado
-        //
-        // > Because 2 bytes may be added to the beginning of the
-        // > stream for encoding, the size of the stream may not
-        // > exactly match the size of the file from which it was
-        // > loaded.
 
         /*let data_buf = (this.has_encoding_bytes === false)
             ? Buffer.from(iconv.encode(data, "utf16le", { addBOM: true }))

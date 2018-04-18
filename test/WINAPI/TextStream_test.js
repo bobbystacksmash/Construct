@@ -3,9 +3,9 @@ const TextStream = require("../../src/winapi/support/TextStream");
 const VirtualFileSystem = require("../../src/runtime/virtfs");
 const iconv = require("iconv-lite");
 
-xdescribe("TextStream", () => {
-
-    describe("#open", () => {
+describe("TextStream", () => {
+/*
+    xdescribe("#open", () => {
 
         it("should throw if an unopened stream is written to.", (done) => {
             let ts = new TextStream();
@@ -23,9 +23,28 @@ xdescribe("TextStream", () => {
         });
     });
 
+    describe("#close", () => {
+
+        it("should set the position to zero when closed/opened", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.put("abcd");
+
+            assert.equal(ts.position, 10);
+
+            ts.close();
+            ts.open();
+            assert.equal(ts.position, 0);
+
+            done();
+        });
+
+    });*/
+
     describe("#put", () => {
 
-        it("should allow writing to an opened stream.", (done) => {
+        xit("should allow writing to an opened stream.", (done) => {
 
             let ts = new TextStream();
             ts.open();
@@ -33,10 +52,30 @@ xdescribe("TextStream", () => {
             done();
         });
 
-        it("should add CRLF when options == 1.", (done) => {
+        // TODO: if linesep is not defined, calling put("foo", 1) throws.
+
+        it("should put according to position", (done) => {
 
             let ts = new TextStream();
             ts.open();
+
+            ts.put("abcd");
+            assert.equal(ts.position, 10);
+
+            ts.position = 8;
+            ts.put("x");
+
+            assert.equal(ts.position, 10);
+
+            done();
+        });
+
+        xit("should add CRLF when options == 1.", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+
+            // Put takes
 
             ts.put("", 1);
             assert.equal(ts.size, 6);
@@ -49,7 +88,7 @@ xdescribe("TextStream", () => {
 
     });
 
-    describe("#fetch_n_chars", () => {
+    /*xdescribe("#fetch_n_chars", () => {
 
         // TODO: have to check if 'set_encoding_bytes === true' before
         // each of these.  Looks like Windows doesn't include the
@@ -122,7 +161,7 @@ xdescribe("TextStream", () => {
         });
     });
 
-    describe("#fetch_line", () => {
+    xdescribe("#fetch_line", () => {
 
         it("Default should fetch up to the first CRLF", (done) => {
 
@@ -196,7 +235,7 @@ xdescribe("TextStream", () => {
             done();
         });
 
-        describe("line separator specific", () => {
+        xdescribe("line separator specific", () => {
 
             it("should throw if the sep value isn't CR, CRLF, or LF", (done) => {
 
@@ -256,7 +295,7 @@ xdescribe("TextStream", () => {
         });
     });
 
-    describe("#fetch_all", () => {
+    xdescribe("#fetch_all", () => {
 
         it("should fetch all chars from pos to EOB (end-of-buffer)", (done) => {
 
@@ -292,7 +331,7 @@ xdescribe("TextStream", () => {
         });
     });
 
-    describe("#skipline", () => {
+    xdescribe("#skipline", () => {
 
         it("should default to CRLF without changing LineSep (default)", (done) => {
 
@@ -350,7 +389,7 @@ xdescribe("TextStream", () => {
     });
 
 
-    describe(".charset", () => {
+    xdescribe(".charset", () => {
 
         // This is not implemented fully.  Currently, the only
         // supported charset is "Unicode", or "utf16le" with buffers.
@@ -366,7 +405,7 @@ xdescribe("TextStream", () => {
     });
 
 
-    describe(".position", () => {
+    xdescribe(".position", () => {
 
         it("should overwrite chars when position is changed", (done) => {
 
@@ -470,7 +509,7 @@ xdescribe("TextStream", () => {
         });
     });
 
-    describe(".size", () => {
+    xdescribe(".size", () => {
 
         it("should throw when size is requested on an unopened stream", (done) => {
             let ts = new TextStream();
@@ -505,7 +544,7 @@ xdescribe("TextStream", () => {
         });
     });
 
-    describe("#copy_to", () => {
+    xdescribe("#copy_to", () => {
 
         it("should copy from one stream to another", (done) => {
 
@@ -544,7 +583,7 @@ xdescribe("TextStream", () => {
         });
     });
 
-    describe("#savetofile", () => {
+    xdescribe("#savetofile", () => {
 
         it("should save to a file when the stream is open", (done) => {
 
@@ -653,7 +692,7 @@ xdescribe("TextStream", () => {
 
     });
 
-    describe("load_from_file", () => {
+    xdescribe("load_from_file", () => {
 
         it("should load from a file, if that file exists", (done) => {
 
@@ -688,7 +727,7 @@ xdescribe("TextStream", () => {
         });
     });
 
-    describe("#to_binary_stream", () => {
+    xdescribe("#to_binary_stream", () => {
 
         it("should return a copy as a binary stream", (done) => {
 
@@ -752,9 +791,9 @@ xdescribe("TextStream", () => {
 
 });
 
-describe("charset", () => {
+xdescribe("charset", () => {
 
-    it("should be 'Unicode' by default", (done) => {
+    xit("should be 'Unicode' by default", (done) => {
 
         let ts = new TextStream();
         ts.open();
@@ -763,7 +802,7 @@ describe("charset", () => {
         done();
     });
 
-    it("should retain the casing used for the charset", (done) => {
+    xit("should retain the casing used for the charset", (done) => {
 
         let ts = new TextStream();
         ts.open();
@@ -778,7 +817,7 @@ describe("charset", () => {
     });
 
 
-    it("should support the ASCII charset", (done) => {
+    xit("should support the ASCII charset", (done) => {
 
         let ts = new TextStream();
         ts.charset = 'ascii';
@@ -787,13 +826,13 @@ describe("charset", () => {
         done();
     });
 
-    it("should throw if trying to change '.charset' when position is not zero", (done) => {
+    xit("should throw if trying to change '.charset' when position is not zero", (done) => {
 
         let ts = new TextStream();
         ts.open();
 
         ts.charset = "ASCII";
-        ts.put(Buffer.from("abcd", "ascii"))
+        ts.put(Buffer.from("abcd", "ascii"));
 
         assert.equal(ts.position, 4);
 
@@ -802,7 +841,7 @@ describe("charset", () => {
         done();
     });
 
-    it("should allow the charset to be changed when the stream is closed", (done) => {
+    xit("should allow the charset to be changed when the stream is closed", (done) => {
 
         let ts = new TextStream();
         ts.open();
@@ -827,7 +866,7 @@ describe("charset", () => {
     // TODO: When we load a file as binstr (file contains ASCII), then
     // convert to UTF16, then save the file, the outputted file contains the BOM.
 
-    it("should correctly report the size of a Unicode string", (done) => {
+    xit("should correctly report the size of a Unicode string", (done) => {
 
         let ts = new TextStream();
 
@@ -855,7 +894,16 @@ describe("charset", () => {
 
         assert.equal(ts.size, 10);
 
-        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0xFF);
+        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0xFF); // BOM
+        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0xFE); // BOM
+        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x61); // ASCII 'a'
+        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x00);
+        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x62); // ASCII 'b'
+        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x00);
+        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x63); // ASCII 'c'
+        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x00);
+        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x64); // ASCII 'd'
+        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x00);
 
         done();
     });
@@ -885,9 +933,9 @@ describe("charset", () => {
         assert.equal(ts.size, 4);
 
         assert.equal(ts.position, 0);
-        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x6261)
+        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x6261);
         assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x6463);
 
         done();
-    });
+    });*/
 });
