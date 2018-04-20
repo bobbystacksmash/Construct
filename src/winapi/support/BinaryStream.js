@@ -37,6 +37,8 @@ class BinaryStream extends Stream {
 
     put (data, options) {
 
+        // TODO: update this to use Stream._put.
+
         if (!this.stream_is_open) {
             throw new Error("Stream is not open for writing.");
         }

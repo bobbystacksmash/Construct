@@ -7,12 +7,6 @@ class TextStream extends Stream {
 
         super(context);
 
-        this.pos            = 0;
-        this.stream_is_open = false;
-        //this.linesep        = Buffer.from("\r\n", "utf16le");
-        this.linesep        = "\r\n";
-        this.encoding       = Buffer.from([0xFF, 0xFE]);
-
         this.has_encoding_bytes = false;
 
         // https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/streamwriteenum
@@ -27,8 +21,8 @@ class TextStream extends Stream {
         };
 
         this.CHARSETS = {
-            "unicode" : { encoding: "utf16le",      bytes_width: 2 },
-            "ascii"   : { encoding: "windows-1252", bytes_width: 1 },
+            "unicode" : { encoding: "utf16-le",      bytes_width: 2 },
+            "ascii"   : { encoding: "windows-1252", bytes_width: 1 }
         };
 
         // https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/lineseparatorsenum
@@ -44,9 +38,12 @@ class TextStream extends Stream {
             LF:   "\n"
         };
 
+        this.pos            = 0;
+        this.stream_is_open = false;
+        this.linesep        = this.LINE_SEPARATOR_ENUM.CRLF;
+        this.UTF16LE_BOM    = Buffer.from([0xFF, 0xFE]);
         this._charset_name = "Unicode";
         this._charset = this.CHARSETS.unicode;
-
     }
 
     get charset () {
@@ -71,6 +68,11 @@ class TextStream extends Stream {
 
         // TODO throw if charset is unknown...
     }
+    _buffer_has_BOM (buf) {
+
+        if (! buf || buf.byteLength <= 1) return false;
+        return this.UTF16LE_BOM.equals(buf.slice(0, 2));
+    }
 
     get type () {
         return 2;
@@ -84,7 +86,9 @@ class TextStream extends Stream {
             throw new Error(`Line separator value "${opt}" is not recognised.`);
         }
 
-        this.linesep = this.getsep(opt);
+        this.linesep = opt;
+
+        //this.linesep = this.getsep(opt);
     }
 
 
@@ -96,17 +100,21 @@ class TextStream extends Stream {
 
         var read_until_sep;
 
+        // TODO: Need to add linesep tests for the case where we have
+        // ASCII CRLF sequences in unicode mode -- where does the
+        // reader stop?
+
         switch (type) {
         case this.LINE_SEPARATOR_ENUM.CR:
-            read_until_sep = Buffer.from("\r", "utf16le");
+            read_until_sep = Buffer.from("\r", "utf16-le");
             break;
         case this.LINE_SEPARATOR_ENUM.LF:
-            read_until_sep = Buffer.from("\n", "utf16le");
+            read_until_sep = Buffer.from("\n", "utf16-le");
             break;
 
         case this.LINE_SEPARATOR_ENUM.CRLF:
         default:
-            read_until_sep = Buffer.from("\r\n", "utf16le");
+            read_until_sep = Buffer.from("\r\n", "utf16-le");
             break;
         }
 
@@ -150,7 +158,7 @@ class TextStream extends Stream {
         const outbuf = Buffer.alloc(outbuf_len);
         this.buffer.copy(outbuf, 0, this.pos, this.pos + outbuf_len);
         this.pos = (sep_index + this.linesep.byteLength);
-        return outbuf.toString("utf16le");
+        return outbuf.toString("utf16-le");
     }
 
 
@@ -170,49 +178,149 @@ class TextStream extends Stream {
 
 
     fetch_n_chars (n_chars) {
+        // Windows will automatically advance the position when ALL of
+        // the following conditions are true:
+        let advance_pos = (this._buffer_has_BOM(this.buffer) &&
+                           this._charset.encoding === "utf16-le" &&
+                           this.buffer.byteLength >= 2 &&
+                           this.position === 0);
+
+        if (advance_pos) {
+            this.pos = 2;
+        }
 
         let buf = this._fetch_n_bytes(n_chars * this._charset.bytes_width);
-
         return iconv.decode(buf, this._charset.encoding);
     }
 
 
-    //
-    // Put
-    // ===
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // As this is a `TextStream', calling `put' will WRITE textual
-    // data to this stream.
-    //
-    put (data, options) {
+    _buf_has_BOM (buf) {
 
-        options = options || {};
+        if (!buf || buf.byteLength < 2) return false;
+
+        return buf.slice(0, 2).equals(this.UTF16LE_BOM);
+    }
+
+    _stream_requires_BOM () {
+
+        // Looks as though Windows only adds the Byte Order Mark (BOM)
+        // under the following conditions:
+        //
+        //  - the stream's charset is "Unicode", and
+        //  - the stream's size is zero.
+        //
+        // A good example test of this is adding an empty string ("")
+        // to an ADODB.Stream in text mode (2):
+        //
+        //   var ado = new ActiveXObject("ADODB.Stream");
+        //   ado.open();
+        //   ado.type    = 2;
+        //   ado.charset = "Unicode";
+        //   WScript.Echo(ado.size, ado.position); // prints=> "0, 0"
+        //   ado.WriteText("");
+        //   WScript.Echo(ado.size, ado.position); // prints=> "2, 2".
+        //
+        let has_utf16_charset = this._charset.encoding === "utf16-le",
+            has_empty_buffer  = this.buffer.byteLength === 0;
+
+        return has_utf16_charset && has_empty_buffer;
+    }
+
+
+    put (data, options) {
 
         if (!this.stream_is_open) {
             throw new Error("Stream is not open for writing.");
         }
 
         if (typeof data === "string") {
-            data = Buffer.from(data);
+            data = iconv.encode(
+                data,
+                this._charset.encoding, { addBOM: this._stream_requires_BOM() }
+            );
         }
 
-        if (options === this.STREAM_WRITE_ENUM.WriteLine) {
+        if (this._charset.encoding === "utf16-le" && this.pos === 0 && this.buffer.byteLength >= 2) {
+            this.pos = 2;
+        }
+
+
+        // Options handling
+        // ================
+        //
+        // Only two options are supported, both are defined in the
+        // `StreamWriteEnum' as:
+        //
+        // | Value | Description                                                        |
+        // |-------|--------------------------------------------------------------------|
+        // |   0   | Default. Writes the text specified by `data' in to the stream buf. |
+        // |   1   | Writes `data' + the current `this.linesep' value.                  |
+        //
+        // The different line separators are defined in the
+        // `LineSeparatorsEnum', with values:
+        //
+        // | Value | Description                                          |
+        // |-------|------------------------------------------------------|
+        // |  13   | Carriage return (CR).                                |
+        // |  -1   | Default. Indicates carriage return line feed (CRLF). |
+        // |  10   | Line feed (LF).                                      |
+        //
+        // https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/lineseparatorsenum?view=sql-server-2017
+        //
+        if (options === undefined || options === null) {
+            options = 0; // Default - do not add a linesep.
+        }
+
+        if (options === 1) {
+
+            var sep;
+
+            // Calling-code indicates that it wants us to append a
+            // line separator to `data'...
+            if (this.linesep === this.LINE_SEPARATOR_ENUM.CR) {
+                sep = this.LINE_SEPARATORS.CR;
+            }
+            else if (this.linesep === this.LINE_SEPARATOR_ENUM.LF) {
+                sep = this.LINE_SEPARATORS.LF;
+            }
+            else if (this.linesep === this.LINE_SEPARATOR_ENUM.CRLF) {
+                sep = this.LINE_SEPARATORS.CRLF;
+            }
+
+            data = Buffer.concat([data, iconv.encode(sep, this._charset.encoding)]);
+        }
+        else if (options !== 0) {
+            throw new Error("Unknown option value to #put -- only '0' and '1' are allowed.");
+        }
+
+        this.put_buf(data);
+
+        return;
+
+        /*if (options === this.STREAM_WRITE_ENUM.WriteLine) {
             data = Buffer.concat([data, Buffer.from("\r\n")]);
-        }
+         }*/
 
-        // TODO: figure out if we would overwrite the existing BOM if a position was zero.
+        /*let incoming_buf = iconv.encode(data, this._charset.encoding, { addBOM: true });
+
+        if (!this.buffer || this.buffer.byteLength === 0) {
+
+            this.buffer = incoming_buf;
+            this.pos = this.buffer.byteLength;
+            return;
+        }*/
+
+        /*let existing_buf_slice = this.buffer.slice(0, this.pos);
+        this.buffer = Buffer.concat([existing_buf_slice, data]);
+        this.pos    = this.buffer.byteLength;*/
 
 
-        let incoming_buf = iconv.encode(data, this._charset.encoding, { addBOM: true });
 
         // TODO: need to figure out if BUF already contains the BOM,
         // and use 'addBom' depending upon it.  Behaviour of
         // iconv-lite means it won't add a BOM for ascii.
 
-        console.log("position", this.pos);
+        /*console.log("position", this.pos);
         console.log("existing", this.buffer);
         console.log("incoming", incoming_buf);
         console.log("----");
@@ -220,11 +328,11 @@ class TextStream extends Stream {
         this.buffer = incoming_buf;
 
         // Will cause tests to fail during integration period...
-        this.pos = this.buffer.byteLength;
+        this.pos = this.buffer.byteLength;*/
 
         /*let data_buf = (this.has_encoding_bytes === false)
-            ? Buffer.from(iconv.encode(data, "utf16le", { addBOM: true }))
-            : Buffer.from(data, "utf16le");
+            ? Buffer.from(iconv.encode(data, "utf16-le", { addBOM: true }))
+            : Buffer.from(data, "utf16-le");
 
         if (this.has_encoding_bytes === false) {
             this.has_encoding_bytes = true;
@@ -235,7 +343,7 @@ class TextStream extends Stream {
         }
 
         if (options === this.STREAM_WRITE_ENUM.WriteLine) {
-            data_buf = Buffer.concat([data_buf, Buffer.from("\r\n", "utf16le")]);
+            data_buf = Buffer.concat([data_buf, Buffer.from("\r\n", "utf16-le")]);
         }
 
         if (this.buffer === null) {

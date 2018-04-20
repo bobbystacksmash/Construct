@@ -4,8 +4,8 @@ const VirtualFileSystem = require("../../src/runtime/virtfs");
 const iconv = require("iconv-lite");
 
 describe("TextStream", () => {
-/*
-    xdescribe("#open", () => {
+
+    describe("#open", () => {
 
         it("should throw if an unopened stream is written to.", (done) => {
             let ts = new TextStream();
@@ -40,11 +40,11 @@ describe("TextStream", () => {
             done();
         });
 
-    });*/
+    });
 
     describe("#put", () => {
 
-        xit("should allow writing to an opened stream.", (done) => {
+        it("should allow writing to an opened stream.", (done) => {
 
             let ts = new TextStream();
             ts.open();
@@ -52,43 +52,199 @@ describe("TextStream", () => {
             done();
         });
 
-        // TODO: if linesep is not defined, calling put("foo", 1) throws.
-
-        it("should put according to position", (done) => {
+        it("should handle correctly inserting ASCII text in to the stream", (done) => {
 
             let ts = new TextStream();
             ts.open();
+            ts.charset = "ascii";
 
             ts.put("abcd");
-            assert.equal(ts.position, 10);
+            assert.equal(ts.size, 4);
 
-            ts.position = 8;
+            ts.position = 2;
             ts.put("x");
 
-            assert.equal(ts.position, 10);
+            ts.position = 0;
+            assert.equal(ts.fetch_all(), "abxd");
+
+            ts.position = 0;
+            ts.put("wxyzz1234");
+            ts.position = 0;
+            assert.equal(ts.fetch_all(), "wxyzz1234");
+
+            ts.position = 5;
+            ts.put("abcdefghi");
+            ts.position = 0;
+            assert.equal(ts.fetch_all(), "wxyzzabcdefghi");
 
             done();
         });
 
-        xit("should add CRLF when options == 1.", (done) => {
+        it("should handle correctly inserting Unicode text in to the stream", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.charset = "Unicode";
+
+            ts.put("abcd");
+            assert.equal(ts.size, 10);
+
+            // Setting a Unicode stream's `.pos' to zero should skip
+            // forward 2 bytes, missing out the BOM.
+            ts.position = 0;
+            ts.put("x");
+
+            ts.position = 0;
+            assert.equal(ts.fetch_all(), "xbcd", "Overwrite the correct buffer portion.");
+
+            ts.position = 0;
+            ts.put("abcdefghij");
+            ts.position = 0;
+            assert.equal(ts.fetch_all(), "abcdefghij", "Overwrite the whole buffer.");
+
+            ts.position = 10;
+            assert.equal(ts.fetch_n_chars(1), "e", "Check fetch_n_chars is charset aware.");
+
+            ts.position = 10;
+            ts.put("XX");
+
+            ts.position = 0;
+            assert.equal(ts.fetch_all(), "abcdXXghij");
+
+            done();
+        });
+
+
+        it("should not add the BOM when switching charset from ascii -> unicode", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.charset = "ascii";
+
+            ts.put("abc");
+            assert.equal(ts.position, 3);
+            assert.equal(ts.size,     3);
+
+            ts.position = 0;
+            ts.charset  = "Unicode";
+
+            assert.equal(ts.size, 3);
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x6261);
+            assert.equal(ts.position, 2);
+
+            ts.position = 0;
+            ts.charset = "ascii";
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x61);
+
+            done();
+        });
+
+        it("should add the BOM only once", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.charset = "Unicode";
+
+            assert.equal(ts.size, 0);
+            assert.equal(ts.position, 0);
+
+            ts.put("");
+
+            assert.equal(ts.size, 2, "size should include BOM");
+            assert.equal(ts.position, 2, "position should include BOM");
+
+            ts.put("abc");
+            assert.equal(ts.size, 8);
+            assert.equal(ts.position, 8);
+
+            ts.position = 0;
+            assert.equal(ts.fetch_n_chars(3), "abc");
+
+            done();
+        });
+
+        it("should not strip the BOM when switching charset from unicode -> ascii", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.charset = "Unicode";
+
+            ts.put("abc");
+            assert.equal(ts.position, 8);
+            assert.equal(ts.size, 8);
+
+            ts.position = 0;
+            ts.charset = "ascii";
+
+            assert.equal(ts.size, 8);
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0xFF);
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0xFE);
+            assert.equal(ts.position, 2);
+
+            ts.position = 0;
+            ts.charset = "Unicode";
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x61);
+
+            done();
+
+        });
+
+        it("should correctly handle inserting Unicode text in to the stream", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.charset = "Unicode"; // default...
+
+            ts.put("");
+            assert.equal(ts.size, 2);
+            assert.equal(ts.position, 2);
+
+            ts.position = 0;
+            ts.put("abc");
+            assert.equal(ts.size, 8);
+
+            ts.position = 0;
+            assert.equal(ts.fetch_all(), "abc");
+
+            done();
+        });
+
+        it("should add CRLF when options == 1.", (done) => {
 
             let ts = new TextStream();
             ts.open();
 
-            // Put takes
-
             ts.put("", 1);
-            assert.equal(ts.size, 6);
+
+            assert.equal(ts.size, 6, "Size should be BOM(2) + CR(2) + LF(2) == 6.");
+            assert.equal(ts.position, 6);
 
             ts.put("abc", 1);
+
             assert.equal(ts.size, 16);
+            assert.equal(ts.position, 16);
 
             done();
         });
 
+        it("should throw if options value is neither 1 nor 0", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+
+            assert.throws(() => ts.put("abc", 3));
+            assert.throws(() => ts.put("abc", -1));
+            assert.throws(() => ts.put("abc", 282712));
+
+            assert.doesNotThrow(() => ts.put("abc"));
+            assert.doesNotThrow(() => ts.put("abc", 1));
+            assert.doesNotThrow(() => ts.put("abc", 0));
+
+            done();
+        });
     });
 
-    /*xdescribe("#fetch_n_chars", () => {
+    describe("#fetch_n_chars", () => {
 
         // TODO: have to check if 'set_encoding_bytes === true' before
         // each of these.  Looks like Windows doesn't include the
@@ -235,7 +391,7 @@ describe("TextStream", () => {
             done();
         });
 
-        xdescribe("line separator specific", () => {
+        describe("line separator specific", () => {
 
             it("should throw if the sep value isn't CR, CRLF, or LF", (done) => {
 
@@ -295,7 +451,7 @@ describe("TextStream", () => {
         });
     });
 
-    xdescribe("#fetch_all", () => {
+    describe("#fetch_all", () => {
 
         it("should fetch all chars from pos to EOB (end-of-buffer)", (done) => {
 
@@ -389,7 +545,7 @@ describe("TextStream", () => {
     });
 
 
-    xdescribe(".charset", () => {
+    describe(".charset", () => {
 
         // This is not implemented fully.  Currently, the only
         // supported charset is "Unicode", or "utf16le" with buffers.
@@ -405,7 +561,7 @@ describe("TextStream", () => {
     });
 
 
-    xdescribe(".position", () => {
+    describe(".position", () => {
 
         it("should overwrite chars when position is changed", (done) => {
 
@@ -509,7 +665,7 @@ describe("TextStream", () => {
         });
     });
 
-    xdescribe(".size", () => {
+    describe(".size", () => {
 
         it("should throw when size is requested on an unopened stream", (done) => {
             let ts = new TextStream();
@@ -544,7 +700,7 @@ describe("TextStream", () => {
         });
     });
 
-    xdescribe("#copy_to", () => {
+    describe("#copy_to", () => {
 
         it("should copy from one stream to another", (done) => {
 
@@ -583,7 +739,7 @@ describe("TextStream", () => {
         });
     });
 
-    xdescribe("#savetofile", () => {
+    describe("#savetofile", () => {
 
         it("should save to a file when the stream is open", (done) => {
 
@@ -727,7 +883,7 @@ describe("TextStream", () => {
         });
     });
 
-    xdescribe("#to_binary_stream", () => {
+    describe("#to_binary_stream", () => {
 
         it("should return a copy as a binary stream", (done) => {
 
@@ -791,7 +947,7 @@ describe("TextStream", () => {
 
 });
 
-xdescribe("charset", () => {
+describe("charset", () => {
 
     xit("should be 'Unicode' by default", (done) => {
 
@@ -937,5 +1093,5 @@ xdescribe("charset", () => {
         assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x6463);
 
         done();
-    });*/
+    });
 });
