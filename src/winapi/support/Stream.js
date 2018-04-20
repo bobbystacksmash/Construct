@@ -132,6 +132,55 @@ class Stream {
         return outbuf;
     }
 
+    put_buf (buf) {
+
+        // Covers the case where the stream is totally empty -- just
+        // set `this.buffer' to contain whatever is in `buf'.
+        if (this.buffer.byteLength === 0) {
+            this.buffer = buf;
+            this.pos = buf.byteLength;
+            return;
+        }
+
+        // First, let's calculate how wide `this.buffer' is going to
+        // be once we've copied `buf' in to it.  Streams support
+        // copying new buffers in to them, starting from `this.pos'.
+        // If the incoming `buf' is wider than the existing
+        // `this.buffer', then `this.buffer' needs to be extended to
+        // accomodate the additional bytes.
+        //
+        let new_this_buf_len = this.pos + buf.byteLength;
+
+        if (new_this_buf_len <= this.buffer.byteLength) {
+
+            // If we get here, then we know that the incoming `buf'
+            // will fit exactly in to our existing buffer -- there is
+            // no need to resize `this.buffer'.
+            buf.copy(this.buffer, this.pos);
+            this.pos = this.buffer.byteLength;
+            return;
+        }
+
+        // We need to lengthen `this.buffer' so we can accomodate the
+        // contents of `buf'.  We already know the required width of
+        // this buffer (`new_this_buf_len'), so we can alloc this now:
+        let new_this_buffer = Buffer.alloc(new_this_buf_len);
+
+        // Our new buffer is now the correct width -- we just need to
+        // copy *into* it -- this is done in two stages.  The first
+        // stage will copy the contents of `this.buffer', starting at
+        // position 0, up to `this.pos' in to the new buffer.  This
+        // ensures anything BEFORE `this.pos' exists in the new
+        // buffer.  Then we'll copy the entire contents of `buf' in to
+        // the new buffer, starting at offset `this.pos'.
+        //
+        this.buffer.copy(new_this_buffer, 0);
+        buf.copy(new_this_buffer, this.pos);
+
+        this.buffer = new_this_buffer;
+        this.pos    = new_this_buffer.byteLength;
+    }
+
     save_to_file (path, save_opt) {
 
         if (this.stream_is_open === false) {
