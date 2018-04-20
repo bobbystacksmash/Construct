@@ -87,8 +87,7 @@ class TextStream extends Stream {
         }
 
         this.linesep = opt;
-
-        //this.linesep = this.getsep(opt);
+        //this.linesep = this.getsep(opt); TODO - needed?
     }
 
 
@@ -294,67 +293,6 @@ class TextStream extends Stream {
         }
 
         this.put_buf(data);
-
-        return;
-
-        /*if (options === this.STREAM_WRITE_ENUM.WriteLine) {
-            data = Buffer.concat([data, Buffer.from("\r\n")]);
-         }*/
-
-        /*let incoming_buf = iconv.encode(data, this._charset.encoding, { addBOM: true });
-
-        if (!this.buffer || this.buffer.byteLength === 0) {
-
-            this.buffer = incoming_buf;
-            this.pos = this.buffer.byteLength;
-            return;
-        }*/
-
-        /*let existing_buf_slice = this.buffer.slice(0, this.pos);
-        this.buffer = Buffer.concat([existing_buf_slice, data]);
-        this.pos    = this.buffer.byteLength;*/
-
-
-
-        // TODO: need to figure out if BUF already contains the BOM,
-        // and use 'addBom' depending upon it.  Behaviour of
-        // iconv-lite means it won't add a BOM for ascii.
-
-        /*console.log("position", this.pos);
-        console.log("existing", this.buffer);
-        console.log("incoming", incoming_buf);
-        console.log("----");
-
-        this.buffer = incoming_buf;
-
-        // Will cause tests to fail during integration period...
-        this.pos = this.buffer.byteLength;*/
-
-        /*let data_buf = (this.has_encoding_bytes === false)
-            ? Buffer.from(iconv.encode(data, "utf16-le", { addBOM: true }))
-            : Buffer.from(data, "utf16-le");
-
-        if (this.has_encoding_bytes === false) {
-            this.has_encoding_bytes = true;
-        }
-
-        if (this.has_encoding_bytes && this.pos === 0) {
-            this.pos = 2;
-        }
-
-        if (options === this.STREAM_WRITE_ENUM.WriteLine) {
-            data_buf = Buffer.concat([data_buf, Buffer.from("\r\n", "utf16-le")]);
-        }
-
-        if (this.buffer === null) {
-            this.buffer = data_buf;
-            this.pos    = data_buf.byteLength;
-            return;
-        }
-
-        let existing_buf_slice = this.buffer.slice(0, this.pos);
-        this.buffer = Buffer.concat([existing_buf_slice, data_buf]);
-        this.pos    = this.buffer.byteLength;*/
     }
 
     copy_to (dest_stream, num_chars) {
