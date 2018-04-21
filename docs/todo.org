@@ -1,0 +1,155 @@
+* Tasks
+
+** ADODB Stream [0%]
+
+*** TODO Methods [0%]
+**** TODO Open
+**** TODO Close
+**** TODO Write
+**** TODO WriteText
+**** TODO Read
+**** TODO ReadText
+**** TODO Flush
+**** TODO CopyTo
+**** TODO SkipLine
+**** TODO SetEOS
+**** TODO SaveToFile
+**** TODO LoadFromFile
+**** TODO Cancel
+
+
+*** Properties [37%]
+
+**** DONE LineSeparator
+**** DONE EOS
+**** TODO Size
+***** TODO Add support/tests for writing past the '.size' and have the stream update
+**** TODO Charset
+**** TODO Position
+**** DONE Type
+**** TODO State
+**** TODO Mode
+
+
+** WshShell
+*** TODO Implement LOTS of methods, from Exec onwards, here:
+https://msdn.microsoft.com/fr-fr/library/aew9yb99(v=vs.84).aspx
+
+** Short-term goals
+
+*** DONE Implement all XMLHTTP classes
+
+**** TODO Msxml2.XMLHTTP.6.0
+**** TODO MsXML2.XMLHTTP.5.0
+**** TODO MsXML2.XMLHTTP.4.0
+**** TODO Msxml2.XMLHTTP.3.0
+**** TODO Msxml2.XMLHTTP
+**** TODO Msxml2.ServerXMLHTTP.6.0
+**** TODO Msxml2.ServerXMLHTTP.3.0
+**** TODO Msxml2.ServerXMLHTTP
+**** TODO WinHttpRequest
+**** TODO Microsoft.XMLHTTP
+**** TODO MSXML.XMLHTTP
+****
+*** DONE Add a "curl" mode, which will dump curl commands to re-create requests.
+
+*** TODO Add an "eval-rewriter", which captures eval statements and saves them
+*** TODO Add an "function in/out" feature which will trap args to and RETs from a fn.
+*** TODO The events are nasty; a simpler scheme is needed for properties and methods.
+
+** Commands
+
+*** TODO Add a switch to the 'net' command to show which route handlers were invoked for each domain.
+
+This would be a REALLY useful debugging aid.  It may be worth adding a
+separate ~route~ command instead which lets users do things like:
+
+ * add new routes,
+ * remove routes,
+ * test routes,
+ * and test functions in plugins.
+
+
+
+** Runtime Environment
+
+*** TODO Update the script timeout handler
+
+After the script times out and aborts, events are still captured.  It
+would be nice to interrupt a script (such as a daemon) after N
+seconds, and still get to see what was happening.
+
+*** DONE JScript components and methods appear case-insensitive.
+
+Calling something like:
+
+#+BEGIN_SRC js
+var foo = new Bar();
+foo.test();
+foo.Test();
+foo.tEst();
+foo.teSt();
+...
+#+END_SRC
+
+Are all equivalent.  I think there's a solution here, where I put a
+proxy method in front of all JS_Class instances, lower-case the
+incoming property, and redirect it to the method.
+
+** Windows Environment
+
+*** TODO Need to add ability for setting command line arguments.
+
+See the [[file:src/winapi/WshArguments.js][WshArguments.js]] file for more information, but command line
+args are grouped in to either:
+
+ * Named parameters -- ~/foo:bar~, and
+ * unnamed parameters -- ~/baz /boo~.
+
+Need a way of setting these params that doesn't require writing a
+parser.  Far easier to just have options be configured via the
+config...some kind of ~/.construct~ or whatever.
+
+*** TODO Need to set a configurable way of changing the CWD of the executing script.
+
+This is currently hard-coded in to the ENVIRONMENT property in ~runtime/hostcontext.js~.
+
+*** TODO Need to take ENV VARS from: https://msdn.microsoft.com/en-gb/library/fd7hxfdd(v=vs.84).aspx
+
+
+
+
+
+** Code Runner
+
+*** TODO Undefined method/property handling
+
+At present, undefined methods are not handled gracefully.  Need to
+find a way to add better debug information to correctly identify the
+property or method which is missing which caused the error in the
+first place.  A mitigating factor for this is correctly implementing
+all methods and properties for all objects, but that's unrealistic.
+
+For an actual example, remove the ~SpecialFolders~ property from
+~WScript.Shell~ and run either ~Fax~ example.
+
+
+** XMLHttpRequestBase
+*** TODO ~responseXML~ is not implemented.
+*** TODO SETTER: ~timeout~
+
+Timeouts may be a deliberate kill-switch option -- the code may WANT
+to timeout.  Tools like construct will need to allow users to mimic
+timeout behaviour.
+
+Likely fix: add a "timeout()" function to the nethooks -- a plugin can
+call this if it wants to invoke a timeout.  We could also shift along
+the sandbox clock by the timeout ms...
+
+** ShellApplication
+*** TODO ~ShellExecute~ is important, yet its implementation is sparse.
+
+Currently, ~winapi/ShellApplication.js ShellExecute~ doesn't really do
+*anything*.  It's an important method, and likely to be used quite
+often and it deserves a better implementation, but at this point in
+time, there just isn't enough bandwidth.
