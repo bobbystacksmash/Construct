@@ -205,13 +205,6 @@ class TextStream extends Stream {
     }
 
 
-    _buf_has_BOM (buf) {
-
-        if (!buf || buf.byteLength < 2) return false;
-
-        return buf.slice(0, 2).equals(this.UTF16LE_BOM);
-    }
-
     _stream_requires_BOM () {
 
         // Looks as though Windows only adds the Byte Order Mark (BOM)
@@ -323,12 +316,11 @@ class TextStream extends Stream {
 
     load_from_file (path) {
 
-        let file_contents    = this._load_from_file(path);
-
-        this.buffer = Buffer.concat([this.encoding, Buffer.from(iconv.encode(file_contents, "ascii"))]);
-
+        let file_contents = this._load_from_file(path);
         this.pos = 0;
-
+        this.buffer = Buffer.alloc(0);
+        this.put(iconv.decode(file_contents, this._charset.encoding));
+        this.pos = 0;
     }
 
     to_binary_stream () {

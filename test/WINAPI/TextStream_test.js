@@ -317,9 +317,9 @@ describe("TextStream", () => {
         });
     });
 
-    xdescribe("#fetch_line", () => {
+    describe("#fetch_line", () => {
 
-        it("Default should fetch up to the first CRLF", (done) => {
+        it("should fetch up to the first CRLF by default", (done) => {
 
             let ts = new TextStream();
             ts.open();
@@ -327,7 +327,6 @@ describe("TextStream", () => {
             ts.position = 0;
 
             assert.equal(ts.fetch_line(), "abcd");
-            assert.equal(ts.position, 14);
 
             assert.equal(ts.fetch_line(), "efgh");
             assert.equal(ts.position, 26);
@@ -370,7 +369,7 @@ describe("TextStream", () => {
             let ts = new TextStream();
             ts.open();
             ts.put("\r\n\r\n\r\n\r\n");
-            ts.separator = -1;
+            ts.separator = -1; // CRLF separator
             ts.position = 0;
 
             assert.equal(ts.fetch_line(), "");
@@ -381,6 +380,7 @@ describe("TextStream", () => {
 
             assert.equal(ts.fetch_line(), "");
             assert.equal(ts.position, 14);
+
 
             assert.equal(ts.fetch_line(), "");
             assert.equal(ts.position, 18);
@@ -487,79 +487,334 @@ describe("TextStream", () => {
         });
     });
 
-    xdescribe("#skipline", () => {
+    describe("#skipline", () => {
 
-        it("should default to CRLF without changing LineSep (default)", (done) => {
+        describe("when the charset is ASCII", () => {
 
-            let ts = new TextStream();
-            ts.open();
-            ts.type = 2;
-            ts.put("abc\r\ndef\r\nghi");
+            it("should default to CRLF without changing LineSep (default)", (done) => {
 
-            ts.position = 0;
-            ts.skipline();
+                let ts = new TextStream();
+                ts.open();
+                ts.charset = "ASCII";
 
-            assert.equal(ts.position, 12);
-            done();
+                ts.type = 2;
+
+                ts.put("abc\r\ndef\r\nghi");
+
+                ts.position = 0;
+                ts.skipline();
+
+                assert.equal(ts.position, 5);
+                done();
+            });
+
+
+            it("should continue skipping lines until there are no more left to skip", (done) => {
+
+                let ts = new TextStream();
+                ts.open();
+                ts.charset = "ASCII";
+
+                ts.type = 2;
+                ts.put("abc\r\ndef\r\nghi\r\n");
+
+                ts.position = 0;
+
+                ts.skipline();
+                assert.equal(ts.position, 5);
+
+                ts.skipline();
+                assert.equal(ts.position, 10);
+
+                ts.skipline();
+                assert.equal(ts.position, 15);
+
+                ts.skipline();
+                ts.skipline();
+                ts.skipline();
+                ts.skipline();
+                assert.equal(ts.position, 15);
+
+                done();
+            });
+
+            it("should read up to LF if set", (done) => {
+
+                let ts = new TextStream();
+                ts.open();
+                ts.charset = "ASCII";
+
+                ts.type = 2;
+                ts.put("abc\ndef");
+                ts.position = 0;
+                ts.skipline(10); // 10 = enum value for LF
+                assert.equal(ts.position, 4);
+                done();
+            });
+
+            it("should read up to CR if CR is linesep", (done) => {
+
+                let ts = new TextStream();
+                ts.open();
+                ts.charset = "ASCII";
+
+                ts.put("abc\rdef");
+                ts.position = 0;
+                ts.skipline(13);
+                assert.equal(ts.position, 4);
+                done();
+            });
         });
 
-        it("should continue skipping lines until there are no more left to skip", (done) => {
+        describe("when the charset is Unicode", () => {
 
-            let ts = new TextStream();
-            ts.open();
-            ts.type = 2;
-            ts.put("abc\r\ndef\r\nghi\r\n");
+            it("should default to CRLF without changing LineSep (default)", (done) => {
 
-            ts.position = 0;
+                let ts = new TextStream();
+                ts.open();
+                ts.type = 2;
 
-            ts.skipline();
-            assert.equal(ts.position, 12);
+                ts.put("abc\r\ndef\r\nghi");
 
-            ts.skipline();
-            assert.equal(ts.position, 22);
+                ts.position = 0;
+                ts.skipline();
 
-            ts.skipline();
-            assert.equal(ts.position, 32);
+                assert.equal(ts.position, 12);
+                done();
+            });
 
-            ts.skipline();
-            ts.skipline();
-            ts.skipline();
-            ts.skipline();
-            assert.equal(ts.position, 32);
 
-            done();
+            it("should continue skipping lines until there are no more left to skip", (done) => {
+
+                let ts = new TextStream();
+                ts.open();
+                ts.type = 2;
+                ts.put("abc\r\ndef\r\nghi\r\n");
+
+                ts.position = 0;
+
+                ts.skipline();
+                assert.equal(ts.position, 12);
+
+                ts.skipline();
+                assert.equal(ts.position, 22);
+
+                ts.skipline();
+                assert.equal(ts.position, 32);
+
+                ts.skipline();
+                ts.skipline();
+                ts.skipline();
+                ts.skipline();
+                assert.equal(ts.position, 32);
+
+                done();
+            });
+
+            it("should read up to LF if set", (done) => {
+
+                let ts = new TextStream();
+                ts.open();
+                ts.type = 2;
+                ts.put("abc\ndef");
+                ts.position = 0;
+                ts.skipline(10); // 10 = enum value for LF
+                assert.equal(ts.position, 10);
+                done();
+            });
+
+            it("should read up to CR if CR is linesep", (done) => {
+
+                let ts = new TextStream();
+                ts.open();
+                ts.put("abc\rdef");
+                ts.position = 0;
+                ts.skipline(13);
+                assert.equal(ts.position, 10);
+                done();
+            });
         });
-
-        it("should read up to LF if set", (done) => {
-
-            let ts = new TextStream();
-            ts.open();
-            ts.type = 2;
-            ts.put("abc\ndef");
-            ts.position = 0;
-            ts.skipline(10); // 10 = enum value for LF
-            assert.equal(ts.position, 10);
-            done();
-        });
-
     });
-
 
     describe(".charset", () => {
 
-        // This is not implemented fully.  Currently, the only
-        // supported charset is "Unicode", or "utf16le" with buffers.
-        // This is known to be wrong, but it's also very low on the
-        // list of features needed for an alpha release.
-        it("should return 'Unicode' charset by default", (done) => {
+        it("should be 'Unicode' by default", (done) => {
 
             let ts = new TextStream();
+            ts.open();
 
             assert.equal(ts.charset, "Unicode");
             done();
         });
-    });
 
+        it("should retain the casing used for the charset", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+
+            ts.charset = "AsCiI";
+            assert.equal(ts.charset, "AsCiI");
+
+            ts.charset = "UNICODE";
+            assert.equal(ts.charset, "UNICODE");
+
+            done();
+        });
+
+
+        it("should support the ASCII charset", (done) => {
+
+            let ts = new TextStream();
+            ts.charset = 'ascii';
+
+            assert.equal(ts.charset, "ascii");
+            done();
+        });
+
+        it("should throw if trying to change '.charset' when position is not zero", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+
+            ts.charset = "ASCII";
+            ts.put(Buffer.from("abcd", "ascii"));
+
+            assert.equal(ts.position, 4);
+
+            assert.throws(() => ts.charset = "Unicode");
+
+            done();
+        });
+
+        it("should allow the charset to be changed when the stream is closed", (done) => {
+
+            let ts = new TextStream();
+            ts.charset = "ASCII";
+            ts.open();
+            ts.put("abcd");
+            assert.equal(ts.size, 4);
+
+            ts.close();
+
+            assert.doesNotThrow(() => ts.charset = "Unicode");
+
+            done();
+        });
+
+        it("should reset position back to zero when '#close()' is called", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            ts.put("abcd");
+
+            assert.equal(ts.position, 10);
+
+            ts.close();
+            ts.open();
+
+            assert.equal(ts.position, 0);
+
+            done();
+        });
+
+        it("should throw if trying to change charcode when position is not zero", (done) => {
+
+            let ts = new TextStream();
+
+            ts.open();
+            ts.put("abcd");
+
+            assert.throws(() => ts.charset = "ascii");
+            done();
+        });
+
+        it("should not alter position when changing charcode", (done) => {
+
+            let ts = new TextStream();
+
+            ts.open();
+            ts.put("abcd");
+
+            ts.position = 0;
+            ts.charset = "ASCII";
+
+            assert.equal(ts.position, 0);
+            done();
+        });
+
+        it("should correctly report the size of a Unicode string", (done) => {
+
+            let ts = new TextStream();
+
+            ts.open();
+            ts.charset = "unicode";
+
+            ts.put("abcd");
+
+            assert.equal(ts.size, 10);
+            done();
+        });
+
+        it("should correctly handle converting from Unicode (UTF16LE) to ASCII (Windows-1252) charset", (done) => {
+
+            let ts = new TextStream();
+
+            ts.open();
+            ts.charset = "unicode";
+
+            ts.put("abcd");
+            assert.equal(ts.size, 10);
+
+            ts.position = 0;
+            ts.charset = "ascii";
+
+            assert.equal(ts.size, 10);
+
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0xFF); // BOM
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0xFE); // BOM
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x61); // ASCII 'a'
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x00);
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x62); // ASCII 'b'
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x00);
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x63); // ASCII 'c'
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x00);
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x64); // ASCII 'd'
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x00);
+
+            done();
+        });
+
+        it("should correctly handle changing between ASCII (Windows-1252) -> Unicode (UTF16LE) charsets", (done) => {
+
+            let ts  = new TextStream();
+
+            ts.open();
+            ts.charset = 'ascii';
+            ts.put(Buffer.from("abcd"));
+
+            // The stream is ASCII.
+            assert.equal(ts.size, 4);
+
+            ts.position = 0;
+            assert.deepEqual(ts.fetch_all(), "abcd");
+
+            ts.position = 0;
+            assert.equal(ts.fetch_n_chars(1), "a");
+            assert.equal(ts.fetch_n_chars(1), "b");
+            assert.equal(ts.fetch_n_chars(1), "c");
+            assert.equal(ts.fetch_n_chars(1), "d");
+
+            ts.position = 0;
+            ts.charset = 'unicode';
+            assert.equal(ts.size, 4);
+
+            assert.equal(ts.position, 0);
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x6261);
+            assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x6463);
+
+            done();
+        });
+    });
 
     describe(".position", () => {
 
@@ -848,16 +1103,16 @@ describe("TextStream", () => {
 
     });
 
-    xdescribe("load_from_file", () => {
+    describe("load_from_file", () => {
 
         it("should load from a file, if that file exists", (done) => {
 
-            let vfs = new VirtualFileSystem({ register: () => {} });
-            let ts  = new TextStream({ vfs: vfs });
+            let vfs = new VirtualFileSystem({ register: () => {} }),
+                ts  = new TextStream({ vfs: vfs });
 
             const file_path = "C:\\foo\\bar.txt";
 
-            vfs.AddFile(file_path, "abcd"); // ASCII file (no BOM)
+            vfs.AddFile(file_path, Buffer.from("abcd")); // ASCII file (no BOM), stream charset is Unicode.
 
             ts.open();
             ts.load_from_file(file_path);
@@ -945,153 +1200,4 @@ describe("TextStream", () => {
         });
     });
 
-});
-
-describe("charset", () => {
-
-    xit("should be 'Unicode' by default", (done) => {
-
-        let ts = new TextStream();
-        ts.open();
-
-        assert.equal(ts.charset, "Unicode");
-        done();
-    });
-
-    xit("should retain the casing used for the charset", (done) => {
-
-        let ts = new TextStream();
-        ts.open();
-
-        ts.charset = "AsCiI";
-        assert.equal(ts.charset, "AsCiI");
-
-        ts.charset = "UNICODE";
-        assert.equal(ts.charset, "UNICODE");
-
-        done();
-    });
-
-
-    xit("should support the ASCII charset", (done) => {
-
-        let ts = new TextStream();
-        ts.charset = 'ascii';
-
-        assert.equal(ts.charset, "ascii");
-        done();
-    });
-
-    xit("should throw if trying to change '.charset' when position is not zero", (done) => {
-
-        let ts = new TextStream();
-        ts.open();
-
-        ts.charset = "ASCII";
-        ts.put(Buffer.from("abcd", "ascii"));
-
-        assert.equal(ts.position, 4);
-
-        assert.throws(() => ts.charset = "Unicode");
-
-        done();
-    });
-
-    xit("should allow the charset to be changed when the stream is closed", (done) => {
-
-        let ts = new TextStream();
-        ts.open();
-        ts.put(Buffer.from("abcd"));
-        assert.equal(ts.size, 10);
-
-        ts.close();
-
-        assert.doesNotThrow(() => ts.charset = "Unicode");
-
-        done();
-    });
-
-    // TODO: can charset be changed on a closed stream? YES
-
-    // TODO: 'close' needs to reset position back to zero.
-
-    // TODO: Add a test to ensure that you cannot SET '.charcode' UNLESS position === 0.
-
-    // TODO: Add a test which checks that chanigng the 'charcode' does not alter .position.
-
-    // TODO: When we load a file as binstr (file contains ASCII), then
-    // convert to UTF16, then save the file, the outputted file contains the BOM.
-
-    xit("should correctly report the size of a Unicode string", (done) => {
-
-        let ts = new TextStream();
-
-        ts.open();
-        ts.charset = "unicode";
-
-        ts.put("abcd");
-
-        assert.equal(ts.size, 10);
-        done();
-    });
-
-    it("should correctly handle converting from Unicode (UTF16LE) to ASCII (Windows-1252) charset", (done) => {
-
-        let ts = new TextStream();
-
-        ts.open();
-        ts.charset = "unicode";
-
-        ts.put("abcd");
-        assert.equal(ts.size, 10);
-
-        ts.position = 0;
-        ts.charset = "ascii";
-
-        assert.equal(ts.size, 10);
-
-        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0xFF); // BOM
-        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0xFE); // BOM
-        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x61); // ASCII 'a'
-        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x00);
-        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x62); // ASCII 'b'
-        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x00);
-        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x63); // ASCII 'c'
-        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x00);
-        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x64); // ASCII 'd'
-        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x00);
-
-        done();
-    });
-
-    it("should correctly handle changing between ASCII (Windows-1252) -> Unicode (UTF16LE) charsets", (done) => {
-
-        let ts  = new TextStream();
-
-        ts.open();
-        ts.charset = 'ascii';
-        ts.put(Buffer.from("abcd"));
-
-        // The stream is ASCII.
-        assert.equal(ts.size, 4);
-
-        ts.position = 0;
-        assert.deepEqual(ts.fetch_all(), "abcd");
-
-        ts.position = 0;
-        assert.equal(ts.fetch_n_chars(1), "a");
-        assert.equal(ts.fetch_n_chars(1), "b");
-        assert.equal(ts.fetch_n_chars(1), "c");
-        assert.equal(ts.fetch_n_chars(1), "d");
-
-        ts.position = 0;
-        ts.charset = 'unicode';
-        assert.equal(ts.size, 4);
-
-        assert.equal(ts.position, 0);
-        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x6261);
-        assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x6463);
-
-        done();
-    });
 });
