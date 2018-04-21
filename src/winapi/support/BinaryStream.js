@@ -86,8 +86,8 @@ class BinaryStream extends Stream {
         let ts = new TextStream(this.context);
 
         ts.open();
-        ts.put(this.buffer, { fromBinaryStream: true });
-        ts.position = this.pos; // TODO: int division?
+        ts.put(this.buffer);
+        ts.position = this.pos;
 
         if (this.stream_is_open) {
             ts.open();
@@ -97,7 +97,6 @@ class BinaryStream extends Stream {
         }
 
         return ts;
-
     }
 }
 

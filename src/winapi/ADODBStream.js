@@ -73,7 +73,14 @@ class JS_ADODBStream extends Component {
     get type () {
         return this.stream.type;
     }
-    set type(x) {
+    set type(stream_type) {
+
+        let curr_stream_type = this.stream.constructor.name;
+
+        if (curr_stream_type === "TextStream" && stream_type === STREAM_TYPE_ENUM.adTypeText ||
+            curr_stream_type === "BinaryStream" && stream_type === STREAM_TYPE_ENUM.adTypeBinary) {
+            return;
+        }
 
         if (this.stream.can_change_stream_type) {
 

@@ -16,13 +16,13 @@ const TEXT_STREAM   = 2;
 
 describe("ADODBStream", () => {
 
-    describe("properties", () => {
+    /*describe("properties", () => {
 
         xdescribe(".LineSeparator", () => {
 
             xdescribe("in binary mode", () => {
 
-                it("Should throw when '.LineSeparator' is set", (done) => {
+                it("should throw when '.LineSeparator' is set", (done) => {
 
                     let num_linesep_values_tried = 0;
 
@@ -59,7 +59,7 @@ describe("ADODBStream", () => {
 
             describe("in text mode", () => {
 
-                it("Should allow only LineSeparatorsEnum values", (done) => {
+                it("should allow only LineSeparatorsEnum values", (done) => {
 
                     function assert_correct_throw_msg () {
                         throw new Error("X");
@@ -91,7 +91,7 @@ describe("ADODBStream", () => {
 
         xdescribe(".EOS", () => {
 
-            it("Should indicate when at the end of the stream", (done) => {
+            it("should indicate when at the end of the stream", (done) => {
 
                 let ado = new ADODBStream(context);
                 ado.open();
@@ -106,37 +106,44 @@ describe("ADODBStream", () => {
                 done();
             });
 
-        });
-
-        xdescribe(".charset", () => {
-
-            // This feature is not fully implemented.
-
-            it("Should allow setting the charset to any value", (done) => {
-
-                let ado = new ADODBStream(context);
-                ado.open();
-                ado.charset = "UTF-16";
-
-                assert.equal(ado.charset, "UTF-16");
-                done();
-            });
-        });
+        });*/
 
         describe(".size", () => {
 
+            it("should report the correct size for a binary stream", (done) => {
+
+                let vfs = new VirtualFileSystem({ register: () => {} }),
+                    ctx = Object.assign({}, context, { vfs: vfs });
+
+                // Add a file, no BOM.
+                vfs.AddFile("C:\\blah.txt", Buffer.from("abcd", "ascii"));
+                let ado = new ADODBStream(ctx);
+                ado.type = BINARY_STREAM;
+                ado.open();
+
+                ado.loadfromfile("C:\\blah.txt");
+
+                assert.equal(ado.size, 4);
+
+                done();
+            });
+
+            it("should report the correct size for a text stream", (done) => {
+
+                let ado = new ADODBStream(context);
+
+                ado.type = TEXT_STREAM;
+                ado.open();
+                ado.writetext("abcd");
+
+                assert.equal(ado.size, 10);
+                done();
+            });
+
             describe("in mixed mode", () => {
 
-                it("Should maintain the correct size when being converted bin -> txt", (done) => {
+                it("should maintain the correct size when being converted bin -> txt", (done) => {
 
-                    // TODO
-                    //
-                    // write ascii file to disk (no BOM)
-                    // read ascii file in to binary buffer
-                    // convert this buffer to text
-                    // test size -- see if BOM is present.
-                    //
-                    // Tests on windows show the BOM is added - size remains at 4 for 'abcd'.
                     let vfs = new VirtualFileSystem({ register: () => {} }),
                         ctx = Object.assign({}, context, { vfs: vfs });
 
@@ -150,21 +157,20 @@ describe("ADODBStream", () => {
                     ado.loadfromfile("C:\\blah.txt");
 
                     assert.equal(ado.size, 4);
+                    assert.equal(ado.position, 0);
 
-                    ado.position = 0;
                     ado.type = TEXT_STREAM;
 
                     assert.equal(ado.size, 4);
+                    assert.equal(ado.position, 0);
 
                     done();
-
                 });
-
             });
 
             describe("in text mode", () => {
 
-                it("Should correctly return the number of bytes in a string (text stream)", (done) => {
+                it("should correctly return the number of bytes in a string (text stream)", (done) => {
 
                     let ado = new ADODBStream(context);
                     ado.open();
@@ -180,7 +186,7 @@ describe("ADODBStream", () => {
 
                 describe("when loading an ASCII file", () => {
 
-                    it("Should report the size as the number of bytes (no BOM)", (done) => {
+                    it("should report the size as the number of bytes (no BOM)", (done) => {
 
                         let vfs = new VirtualFileSystem({ register: () => {} }),
                             ctx = Object.assign({}, context, { vfs: vfs });
@@ -200,7 +206,7 @@ describe("ADODBStream", () => {
 
                 describe("when loading a UTF-16 file with BOM", () => {
 
-                    it("Should report the full size, including the BOM", (done) => {
+                    it("should report the full size, including the BOM", (done) => {
 
                         let vfs = new VirtualFileSystem({ register: () => {} }),
                             ctx = Object.assign({}, context, { vfs: vfs });
@@ -220,7 +226,7 @@ describe("ADODBStream", () => {
                 });
 
 
-                it("Should correctly return the number of bytes loaded from a file", (done) => {
+                it("should correctly return the number of bytes loaded from a file", (done) => {
 
                     let vfs = new VirtualFileSystem({ register: () => {} }),
                         ctx = Object.assign({}, context, { vfs: vfs });
@@ -236,7 +242,7 @@ describe("ADODBStream", () => {
                     done();
                 });
 
-                it("Should report a size of '0' (zero) for an empty file", (done) => {
+                it("should report a size of '0' (zero) for an empty file", (done) => {
 
                     let vfs = new VirtualFileSystem({ register: () => {} }),
                         ctx = Object.assign({}, context, { vfs: vfs });
@@ -252,13 +258,13 @@ describe("ADODBStream", () => {
                     done();
                 });
 
-                xit("Should report size correctly after truncation (via SetEOS)", (done) => {
+                it("should report size correctly after truncation (via SetEOS)", (done) => {
 
                     let vfs = new VirtualFileSystem({ register: () => {} }),
                         ctx = Object.assign({}, context, { vfs: vfs });
 
                     let ado = new ADODBStream(ctx);
-                    ado.type = BINARY_STREAM
+                    ado.type = BINARY_STREAM;
                     ado.open();
 
                     vfs.AddFile("C:\\blah.txt", Buffer.from("Hello, World!"));
@@ -274,13 +280,13 @@ describe("ADODBStream", () => {
             });
         });
 
-        xdescribe(".Position", () => {
+    /*xdescribe(".Position", () => {
 
             describe("when the stream is opened", () => {
 
                 describe("in binary mode", () => {
 
-                    it("Should throw if '.position' is updated beyond the available size", (done) => {
+                    it("should throw if '.position' is updated beyond the available size", (done) => {
 
                         let vfs = new VirtualFileSystem({ register: () => {} });
                         vfs.AddFile("C:\\blah.txt", Buffer.from("Hello, World!"));
@@ -310,7 +316,7 @@ describe("ADODBStream", () => {
 
                 describe("in text mode", () => {
 
-                    it("Should throw if '.position' is updated beyond the available size", (done) => {
+                    it("should throw if '.position' is updated beyond the available size", (done) => {
 
                         function assert_correct_throw_msg () {
                             assert.isTrue(true);
@@ -332,7 +338,7 @@ describe("ADODBStream", () => {
                         ado.position = ado.size + 1;
                     });
 
-                    it("Should throw if '.position' is set to a negative number", (done) => {
+                    it("should throw if '.position' is set to a negative number", (done) => {
 
                         function assert_correct_throw_msg () {
                             assert.isTrue(true);
@@ -357,7 +363,7 @@ describe("ADODBStream", () => {
 
             xdescribe("when the stream is closed", () => {
 
-                it("Should throw if .position is accessed", (done) => {
+                it("should throw if .position is accessed", (done) => {
 
                     function assert_correct_throw_msg () {
                         done();
@@ -374,7 +380,7 @@ describe("ADODBStream", () => {
                     assert.throws(() => ado.position);
                 });
 
-                it("Should throw if .position is assigned-to", (done) => {
+                it("should throw if .position is assigned-to", (done) => {
 
                     function assert_correct_throw_msg () {
                         done();
@@ -395,14 +401,14 @@ describe("ADODBStream", () => {
 
         xdescribe(".Type", () => {
 
-            it("Should create a text stream", (done) => {
+            it("should create a text stream", (done) => {
 
                 let ado = new ADODBStream(context);
                 assert.equal(ado.type, TEXT_STREAM);
                 done();
             });
 
-            it("Should allow changing stream types, only when .position is 0", (done) => {
+            it("should allow changing stream types, only when .position is 0", (done) => {
 
                 let ado = new ADODBStream(context);
                 assert.equal(ado.type, TEXT_STREAM);
@@ -411,7 +417,7 @@ describe("ADODBStream", () => {
                 done();
             });
 
-            it("Should throw if trying to change types without position at 0", (done) => {
+            it("should throw if trying to change types without position at 0", (done) => {
 
                 function assert_correct_throw_msg () {
                     assert.isTrue(true);
@@ -444,7 +450,7 @@ describe("ADODBStream", () => {
 
 
 
-    it("Should throw when trying to 'write' bytes in to a binary stream", (done) => {
+    it("should throw when trying to 'write' bytes in to a binary stream", (done) => {
 
         function assert_correct_throw_msg () {
             throw new Error("X");
@@ -466,6 +472,6 @@ describe("ADODBStream", () => {
         assert.throws(() => ado.write("abc"));
 
         done();
-    });
+    });*/
 
 });
