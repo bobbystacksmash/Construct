@@ -87,7 +87,6 @@ class TextStream extends Stream {
         }
 
         this.linesep = opt;
-        //this.linesep = this.getsep(opt); TODO - needed?
     }
 
 
@@ -97,43 +96,43 @@ class TextStream extends Stream {
             type = this.linesep;
         }
 
-        var read_until_sep;
-
-        // TODO: Need to add linesep tests for the case where we have
-        // ASCII CRLF sequences in unicode mode -- where does the
-        // reader stop?
+        var linesep;
 
         switch (type) {
         case this.LINE_SEPARATOR_ENUM.CR:
-            read_until_sep = Buffer.from("\r", "utf16-le");
+            linesep = this.LINE_SEPARATORS.CR;
             break;
+
         case this.LINE_SEPARATOR_ENUM.LF:
-            read_until_sep = Buffer.from("\n", "utf16-le");
+            linesep = this.LINE_SEPARATORS.LF;
             break;
 
         case this.LINE_SEPARATOR_ENUM.CRLF:
-        default:
-            read_until_sep = Buffer.from("\r\n", "utf16-le");
+            linesep = this.LINE_SEPARATORS.CRLF;
             break;
         }
 
-        return read_until_sep;
+        return iconv.encode(Buffer.from(linesep), this._charset.encoding);
     }
 
 
     skipline (line_sep_val) {
 
-        let read_until_sep = this.getsep(line_sep_val),
-            index_of_next_line = this.buffer.indexOf(read_until_sep, this.pos);
+        let encoded_line_separator = this.getsep(line_sep_val),
+            possible_nextline_pos  = this.buffer.indexOf(encoded_line_separator, this.pos);
 
-        if (index_of_next_line === -1) {
-            index_of_next_line = this.buffer.byteLength;
+        if (possible_nextline_pos === -1) {
+            // No further newlines were found.
+            possible_nextline_pos = this.buffer.byteLength;
         }
         else {
-            index_of_next_line += read_until_sep.byteLength;
+            // Using `buffer.indexOf' will return us the first byte of
+            // the separator, where we actually want the first byte
+            // AFTER the separator, so we add on the linesep width:
+            possible_nextline_pos += encoded_line_separator.byteLength;
         }
 
-        this.pos = index_of_next_line;
+        this.pos = possible_nextline_pos;
     }
 
 
@@ -147,17 +146,30 @@ class TextStream extends Stream {
             return "";
         }
 
-        let sep_index  = this.buffer.indexOf(this.linesep, this.pos),
-            outbuf_len = (this.pos === 0) ? sep_index : (sep_index - this.pos);
-
-        if (sep_index === -1) {
-            return this.fetch_all();
+        if (this.pos === this.buffer.byteLength) {
+            return "";
         }
 
-        const outbuf = Buffer.alloc(outbuf_len);
-        this.buffer.copy(outbuf, 0, this.pos, this.pos + outbuf_len);
-        this.pos = (sep_index + this.linesep.byteLength);
-        return outbuf.toString("utf16-le");
+        // Skip line will set POS to be the first byte AFTER the
+        // lineseparator.
+        let start_pos = this.pos;
+        this.skipline();
+
+        let outbuf  = this.buffer.slice(start_pos, this.pos),
+            linesep = this.getsep();
+
+        // We strip any trailing newline chars from outbuf before
+        // decoding it...
+        let outbuf_newline_index = outbuf.indexOf(linesep);
+
+        if (outbuf_newline_index === 0) {
+            return "";
+        }
+        else if (outbuf_newline_index > 0) {
+            outbuf = outbuf.slice(0, outbuf_newline_index);
+        }
+
+        return iconv.decode(outbuf, this._charset.encoding);
     }
 
 
