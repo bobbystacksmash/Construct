@@ -18,16 +18,15 @@
 **** TODO Cancel
 
 
-*** Properties [75%]
+*** Properties [87%]
 
 **** DONE LineSeparator
 **** DONE EOS
 **** DONE Size
 **** DONE Charset
 **** DONE Position
-**** TODO Type
-
-***** TODO Stream type inference?
+**** DONE Type
+***** Stream type inference?
 
 Looking through the ADODBStream manual, it says that:
 
