@@ -14,6 +14,13 @@ class Stream {
         this.stream_is_open = false;
     }
 
+    get state () {
+        return (this.stream_is_open) ? 1 : 0;
+    }
+    set state (_) {
+        throw new Error("State is a read-only property");
+    }
+
     get EOS () {
         if (!this.buffer) return false;
         if (this.buffer.byteLength === this.pos) return true;

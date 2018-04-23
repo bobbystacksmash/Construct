@@ -319,7 +319,7 @@ describe("ADODBStream", () => {
         });
     });*/
 
-    describe(".Charset", () => {
+    /*describe(".Charset", () => {
 
         // For a more comprehensive set of tests regarding
         // ADODB.Stream charsets, please see the TextStream_test.js
@@ -469,128 +469,154 @@ describe("ADODBStream", () => {
                 done();
             });
         });
-    });
+    });*/
 
-    /*xdescribe(".Position", () => {
+    /*describe(".Position", () => {
 
-            describe("when the stream is opened", () => {
+        describe("when the stream is opened", () => {
 
-                describe("in binary mode", () => {
+            describe("in binary mode", () => {
 
-                    it("should throw if '.position' is updated beyond the available size", (done) => {
+                it("should throw if '.position' is updated beyond the available size", (done) => {
 
-                        let vfs = new VirtualFileSystem({ register: () => {} });
-                        vfs.AddFile("C:\\blah.txt", Buffer.from("Hello, World!"));
+                    let vfs = new VirtualFileSystem({ register: () => {} });
+                    vfs.AddFile("C:\\blah.txt", Buffer.from("abcd", "ascii"));
 
-                        function assert_correct_throw_msg () {
-                            assert.isTrue(true);
-                            done();
+                    function assert_correct_throw_msg () {
+                        assert.isTrue(true);
+                        done();
+                    }
+
+                    let this_context = {};
+                    Object.assign(this_context, context, {
+                        vfs: vfs,
+                        exceptions: {
+                            throw_parameter_is_incorrect: assert_correct_throw_msg
                         }
-
-                        let this_context = {};
-                        Object.assign(this_context, context, {
-                            vfs: vfs,
-                            exceptions: {
-                                throw_parameter_is_incorrect: assert_correct_throw_msg
-                            }
-                        });
-
-                        let ado = new ADODBStream(this_context);
-                        ado.open();
-                        ado.type = 1;
-
-                        ado.loadfromfile("C:\\blah.txt");
-                        assert.equal(ado.size, 15);
-                        ado.position = ado.size + 1;
-                    });
-                });
-
-                describe("in text mode", () => {
-
-                    it("should throw if '.position' is updated beyond the available size", (done) => {
-
-                        function assert_correct_throw_msg () {
-                            assert.isTrue(true);
-                            done();
-                        }
-
-                        let this_context = {};
-                        Object.assign(this_context, context, {
-                            exceptions: {
-                                throw_parameter_is_incorrect: assert_correct_throw_msg
-                            }
-                        });
-
-                        let ado = new ADODBStream(this_context);
-                        ado.open();
-                        ado.writetext("Hello, World!");
-                        assert.equal(ado.size, 28);
-
-                        ado.position = ado.size + 1;
                     });
 
-                    it("should throw if '.position' is set to a negative number", (done) => {
+                    let ado = new ADODBStream(this_context);
+                    ado.open();
+                    ado.type = 1;
 
-                        function assert_correct_throw_msg () {
-                            assert.isTrue(true);
-                            done();
-                        }
-
-                        let this_context = {};
-                        Object.assign(this_context, context, {
-                            exceptions: {
-                                throw_args_wrong_type_or_out_of_range_or_conflicted: assert_correct_throw_msg
-                            }
-                        });
-
-                        let ado = new ADODBStream(this_context);
-                        ado.open();
-                        ado.writetext("Hello, World!");
-                        assert.equal(ado.size, 28);
-                        ado.position = -10;
-                    });
+                    ado.loadfromfile("C:\\blah.txt");
+                    assert.equal(ado.size, 4);
+                    ado.position = ado.size + 1;
                 });
             });
 
-            xdescribe("when the stream is closed", () => {
+            describe("in text mode", () => {
 
-                it("should throw if .position is accessed", (done) => {
+                it("should throw if '.position' is updated beyond the available size", (done) => {
 
                     function assert_correct_throw_msg () {
+                        assert.isTrue(true);
                         done();
                     }
 
                     let this_context = {};
                     Object.assign(this_context, context, {
                         exceptions: {
-                            throw_operation_not_allowed_when_closed: assert_correct_throw_msg
+                            throw_parameter_is_incorrect: assert_correct_throw_msg
                         }
                     });
 
                     let ado = new ADODBStream(this_context);
-                    assert.throws(() => ado.position);
+                    ado.open();
+                    ado.writetext("abcd");
+                    assert.equal(ado.size, 10);
+
+                    ado.position = ado.size + 1;
                 });
 
-                it("should throw if .position is assigned-to", (done) => {
+                it("should throw if '.position' is set to a negative number", (done) => {
 
                     function assert_correct_throw_msg () {
+                        assert.isTrue(true);
                         done();
                     }
 
                     let this_context = {};
                     Object.assign(this_context, context, {
                         exceptions: {
-                            throw_operation_not_allowed_when_closed: assert_correct_throw_msg
+                            throw_args_wrong_type_or_out_of_range_or_conflicted: assert_correct_throw_msg
                         }
                     });
 
                     let ado = new ADODBStream(this_context);
-                    assert.throws(() => ado.position = 1);
+                    ado.open();
+                    ado.writetext("Hello, World!");
+                    assert.equal(ado.size, 28);
+                    ado.position = -10;
                 });
             });
         });
 
-        xdescribe(".Type", () => {
+        describe("when the stream is closed", () => {
+
+            it("should throw if .position is accessed", (done) => {
+
+                function assert_correct_throw_msg () {
+                    done();
+                }
+
+                let this_context = {};
+                Object.assign(this_context, context, {
+                    exceptions: {
+                        throw_operation_not_allowed_when_closed: assert_correct_throw_msg
+                    }
+                });
+
+                let ado = new ADODBStream(this_context);
+                assert.throws(() => ado.position);
+            });
+
+            it("should throw if .position is assigned-to", (done) => {
+
+                function assert_correct_throw_msg () {
+                    done();
+                }
+
+                let this_context = {};
+                Object.assign(this_context, context, {
+                    exceptions: {
+                        throw_operation_not_allowed_when_closed: assert_correct_throw_msg
+                    }
+                });
+
+                let ado = new ADODBStream(this_context);
+                assert.throws(() => ado.position = 1);
+            });
+        });
+     });*/
+
+    describe(".State", () => {
+
+        it("should report the state as '0' when stream is closed", (done) => {
+
+            let ado = new ADODBStream(context);
+
+            assert.equal(ado.state, 0);
+            done();
+        });
+
+        it("should report the state as '1' when the stream is open", (done) => {
+
+            let ado = new ADODBStream(context);
+            assert.equal(ado.state, 0);
+
+            ado.open();
+            assert.equal(ado.state, 1);
+
+            ado.close();
+            assert.equal(ado.state, 0);
+
+            done();
+        });
+
+    });
+
+        /*xdescribe(".Type", () => {
 
             it("should create a text stream", (done) => {
 

@@ -18,15 +18,15 @@
 **** TODO Cancel
 
 
-*** Properties [62%]
+*** Properties [87%]
 
 **** DONE LineSeparator
 **** DONE EOS
 **** DONE Size
 **** DONE Charset
-**** TODO Position
+**** DONE Position
 **** DONE Type
-**** TODO State
+**** DONE State
 **** TODO Mode
 
 

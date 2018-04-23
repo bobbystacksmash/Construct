@@ -144,6 +144,13 @@ class JS_ADODBStream extends Component {
         );
     }
 
+    get state () {
+        return this.stream.state;
+    }
+    set state (_) {
+
+    }
+
 
     get size () {
         return this.stream.size;
@@ -219,7 +226,7 @@ class JS_ADODBStream extends Component {
     }
 
     close () {
-
+        this.stream.close();
     }
 
     read () {

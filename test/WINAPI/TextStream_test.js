@@ -636,6 +636,34 @@ describe("TextStream", () => {
         });
     });
 
+    describe(".state", () => {
+
+        it("should return 1 when stream is open", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+
+            assert.equal(ts.state, 1);
+            done();
+        });
+
+        it("should return 0 when stream is closed", (done) => {
+
+            let ts = new TextStream();
+
+            assert.equal(ts.state, 0);
+
+            ts.open();
+
+            assert.equal(ts.state, 1);
+
+            ts.close();
+            assert.equal(ts.state, 0);
+
+            done();
+        });
+    });
+
     describe(".charset", () => {
 
         it("should be 'Unicode' by default", (done) => {
