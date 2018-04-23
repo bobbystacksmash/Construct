@@ -18,12 +18,11 @@
 **** TODO Cancel
 
 
-*** Properties [37%]
+*** Properties [50%]
 
 **** DONE LineSeparator
 **** DONE EOS
-**** TODO Size
-***** TODO Add support/tests for writing past the '.size' and have the stream update
+**** DONE Size
 **** TODO Charset
 **** TODO Position
 **** DONE Type
