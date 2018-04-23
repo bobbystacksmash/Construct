@@ -34,9 +34,42 @@ class JS_ADODBStream extends Component {
     }
 
     get charset () {
+
+        if (this._is_binary_stream()) {
+            this.context.exceptions.throw_operation_not_permitted_in_context(
+                "ADODB.Stream",
+                "Cannot get charset when stream is in binary mode.",
+                "The '.charset' property cannot be requested while " +
+                    "the ADODB.Stream is in binary mode.  The mode " +
+                    "can be changed by setting position to zero, and " +
+                    "setting the '.type' property."
+            );
+        }
+
         return this.stream.charset;
     }
     set charset (new_charset) {
+
+        if (this._is_binary_stream()) {
+            this.context.exceptions.throw_operation_not_permitted_in_context(
+                "ADODB.Stream",
+                "Cannot set charset when stream is in binary mode.",
+                "The '.charset' property cannot be updated while " +
+                    "the ADODB.Stream is in binary mode.  The mode " +
+                    "can be changed by setting position to zero, and " +
+                    "setting the '.type' property."
+            );
+        }
+
+        if (this.position !== 0) {
+            this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
+                "ADODB.Stream",
+                "Cannot change charset while position is not zero.",
+                "The charset property of a text stream cannot be changed " +
+                    "until the stream's .position is set to zero."
+            );
+        }
+
         this.stream.charset = new_charset;
     }
 
@@ -193,8 +226,11 @@ class JS_ADODBStream extends Component {
 
     }
 
-    readtext () {
+    readtext (n_chars) {
 
+        // TODO: add 'throw in binary mode' option
+
+        return this.stream.fetch_n_chars(n_chars);
     }
 
     write () {

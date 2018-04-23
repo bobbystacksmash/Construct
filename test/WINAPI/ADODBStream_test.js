@@ -108,7 +108,7 @@ describe("ADODBStream", () => {
 
         });*/
 
-    describe(".size", () => {
+    /*describe(".size", () => {
 
         it("should throw if size is assigned to", (done) => {
 
@@ -313,6 +313,158 @@ describe("ADODBStream", () => {
 
                 ado.writetext("1234567890");
                 assert.equal(ado.size, 13);
+
+                done();
+            });
+        });
+    });*/
+
+    describe(".Charset", () => {
+
+        // For a more comprehensive set of tests regarding
+        // ADODB.Stream charsets, please see the TextStream_test.js
+        // file.  We're really only checking that the ADODB.Stream
+        // correctly passes-thru the values to its underlying
+        // TextStream instance.
+
+        describe("in binary mode", () => {
+
+            it("should throw when trying to GET the charset", (done) => {
+
+                let ctx = {};
+                Object.assign(ctx, context, {
+                    exceptions: {
+                        throw_operation_not_permitted_in_context: () => {
+                            throw new Error("x");
+                        }
+                    }
+                });
+
+                let ado = new ADODBStream(ctx);
+                ado.type = BINARY_STREAM;
+
+                assert.throws(() => ado.charset);
+                done();
+            });
+
+            it("should throw when trying to SET the charset", (done) => {
+
+                let ctx = {};
+                Object.assign(ctx, context, {
+                    exceptions: {
+                        throw_operation_not_permitted_in_context: () => {
+                            throw new Error("x");
+                        }
+                    }
+                });
+
+                let ado = new ADODBStream(ctx);
+                ado.type = BINARY_STREAM;
+
+                assert.throws(() => ado.charset = "ASCII");
+                done();
+            });
+        });
+
+        describe("in text mode", () => {
+
+            it("should throw on charset change when pos != 0", (done) => {
+
+                let ctx = {};
+                Object.assign(ctx, context, {
+                    exceptions: {
+                        throw_args_wrong_type_or_out_of_range_or_conflicted: () => {
+                            done();
+                            throw new Error("x");
+                        }
+                    }
+                });
+
+                let ado = new ADODBStream(ctx);
+                ado.open();
+                ado.type =TEXT_STREAM;
+                ado.writetext("abcd");
+                assert.equal(ado.position, 10);
+
+                try {
+                    ado.charset = "ASCII";
+                }
+                catch (_) {}
+            });
+
+            it("should throw if the new charset is unknown", (done) => {
+
+                let ado = new ADODBStream(context);
+
+                ado.type = TEXT_STREAM;
+                ado.open();
+
+                assert.throws(() => ado.charset = "Windows-1252");
+
+                assert.doesNotThrow(() => ado.charset = "ASCII");
+                assert.doesNotThrow(() => ado.charset = "Unicode");
+                assert.doesNotThrow(() => ado.charset = "UnIcOdE");
+                done();
+            });
+
+            it("should use 'Unicode' by default", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.type = TEXT_STREAM;
+
+                assert.equal(ado.charset, "Unicode");
+
+                done();
+            });
+
+            it("should not add the BOM when in ASCII mode", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.type = TEXT_STREAM;
+                ado.open();
+                ado.charset = "ASCII";
+
+                ado.writetext("");
+
+                assert.equal(ado.size, 0);
+                assert.equal(ado.position, 0);
+
+                done();
+            });
+
+            it("should add the BOM by default for Unicode strings", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.type = TEXT_STREAM;
+                ado.open();
+
+                ado.writetext("");
+                assert.equal(ado.size, 2);
+                assert.equal(ado.position, 2);
+
+                done();
+            });
+
+            it("should support changing encodings from Unicode to ASCII", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.type = TEXT_STREAM;
+                ado.open();
+
+                ado.writetext("abcd");
+                assert.equal(ado.size, 10);
+                assert.equal(ado.position, 10);
+
+                ado.position = 0;
+                ado.charset = "ascii";
+
+                assert.equal(ado.size, 10);
+
+                let expected = [ 255, 254, 97, 0, 98, 0, 99, 0, 100, 0 ];
+
+                for (let i = 0; i < ado.size; i++) {
+                    assert.equal(ado.readtext(1).charCodeAt(0), expected[i]);
+                }
 
                 done();
             });
