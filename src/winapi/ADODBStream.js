@@ -33,6 +33,13 @@ class JS_ADODBStream extends Component {
         return this.stream.constructor.name === "BinaryStream";
     }
 
+    get charset () {
+        return this.stream.charset;
+    }
+    set charset (new_charset) {
+        this.stream.charset = new_charset;
+    }
+
     get lineseparator () {
 
     }

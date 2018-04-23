@@ -134,13 +134,46 @@ describe("ADODBStream", () => {
             done();
         });
 
-            it("should report the correct size for a binary stream", (done) => {
+        it("should report the correct size for a binary stream", (done) => {
+
+            let vfs = new VirtualFileSystem({ register: () => {} }),
+                ctx = Object.assign({}, context, { vfs: vfs });
+
+            // Add a file, no BOM.
+            vfs.AddFile("C:\\blah.txt", Buffer.from("abcd", "ascii"));
+            let ado = new ADODBStream(ctx);
+            ado.type = BINARY_STREAM;
+            ado.open();
+
+            ado.loadfromfile("C:\\blah.txt");
+
+            assert.equal(ado.size, 4);
+
+            done();
+        });
+
+        it("should report the correct size for a text stream", (done) => {
+
+            let ado = new ADODBStream(context);
+
+            ado.type = TEXT_STREAM;
+            ado.open();
+            ado.writetext("abcd");
+
+            assert.equal(ado.size, 10);
+            done();
+        });
+
+        describe("in mixed mode", () => {
+
+            it("should maintain the correct size when being converted bin -> txt", (done) => {
 
                 let vfs = new VirtualFileSystem({ register: () => {} }),
                     ctx = Object.assign({}, context, { vfs: vfs });
 
                 // Add a file, no BOM.
                 vfs.AddFile("C:\\blah.txt", Buffer.from("abcd", "ascii"));
+
                 let ado = new ADODBStream(ctx);
                 ado.type = BINARY_STREAM;
                 ado.open();
@@ -148,30 +181,40 @@ describe("ADODBStream", () => {
                 ado.loadfromfile("C:\\blah.txt");
 
                 assert.equal(ado.size, 4);
-
-                done();
-            });
-
-            it("should report the correct size for a text stream", (done) => {
-
-                let ado = new ADODBStream(context);
+                assert.equal(ado.position, 0);
 
                 ado.type = TEXT_STREAM;
-                ado.open();
-                ado.writetext("abcd");
 
-                assert.equal(ado.size, 10);
+                assert.equal(ado.size, 4);
+                assert.equal(ado.position, 0);
+
+                done();
+            });
+        });
+
+        describe("in text mode", () => {
+
+            it("should correctly return the number of bytes in a string (text stream)", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.open();
+                ado.writetext("Hello, World!");
+                assert.equal(ado.size, 28);
+
                 done();
             });
 
-            describe("in mixed mode", () => {
+        });
 
-                it("should maintain the correct size when being converted bin -> txt", (done) => {
+        describe("in binary mode", () => {
+
+            describe("when loading an ASCII file", () => {
+
+                it("should report the size as the number of bytes (no BOM)", (done) => {
 
                     let vfs = new VirtualFileSystem({ register: () => {} }),
                         ctx = Object.assign({}, context, { vfs: vfs });
 
-                    // Add a file, no BOM.
                     vfs.AddFile("C:\\blah.txt", Buffer.from("abcd", "ascii"));
 
                     let ado = new ADODBStream(ctx);
@@ -181,127 +224,100 @@ describe("ADODBStream", () => {
                     ado.loadfromfile("C:\\blah.txt");
 
                     assert.equal(ado.size, 4);
-                    assert.equal(ado.position, 0);
-
-                    ado.type = TEXT_STREAM;
-
-                    assert.equal(ado.size, 4);
-                    assert.equal(ado.position, 0);
-
                     done();
                 });
             });
 
-            describe("in text mode", () => {
+            describe("when loading a UTF-16 file with BOM", () => {
 
-                it("should correctly return the number of bytes in a string (text stream)", (done) => {
+                it("should report the full size, including the BOM", (done) => {
 
-                    let ado = new ADODBStream(context);
+                    let vfs = new VirtualFileSystem({ register: () => {} }),
+                        ctx = Object.assign({}, context, { vfs: vfs });
+
+                    vfs.AddFile("C:\\blah.txt", Buffer.from([0xFF, 0xFE, 0x61, 0x00, 0x62, 0x00, 0x63, 0x00, 0x64, 0x00]));
+
+                    let ado = new ADODBStream(ctx);
+                    ado.type = BINARY_STREAM;
                     ado.open();
-                    ado.writetext("Hello, World!");
-                    assert.equal(ado.size, 28);
 
+                    ado.loadfromfile("C:\\blah.txt");
+
+                    assert.equal(ado.size, 10);
                     done();
                 });
 
             });
 
-            describe("in binary mode", () => {
+            it("should correctly return the number of bytes loaded from a file", (done) => {
 
-                describe("when loading an ASCII file", () => {
+                let vfs = new VirtualFileSystem({ register: () => {} }),
+                    ctx = Object.assign({}, context, { vfs: vfs });
 
-                    it("should report the size as the number of bytes (no BOM)", (done) => {
+                let ado = new ADODBStream(ctx);
+                ado.type = BINARY_STREAM;
+                ado.open();
 
-                        let vfs = new VirtualFileSystem({ register: () => {} }),
-                            ctx = Object.assign({}, context, { vfs: vfs });
+                vfs.AddFile("C:\\blah.txt", Buffer.from("Hello, World!", "ascii"));
+                ado.loadfromfile("C:\\blah.txt");
 
-                        vfs.AddFile("C:\\blah.txt", Buffer.from("abcd", "ascii"));
+                assert.equal(ado.size, "Hello, World!".length);
+                done();
+            });
 
-                        let ado = new ADODBStream(ctx);
-                        ado.type = BINARY_STREAM;
-                        ado.open();
+            it("should report a size of '0' (zero) for an empty file", (done) => {
 
-                        ado.loadfromfile("C:\\blah.txt");
+                let vfs = new VirtualFileSystem({ register: () => {} }),
+                    ctx = Object.assign({}, context, { vfs: vfs });
 
-                        assert.equal(ado.size, 4);
-                        done();
-                    });
-                });
+                let ado = new ADODBStream(ctx);
+                ado.type = BINARY_STREAM;
+                ado.open();
 
-                describe("when loading a UTF-16 file with BOM", () => {
+                vfs.AddFile("C:\\empty.txt", Buffer.alloc(0));
+                ado.loadfromfile("C:\\empty.txt");
 
-                    it("should report the full size, including the BOM", (done) => {
+                assert.equal(ado.size, 0);
+                done();
+            });
 
-                        let vfs = new VirtualFileSystem({ register: () => {} }),
-                            ctx = Object.assign({}, context, { vfs: vfs });
+            it("should report size correctly after truncation (via SetEOS)", (done) => {
 
-                        vfs.AddFile("C:\\blah.txt", Buffer.from([0xFF, 0xFE, 0x61, 0x00, 0x62, 0x00, 0x63, 0x00, 0x64, 0x00]));
+                let vfs = new VirtualFileSystem({ register: () => {} }),
+                    ctx = Object.assign({}, context, { vfs: vfs });
 
-                        let ado = new ADODBStream(ctx);
-                        ado.type = BINARY_STREAM;
-                        ado.open();
+                let ado = new ADODBStream(ctx);
+                ado.type = BINARY_STREAM;
+                ado.open();
 
-                        ado.loadfromfile("C:\\blah.txt");
+                vfs.AddFile("C:\\blah.txt", Buffer.from("abcd"));
+                ado.loadfromfile("C:\\blah.txt");
 
-                        assert.equal(ado.size, 10);
-                        done();
-                    });
+                assert.equal(ado.size, 4);
+                ado.position = 2;
+                ado.setEOS();
+                assert.equal(ado.size, 2);
 
-                });
+                done();
+            });
 
-                it("should correctly return the number of bytes loaded from a file", (done) => {
+            it("should report size correctly after size has been updated", (done) => {
 
-                    let vfs = new VirtualFileSystem({ register: () => {} }),
-                        ctx = Object.assign({}, context, { vfs: vfs });
+                let ado = new ADODBStream(context);
+                ado.type = TEXT_STREAM;
+                ado.charset = "ASCII";
+                ado.open();
 
-                    let ado = new ADODBStream(ctx);
-                    ado.type = BINARY_STREAM;
-                    ado.open();
+                ado.writetext("abc");
+                assert.equal(ado.size, 3);
 
-                    vfs.AddFile("C:\\blah.txt", Buffer.from("Hello, World!", "ascii"));
-                    ado.loadfromfile("C:\\blah.txt");
+                ado.writetext("1234567890");
+                assert.equal(ado.size, 13);
 
-                    assert.equal(ado.size, "Hello, World!".length);
-                    done();
-                });
-
-                it("should report a size of '0' (zero) for an empty file", (done) => {
-
-                    let vfs = new VirtualFileSystem({ register: () => {} }),
-                        ctx = Object.assign({}, context, { vfs: vfs });
-
-                    let ado = new ADODBStream(ctx);
-                    ado.type = BINARY_STREAM;
-                    ado.open();
-
-                    vfs.AddFile("C:\\empty.txt", Buffer.alloc(0));
-                    ado.loadfromfile("C:\\empty.txt");
-
-                    assert.equal(ado.size, 0);
-                    done();
-                });
-
-                it("should report size correctly after truncation (via SetEOS)", (done) => {
-
-                    let vfs = new VirtualFileSystem({ register: () => {} }),
-                        ctx = Object.assign({}, context, { vfs: vfs });
-
-                    let ado = new ADODBStream(ctx);
-                    ado.type = BINARY_STREAM;
-                    ado.open();
-
-                    vfs.AddFile("C:\\blah.txt", Buffer.from("abcd"));
-                    ado.loadfromfile("C:\\blah.txt");
-
-                    assert.equal(ado.size, 4);
-                    ado.position = 2;
-                    ado.setEOS();
-                    assert.equal(ado.size, 2);
-
-                    done();
-                });
+                done();
             });
         });
+    });
 
     /*xdescribe(".Position", () => {
 
