@@ -647,6 +647,20 @@ describe("TextStream", () => {
             done();
         });
 
+        it("should throw if the given charset value is unknown", (done) => {
+
+            let ts = new TextStream();
+
+            assert.throws(() => ts.charset = "unknown");
+            assert.throws(() => ts.charset = "windows-1252");
+            assert.throws(() => ts.charset = "utf-7");
+
+            assert.doesNotThrow(() => ts.charset = "Unicode");
+            assert.doesNotThrow(() => ts.charset = "ASCII");
+
+            done();
+        });
+
         it("should retain the casing used for the charset", (done) => {
 
             let ts = new TextStream();

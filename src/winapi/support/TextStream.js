@@ -65,8 +65,9 @@ class TextStream extends Stream {
             this._charset_name = charset;
             this._charset = this.CHARSETS[charset.toLowerCase()];
         }
-
-        // TODO throw if charset is unknown...
+        else {
+            throw new Error(`Cannot change charset - unknown charset supplied: ${charset}`);
+        }
     }
     _buffer_has_BOM (buf) {
 
