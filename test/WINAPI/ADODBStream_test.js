@@ -645,16 +645,29 @@ describe("ADODBStream", () => {
 
         it("should throw if the stream type is set to an invalid type", (done) => {
 
-            assert.equal(1, 2);
-            done();
+            let this_context = {};
+            Object.assign(this_context, context, {
+                exceptions: {
+                    throw_args_wrong_type_or_out_of_range_or_conflicted: () => {
+                        throw new Error("x");
+                    }
+                }
+            });
 
+            let ado = new ADODBStream(this_context);
+            assert.equal(ado.type, TEXT_STREAM);
+
+            assert.throws(() => ado.type = 10);
+            assert.throws(() => ado.type = null);
+            assert.throws(() => ado.type = -3);
+
+            done();
         });
 
         it("should throw if trying to change types without position at 0", (done) => {
 
             function assert_correct_throw_msg () {
-                assert.isTrue(true);
-                done();
+                throw new Error("x");
             }
 
             let this_context = {};
@@ -668,18 +681,15 @@ describe("ADODBStream", () => {
             assert.equal(ado.type, TEXT_STREAM);
 
             ado.open();
-            ado.WriteText("Hello, world!");
-            assert.equal(ado.position, 26);
+            ado.WriteText("abcd");
+            assert.equal(ado.position, 10);
 
-            try {
-                ado.type = BINARY_STREAM;
-            }
-            catch (e) {
-            }
+            assert.throws(() => ado.type = 1);
 
+            done();
         });
 
-        xit("should throw when trying to 'write' bytes in to a binary stream", (done) => {
+        it("should throw when trying to 'write' bytes in to a binary stream", (done) => {
 
             function assert_correct_throw_msg () {
                 throw new Error("X");

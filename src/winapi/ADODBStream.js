@@ -115,7 +115,7 @@ class JS_ADODBStream extends Component {
     }
     set type(stream_type) {
 
-        if (this.stream.position !== 0) {
+        if (this.stream.stream_is_open && this.stream.position !== 0) {
             this.context.exceptions.throw_operation_not_permitted_in_context(
                 "ADODB.Stream",
                 "Cannot set '.type' while position is not zero.",
