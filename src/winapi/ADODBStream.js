@@ -115,10 +115,31 @@ class JS_ADODBStream extends Component {
     }
     set type(stream_type) {
 
+        if (this.stream.position !== 0) {
+            this.context.exceptions.throw_operation_not_permitted_in_context(
+                "ADODB.Stream",
+                "Cannot set '.type' while position is not zero.",
+                "Unable to change the stream type unless the stream has its " +
+                    ".position set to zero (the beginning of the stream)."
+            );
+        }
+
+        if (stream_type !== STREAM_TYPE_ENUM.adTypeText && stream_type !== STREAM_TYPE_ENUM.adTypeBinary) {
+            this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
+                "ADODB.Stream",
+                ".Type property may only be set to '1' (binary) or '2' (text)",
+                "Streams have two types: binary and text.  These can be set using " +
+                    "numeric values '1' and '2' respectively.  Any other value is invalud " +
+                    "and will trigger this exception to be thrown."
+            );
+        }
+
         let curr_stream_type = this.stream.constructor.name;
 
         if (curr_stream_type === "TextStream" && stream_type === STREAM_TYPE_ENUM.adTypeText ||
             curr_stream_type === "BinaryStream" && stream_type === STREAM_TYPE_ENUM.adTypeBinary) {
+            // The stream type has been re-assigned, but with a type
+            // which matches the existing stream.
             return;
         }
 
