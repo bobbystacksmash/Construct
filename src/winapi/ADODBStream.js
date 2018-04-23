@@ -108,7 +108,13 @@ class JS_ADODBStream extends Component {
     get size () {
         return this.stream.size;
     }
-    set size (x) {
+    set size (_) {
+        this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            "ADODB.Stream",
+            "Cannot assign-to the property: size",
+            "The size property cannot be assigned-to in any state or context. " +
+                "To change the stream's size, use .position and #SetEOS."
+        );
     }
 
     get position () {

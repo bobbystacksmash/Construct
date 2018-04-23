@@ -88,9 +88,8 @@ class Stream {
             throw new Error("Cannot call EOS on a negative position value.");
         }
 
-        let tmpbuf = Buffer.alloc(this.position);
-        this.buffer.copy(tmpbuf, 0, 0, this.position);
-        this.buffer = tmpbuf;
+        this.buffer = this.buffer.slice(0, this.position);
+        this.pos = this.buffer.byteLength;
     }
 
 

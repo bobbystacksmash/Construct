@@ -108,7 +108,31 @@ describe("ADODBStream", () => {
 
         });*/
 
-        describe(".size", () => {
+    describe(".size", () => {
+
+        it("should throw if size is assigned to", (done) => {
+
+            let ctx = {};
+            Object.assign(ctx, context, {
+                exceptions: {
+                    throw_wrong_argc_or_invalid_prop_assign: () => { throw new Error("x"); }
+                }
+            });
+
+            let ado = new ADODBStream(ctx);
+
+            assert.throws(() => ado.size = 3);
+
+            ado.open();
+            ado.type = TEXT_STREAM;
+
+            ado.writetext("abcd");
+            assert.equal(ado.size, 10);
+
+            assert.throws(() => ado.size = 5);
+
+            done();
+        });
 
             it("should report the correct size for a binary stream", (done) => {
 
@@ -225,7 +249,6 @@ describe("ADODBStream", () => {
 
                 });
 
-
                 it("should correctly return the number of bytes loaded from a file", (done) => {
 
                     let vfs = new VirtualFileSystem({ register: () => {} }),
@@ -248,7 +271,7 @@ describe("ADODBStream", () => {
                         ctx = Object.assign({}, context, { vfs: vfs });
 
                     let ado = new ADODBStream(ctx);
-                    ado.type = BINARY_STREAM
+                    ado.type = BINARY_STREAM;
                     ado.open();
 
                     vfs.AddFile("C:\\empty.txt", Buffer.alloc(0));
@@ -267,13 +290,13 @@ describe("ADODBStream", () => {
                     ado.type = BINARY_STREAM;
                     ado.open();
 
-                    vfs.AddFile("C:\\blah.txt", Buffer.from("Hello, World!"));
+                    vfs.AddFile("C:\\blah.txt", Buffer.from("abcd"));
                     ado.loadfromfile("C:\\blah.txt");
 
-                    assert.equal(ado.size, 15);
-                    ado.position = 3;
+                    assert.equal(ado.size, 4);
+                    ado.position = 2;
                     ado.setEOS();
-                    assert.equal(ado.size, 5);
+                    assert.equal(ado.size, 2);
 
                     done();
                 });
