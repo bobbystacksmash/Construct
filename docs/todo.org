@@ -18,14 +18,31 @@
 **** TODO Cancel
 
 
-*** Properties [87%]
+*** Properties [75%]
 
 **** DONE LineSeparator
 **** DONE EOS
 **** DONE Size
 **** DONE Charset
 **** DONE Position
-**** DONE Type
+**** TODO Type
+
+***** TODO Stream type inference?
+
+Looking through the ADODBStream manual, it says that:
+
+#+BEGIN_QUOTE
+Sets or returns a StreamTypeEnum value that specifies the type of data
+contained in the Stream object. The default value is
+adTypeText. However, if binary data is initially written to a new,
+empty Stream, the Type will be changed to adTypeBinary.
+#+END_QUOTE
+
+This was tested on a Win7 box with a text stream, loading an EXE and a
+JPG file, neither of which got the stream to change its type.  Marking
+this as done, but may revisit in the future if I can find a way to
+reproduce the behaviour.
+
 **** DONE State
 **** TODO Mode
 
