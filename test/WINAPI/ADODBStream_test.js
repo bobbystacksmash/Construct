@@ -6,7 +6,6 @@ let context = {
     epoch: 1234567890,
     emitter: { emit: () => {} },
     exceptions: {
-        throw_operation_not_permitted_in_context: () => {}
     },
     vfs: {}
 };
@@ -15,6 +14,15 @@ const BINARY_STREAM = 1;
 const TEXT_STREAM   = 2;
 
 describe("ADODBStream", () => {
+
+    describe("methods", () => {
+
+        describe("#open", () => {
+
+            // TODO: make sure open() on an already opened stream throws.
+        });
+    });
+
 
     /*describe("properties", () => {
 
@@ -31,14 +39,14 @@ describe("ADODBStream", () => {
                         assert.isTrue(true);
                     }
 
-                    let this_context = {};
-                    Object.assign(this_context, context, {
+                    let ctx = {};
+                    Object.assign(ctx, context, {
                         exceptions: {
                             throw_args_wrong_type_or_out_of_range_or_conflicted: assert_correct_throw_msg
                         }
                     });
 
-                    let ado = new ADODBStream(this_context);
+                    let ado = new ADODBStream(ctx);
                     ado.type = BINARY_STREAM;
                     ado.open();
 
@@ -65,14 +73,14 @@ describe("ADODBStream", () => {
                         throw new Error("X");
                     }
 
-                    let this_context = {};
-                    Object.assign(this_context, context, {
+                    let ctx = {};
+                    Object.assign(ctx, context, {
                         exceptions: {
                             throw_args_wrong_type_or_out_of_range_or_conflicted: assert_correct_throw_msg
                         }
                     });
 
-                    let ado = new ADODBStream(this_context);
+                    let ado = new ADODBStream(ctx);
                     ado.open();
                     ado.type = TEXT_STREAM;
 
@@ -487,15 +495,15 @@ describe("ADODBStream", () => {
                         done();
                     }
 
-                    let this_context = {};
-                    Object.assign(this_context, context, {
+                    let ctx = {};
+                    Object.assign(ctx, context, {
                         vfs: vfs,
                         exceptions: {
                             throw_parameter_is_incorrect: assert_correct_throw_msg
                         }
                     });
 
-                    let ado = new ADODBStream(this_context);
+                    let ado = new ADODBStream(ctx);
                     ado.open();
                     ado.type = 1;
 
@@ -514,14 +522,14 @@ describe("ADODBStream", () => {
                         done();
                     }
 
-                    let this_context = {};
-                    Object.assign(this_context, context, {
+                    let ctx = {};
+                    Object.assign(ctx, context, {
                         exceptions: {
                             throw_parameter_is_incorrect: assert_correct_throw_msg
                         }
                     });
 
-                    let ado = new ADODBStream(this_context);
+                    let ado = new ADODBStream(ctx);
                     ado.open();
                     ado.writetext("abcd");
                     assert.equal(ado.size, 10);
@@ -536,14 +544,14 @@ describe("ADODBStream", () => {
                         done();
                     }
 
-                    let this_context = {};
-                    Object.assign(this_context, context, {
+                    let ctx = {};
+                    Object.assign(ctx, context, {
                         exceptions: {
                             throw_args_wrong_type_or_out_of_range_or_conflicted: assert_correct_throw_msg
                         }
                     });
 
-                    let ado = new ADODBStream(this_context);
+                    let ado = new ADODBStream(ctx);
                     ado.open();
                     ado.writetext("Hello, World!");
                     assert.equal(ado.size, 28);
@@ -560,14 +568,14 @@ describe("ADODBStream", () => {
                     done();
                 }
 
-                let this_context = {};
-                Object.assign(this_context, context, {
+                let ctx = {};
+                Object.assign(ctx, context, {
                     exceptions: {
                         throw_operation_not_allowed_when_closed: assert_correct_throw_msg
                     }
                 });
 
-                let ado = new ADODBStream(this_context);
+                let ado = new ADODBStream(ctx);
                 assert.throws(() => ado.position);
             });
 
@@ -577,26 +585,29 @@ describe("ADODBStream", () => {
                     done();
                 }
 
-                let this_context = {};
-                Object.assign(this_context, context, {
+                let ctx = {};
+                Object.assign(ctx, context, {
                     exceptions: {
                         throw_operation_not_allowed_when_closed: assert_correct_throw_msg
                     }
                 });
 
-                let ado = new ADODBStream(this_context);
+                let ado = new ADODBStream(ctx);
                 assert.throws(() => ado.position = 1);
             });
         });
      });*/
 
-    describe(".State", () => {
+    xdescribe(".State", () => {
 
-        it("should report the state as '0' when stream is closed", (done) => {
+        it("should report the state as '0' by default", (done) => {
 
             let ado = new ADODBStream(context);
 
-            assert.equal(ado.state, 0);
+            assert.equal(ado.mode, 0);
+            ado.open();
+            assert.equal(ado.mode, 0);
+
             done();
         });
 
@@ -624,7 +635,7 @@ describe("ADODBStream", () => {
         //   attempted, it throws.
         // - mode cannot be SET while stream is open
         // -
-        xit("should have mode = 0 when object is closed", (done) => {
+        /*xit("should have mode = 0 when object is closed", (done) => {
 
             let ado = new ADODBStream(context);
             assert.equal(ado.mode, 0);
@@ -649,7 +660,7 @@ describe("ADODBStream", () => {
             done();
         });
 
-        it("should throw appropriately when .mode is set to an unknown value", (done) => {
+        xit("should throw appropriately when .mode is set to an unknown value", (done) => {
 
             let ctx = {};
             Object.assign(ctx, context, {
@@ -673,6 +684,106 @@ describe("ADODBStream", () => {
 
             done();
         });
+
+        xit("should not throw for all valid modes", (done) => {
+
+            let ado = new ADODBStream(context);
+
+            let allowed_values = [
+                { constant: "adModeUnknown",        value: 0x0,      desc: "DEFAULT. Permissions not set / cannot be determined." },
+                { constant: "adModeRead",           value: 0x1,      desc: "Indicates read-only permissions." },
+                { constant: "adModeWrite",          value: 0x2,      desc: "Indicates write-only permissions." },
+                { constant: "adModeReadWrite",      value: 0x3,      desc: "Indicates read/write permissions." },
+                { constant: "adModeShareDenyRead",  value: 0x4,      desc: "Not implemented (by Construct)." },
+                { constant: "adModeShareDenyWrite", value: 0x8,      desc: "Not implemented (by Construct)." },
+                { constant: "adModeShareExclusive", value: 0xC,      desc: "Not implemented (by Construct)." },
+                { constant: "adModeShareDenyNone",  value: 0x10,     desc: "Not implemented (by Construct)." },
+                { constant: "adModeRecursive",      value: 0x400000, desc: "Not implemented (by Construct)." },
+            ];
+
+            allowed_values.forEach((x) => assert.doesNotThrow(() => ado.mode = x.value));
+
+            done();
+        });*/
+
+        describe("permissions", () => {
+
+            /*xit("should not throw if mode is set to 'adModeUnknown' (0x0) and a write is attempted", (done) => {
+
+                let ado = new ADODBStream(context);
+
+                ado.mode = 0x0;
+                ado.open();
+
+                assert.doesNotThrow(() => ado.writetext("abc"));
+
+                done();
+             });*/
+
+            xit("should throw a 'not open' exception when .Mode is 'adModeRead' but the stream is not open", (done) => {
+
+                let ctx = {};
+                Object.assign(ctx, context, {
+                    exceptions: {
+                        throw_operation_not_allowed_when_closed: () => {
+                            throw new Error("Operation not permitted on closed stream.");
+                        }
+                    }
+                });
+
+                let ado = new ADODBStream(ctx);
+
+                ado.mode = 0x1;
+                assert.throws(() => ado.writetext("abc"), "Operation not permitted on closed stream.");
+
+                done();
+            });
+
+            it("should throw 'Access Denied' when mode is set to 'adModeRead' (0x1) and a write is attempted", (done) => {
+
+                let ctx = {};
+                Object.assign(ctx, context, {
+                    exceptions: {
+                        throw_permission_denied: () => {
+                            throw new Error("permission denied");
+                        }
+                    }
+                });
+
+                let ado = new ADODBStream(ctx);
+
+                ado.mode = 0x1;
+                ado.open();
+
+                assert.throws(() => ado.writetext("abc"), "permission denied");
+
+                done();
+            });
+
+            it("should throw 'operation not permitted' when mode is set to 'adModeWrite' (0x2) and a read is attempted", (done) => {
+
+                let ctx = {};
+                Object.assign(ctx, context, {
+                    exceptions: {
+                        throw_operation_not_permitted_in_context: () => {
+                            throw new Error("operation not permitted");
+                        }
+                    }
+                });
+
+                let ado = new ADODBStream(ctx);
+
+                ado.mode = 0x2;
+                ado.open();
+
+                assert.doesNotThrow(() => ado.writetext("abc"));
+
+                ado.position = 0;
+                assert.throws(() => ado.readtext(), "operation not permitted");
+
+                done();
+            });
+        });
     });
 
     xdescribe(".Type", () => {
@@ -695,8 +806,8 @@ describe("ADODBStream", () => {
 
         it("should throw if the stream type is set to an invalid type", (done) => {
 
-            let this_context = {};
-            Object.assign(this_context, context, {
+            let ctx = {};
+            Object.assign(ctx, context, {
                 exceptions: {
                     throw_args_wrong_type_or_out_of_range_or_conflicted: () => {
                         throw new Error("x");
@@ -704,7 +815,7 @@ describe("ADODBStream", () => {
                 }
             });
 
-            let ado = new ADODBStream(this_context);
+            let ado = new ADODBStream(ctx);
             assert.equal(ado.type, TEXT_STREAM);
 
             assert.throws(() => ado.type = 10);
@@ -720,14 +831,14 @@ describe("ADODBStream", () => {
                 throw new Error("x");
             }
 
-            let this_context = {};
-            Object.assign(this_context, context, {
+            let ctx = {};
+            Object.assign(ctx, context, {
                 exceptions: {
                     throw_operation_not_permitted_in_context: assert_correct_throw_msg
                 }
             });
 
-            let ado = new ADODBStream(this_context);
+            let ado = new ADODBStream(ctx);
             assert.equal(ado.type, TEXT_STREAM);
 
             ado.open();
@@ -746,15 +857,15 @@ describe("ADODBStream", () => {
                 assert.isTrue(true);
             }
 
-            let this_context = {};
-            Object.assign(this_context, context, {
+            let ctx = {};
+            Object.assign(ctx, context, {
                 exceptions: {
                     throw_args_wrong_type_or_out_of_range_or_conflicted: assert_correct_throw_msg
                 }
             });
 
 
-            let ado = new ADODBStream(this_context);
+            let ado = new ADODBStream(ctx);
             ado.type = BINARY_STREAM;
             ado.open();
 

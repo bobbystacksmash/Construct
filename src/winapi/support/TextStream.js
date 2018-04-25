@@ -180,16 +180,16 @@ class TextStream extends Stream {
             return 0;
         }
 
-        // TODO - fix this...
-        /*if (this.pos === 0) {
-            this.pos = 2;
-        }*/
-
         return iconv.decode(this._fetch_all(), this._charset.encoding);
     }
 
 
     fetch_n_chars (n_chars) {
+
+        if (n_chars === undefined || n_chars === null) {
+            n_chars = this.buffer.byteLength;
+        }
+
         // Windows will automatically advance the position when ALL of
         // the following conditions are true:
         let advance_pos = (this._buffer_has_BOM(this.buffer) &&

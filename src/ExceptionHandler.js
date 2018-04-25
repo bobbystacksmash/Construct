@@ -1,13 +1,3 @@
-
-
-
-
-
-
-
-
-
-
 const Component = require("./Component");
 
 class ExceptionHandler extends Component {
@@ -189,6 +179,17 @@ class ExceptionHandler extends Component {
             "The parameter is incorrect.",
             -2147024809,
             "The parameter is incorrect.",
+            source, summary, details
+        );
+    }
+
+
+    throw_access_denied (source, summary, details) {
+        this.throw(
+            "TypeError",
+            "Access Denied.",
+            -2147287035,
+            "Access Denied.",
             source, summary, details
         );
     }

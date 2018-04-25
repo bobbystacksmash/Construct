@@ -27,7 +27,7 @@ class Stream {
         this._mode = 0;
     }
 
-    _is_connect_mode_valid (mode) {
+    _is_mode_valid (mode) {
         let modes = this.CONNECT_MODE_ENUM;
         let result = Object.keys(this.CONNECT_MODE_ENUM).filter(key => modes[key] === mode);
         return result.length > 0;
@@ -42,7 +42,7 @@ class Stream {
             throw new Error("Cannot change mode while stream is open.");
         }
 
-        if (this._is_connect_mode_valid(mode)) {
+        if (this._is_mode_valid(mode)) {
             this._mode = mode;
             return;
         }
@@ -116,14 +116,11 @@ class Stream {
         return Buffer.byteLength(this.buffer);
     }
 
-    open (mode) {
+    open () {
 
         if (this.stream_is_open === true) {
             throw new Error("Cannot open an already opened stream.");
         }
-
-        if (mode === undefined || mode === null) mode = 0;
-        this.mode = mode;
 
         this.stream_is_open = true;
     }
@@ -182,7 +179,67 @@ class Stream {
         return outbuf;
     }
 
+    _get_read_write_permissions () {
+
+        let can_read  = true,
+            can_write = true,
+            modes     = this.CONNECT_MODE_ENUM;
+
+        switch (this._mode) {
+        case modes.adModeUnknown:
+        case modes.adModeReadWrite:
+            can_read  = true;
+            can_write = true;
+            break;
+        case modes.adModeRead:
+            can_read  = true;
+            can_write = false;
+            break;
+        case modes.adModeWrite:
+            can_read  = false;
+            can_write = true;
+        default:
+            break;
+        }
+
+        return {
+            can_read:  can_read,
+            can_write: can_write
+        };
+    }
+
+    // Throws if code wants to READ but stream permissions have denied
+    // the request.
+    _assert_can_read () {
+
+        if (this._get_read_write_permissions().can_read === false) {
+            throw new Error("Read Access Denied");
+        }
+
+        return true;
+    }
+
+    _assert_can_write () {
+
+        if (this._get_read_write_permissions().can_write === false) {
+            throw new Error("Write Access Denied");
+        }
+
+        return true;
+    }
+
     put_buf (buf) {
+
+        // Are we open?
+        if (this.stream_is_open === false) {
+            throw new Error("Stream is not open for writing.");
+        }
+
+        let permissions = this._get_read_write_permissions();
+
+        if (permissions.can_write === false) {
+            throw new Error("Write Access Denied: stream is not in a writeable mode.");
+        }
 
         // Covers the case where the stream is totally empty -- just
         // set `this.buffer' to contain whatever is in `buf'.

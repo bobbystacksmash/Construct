@@ -1,5 +1,11 @@
 * Tasks
 
+** ~Math~
+
+The ~Math~ object should be created in much the same way that the
+~Date~ object has been.  This will allow us to track ~Math~ object
+usage, as well as controlling randomness for improved reproducability.
+
 ** ADODB Stream [0%]
 
 *** TODO Methods [0%]

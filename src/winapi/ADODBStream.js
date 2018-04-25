@@ -283,9 +283,54 @@ class JS_ADODBStream extends Component {
 
     readtext (n_chars) {
 
-        // TODO: add 'throw in binary mode' option
+        if (this.stream.is_open) {
 
-        return this.stream.fetch_n_chars(n_chars);
+            try {
+                this.stream._assert_can_read();
+            }
+            catch (e) {
+                this.context.exceptions.throw_operation_not_permitted_in_context(
+                    "ADODB.Stream",
+                    "Cannot ReadText while the stream's permissions do not permit reading",
+                    "This stream is currently in a write-only mode, meaning that reads from " +
+                        "it are not permitted. Please alter the .Mode property such that the " +
+                        "stream is writeable."
+                );
+            }
+        }
+
+        try {
+            return this.stream.fetch_n_chars(n_chars);
+        }
+        catch (e) {
+
+        }
+    }
+
+    writetext (text) {
+        try {
+            this.stream.put(text);
+        }
+        catch (e) {
+
+            if (e.message.includes("Write Access Denied")) {
+                this.context.exceptions.throw_permission_denied(
+                    "ADODB.Stream",
+                    "Access Denied",
+                    "A write operation has failed because this stream is currently not " +
+                        "writeable. Ensure that the '.mode' property is set correctly to " +
+                        "permit writing to this stream."
+                );
+            }
+            else {
+                this.context.exceptions.throw_operation_not_allowed_when_closed(
+                    "ADODB.Stream",
+                    "Cannot write to the stream when the stream is closed.",
+                    "A write operation failed because this stream is currently closed. " +
+                        "Please call '.open()' before attempting to write to this stream."
+                );
+            }
+        }
     }
 
     write () {
@@ -302,10 +347,6 @@ class JS_ADODBStream extends Component {
             );
         }
 
-    }
-
-    writetext (text) {
-        this.stream.put(text);
     }
 
     flush () {

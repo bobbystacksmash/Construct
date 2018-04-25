@@ -7,21 +7,6 @@ describe("TextStream", () => {
 
     describe("#open", () => {
 
-        it("should support specifiying a 'mode' property when opening the stream", (done) => {
-            let ts = new TextStream();
-            assert.equal(ts.mode, 0);
-
-            assert.doesNotThrow(() => ts.open(1));
-            assert.equal(ts.mode, 1);
-
-            ts.close();
-
-            assert.doesNotThrow(() => ts.open(2));
-            assert.equal(ts.mode, 2);
-
-            done();
-        });
-
         it("should throw if an unopened stream is written to.", (done) => {
             let ts = new TextStream();
             assert.throws(function () { ts.put("testing..."); });
