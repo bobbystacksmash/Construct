@@ -27,25 +27,13 @@ class BinaryStream extends Stream {
         return this._fetch_all();
     }
 
-    put (data, options) {
-
-        // TODO: update this to use Stream._put.
+    put (data) {
 
         if (!this.stream_is_open) {
             throw new Error("Stream is not open for writing.");
         }
 
-        let data_buf = Buffer.from(data);
-
-        if (this.buffer === null) {
-            this.buffer = data_buf;
-            this.pos    = data_buf.byteLength;
-            return;
-        }
-
-        let existing_buf_slice = this.buffer.slice(0, this.pos);
-        this.buffer = Buffer.concat([existing_buf_slice, data_buf]);
-        this.pos    = this.buffer.byteLength;
+        this.put_buf(data);
     }
 
     copy_to (dest_stream, num_bytes) {
