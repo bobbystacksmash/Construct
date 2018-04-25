@@ -1,4 +1,13 @@
 
+
+
+
+
+
+
+
+
+
 const Component = require("./Component");
 
 class ExceptionHandler extends Component {
@@ -158,6 +167,17 @@ class ExceptionHandler extends Component {
             "Arguments are of the wrong type, are out of acceptable range, or are in conflict with one another.",
             -2146825287,
             "Arguments are of the wrong type, are out of acceptable range, or are in conflict with one another.",
+            source, summary, details
+        );
+    }
+
+
+    throw_operation_not_allowed_when_object_is_open (source, summary, details) {
+        this.throw(
+            "Error",
+            "Operation is not allowed when the object is open.",
+            -2146824583,
+            "Operation is not allowed when the object is open.",
             source, summary, details
         );
     }

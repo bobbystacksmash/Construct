@@ -9,9 +9,45 @@ class Stream {
         this.context = context;
         this.vfs = context.vfs;
 
+        this.CONNECT_MODE_ENUM = {
+            adModeUnknown:            0x0, // DEFAULT. Permissions not set / cannot be determined.
+            adModeRead:               0x1, // Indicates read-only permissions.
+            adModeWrite:              0x2, // Indicates write-only permissions.
+            adModeReadWrite:          0x3, // Indicates read/write permissions.
+            adModeRecursive:     0x400000, // Not implemented (by Construct).
+            adModeShareDenyNone:     0x10, // Not implemented (by Construct).
+            adModeShareDenyRead:      0x4, // Not implemented (by Construct).
+            adModeShareDenyWrite:     0x8, // Not implemented (by Construct).
+            adModeShareExclusive:     0xC  // Not implemented (by Construct).
+        };
+
         this.buffer = Buffer.alloc(0);
         this.pos    = 0;
         this.stream_is_open = false;
+        this._mode = 0;
+    }
+
+    _is_connect_mode_valid (mode) {
+        let modes = this.CONNECT_MODE_ENUM;
+        let result = Object.keys(this.CONNECT_MODE_ENUM).filter(key => modes[key] === mode);
+        return result.length > 0;
+    }
+
+    get mode () {
+        return this._mode;
+    }
+    set mode (mode) {
+
+        if (this.stream_is_open) {
+            throw new Error("Cannot change mode while stream is open.");
+        }
+
+        if (this._is_connect_mode_valid(mode)) {
+            this._mode = mode;
+            return;
+        }
+
+        throw new Error("Invalid value used to set '.mode'.");
     }
 
     get state () {

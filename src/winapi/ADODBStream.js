@@ -33,6 +33,33 @@ class JS_ADODBStream extends Component {
         return this.stream.constructor.name === "BinaryStream";
     }
 
+    get mode () {
+        return this.stream.mode;
+    }
+    set mode (mode) {
+
+        if (this.stream.is_open) {
+            this.context.exceptions.throw_operation_not_allowed_when_object_is_open(
+                "ADODB.Stream",
+                "Cannot change a stream's mode while the stream is open.",
+                "Streams have different modes, where each mode-value controls stream " +
+                    "permissions, such as read-only, etc.  To change the mode of a " +
+                    "stream, the stream must first be closed."
+            );
+        }
+
+        try {
+            this.stream.mode = mode;
+        }
+        catch (e) {
+            this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
+                "ADODB.Stream",
+                "Stream mode value is unknown",
+                "The stream mode value has been set to an invalid or unknown value."
+            );
+        }
+    }
+
     get charset () {
 
         if (this._is_binary_stream()) {

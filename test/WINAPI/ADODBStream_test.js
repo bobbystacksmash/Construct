@@ -618,14 +618,64 @@ describe("ADODBStream", () => {
 
     describe(".Mode", () => {
 
-        it("XXX", (done) => {
-            // TODO
+        // TODO
+        //
+        // - if mode is changed to read only and then a write is
+        //   attempted, it throws.
+        // - mode cannot be SET while stream is open
+        // -
+        xit("should have mode = 0 when object is closed", (done) => {
+
+            let ado = new ADODBStream(context);
+            assert.equal(ado.mode, 0);
             done();
         });
 
+        xit("should not allow .mode to be set while stream is open", (done) => {
+
+            let ctx = {};
+            Object.assign(ctx, context, {
+                exceptions: {
+                    throw_operation_not_allowed_when_object_is_open: () => {
+                        throw new Error("x");
+                    }
+                }
+            });
+
+            let ado = new ADODBStream(ctx);
+            ado.open();
+
+            assert.throws(() => ado.mode = 1);
+            done();
+        });
+
+        it("should throw appropriately when .mode is set to an unknown value", (done) => {
+
+            let ctx = {};
+            Object.assign(ctx, context, {
+                exceptions: {
+                    throw_args_wrong_type_or_out_of_range_or_conflicted: () => {
+                        throw new Error("x");
+                    }
+                }
+            });
+
+            let ado = new ADODBStream(ctx);
+
+            assert.throws(() => ado.mode = 1999);
+            assert.throws(() => ado.mode = -1);
+            assert.throws(() => ado.mode = null);
+            assert.throws(() => ado.mode = undefined);
+            assert.throws(() => ado.mode = []);
+            assert.throws(() => ado.mode = 5);
+
+            assert.doesNotThrow(() => ado.mode = 0);
+
+            done();
+        });
     });
 
-    describe(".Type", () => {
+    xdescribe(".Type", () => {
 
         it("should create a text stream", (done) => {
 
