@@ -334,10 +334,7 @@ class TextStream extends Stream {
         bs.put(this.buffer);
         bs.position = this.pos; // TODO: int division?
 
-        if (this.stream_is_open) {
-            bs.open();
-        }
-        else {
+        if (!this.stream_is_open) {
             bs.close();
         }
 

@@ -116,7 +116,15 @@ class Stream {
         return Buffer.byteLength(this.buffer);
     }
 
-    open () {
+    open (mode) {
+
+        if (this.stream_is_open === true) {
+            throw new Error("Cannot open an already opened stream.");
+        }
+
+        if (mode === undefined || mode === null) mode = 0;
+        this.mode = mode;
+
         this.stream_is_open = true;
     }
 

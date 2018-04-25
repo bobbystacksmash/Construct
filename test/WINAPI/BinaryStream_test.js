@@ -7,7 +7,7 @@ describe("BinaryStream", () => {
 
     describe(".charset", () => {
 
-        it("Should throw if '.charset' is assigned-to", (done) => {
+        it("should throw if '.charset' is assigned-to", (done) => {
 
             let bs = new BinaryStream();
             assert.throws(() => { bs.charset = "ascii"; });
@@ -17,13 +17,30 @@ describe("BinaryStream", () => {
 
     describe("#open", () => {
 
-        it("Should throw if an unopened stream is written to.", (done) => {
+        it("should support specifiying a 'mode' property when opening the stream", (done) => {
+
+            let bs = new BinaryStream();
+            assert.equal(bs.mode, 0);
+
+            assert.doesNotThrow(() => bs.open(1));
+            assert.equal(bs.mode, 1);
+
+            bs.close();
+
+            assert.doesNotThrow(() => bs.open(2));
+            assert.equal(bs.mode, 2);
+
+            done();
+        });
+
+
+        it("should throw if an unopened stream is written to.", (done) => {
             let bs = new BinaryStream();
             assert.throws(function () { bs.load_from_file("C:\\foo\\bar.txt"); });
             done();
         });
 
-        it("Should throw if an opened stream has been closed and is written to.", (done) => {
+        it("should throw if an opened stream has been closed and is written to.", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
             let bs  = new BinaryStream({ vfs: vfs });
@@ -53,7 +70,7 @@ describe("BinaryStream", () => {
 
     describe("#fetch_n_bytes", () => {
 
-        it("Should fetch the correct number of bytes", (done) => {
+        it("should fetch the correct number of bytes", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
             let bs  = new BinaryStream({ vfs: vfs });
@@ -70,7 +87,7 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("Should return an empty string if there are no bytes in the stream to read", (done) => {
+        it("should return an empty string if there are no bytes in the stream to read", (done) => {
 
             let bs = new BinaryStream();
             bs.open();
@@ -82,7 +99,7 @@ describe("BinaryStream", () => {
 
     describe("#fetch_all", () => {
 
-        it("Should fetch all chars from pos to EOB (end-of-buffer)", (done) => {
+        it("should fetch all chars from pos to EOB (end-of-buffer)", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
             let bs  = new BinaryStream({ vfs: vfs });
@@ -97,7 +114,7 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("Should fetch all chars from pos to EOB (when pos != 0)", (done) => {
+        it("should fetch all chars from pos to EOB (when pos != 0)", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
             let bs  = new BinaryStream({ vfs: vfs });
@@ -113,7 +130,7 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("Should return an empty string if the buffer is empty", (done) => {
+        it("should return an empty string if the buffer is empty", (done) => {
 
             let bs = new BinaryStream();
             bs.open();
@@ -126,7 +143,7 @@ describe("BinaryStream", () => {
 
     describe(".position", () => {
 
-        it("Should allow .position to be updated, so long as it is within acceptable range", (done) => {
+        it("should allow .position to be updated, so long as it is within acceptable range", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} }),
                 bs  = new BinaryStream({ vfs: vfs });
@@ -145,7 +162,7 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("Should update acceptable range values for .position when used with #set_EOS", (done) => {
+        it("should update acceptable range values for .position when used with #set_EOS", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} }),
                 bs  = new BinaryStream({ vfs: vfs });
@@ -170,7 +187,7 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("Should clear the buffer each time 'load_from_file' is called", (done) => {
+        it("should clear the buffer each time 'load_from_file' is called", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} }),
                 bs  = new BinaryStream({ vfs: vfs });
@@ -194,20 +211,20 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("Should throw when .position is called on an unopened stream", (done) => {
+        it("should throw when .position is called on an unopened stream", (done) => {
             let bs = new BinaryStream();
             assert.throws(function () { bs.position; });
             done();
         });
 
-        it("Should report a position of zero when stream is open but not written to.", (done) => {
+        it("should report a position of zero when stream is open but not written to.", (done) => {
             let bs = new BinaryStream();
             bs.open();
             assert(bs.position === 0, "Position is zero when not written to.");
             done();
         });
 
-        it("Should not advance position when empty files are read-in", (done) => {
+        it("should not advance position when empty files are read-in", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} }),
                 bs  = new BinaryStream({ vfs: vfs });
@@ -223,7 +240,7 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("Should throw if position is set higher than string len", (done) => {
+        it("should throw if position is set higher than string len", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} }),
                 bs  = new BinaryStream({ vfs: vfs });
@@ -243,13 +260,13 @@ describe("BinaryStream", () => {
 
     describe(".size", () => {
 
-        it("Should throw when size is requested on an unopened stream.", (done) => {
+        it("should throw when size is requested on an unopened stream.", (done) => {
             let bs = new BinaryStream();
             assert.throws(function () { bs.size(); });
             done();
         });
 
-        it("Should report the size as zero for an open but not written-to stream.", (done) => {
+        it("should report the size as zero for an open but not written-to stream.", (done) => {
 
             let bs = new BinaryStream();
             bs.open();
@@ -257,7 +274,7 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("Should not advance position when empty files are read-in", (done) => {
+        it("should not advance position when empty files are read-in", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} }),
                 bs  = new BinaryStream({ vfs: vfs });
@@ -273,7 +290,7 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("Should report the size correctly for a binary file.", (done) => {
+        it("should report the size correctly for a binary file.", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} }),
                 bs  = new BinaryStream({ vfs: vfs });
@@ -289,7 +306,7 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("Should load files into buffer as UTF-16", (done) => {
+        it("should load files into buffer as UTF-16", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} }),
                 bs  = new BinaryStream({ vfs: vfs });
@@ -308,7 +325,7 @@ describe("BinaryStream", () => {
 
     describe("#set_EOS", () => {
 
-        it("Should clear the stream when 'set_EOS' is called when pos = 0", (done) => {
+        it("should clear the stream when 'set_EOS' is called when pos = 0", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
             let bs  = new BinaryStream({ vfs: vfs });
@@ -330,7 +347,7 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("Should trunace existing bytes when called and .pos is not EOS", (done) => {
+        it("should trunace existing bytes when called and .pos is not EOS", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
             let bs  = new BinaryStream({ vfs: vfs });
@@ -361,7 +378,7 @@ describe("BinaryStream", () => {
 
     describe("#copy_to", () => {
 
-        it("Should throw when trying to copy bin -> txt streams", (done) => {
+        it("should throw when trying to copy bin -> txt streams", (done) => {
 
             let vfs       = new VirtualFileSystem({ register: () => {} });
             let srcstream = new BinaryStream({ vfs: vfs }),
@@ -372,14 +389,13 @@ describe("BinaryStream", () => {
             srcstream.open();
             dststream.open();
 
-            srcstream.open();
             srcstream.load_from_file("C:\\foo\\bar.txt");
 
             assert.throws(() => srcstream.copy_to(dststream));
             done();
         });
 
-        it("Should copy from bin -> bin streams", (done) => {
+        it("should copy from bin -> bin streams", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
 
@@ -405,7 +421,7 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("Should copy bin -> bin streams when the src & dst streams pos' != 0", (done) => {
+        it("should copy bin -> bin streams when the src & dst streams pos' != 0", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
 
@@ -437,7 +453,7 @@ describe("BinaryStream", () => {
 
     describe("load_from_file", () => {
 
-        it("Should load from a file, if that file exists", (done) => {
+        it("should load from a file, if that file exists", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
             let bs  = new BinaryStream({ vfs: vfs });
@@ -455,7 +471,7 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("Should throw if the file does not exist", (done) => {
+        it("should throw if the file does not exist", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
             let bs  = new BinaryStream({ vfs: vfs });
@@ -472,7 +488,7 @@ describe("BinaryStream", () => {
 
     describe("#to_text_stream", () => {
 
-        it("Should maintain the correct size while being converted from bin -> txt", (done) => {
+        it("should maintain the correct size while being converted from bin -> txt", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
             let ts  = new TextStream({ vfs: vfs });
@@ -488,7 +504,6 @@ describe("BinaryStream", () => {
 
             let bs = ts.to_binary_stream();
 
-
             assert.equal(ts.type, 2);
             assert.equal(bs.type, 1);
 
@@ -498,12 +513,12 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("Should return a copy as a text stream", (done) => {
+        it("should return a copy as a text stream", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
             let bs  = new BinaryStream({ vfs: vfs });
 
-            vfs.AddFile("C:\\foo\\bar.txt", "Hello, World!");
+            vfs.AddFile("C:\\foo\\bar.txt", "abcd");
 
             bs.open();
             bs.load_from_file("C:\\foo\\bar.txt");
@@ -511,12 +526,12 @@ describe("BinaryStream", () => {
             let ts = bs.to_text_stream();
 
             assert.equal(ts.type, 2);
-            assert.equal(ts.size, 28);
+            assert.equal(ts.size, 4);
 
             done();
         });
 
-        it("Should convert to a binary stream, copying across position", (done) => {
+        it("should convert to a binary stream, copying across position", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
             let bs  = new BinaryStream({ vfs: vfs });
@@ -535,7 +550,7 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("Should convert to a binary stream, copying across open/closed status", (done) => {
+        it("should convert to a binary stream, copying across open/closed status", (done) => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
             let bs  = new BinaryStream({ vfs: vfs });

@@ -19,14 +19,6 @@ class BinaryStream extends Stream {
         return 1;
     }
 
-    open () {
-        this.stream_is_open = true;
-    }
-
-    close () {
-        this.stream_is_open = false;
-    }
-
     fetch_n_bytes (n_bytes) {
         return this._fetch_n_bytes(n_bytes);
     }
@@ -89,10 +81,7 @@ class BinaryStream extends Stream {
         ts.put(this.buffer);
         ts.position = this.pos;
 
-        if (this.stream_is_open) {
-            ts.open();
-        }
-        else {
+        if (!this.stream_is_open) {
             ts.close();
         }
 
