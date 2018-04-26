@@ -24,7 +24,7 @@ class Stream {
         this.buffer = Buffer.alloc(0);
         this.pos    = 0;
         this.stream_is_open = false;
-        this._mode = 0;
+        this._mode = this.CONNECT_MODE_ENUM.adModeUnknown;
     }
 
     _is_mode_valid (mode) {

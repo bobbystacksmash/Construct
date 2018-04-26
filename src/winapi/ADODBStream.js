@@ -88,7 +88,7 @@ class JS_ADODBStream extends Component {
             );
         }
 
-        if (this.position !== 0) {
+        if (this.stream.pos !== 0) {
             this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
                 "ADODB.Stream",
                 "Cannot change charset while position is not zero.",
@@ -97,6 +97,7 @@ class JS_ADODBStream extends Component {
             );
         }
 
+        // TODO: Add try/carch around this:
         this.stream.charset = new_charset;
     }
 
@@ -218,7 +219,6 @@ class JS_ADODBStream extends Component {
             return this.stream.position;
         }
         catch (e) {
-
             if (this.stream.is_closed) {
                 this.context.exceptions.throw_operation_not_allowed_when_closed(
                     "ADODB.Stream",
@@ -229,7 +229,7 @@ class JS_ADODBStream extends Component {
                         "ensure the stream is open before calling '.position'."
                 );
             }
-            return false;
+            return;
         }
     }
     set position (p) {

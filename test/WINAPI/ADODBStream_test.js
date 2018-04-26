@@ -17,18 +17,14 @@ describe("ADODBStream", () => {
 
     describe("methods", () => {
 
-        describe("#open", () => {
-
-            // TODO: make sure open() on an already opened stream throws.
-        });
     });
 
 
-    /*describe("properties", () => {
+    describe("properties", () => {
 
-        xdescribe(".LineSeparator", () => {
+        describe(".LineSeparator", () => {
 
-            xdescribe("in binary mode", () => {
+            describe("in binary mode", () => {
 
                 it("should throw when '.LineSeparator' is set", (done) => {
 
@@ -96,27 +92,29 @@ describe("ADODBStream", () => {
 
             });
         });
+    });
 
-        xdescribe(".EOS", () => {
+    describe(".EOS", () => {
 
-            it("should indicate when at the end of the stream", (done) => {
+        it("should indicate when at the end of the stream", (done) => {
 
-                let ado = new ADODBStream(context);
-                ado.open();
-                ado.writetext("Hello, World!");
+            let ado = new ADODBStream(context);
+            ado.open();
+            ado.writetext("abcd");
 
-                assert.equal(ado.position, 26);
-                assert.equal(ado.eos, true);
+            assert.equal(ado.size, 10);
+            assert.equal(ado.position, 10);
+            assert.equal(ado.eos, true);
 
-                ado.position = 10;
-                assert.isFalse(ado.eos);
+            ado.position = 6;
+            assert.isFalse(ado.eos);
 
-                done();
-            });
+            done();
+        });
 
-        });*/
+    });
 
-    /*describe(".size", () => {
+    describe(".size", () => {
 
         it("should throw if size is assigned to", (done) => {
 
@@ -325,9 +323,9 @@ describe("ADODBStream", () => {
                 done();
             });
         });
-    });*/
+    });
 
-    /*describe(".Charset", () => {
+    describe(".Charset", () => {
 
         // For a more comprehensive set of tests regarding
         // ADODB.Stream charsets, please see the TextStream_test.js
@@ -477,9 +475,9 @@ describe("ADODBStream", () => {
                 done();
             });
         });
-    });*/
+    });
 
-    /*describe(".Position", () => {
+    describe(".Position", () => {
 
         describe("when the stream is opened", () => {
 
@@ -596,9 +594,9 @@ describe("ADODBStream", () => {
                 assert.throws(() => ado.position = 1);
             });
         });
-     });*/
+     });
 
-    xdescribe(".State", () => {
+    describe(".State", () => {
 
         it("should report the state as '0' by default", (done) => {
 
@@ -635,14 +633,14 @@ describe("ADODBStream", () => {
         //   attempted, it throws.
         // - mode cannot be SET while stream is open
         // -
-        /*xit("should have mode = 0 when object is closed", (done) => {
+        it("should have mode = 0 when object is closed", (done) => {
 
             let ado = new ADODBStream(context);
             assert.equal(ado.mode, 0);
             done();
         });
 
-        xit("should not allow .mode to be set while stream is open", (done) => {
+        it("should not allow .mode to be set while stream is open", (done) => {
 
             let ctx = {};
             Object.assign(ctx, context, {
@@ -660,7 +658,7 @@ describe("ADODBStream", () => {
             done();
         });
 
-        xit("should throw appropriately when .mode is set to an unknown value", (done) => {
+        it("should throw appropriately when .mode is set to an unknown value", (done) => {
 
             let ctx = {};
             Object.assign(ctx, context, {
@@ -685,7 +683,7 @@ describe("ADODBStream", () => {
             done();
         });
 
-        xit("should not throw for all valid modes", (done) => {
+        it("should not throw for all valid modes", (done) => {
 
             let ado = new ADODBStream(context);
 
@@ -704,11 +702,24 @@ describe("ADODBStream", () => {
             allowed_values.forEach((x) => assert.doesNotThrow(() => ado.mode = x.value));
 
             done();
-        });*/
+        });
 
         describe("permissions", () => {
 
-            /*xit("should not throw if mode is set to 'adModeUnknown' (0x0) and a write is attempted", (done) => {
+            it("should be set to mode 'adModeUnknown' (0x0) by default, and permit reading and writing", (done) => {
+
+                let ado = new ADODBStream(context);
+
+                ado.open();
+                assert.doesNotThrow(() => ado.writetext("abc"));
+                ado.position = 0;
+
+                assert.doesNotThrow(() => ado.readtext());
+
+                done();
+            });
+
+            it("should not throw if mode is set to 'adModeUnknown' (0x0) and a write is attempted", (done) => {
 
                 let ado = new ADODBStream(context);
 
@@ -718,9 +729,9 @@ describe("ADODBStream", () => {
                 assert.doesNotThrow(() => ado.writetext("abc"));
 
                 done();
-             });*/
+             });
 
-            xit("should throw a 'not open' exception when .Mode is 'adModeRead' but the stream is not open", (done) => {
+            it("should throw a 'not open' exception when .Mode is 'adModeRead' but the stream is not open", (done) => {
 
                 let ctx = {};
                 Object.assign(ctx, context, {
@@ -784,9 +795,23 @@ describe("ADODBStream", () => {
                 done();
             });
         });
+
+        it("should allow read/write when 'adModeReadWrite' (0x3) is set", (done) => {
+
+            let ado = new ADODBStream(context);
+            ado.mode = 3;
+
+            ado.open();
+            assert.doesNotThrow(() => ado.writetext("abc"));
+
+            ado.position = 0;
+            assert.doesNotThrow(() => ado.readtext());
+
+            done();
+        });
     });
 
-    xdescribe(".Type", () => {
+    describe(".Type", () => {
 
         it("should create a text stream", (done) => {
 
