@@ -125,7 +125,6 @@ describe("TextStream", () => {
             done();
         });
 
-
         it("should not add the BOM when switching charset from ascii -> unicode", (done) => {
 
             let ts = new TextStream();
@@ -198,6 +197,52 @@ describe("TextStream", () => {
 
             done();
 
+        });
+        it("should write the BOM when put is passed 'undefined'", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            assert.doesNotThrow(() => ts.put(undefined));
+
+            assert.equal(ts.size, 2);
+            assert.equal(ts.position, 2);
+
+            done();
+        });
+
+        it("should throw when trying to write 'null' to the stream", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+            assert.throws(() => ts.put(null), "cannot write null data to this stream");
+
+            done();
+        });
+
+        it("should treat an empty array '[]' as an undefined value", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+
+            assert.doesNotThrow(() => ts.put([]));
+            assert.equal(ts.size, 2);
+            assert.equal(ts.position, 2);
+
+            done();
+        });
+
+        it("should convert an object to '[object Object]' when an object-write is attempted", (done) => {
+
+            let ts = new TextStream();
+            ts.open();
+
+            // '{}' becomes '[object Object]'.
+            assert.doesNotThrow(() => ts.put({}));
+
+            assert.equal(ts.size, 32);
+            assert.equal(ts.position, 32);
+
+            done();
         });
 
         it("should correctly handle inserting Unicode text in to the stream", (done) => {
@@ -1156,7 +1201,7 @@ describe("TextStream", () => {
 
     });
 
-    describe("load_from_file", () => {
+    describe("#load_from_file", () => {
 
         it("should load from a file, if that file exists", (done) => {
 
@@ -1252,5 +1297,4 @@ describe("TextStream", () => {
             done();
         });
     });
-
 });

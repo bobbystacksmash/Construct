@@ -234,8 +234,19 @@ class TextStream extends Stream {
 
     put (data, options) {
 
+        if (data === null) {
+            throw new Error("Type mismatch - cannot write null data to this stream.");
+        }
+
         if (!this.stream_is_open) {
             throw new Error("Stream is not open for writing.");
+        }
+
+        if (data === undefined || data === []) {
+            data = "";
+        }
+        else if (typeof data === "object") {
+            data = data.toString();
         }
 
         if (typeof data === "string") {
@@ -248,7 +259,6 @@ class TextStream extends Stream {
         if (this._charset.encoding === "utf16-le" && this.pos === 0 && this.buffer.byteLength >= 2) {
             this.pos = 2;
         }
-
 
         // Options handling
         // ================
