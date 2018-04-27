@@ -17,10 +17,282 @@ describe("ADODBStream", () => {
 
     describe("methods", () => {
 
+        describe("#Open", () => {
+
+            it("should be case-insensitive", (done) => {
+
+                let ado = new ADODBStream(context);
+
+                assert.doesNotThrow(() => ado.open());
+                ado.close();
+
+                assert.doesNotThrow(() => ado.Open());
+                ado.close();
+
+                assert.doesNotThrow(() => ado.OPEN());
+                ado.close();
+
+                done();
+            });
+
+            it("should throw when opening an already open stream", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_operation_not_allowed_when_object_is_open: () => {
+                            throw new Error("Operation not allowed when the object is open.");
+                        }
+                    }
+                });
+
+                let ado = new ADODBStream(ctx);
+
+                assert.doesNotThrow(() => ado.open());
+
+                assert.throws(() => ado.open(), "Operation not allowed when the object is open.");
+                done();
+            });
+        });
+
+        describe("#Close", () => {
+
+            it("should throw when trying to close an already closed stream", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_operation_not_allowed_when_closed: () => {
+                            throw new Error("stream already closed");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+
+                ado.open();
+                assert.doesNotThrow(() => ado.close());
+                assert.throws(() => ado.close(), "stream already closed");
+
+                done();
+            });
+        });
+
+        describe("#Write", () => {
+
+            it("should throw if attempting to call #Write when the stream-type is text", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_args_wrong_type_or_out_of_range_or_conflicted: () => {
+                            throw new Error("cannot call write in text mode");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+                ado.type = TEXT_STREAM;
+                ado.open();
+
+                assert.throws(() => ado.write("testing"), "cannot call write in text mode");
+
+                done();
+            });
+
+            it("should throw if calling write in a binary stream", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_args_wrong_type_or_out_of_range_or_conflicted: () => {
+                            throw new Error("cannot call write on a binary stream");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+                ado.type = BINARY_STREAM;
+                ado.open();
+
+                assert.throws(() => ado.write("testing"), "cannot call write on a binary stream");
+
+                done();
+            });
+        });
+
+        describe("#WriteText", () => {
+
+            it("should allow writing of text when stream type is text", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.type = TEXT_STREAM;
+                ado.open();
+
+                assert.equal(ado.position, 0);
+                assert.equal(ado.size, 0);
+
+                assert.doesNotThrow(() => ado.WriteText("abcd"));
+
+                assert.equal(ado.size, 10);
+                assert.equal(ado.position, 10);
+
+                done();
+            });
+
+            it("should throw if the stream type is binary and #WriteText is called", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_operation_not_permitted_in_contex: () => {
+                            throw new Error("cannot call writetext on a binary stream");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+                ado.type = BINARY_STREAM;
+                ado.open();
+
+                assert.throws(() => ado.WriteText("testing"), "cannot call writetext on a binary stream");
+
+                assert.equal(ado.position, 0);
+                assert.equal(ado.size, 0);
+
+                done();
+            });
+
+            it("should allow the writing of text to the stream with the default character encoding", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.type = TEXT_STREAM;
+                ado.open();
+
+                ado.WriteText("abcd");
+                assert.equal(ado.size, 10);
+                assert.equal(ado.position, 10);
+
+                done();
+            });
+
+            it("should correctly handle being passed an object '{}'", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.type = TEXT_STREAM;
+                ado.open();
+
+                assert.doesNotThrow(() => ado.WriteText({}));
+
+                assert.equal(ado.size, 32);
+                assert.equal(ado.position, 32);
+
+                ado.position = 0;
+                assert.equal(ado.ReadText(), "[object Object]");
+
+                done();
+            });
+
+            it("should correctly handle being passed an empty array '[]'", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.type = TEXT_STREAM;
+                ado.open();
+
+                assert.doesNotThrow(() => ado.WriteText([]));
+
+                assert.equal(ado.size, 2);
+                assert.equal(ado.position, 2);
+
+                ado.position = 0;
+                assert.equal(ado.ReadText(), "");
+
+                done();
+            });
+
+            it("should correctly handle being passed 'undefined'", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.type = TEXT_STREAM;
+                ado.open();
+
+                assert.doesNotThrow(() => ado.WriteText(undefined));
+
+                assert.equal(ado.size, 2);
+                assert.equal(ado.position, 2);
+
+                ado.position = 0;
+                assert.equal(ado.ReadText(), "");
+
+                done();
+            });
+
+            it("should throw when passed 'null'", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_type_mismatch: () => {
+                            throw new Error("type mismatch");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+                ado.type = TEXT_STREAM;
+                ado.open();
+
+                assert.throws(() => ado.WriteText(null), "type mismatch");
+
+                assert.equal(ado.size, 0);
+                assert.equal(ado.position, 0);
+
+                done();
+            });
+
+            describe("StreamWriteEnum (option)", () => {
+
+                it("should not add any new lines by default", (done) => {
+
+                    let ado = new ADODBStream(context);
+                    ado.open();
+                    ado.type = TEXT_STREAM;
+
+                    ado.WriteText("abcd");
+                    assert.equal(ado.size, 10);
+                    assert.equal(ado.position, 10);
+
+                    ado.position = 0;
+                    assert.equal(ado.ReadText(), "abcd");
+
+                    done();
+                });
+
+                it("should write what ever is specified in the LineSeparator property by default", (done) => {
+
+                    let ado = new ADODBStream(context);
+
+                    ado.open();
+                    ado.WriteText("abcd", 1);
+
+                    assert.equal(ado.size, 14);
+                    assert.equal(ado.position, 14);
+
+                    done();
+                });
+
+                it("should throw if option value to #WriteText is not '1'", (done) => {
+
+                    let ctx = Object.assign({}, context, {
+                        exceptions: {
+                            throw_args_wrong_type_or_out_of_range_or_conflicted: () => {
+                                throw new Error("invalid StreamWriteEnum value");
+                            }
+                        }});
+
+                    let ado = new ADODBStream(ctx);
+                    ado.open();
+                    ado.type = TEXT_STREAM;
+
+                    assert.throws(() => ado.WriteText("abcd", 2), "invalid StreamWriteEnum value");
+
+                    done();
+                });
+            });
+        });
     });
 
 
-    describe("properties", () => {
+    /*describe("properties", () => {
 
         describe(".LineSeparator", () => {
 
@@ -898,5 +1170,5 @@ describe("ADODBStream", () => {
 
             done();
         });
-    });
+    });*/
 });

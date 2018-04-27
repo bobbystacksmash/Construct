@@ -229,7 +229,6 @@ class JS_ADODBStream extends Component {
                         "ensure the stream is open before calling '.position'."
                 );
             }
-            return;
         }
     }
     set position (p) {
@@ -270,11 +269,37 @@ class JS_ADODBStream extends Component {
     }
 
     open () {
-        this.stream.open();
+        try {
+            this.stream.open();
+        }
+        catch (e) {
+            if (e.message.includes("Cannot open an already opened stream")) {
+                this.context.exceptions.throw_operation_not_allowed_when_object_is_open(
+                    "ADODB.Stream",
+                    "Open called on an already open stream.",
+                    "ADODB Stream objects will throw this exception if they are already " +
+                        "open, and calling-code tries to open them again."
+                );
+            }
+        }
     }
 
     close () {
-        this.stream.close();
+
+        try {
+            this.stream.close();
+        }
+        catch (e) {
+
+            if (e.message.includes("Cannot close an already closed stream")) {
+                this.context.exceptions.throw_operation_not_allowed_when_closed(
+                    "ADODB.Stream",
+                    "Close called on an already closed stream.",
+                    "ADODB Stream objects will throw this exception if they are already " +
+                        "closed, and calling-code tries to close them again."
+                );
+            }
+        }
     }
 
     read () {
@@ -307,19 +332,49 @@ class JS_ADODBStream extends Component {
         }
     }
 
-    writetext (text) {
+    writetext (text, option) {
+
+        if (this._is_binary_stream()) {
+
+            this.context.exceptions.throw_operation_not_permitted_in_contex(
+                "ADODB.Stream",
+                "Cannot call WriteText while stream-type is binary (use text instead).",
+                "The use of WriteText is not allowed when the stream type is set to binary.  " +
+                    "To fix this, either change the stream type to Text or load data in to " +
+                    "the stream using the LoadFromFile method."
+            );
+        }
+
         try {
-            this.stream.put(text);
+            this.stream.put(text, option);
         }
         catch (e) {
 
-            if (e.message.includes("Write Access Denied")) {
+            if (e.message.includes("Type mismatch")) {
+                this.context.exceptions.throw_type_mismatch(
+                    "ADODB.Stream",
+                    "Type Mismatch",
+                    "The value passed in to #WriteText is an incompatible type which cannot " +
+                        "be written to the stream, most likely 'null'."
+                );
+            }
+            else if (e.message.includes("Write Access Denied")) {
                 this.context.exceptions.throw_permission_denied(
                     "ADODB.Stream",
                     "Access Denied",
                     "A write operation has failed because this stream is currently not " +
                         "writeable. Ensure that the '.mode' property is set correctly to " +
                         "permit writing to this stream."
+                );
+            }
+            else if (e.message.includes("Unknown option value to #put")) {
+                this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
+                    "ADODB.Stream",
+                    "Invalid StreamWriteEnum passed to #WriteText",
+                    "WriteText is optional, however, if it is present, the only valid value " +
+                        "for it is '1' (numeric).  This describes the StreamWriteEnum, where " +
+                        "'0' is default (do not add a line), and '1' will add the new-line value " +
+                        "set in LineSeparator."
                 );
             }
             else {
@@ -334,6 +389,16 @@ class JS_ADODBStream extends Component {
     }
 
     write () {
+
+        if (this._is_text_stream()) {
+            this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
+                "ADODB.Stream",
+                "Cannot call Write on text-type streams.",
+                "This stream is currently in text-mode, as set by the stream's .type property. " +
+                    "Either use WriteText, or change to a binary stream and use LoadFromFile " +
+                    "to write data to this stream."
+            );
+        }
 
         if (this._is_binary_stream()) {
             this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(

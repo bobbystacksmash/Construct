@@ -8,11 +8,11 @@ usage, as well as controlling randomness for improved reproducability.
 
 ** ADODB Stream [0%]
 
-*** TODO Methods [0%]
-**** TODO Open
-**** TODO Close
-**** TODO Write
-**** TODO WriteText
+*** TODO Methods [30%]
+**** DONE Open
+**** DONE Close
+**** DONE Write
+**** DONE WriteText
 **** TODO Read
 **** TODO ReadText
 **** TODO Flush
