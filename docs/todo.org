@@ -24,7 +24,7 @@ usage, as well as controlling randomness for improved reproducability.
 **** TODO Cancel
 
 
-*** Properties [87%]
+*** Properties [100%]
 
 **** DONE LineSeparator
 **** DONE EOS
@@ -49,7 +49,7 @@ this as done, but may revisit in the future if I can find a way to
 reproduce the behaviour.
 
 **** DONE State
-**** TODO Mode
+**** DONE Mode
 
 
 ** WshShell
