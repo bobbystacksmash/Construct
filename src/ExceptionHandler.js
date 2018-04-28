@@ -129,17 +129,6 @@ class ExceptionHandler extends Component {
     }
 
 
-    throw_operation_not_allowed_when_closed (source, summary, details) {
-        this.throw(
-            "Error",
-            "Operation is not allowed when the object is closed.",
-            -2146824584,
-            "Operation is not allowed when the object is closed.",
-            source, summary, details
-        );
-    }
-
-
     throw_operation_not_permitted_in_context (source, summary, details) {
         this.throw(
             "Error",
@@ -173,6 +162,17 @@ class ExceptionHandler extends Component {
     }
 
 
+    throw_operation_not_allowed_when_closed (source, summary, details) {
+        this.throw(
+            "Error",
+            "Operation is not allowed when the object is closed.",
+            -2146824584,
+            "Operation is not allowed when the object is closed.",
+            source, summary, details
+        );
+    }
+
+
     throw_parameter_is_incorrect (source, summary, details) {
         this.throw(
             "Error",
@@ -190,6 +190,16 @@ class ExceptionHandler extends Component {
             "Access Denied.",
             -2147287035,
             "Access Denied.",
+            source, summary, details
+        );
+    }
+
+    throw_type_mismatch (source, summary, details) {
+        this.throw(
+            "TypeError",
+            "Type mismatch.",
+            -2147352571,
+            "Type mismatch.",
             source, summary, details
         );
     }
