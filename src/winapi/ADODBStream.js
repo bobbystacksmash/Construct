@@ -302,8 +302,42 @@ class JS_ADODBStream extends Component {
         }
     }
 
-    read () {
+    read (num_bytes) {
 
+        // Windows checks if the stream is open before it checks the type...
+        if (this.stream.is_open === false) {
+            this.context.exceptions.throw_operation_not_allowed_when_closed(
+                "ADODB.Stream",
+                "Cannot Read from this stream while the stream is closed.",
+                "Streams must be open to be read from, and even then, depending on the " +
+                    "stream type (text or binary), the method used to read from the stream " +
+                    "differs. Ensure that the stream is open before calling #Read."
+            );
+        }
+
+        if (this._is_text_stream()) {
+            this.context.exceptions.throw_operation_not_permitted_in_context(
+                "ADODB.Stream",
+                "Cannot call #Read while stream is in text mode.",
+                "This error is thrown when #Read is called on a text stream.  Either convert " +
+                    "the stream to a binary stream, or use #ReadText to fetch the stream's content."
+            );
+        }
+
+        if (this.stream.size === 0) {
+            return null;
+        }
+
+        var read_fn;
+
+        if (num_bytes === undefined) {
+            read_fn = () => this.stream.fetch_all();
+        }
+        else {
+            read_fn = () => this.stream.fetch_n_bytes(num_bytes);
+        }
+
+        return read_fn();
     }
 
     readtext (n_chars) {

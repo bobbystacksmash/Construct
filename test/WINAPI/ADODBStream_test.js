@@ -289,6 +289,57 @@ describe("ADODBStream", () => {
                 });
             });
         });
+
+        describe("#Read", () => {
+
+            it("should return type 'object' when #Read is called", (done) => {
+
+                let ado = new ADODBStream(context);
+
+                ado.type = BINARY_STREAM;
+                ado.open();
+
+                assert.equal(typeof ado.Read(), "object");
+                done();
+            });
+
+            it("should throw when #Read is called and the stream is closed", (done) => {
+
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_operation_not_allowed_when_closed: () => {
+                            throw new Error("stream is closed");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+                ado.type = BINARY_STREAM;
+
+                assert.throws(() => ado.read(), "stream is closed");
+                done();
+            });
+
+            it("should throw when called when type is text", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_operation_not_permitted_in_context: () => {
+                            throw new Error("cannot call read in text mode");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+
+                ado.open();
+                ado.type = TEXT_STREAM;
+
+                assert.throws(() => ado.Read(), "cannot call read in text mode");
+
+                done();
+
+            });
+        });
     });
 
 

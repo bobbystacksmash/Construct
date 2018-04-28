@@ -126,6 +126,11 @@ class Stream {
     }
 
     close () {
+
+        if (this.stream_is_open === false) {
+            throw new Error("Cannot close an already closed stream.");
+        }
+
         this.pos = 0;
         this.stream_is_open = false;
     }
