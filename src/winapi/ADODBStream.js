@@ -331,7 +331,20 @@ class JS_ADODBStream extends Component {
 
     read (num_bytes) {
 
-        // Windows checks if the stream is open before it checks the type...
+        // Windows checks things in the following order:
+        //
+        //   1. is the type of `num_bytes' correct?
+        //   2. is the stream open()?
+        //   3. is the stream's type === text?
+        //
+        if (num_bytes === null) {
+            this.context.exceptions.throw_type_mismatch(
+                "ADODB.Stream",
+                "Cannot read 'null' bytes.",
+                "The `num_bytes' parameter, if supplied, cannot be null."
+            );
+        }
+
         if (this.stream.is_open === false) {
             this.context.exceptions.throw_operation_not_allowed_when_closed(
                 "ADODB.Stream",
@@ -355,16 +368,25 @@ class JS_ADODBStream extends Component {
             return null;
         }
 
-        var read_fn;
+        if (typeof num_bytes === "boolean") {
 
-        if (num_bytes === undefined) {
-            read_fn = () => this.stream.fetch_all();
+            if (num_bytes) {
+                return this.stream.fetch_all();
+            }
+            else {
+                return null;
+            }
+        }
+        else if (isNaN(num_bytes)) {
+            this.context.exceptions.throw_type_mismatch(
+                "ADODB.Stream",
+                "Cannot convert non-numeric value to a number",
+                "Unable to convert the non-numeric string value to a valid number."
+            );
         }
         else {
-            read_fn = () => this.stream.fetch_n_bytes(num_bytes);
+            this.stream.fetch_n_bytes(num_bytes);
         }
-
-        return read_fn();
     }
 
     readtext (n_chars) {

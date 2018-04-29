@@ -10,6 +10,8 @@ let context = {
     vfs: {}
 };
 
+const vfs_factory = () => new VirtualFileSystem({ register: () => {} })
+
 const BINARY_STREAM = 1;
 const TEXT_STREAM   = 2;
 
@@ -339,11 +341,199 @@ describe("ADODBStream", () => {
                 done();
 
             });
+
+            it("should read throw if 'null' is passed in to #Read", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_type_mismatch: () => {
+                            throw new Error("null is not a valid #Read parameter");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+                assert.throws(() => ado.Read(null), "null is not a valid #Read param");
+
+                done();
+            });
+
+            it("should not throw if 'undefined' is passed in to #Read", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_operation_not_allowed_when_closed: () => {
+                            throw new Error("not allowed when closed");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+                assert.throws(() => ado.Read(undefined), "not allowed when closed");
+
+                done();
+            });
+
+            it("should throw a TypeMismatch error for different truthy values", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_type_mismatch: () => {
+                            throw new Error("snakes");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+                assert.throws(() => ado.Read([]));
+                assert.throws(() => ado.Read({}));
+                assert.throws(() => ado.Read("abc"));
+
+                done();
+            });
+
+            it("should return 'null' for certain #Read parameters", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.open();
+                ado.type = BINARY_STREAM;
+
+                assert.isNull(ado.Read(-1));
+                assert.isNull(ado.Read(false));
+
+                done();
+            });
+
+            //
+            // We are limited here in what we can test because JScript
+            // doesn't support reading the contents of a BinaryStream
+            // in to a JScript-native data structure.  Using `typeof
+            // x', where `x' is a value successfully #Read from a
+            // binstream will return 'unknown'.  This is due to the
+            // fact that the actual value is the other side of a "COM
+            // bridge", meaning we've got no way of knowing what it is.
+            //
+
+            it("should correctly read a binary stream", (done) => {
+
+                let vfs = vfs_factory(),
+                    ctx = Object.assign({}, context, { vfs: vfs });
+
+                let ado = new ADODBStream(ctx);
+                ado.type = BINARY_STREAM;
+                ado.open();
+
+                vfs.AddFile("C:\\test.txt", Buffer.from([61, 62, 63, 64]));
+                ado.LoadFromFile("C:\\test.txt");
+
+                assert.equal(ado.position, 0);
+                ado.Read(1);
+
+                assert.equal(ado.position, 1);
+                ado.Read(2);
+
+                assert.equal(ado.position, 3);
+
+                ado.Read(4);
+                assert.equal(ado.position, 4);
+
+                done();
+            });
+
+            it("should correctly convert a string containing a number to a number", (done) => {
+
+                let vfs = vfs_factory(),
+                    ctx = Object.assign({}, context, { vfs: vfs });
+
+                let ado = new ADODBStream(ctx);
+                ado.type = BINARY_STREAM;
+                ado.open();
+
+                vfs.AddFile("C:\\test.txt", Buffer.from([61, 62, 63, 64]));
+                ado.LoadFromFile("C:\\test.txt");
+
+                assert.doesNotThrow(() => ado.Read("1"));
+                assert.equal(ado.position, 1);
+
+                assert.doesNotThrow(() => ado.Read("4"));
+                assert.equal(ado.position, 4);
+
+                done();
+            });
+
+            it("should throw when trying to read a string which cannot be converted to a decimal value", (done) => {
+
+                let vfs = vfs_factory();
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_type_mismatch: () => {
+                            throw new Error("read value cannot be converted to a number");
+                        }
+                    }});
+
+                ctx.vfs = vfs;
+
+                vfs.AddFile("C:\\test.txt", Buffer.from([61, 62, 63, 64]));
+
+
+                let ado = new ADODBStream(ctx);
+                ado.type = BINARY_STREAM;
+                ado.open();
+
+                ado.LoadFromFile("C:\\test.txt");
+
+                assert.throws(() => ado.Read("testing"), "read value cannot be converted to a number");
+
+                done();
+
+
+
+
+            });
+
+            it("should correctly handle the case where #Read is passed 'true'", (done) => {
+
+                let vfs = vfs_factory(),
+                    ctx = Object.assign({}, context, { vfs: vfs });
+
+                let ado = new ADODBStream(ctx);
+                ado.type = BINARY_STREAM;
+                ado.open();
+
+                vfs.AddFile("C:\\test.txt", Buffer.from([61, 62, 63, 64]));
+                ado.LoadFromFile("C:\\test.txt");
+
+                assert.equal(ado.position, 0);
+                assert.doesNotThrow(() => ado.Read(true));
+                assert.equal(ado.position, 4);
+
+                done();
+            });
+
+            it("should return 'null' when asked to #Read(false)", (done) => {
+
+                let vfs = vfs_factory(),
+                    ctx = Object.assign({}, context, { vfs: vfs });
+
+                let ado = new ADODBStream(ctx);
+                ado.type = BINARY_STREAM;
+                ado.open();
+
+                vfs.AddFile("C:\\test.txt", Buffer.from([61, 62, 63, 64]));
+                ado.LoadFromFile("C:\\test.txt");
+
+                assert.equal(ado.position, 0);
+                var result = true;
+                assert.doesNotThrow(() => result = ado.Read(false));
+                assert.equal(ado.position, 0);
+                assert.isNull(result);
+
+                done();
+            });
+
+            // TODO: if a string value cannot be converted to decimal, throw type mismatch.
         });
     });
 
-
-    describe("properties", () => {
+    /*describe("properties", () => {
 
         describe(".LineSeparator", () => {
 
@@ -1228,5 +1418,5 @@ describe("ADODBStream", () => {
 
             done();
         });
-    });
+    });*/
 });
