@@ -473,7 +473,6 @@ describe("ADODBStream", () => {
 
                 vfs.AddFile("C:\\test.txt", Buffer.from([61, 62, 63, 64]));
 
-
                 let ado = new ADODBStream(ctx);
                 ado.type = BINARY_STREAM;
                 ado.open();
@@ -483,10 +482,6 @@ describe("ADODBStream", () => {
                 assert.throws(() => ado.Read("testing"), "read value cannot be converted to a number");
 
                 done();
-
-
-
-
             });
 
             it("should correctly handle the case where #Read is passed 'true'", (done) => {
@@ -528,8 +523,44 @@ describe("ADODBStream", () => {
 
                 done();
             });
+        });
 
-            // TODO: if a string value cannot be converted to decimal, throw type mismatch.
+        describe("#ReadText", () => {
+
+            it("should throw when called on a binary stream instance", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_operation_not_permitted_in_context: () => {
+                            throw new Error("cannot call #Read in binary mode");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+                ado.open();
+                ado.type = BINARY_STREAM;
+
+                assert.throws(() => ado.ReadText(), "cannot call #Read in binary mode");
+
+                done();
+            });
+
+            it("should throw when in text mode but the stream is closed", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_operation_not_permitted_in_context: () => {
+                            throw new Error("cannot call #Read when stream is closed");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+                ado.type = TEXT_STREAM;
+
+                assert.throws(() => ado.ReadText(), "cannot call #Read when stream is closed");
+
+                done();
+            });
         });
     });
 

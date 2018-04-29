@@ -391,6 +391,30 @@ class JS_ADODBStream extends Component {
 
     readtext (n_chars) {
 
+        // ReadText appears to function in a slightly different way to
+        // #Read.  It's checking order is:
+        //
+        //   1. context (throw if stream == binary)
+        //   2. ...
+        //
+        if (this._is_binary_stream()) {
+            this.context.exceptions.throw_operation_not_permitted_in_context(
+                "ADODB.Stream",
+                "Cannot ReadText while the stream's type is binary",
+                "The stream is currently in 'binary' mode, meaning the only way to fetch " +
+                    "data from the stream is to use 'Read' (not 'ReadText')."
+            );
+        }
+
+        if (this.stream.is_open === false) {
+            this.context.exceptions.throw_operation_not_permitted_in_context(
+                "ADODB.Stream",
+                "Cannot call #ReadText when the stream is not open.",
+                "This stream is currently closed.  To successfully read from this stream " +
+                    "calling code must first call #Open()."
+            );
+        }
+
         if (this.stream.is_open) {
 
             try {
