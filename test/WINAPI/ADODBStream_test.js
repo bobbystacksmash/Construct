@@ -343,7 +343,7 @@ describe("ADODBStream", () => {
     });
 
 
-    /*describe("properties", () => {
+    describe("properties", () => {
 
         describe(".LineSeparator", () => {
 
@@ -723,12 +723,20 @@ describe("ADODBStream", () => {
 
             it("should throw if the new charset is unknown", (done) => {
 
-                let ado = new ADODBStream(context);
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_args_wrong_type_or_out_of_range_or_conflicted: () => {
+                            throw new Error("unknown charset error");
+                        }
+                    }
+                });
+
+                let ado = new ADODBStream(ctx);
 
                 ado.type = TEXT_STREAM;
                 ado.open();
 
-                assert.throws(() => ado.charset = "Windows-1252");
+                assert.throws(() => ado.charset = "Windows-1252", "unknown charset error");
 
                 assert.doesNotThrow(() => ado.charset = "ASCII");
                 assert.doesNotThrow(() => ado.charset = "Unicode");
@@ -1154,8 +1162,7 @@ describe("ADODBStream", () => {
 
         it("should throw if the stream type is set to an invalid type", (done) => {
 
-            let ctx = {};
-            Object.assign(ctx, context, {
+            let ctx = Object.assign({}, context, {
                 exceptions: {
                     throw_args_wrong_type_or_out_of_range_or_conflicted: () => {
                         throw new Error("x");
@@ -1221,5 +1228,5 @@ describe("ADODBStream", () => {
 
             done();
         });
-    });*/
+    });
 });

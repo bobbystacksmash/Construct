@@ -15,6 +15,20 @@ const LINE_SEPARATOR_ENUM = {
     adLF:    10
 };
 
+/*
+ * ADODB Stream
+ * ============
+ *
+ * This class is really just a wrapper around two other classes:
+ *
+ *  - TextStream
+ *  - BinaryStream
+ *
+ * They abstract the core functionality of actually doing "stream
+ * stuff".  This class really just serves as a router for ADODB.Stream
+ * requests and throwing correct exceptions.
+ */
+
 class JS_ADODBStream extends Component {
 
     constructor (context) {
@@ -97,8 +111,21 @@ class JS_ADODBStream extends Component {
             );
         }
 
-        // TODO: Add try/carch around this:
-        this.stream.charset = new_charset;
+        try {
+            this.stream.charset = new_charset;
+        }
+        catch (e) {
+
+            if (e.message.includes("unknown charset supplied")) {
+                this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
+                    "ADODB.Stream",
+                    "Cannot set charset to an unknown value.",
+                    "The charset can't be set to an unknown value.  The currently supported " +
+                        "list of charsets are: 'Unicode' and 'ASCII'.  All other values will " +
+                        "cause this exception to be thrown."
+                );
+            }
+        }
     }
 
     get lineseparator () {
