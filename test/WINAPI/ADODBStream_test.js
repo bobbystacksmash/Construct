@@ -10,7 +10,7 @@ let context = {
     vfs: {}
 };
 
-const vfs_factory = () => new VirtualFileSystem({ register: () => {} })
+const vfs_factory = () => new VirtualFileSystem({ register: () => {} });
 
 const BINARY_STREAM = 1;
 const TEXT_STREAM   = 2;
@@ -558,6 +558,101 @@ describe("ADODBStream", () => {
                 ado.type = TEXT_STREAM;
 
                 assert.throws(() => ado.ReadText(), "cannot call #Read when stream is closed");
+
+                done();
+            });
+
+            it("should return all chars when no num is specified and pos is 0", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.type = TEXT_STREAM;
+                ado.open();
+
+                ado.WriteText("Hello, World!");
+
+                assert.equal(ado.size, 28);
+                assert.equal(ado.position, 28);
+
+                ado.position = 0;
+                assert.equal(ado.ReadText(), "Hello, World!");
+
+                done();
+            });
+
+            it("should return all chars from pos until the end", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.type = TEXT_STREAM;
+                ado.open();
+
+                ado.WriteText("Hello, World!");
+                ado.position = 12;
+
+                assert.equal(ado.ReadText(), ", World!");
+
+                done();
+            });
+
+            it("should return the number of chars when charset is Unicode", (done) => {
+
+                let ado = new ADODBStream(context);
+
+                ado.open();
+                ado.type = TEXT_STREAM;
+                ado.charset = "Unicode";
+
+                // Unicode chars are 2-bytes wide.
+
+                ado.WriteText("Hello, World!");
+                ado.position = 16;
+
+                assert.equal(ado.ReadText(5), "World");
+
+                done();
+            });
+
+            it("should return the correct number of chars when the charset is ASCII", (done) => {
+
+                let ado = new ADODBStream(context);
+
+                ado.open();
+                ado.type = TEXT_STREAM;
+                ado.charset = "ASCII";
+
+                ado.WriteText("Hello, World!");
+                ado.position = 7;
+
+                assert.equal(ado.ReadText(5), "World");
+                done();
+            });
+
+            it("should correctly handle reading more chars than are available", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.open();
+                ado.type = TEXT_STREAM;
+
+                ado.WriteText("Hello, World!");
+                ado.position = 20;
+
+                assert.equal(ado.ReadText(200), "rld!");
+                done();
+            });
+
+            it("should return a zero-width (empty) string when pos it at the end", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.open();
+                ado.type = TEXT_STREAM;
+
+                ado.WriteText("Hello, World!");
+                ado.position = ado.size;
+
+                let res = ado.ReadText();
+
+                assert.equal(res, "");
+                assert.equal(res.length, 0);
+                assert.isString(res);
 
                 done();
             });
