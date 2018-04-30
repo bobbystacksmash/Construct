@@ -8,14 +8,14 @@ usage, as well as controlling randomness for improved reproducability.
 
 ** ADODB Stream [0%]
 
-*** TODO Methods [38%]
+*** TODO Methods [53%]
 **** DONE Open
 **** DONE Close
 **** DONE Write
 **** DONE WriteText
 **** DONE Read
-**** TODO ReadText
-**** TODO Flush
+**** DONE ReadText
+**** DONE Flush
 **** TODO CopyTo
 **** TODO SkipLine
 **** TODO SetEOS

@@ -657,6 +657,43 @@ describe("ADODBStream", () => {
                 done();
             });
         });
+
+        describe("#Flush", () => {
+
+            it("should throw if the stream is not open", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_operation_not_allowed_when_object_is_open: () => {
+                            throw new Error("stream is closed");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+                assert.throws(() => ado.Flush(), "stream is closed");
+
+                done();
+            });
+
+            it("should throw if any parameters are passed to #Flush", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_wrong_argc_or_invalid_prop_assign: () => {
+                            throw new Error("too many params passed to flush");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+               ado.open();
+
+                assert.throws(() => ado.flush(1),       "too many params passed to flush");
+                assert.throws(() => ado.flush(1, 2, 3), "too many params passed to flush");
+                assert.throws(() => ado.flush(null),    "too many params passed to flush");
+
+               done();
+            });
+        });
     });
 
     /*describe("properties", () => {

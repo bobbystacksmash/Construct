@@ -523,6 +523,27 @@ class JS_ADODBStream extends Component {
 
     flush () {
 
+        // Windows handles #Flush in the following sequence:
+        //
+        //  1. checks whether the number of args > 0 -> throws if TRUE
+        //  2. throws if stream is closed.
+        //
+        if (arguments.length > 0) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "ADODB.Stream",
+                "The Flush method accepts zero parameters.",
+                "Flush cannot be called with any parameters."
+            );
+        }
+
+        if (this.stream.is_open === false) {
+            this.context.exceptions.throw_operation_not_allowed_when_object_is_open(
+                "ADODB.Stream",
+                "Cannot flush an unopened stream.",
+                "This stream is not currently open, and therefore cannot be " +
+                    "flushed.  Ensure the stream is open before calling Flush."
+            );
+        }
     }
 
     copyto () {
