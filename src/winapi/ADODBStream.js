@@ -47,6 +47,10 @@ class JS_ADODBStream extends Component {
         return this.stream.constructor.name === "BinaryStream";
     }
 
+    get _underlying_stream () {
+        return this.stream;
+    }
+
     get mode () {
         return this.stream.mode;
     }
@@ -546,8 +550,21 @@ class JS_ADODBStream extends Component {
         }
     }
 
-    copyto () {
+    copyto (dst_stream, num_chars) {
+        try {
+            this.stream.copy_to(dst_stream._underlying_stream, num_chars);
+        }
+        catch (e) {
 
+            if (e.message.includes("when stream instance is closed")) {
+                this.context.exceptions.throw_operation_not_allowed_when_closed(
+                    "ADODB.Stream",
+                    "Cannot copy when either stream instance is closed.",
+                    "This error is thrown when a stream instance is not open, meaning that the #CopyTo" +
+                        "call fails."
+                );
+            }
+        }
     }
 
     skipline () {
