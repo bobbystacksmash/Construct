@@ -803,11 +803,102 @@ describe("ADODBStream", () => {
                 done();
             });
 
-            // TODO:
-            //
-            //  - Copy from txt -> bin.
-            //  - Copy from bin -> bin.
-            //
+            it("should copy successfully from an ASCII text stream to a bin stream", (done) => {
+
+                let txt = new ADODBStream(context),
+                    bin = new ADODBStream(context);
+
+                txt.open();
+                bin.open();
+
+                txt.type = 2;
+                bin.type = 1;
+
+                txt.charset = "ASCII";
+
+                txt.WriteText("abcd");
+                txt.position = 0;
+
+                txt.CopyTo(bin);
+
+                assert.equal(bin.size,      4, "Size is correct");
+                assert.equal(bin.position, 4, "Position is correct");
+
+                done();
+            });
+
+
+
+            it("should copy successfully from a Unicode text stream to a bin stream", (done) => {
+
+                let txt = new ADODBStream(context),
+                    bin = new ADODBStream(context);
+
+                txt.open();
+                bin.open();
+
+                txt.type = 2;
+                bin.type = 1;
+
+                txt.WriteText("abcd");
+                txt.position = 0;
+
+                txt.CopyTo(bin);
+
+                assert.equal(bin.size,      10, "Size should be 10");
+                assert.equal(bin.position, 10, "Position should be 10");
+
+                done();
+            });
+
+            it("should correctly copy from bin -> bin", (done) => {
+
+                let vfs = new VirtualFileSystem({ register: () => {} }),
+                    ctx = Object.assign({}, context, { vfs: vfs });
+
+                let bin1 = new ADODBStream(ctx),
+                    bin2 = new ADODBStream(ctx);
+
+                bin1.type = BINARY_STREAM;
+                bin2.type = BINARY_STREAM;
+
+                vfs.AddFile("C:\\test", Buffer.from([0x1, 0x2, 0x3, 0x4]));
+
+                bin1.open();
+                bin1.LoadFromFile("C:\\test");
+
+                bin2.open();
+
+                assert.equal(bin1.size, 4);
+                assert.equal(bin1.position, 0);
+
+                bin1.CopyTo(bin2);
+
+                assert.equal(bin2.size, bin1.size);
+                assert.equal(bin2.position, 4);
+
+                done();
+            });
+
+            it("should throw when a binary stream is closed, yet a copy is attempted", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_args_wrong_type_or_out_of_range_or_conflicted: () => {
+                            throw new Error("dst stream closed");
+                        }
+                    }});
+
+                let txt = new ADODBStream(ctx),
+                    bin = new ADODBStream(ctx);
+
+                txt.open();
+                txt.WriteText("abcd");
+
+                assert.throws(() => txt.CopyTo(bin), "dst stream closed");
+
+                done();
+            });
         });
     });
 

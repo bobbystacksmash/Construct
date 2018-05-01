@@ -174,13 +174,21 @@ class TextStream extends Stream {
     }
 
 
-    fetch_all () {
+    fetch_all (opts) {
+
+        opts = opts || { as_buffer: false };
 
         if (this.buffer.byteLength === 0) {
             return 0;
         }
 
-        return iconv.decode(this._fetch_all(), this._charset.encoding);
+        let buf = this._fetch_all();
+
+        if (opts.as_buffer) {
+            return buf;
+        }
+
+        return iconv.decode(buf, this._charset.encoding);
     }
 
 
@@ -307,7 +315,6 @@ class TextStream extends Stream {
         else if (options !== 0) {
             throw new Error("Unknown option value to #put -- only '0' and '1' are allowed.");
         }
-
         this.put_buf(data);
     }
 
@@ -316,7 +323,8 @@ class TextStream extends Stream {
         var stream_contents;
 
         if (num_chars === undefined || num_chars === null || num_chars === -1) {
-            stream_contents = this.fetch_all();
+            let is_binary_stream = dest_stream.constructor.name === "BinaryStream";
+            stream_contents = this.fetch_all({ as_buffer: is_binary_stream });
         }
         else {
             stream_contents = this.fetch_n_chars(num_chars);
