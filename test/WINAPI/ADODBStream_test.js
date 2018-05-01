@@ -1055,11 +1055,88 @@ describe("ADODBStream", () => {
 
                 done();
             });
+        });
 
+        describe("#SetEOS", () => {
 
-            // TODO:
-            //
-            //  - stream is empty? -> doesn't affect size, does not throw
+            it("should throw when a text stream is closed and SetEOS is called", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_operation_not_allowed_when_closed: () => {
+                            throw new Error("can't call SetEOS while stream is closed");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+                assert.throws(() => ado.SetEOS(), "can't call SetEOS while stream is closed");
+                done();
+            });
+
+            it("should throw when a binary stream is closed and SetEOS is called", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_operation_not_allowed_when_closed: () => {
+                            throw new Error("can't call SetEOS while stream is closed");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+                ado.type = 1;
+                assert.throws(() => ado.SetEOS(), "can't call SetEOS while stream is closed");
+                done();
+            });
+
+            it("should throw if the arg count is > 0", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_wrong_argc_or_invalid_prop_assign: () => {
+                            throw new Error("invalid argc");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+                ado.open();
+
+                assert.throws(() => ado.SetEOS(1),     "invalid argc");
+                assert.throws(() => ado.SetEOS(1,2),   "invalid argc");
+                assert.throws(() => ado.SetEOS(1,2,3), "invalid argc");
+
+                done();
+
+            });
+
+            it("should not throw if SetEOS is called and the stream is open yet empty", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.Open();
+                assert.doesNotThrow(() => ado.SetEOS());
+                done();
+            });
+
+            it("should update the current pos to be the EOS", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.open();
+                ado.type = TEXT_STREAM;
+                ado.charset = "ASCII";
+
+                ado.WriteText("1234567890");
+
+                assert.equal(ado.position, 10);
+                assert.equal(ado.size, 10);
+
+                ado.position = 5;
+
+                ado.SetEOS();
+
+                assert.equal(ado.size, 5);
+                assert.equal(ado.position, 5);
+
+                done();
+            });
         });
     });
 

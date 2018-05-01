@@ -609,6 +609,28 @@ class JS_ADODBStream extends Component {
     }
 
     seteos () {
+
+        // Order of checking:
+        //
+        //  - Number of params
+        //  - Is stream open?
+        //
+        if (arguments.length > 0) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "ADODB.Stream",
+                "SetEOS accepts zero parameters.",
+                "Cannot call SetEOS with > 0 parameters."
+            );
+        }
+
+        if (this.stream.is_closed) {
+            this.context.exceptions.throw_operation_not_allowed_when_closed(
+                "ADODB.Stream",
+                "Cannot call SetEOS when the stream is closed.",
+                "The SetEOS method cannot be used while the stream is closed."
+            );
+        }
+
         this.stream.set_EOS();
     }
 
