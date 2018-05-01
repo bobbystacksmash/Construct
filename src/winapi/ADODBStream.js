@@ -634,8 +634,8 @@ class JS_ADODBStream extends Component {
         this.stream.set_EOS();
     }
 
-    savetofile () {
-
+    savetofile (path, opt) {
+        this.stream.save_to_file(path, opt);
     }
 
     loadfromfile (file) {

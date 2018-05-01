@@ -1138,6 +1138,36 @@ describe("ADODBStream", () => {
                 done();
             });
         });
+
+        describe("#SaveToFile", () => {
+
+            it("should successfully save to the file system", (done) => {
+
+                let mock_vfs = {
+                    GetFile: () => {},
+                    AddFile: (path, contents) => {
+                        assert.equal(path, "C:\\test.txt");
+                        assert.instanceOf(contents, Buffer);
+                    }
+                };
+
+                let ctx = Object.assign({}, context, { vfs: mock_vfs }),
+                    ado = new ADODBStream(ctx);
+
+                ado.open();
+                ado.WriteText("abcd");
+
+                ado.SaveToFile("C:\\test.txt");
+
+                done();
+            });
+
+            // TODO:
+            //
+            //  - can we call saveToFile on a closed stream()?
+            //  - throw if the file already exists on disk
+            //  - check charset is applied correctly (no BOM written in ASCII mode)
+        });
     });
 
     /*describe("properties", () => {

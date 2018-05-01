@@ -21,6 +21,11 @@ class Stream {
             adModeShareExclusive:     0xC  // Not implemented (by Construct).
         };
 
+        this.SAVE_OPTIONS_ENUM = {
+            adSaveCreateNotExist:    1,
+            adSaveCreateOverWrite: 2
+        };
+
         this.buffer = Buffer.alloc(0);
         this.pos    = 0;
         this.stream_is_open = false;
@@ -297,6 +302,36 @@ class Stream {
 
         if (this.stream_is_open === false) {
             throw new Error("Unable to save to file -- the stream is not open.");
+        }
+
+        // Save Options
+        // ============
+        //
+        // | Constant              | Value | Desc                                     |
+        // |-----------------------|-------|------------------------------------------|
+        // | adSaveCreateNotExist  |   1   | Default. Creates new file if not exists. |
+        // | adSaveCreateOverWrite |   2   | Creates new or overwrites existing file. |
+        //
+        if (save_opt === undefined || save_opt === null) {
+            save_opt = this.SAVE_OPTIONS_ENUM.adSaveCreateNotExist;
+        }
+
+        if (save_opt === this.SAVE_OPTIONS_ENUM.adSaveCreateNotExist) {
+
+            // Does this file exist?
+            if(this.vfs.GetFile(path)) {
+                throw new Error("Cannot save file -- file already exists.");
+            }
+        }
+        else if (save_opt === this.SAVE_OPTIONS_ENUM.adSaveCreateOverWrite) {
+            //
+            // We do not need to code for the case where the value ===
+            // adSaveCreateOverWrite, as the output is the same -- the
+            // file will be created if not exists, or updated if it does.
+            //
+        }
+        else {
+            throw new Error("Unknown save option passed to save_to_file");
         }
 
         let fsbuf = Buffer.alloc(this.buffer.byteLength || 0);
