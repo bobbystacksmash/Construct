@@ -119,6 +119,10 @@ class TextStream extends Stream {
 
     skipline (line_sep_val) {
 
+        if (line_sep_val === undefined || line_sep_val === null) {
+            line_sep_val = this.linesep;
+        }
+
         let encoded_line_separator = this.getsep(line_sep_val),
             possible_nextline_pos  = this.buffer.indexOf(encoded_line_separator, this.pos);
 

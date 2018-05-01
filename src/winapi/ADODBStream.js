@@ -137,7 +137,7 @@ class JS_ADODBStream extends Component {
     }
     set lineseparator (line_sep_opt) {
 
-        if (this._is_binary_stream) {
+        if (this._is_binary_stream()) {
 
             this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
                 "ADODB.Stream",
@@ -148,8 +148,8 @@ class JS_ADODBStream extends Component {
             );
         }
 
-        if (line_sep_opt !== LINE_SEPARATOR_ENUM.adCR ||
-            line_sep_opt !== LINE_SEPARATOR_ENUM.adCRLF ||
+        if (line_sep_opt !== LINE_SEPARATOR_ENUM.adCR &&
+            line_sep_opt !== LINE_SEPARATOR_ENUM.adCRLF &&
             line_sep_opt !== LINE_SEPARATOR_ENUM.adLF) {
 
             this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
@@ -160,6 +160,8 @@ class JS_ADODBStream extends Component {
                     "Accepted values are: 13 (CR), -1 (CRLF), or 10 (LF)."
             );
         }
+
+        this.stream.separator = line_sep_opt;
     }
 
     get eos () {
@@ -587,6 +589,23 @@ class JS_ADODBStream extends Component {
 
     skipline () {
 
+        if (this._is_binary_stream()) {
+            this.context.exceptions.throw_operation_not_permitted_in_context(
+                "ADODB.Stream",
+                "Cannot call SkipLine when stream type is binary.",
+                "The SkipLine method can only be called from a text stream."
+            );
+        }
+
+        if (this.stream.is_open === false) {
+            this.context.exceptions.throw_operation_not_allowed_when_closed(
+                "ADODB.Stream",
+                "Cannot call SkipLine when stream is closed.",
+                "The SkipLine method cannot be used while the stream is closed."
+            );
+        }
+
+        this.stream.skipline();
     }
 
     seteos () {

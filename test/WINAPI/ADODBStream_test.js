@@ -900,6 +900,167 @@ describe("ADODBStream", () => {
                 done();
             });
         });
+
+        describe("#SkipLine", () => {
+
+            it("should throw when called in Binary mode", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_operation_not_permitted_in_context: () => {
+                            throw new Error("can't call in bin mode");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+                ado.type = BINARY_STREAM;
+
+                ado.open();
+
+                assert.throws(() => ado.SkipLine(), "can't call in bin mode");
+
+                done();
+            });
+
+            it("should throw when the stream is closed", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_operation_not_allowed_when_closed: () => {
+                            throw new Error("can't call while stream is closed");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+
+                assert.throws(() => ado.SkipLine(), "can't call while stream is closed");
+
+                done();
+            });
+
+            it("should not throw when the stream is open and empty", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.open();
+
+                assert.doesNotThrow(() => ado.SkipLine());
+                assert.isUndefined(ado.SkipLine());
+                assert.equal(ado.size, 0);
+                assert.equal(ado.position, 0);
+
+                done();
+            });
+
+            it("should correctly return each line using the default CRLF linesep", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.open();
+
+                ado.WriteText("abcd\r\nefgh\r\nijkl\r\nmnop");
+                ado.position = 0;
+
+                ado.SkipLine();
+                assert.equal(ado.position, 14);
+
+                assert.equal(ado.ReadText(4), "efgh");
+
+                ado.position = 14;
+                ado.SkipLine();
+                assert.equal(ado.position, 26);
+
+                ado.SkipLine();
+                assert.equal(ado.position, 38);
+
+                ado.SkipLine();
+                assert.equal(ado.position, 46);
+
+                for (let i = 0; i < 10; i++) {
+                    ado.SkipLine();
+                    assert.equal(ado.position, 46);
+                }
+
+                done();
+            });
+
+            it("should correctly skip CR strings", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.type = TEXT_STREAM;
+                ado.open();
+                ado.WriteText("abcd\refgh\r");
+                ado.position = 0;
+
+                ado.Lineseparator = 13;
+
+                assert.equal(ado.position, 0);
+                ado.SkipLine();
+                assert.equal(ado.position, 12);
+
+                ado.SkipLine();
+                assert.equal(ado.position, 22);
+
+                ado.SkipLine();
+                assert.equal(ado.position, 22);
+
+                done();
+            });
+
+            it("should correctly skip LF strings", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.open();
+                ado.WriteText("abcd\nefgh\nijkl\n");
+                ado.position = 0;
+
+                ado.LineSEPARATOR = 10;
+
+                ado.SkipLine();
+                assert.equal(ado.position, 12);
+
+                ado.SkipLine();
+                assert.equal(ado.position, 22);
+
+                ado.SkipLine();
+                assert.equal(ado.position, 32);
+
+                ado.SkipLine();
+                assert.equal(ado.position, 32);
+
+                done();
+            });
+
+            it("should skip to the end when the string is ONLY the linesep value", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.open();
+                ado.WriteText("\n\n\n\n\n");
+                ado.position = 0;
+
+                ado.SkipLine();
+                assert.equal(ado.position, 12);
+
+                done();
+            });
+
+            it("should skip to the end of the stream when there is no linesep values", (done) => {
+
+                let ado = new ADODBStream(context);
+                ado.open();
+                ado.WriteText("1234567890");
+                ado.position = 0;
+
+                assert.doesNotThrow(() => ado.SkipLine());
+                assert.equal(ado.position, 22);
+                assert.equal(ado.size, 22);
+
+                done();
+            });
+
+
+            // TODO:
+            //
+            //  - stream is empty? -> doesn't affect size, does not throw
+        });
     });
 
     /*describe("properties", () => {

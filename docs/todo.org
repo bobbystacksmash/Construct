@@ -13,7 +13,7 @@ usage, as well as controlling randomness for improved reproducability.
 There's no easy way to check the type of a Stream instance.  This
 needs to be added to ~Stream~ and tested.
 
-*** TODO Methods [61%]
+*** TODO Methods [69%]
 **** DONE Open
 **** DONE Close
 **** DONE Write
@@ -22,7 +22,7 @@ needs to be added to ~Stream~ and tested.
 **** DONE ReadText
 **** DONE Flush
 **** DONE CopyTo
-**** TODO SkipLine
+**** DONE SkipLine
 **** TODO SetEOS
 **** TODO SaveToFile
 **** TODO LoadFromFile
