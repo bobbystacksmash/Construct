@@ -551,6 +551,24 @@ class JS_ADODBStream extends Component {
     }
 
     copyto (dst_stream, num_chars) {
+
+        // When the `dst_stream' is closed, Windows (7) raises:
+        //
+        //  Arguments are of the wrong type, are out of acceptable
+        //  range, or are in conflict with one another.
+        //
+        // An odd choice of message, given that other stream-closed
+        // situations *do* alert that $some_stream is not open for
+        // writing...
+        //
+        if (dst_stream._underlying_stream.stream_is_open === false) {
+            this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
+                "ADODB.Stream",
+                "The destination stream is closed for writing.",
+                "Unable to write to the destination stream because it is currently closed."
+            );
+        }
+
         try {
             this.stream.copy_to(dst_stream._underlying_stream, num_chars);
         }

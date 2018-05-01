@@ -697,90 +697,117 @@ describe("ADODBStream", () => {
 
         describe("#CopyTo", () => {
 
-            describe("TextStream -> TextStream", () => {
+            it("should copy from one text stream to another successfully", (done) => {
 
-                it("should copy from one text stream to another successfully", (done) => {
+                let foo = new ADODBStream(context),
+                    bar = new ADODBStream(context);
 
-                    let foo = new ADODBStream(context),
-                        bar = new ADODBStream(context);
+                foo.open();
+                bar.open();
 
-                    foo.open();
-                    bar.open();
+                foo.charset = "ASCII";
+                foo.WriteText("abcd");
 
-                    foo.charset = "ASCII";
-                    foo.WriteText("abcd");
+                assert.equal(foo.size, 4);
+                assert.equal(foo.position, 4);
+                assert.equal(foo.charset, "ASCII");
+                foo.position = 0;
 
-                    assert.equal(foo.size, 4);
-                    assert.equal(foo.position, 4);
-                    assert.equal(foo.charset, "ASCII");
-                    foo.position = 0;
+                assert.equal(bar.size, 0);
+                assert.equal(bar.position, 0);
 
-                    assert.equal(bar.size, 0);
-                    assert.equal(bar.position, 0);
+                foo.CopyTo(bar);
 
-                    foo.CopyTo(bar);
+                assert.equal(bar.charset, "Unicode");
+                assert.equal(bar.size, 10);
+                assert.equal(bar.position, 10);
 
-                    assert.equal(bar.charset, "Unicode");
-                    assert.equal(bar.size, 10);
-                    assert.equal(bar.position, 10);
+                bar.position = 0;
+                assert.equal(bar.ReadText(), "abcd");
 
-                    bar.position = 0;
-                    assert.equal(bar.ReadText(), "abcd");
-
-                    done();
-                });
-
-                it("should correctly copy for the right number of chars in Unicode mode", (done) => {
-
-                    let foo = new ADODBStream(context),
-                        bar = new ADODBStream(context);
-
-                    foo.open();
-                    bar.open();
-
-                    foo.WriteText("abcdefghijklmnopqrstuvwxyz");
-                    foo.position = 10;
-
-                    assert.equal(foo.position, 10);
-                    assert.equal(foo.size, 54);
-
-                    foo.CopyTo(bar, 10);
-
-                    assert.equal(bar.size, 22);
-                    assert.equal(bar.position, 22);
-
-                    done();
-                });
-
-                it("should throw if the src stream is not open", (done) => {
-
-                    let ctx = Object.assign({}, context, {
-                        exceptions: {
-                            throw_operation_not_allowed_when_closed: () => {
-                                throw new Error("src stream closed");
-                            }
-                        }});
-
-                    let foo = new ADODBStream(ctx),
-                        bar = new ADODBStream(context);
-
-                    foo.open();
-                    bar.open();
-
-                    foo.WriteText("abcdefghijklmnopqrstuvwxyz");
-                    foo.position = 10;
-
-                    assert.equal(foo.position, 10);
-                    assert.equal(foo.size, 54);
-
-                    foo.Close();
-
-                    assert.throws(() => foo.CopyTo(bar, 10), "src stream closed");
-
-                    done();
-                });
-
+                done();
             });
+
+            it("should correctly copy for the right number of chars in Unicode mode", (done) => {
+
+                let foo = new ADODBStream(context),
+                    bar = new ADODBStream(context);
+
+                foo.open();
+                bar.open();
+
+                foo.WriteText("abcdefghijklmnopqrstuvwxyz");
+                foo.position = 10;
+
+                assert.equal(foo.position, 10);
+                assert.equal(foo.size, 54);
+
+                foo.CopyTo(bar, 10);
+
+                assert.equal(bar.size, 22);
+                assert.equal(bar.position, 22);
+
+                done();
+            });
+
+            it("should throw if the src stream is not open", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_operation_not_allowed_when_closed: () => {
+                            throw new Error("src stream closed");
+                        }
+                    }});
+
+                let foo = new ADODBStream(ctx),
+                    bar = new ADODBStream(context);
+
+                foo.open();
+                bar.open();
+
+                foo.WriteText("abcdefghijklmnopqrstuvwxyz");
+                foo.position = 10;
+
+                assert.equal(foo.position, 10);
+                assert.equal(foo.size, 54);
+
+                foo.Close();
+
+                assert.throws(() => foo.CopyTo(bar, 10), "src stream closed");
+
+                done();
+            });
+
+            it("should throw if the dest stream is not open", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_args_wrong_type_or_out_of_range_or_conflicted: () => {
+                            throw new Error("dst stream closed");
+                        }
+                    }});
+
+                let foo = new ADODBStream(ctx),
+                    bar = new ADODBStream(context);
+
+                foo.open();
+
+                foo.WriteText("abcdefghijklmnopqrstuvwxyz");
+                foo.position = 10;
+
+                assert.equal(foo.position, 10);
+                assert.equal(foo.size, 54);
+
+                assert.throws(() => foo.CopyTo(bar, 10), "dst stream closed");
+
+                done();
+            });
+
+            // TODO:
+            //
+            //  - Copy from txt -> bin.
+            //  - Copy from bin -> bin.
+            //
         });
     });
 
