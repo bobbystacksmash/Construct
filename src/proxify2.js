@@ -2,7 +2,7 @@ module.exports = function proxify(context, instance) {
 
     return new Proxy(instance, {
 	get (target, prop_key, receiver) {
-	    
+
 	    let actual_propkey = prop_key.toLowerCase();
 
 	    context.emitter.emit("$DEBUG::proxy-translate", {
@@ -13,7 +13,7 @@ module.exports = function proxify(context, instance) {
 	    if (context.DEBUG) {
 		console.log(`PROXDBG> ${prop_key}`);
 	    }
-		
+
 
 	    const original_method = target[actual_propkey];
 
@@ -25,7 +25,10 @@ module.exports = function proxify(context, instance) {
 	    }
 
 	    return original_method;
-	}
+	},
+
+        set (obj, prop, value) {
+            return Reflect.set(obj, prop.toLowerCase(), value);
+        }
     });
 };
-
