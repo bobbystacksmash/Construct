@@ -125,9 +125,6 @@ class VirtualFileSystem {
 
     AddFile (path, contents, opts) {
 
-        // Check that the path is valid
-        AbsFileSystemObject.ValidatePath(path);
-
 	opts = opts || {};
 	if (!opts.hasOwnProperty("overwrite")) opts.overwrite = false;
 	const overwrite = opts.overwrite;
@@ -135,6 +132,9 @@ class VirtualFileSystem {
 	let parsed_path = AbsFileSystemObject.Parse(path),
 	    file_path   = parsed_path.orig_path_parts_mv.slice(0, -1);
 
+        // Perform path and file checks...
+        AbsFileSystemObject.ThrowIfInvalidPath(parsed_path.base, { file: true });
+        AbsFileSystemObject.ThrowIfInvalidPath(parsed_path.dir);
 
         if (typeof contents === "String" || contents instanceof String) {
             contents = Buffer.from(contents, "utf16le");

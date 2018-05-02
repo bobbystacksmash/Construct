@@ -1212,19 +1212,18 @@ describe("ADODBStream", () => {
                         }
                     });
 
-                // TODO:
-                //
-                //  - need to separate FILE NAME from FILE PATH...
-                //    what constitutes a valid path is an invalid FILE.
-                //
-
                 let ado = new ADODBStream(ctx);
                 ado.open();
                 ado.WriteText("abcd");
 
-                assert.throws(() => ado.SaveToFile("<foo>/bar/baz.txt"), "invalid path");
-                assert.throws(() => ado.SaveToFile("C:\\foo^bar"), "invalid path");
-                assert.throws(() => ado.SaveToFile("C:\"foo"), "invalid path");
+                assert.throws(() => ado.SaveToFile("<foo/bar/baz.txt"), "invalid path");
+                assert.throws(() => ado.SaveToFile("C:\\foo/bar/baz>.txt"), "invalid path");
+                assert.throws(() => ado.SaveToFile("C:\\blah:bar.txt"), "invalid path");
+                assert.throws(() => ado.SaveToFile("C:\\\"foobar"), "invalid path");
+                assert.throws(() => ado.SaveToFile("C:\\\|foobar"), "invalid path");
+                assert.throws(() => ado.SaveToFile("C:\\foob?ar"), "invalid path");
+                assert.throws(() => ado.SaveToFile("C:\\foob*ar"), "invalid path");
+                //assert.throws(() => ado.SaveToFile("C:\"foo"), "invalid path");
                 done();
 
                 // Error thrown when file path is invalid:

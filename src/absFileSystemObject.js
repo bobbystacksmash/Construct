@@ -12,7 +12,7 @@ class AbsFileSystemObject {
 
 	args = args || {};
 
-	this.Attributes           = null; // Int
+	this.Attributes       = null; // Int
 	this.DateCreated      = null; // date
 	this.DateLastAccessed = null; // date
 	this.DateLastModified = null; // date
@@ -28,17 +28,19 @@ class AbsFileSystemObject {
     }
 
     /*
-     * ValidatePath
-     * ============
+     * ThrowIfInvalidPath
+     * ==================
      *
      * Performs path validation.  If the `path' is valid,
      * `ValidatePath' returns `null'.  However, if the path is
-     * invalid, it returns an exception.
+     * invalid, it raises an exception.
      *
      */
-    static ValidatePath (path) {
+    static ThrowIfInvalidPath (path, options) {
 
-        // RESERVED CHARACTER USAGE IN PATHS
+        options = options || { file: false };
+
+        // RESERVED CHARACTER USAGE IN FILENAMES
         //
         //  https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
         //
@@ -56,15 +58,33 @@ class AbsFileSystemObject {
         //   * (asterisk)
         //
 
-        if (/[<>\^"]/.test(path)) {
-            throw new Error("The supplied path contains an illegal path character.");
+        // The following code is adopted from:
+        //
+        //   - https://github.com/jonschlinkert/is-invalid-path/blob/master/index.js
+        //
+        // Unable to use this library as it adds a senseless condition
+        // to check if the OS is Windows.
+        //
+        //
+        // Remove the volume lable from the beginning of the path,
+        // such as: `C:\'
+        let path_root = pathlib.parse(path).root;
+        if (path_root) {
+            path = path.slice(path_root.length);
+        }
+
+        if (options.file) {
+            if (/[<>:"/\\|?*]/.test(path)) {
+                throw new Error("Filename contains invalid characters.");
+            }
+        }
+        else if (/[<>:"|?*]/.test(path)) {
+            throw new Error("Path contains invalid characters.");
         }
     }
 
 
     static Parse (path) {
-
-        this.ValidatePath(path);
 
 	// Replace all forward slashes with back slashes...
 	path = path.replace(/\//, "\\").toLowerCase();
@@ -72,9 +92,14 @@ class AbsFileSystemObject {
 
 	let ends_with_path_sep = /\/$/.test(path);
 
-	let parsed_path   = pathlib.parse(path),
-	    path_parts    = parsed_path.dir.split(/\\/),
-	    volume_letter = parsed_path.root.replace(/\\/g, "").toLowerCase();
+        try {
+	    var parsed_path   = pathlib.parse(path),
+	        path_parts    = parsed_path.dir.split(/\\/),
+	        volume_letter = parsed_path.root.replace(/\\/g, "").toLowerCase();
+        }
+        catch (e) {
+
+        }
 
 	parsed_path.volume             = volume_letter;
 	parsed_path.assumed_folder     = ends_with_path_sep;
