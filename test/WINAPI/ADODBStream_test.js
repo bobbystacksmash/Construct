@@ -1141,13 +1141,14 @@ describe("ADODBStream", () => {
 
         describe("#SaveToFile", () => {
 
-            it("should successfully save to the file system", (done) => {
+            it("should successfully save to the file system when file not exists", (done) => {
 
                 let mock_vfs = {
                     GetFile: () => {},
                     AddFile: (path, contents) => {
                         assert.equal(path, "C:\\test.txt");
                         assert.instanceOf(contents, Buffer);
+                        done();
                     }
                 };
 
@@ -1158,15 +1159,76 @@ describe("ADODBStream", () => {
                 ado.WriteText("abcd");
 
                 ado.SaveToFile("C:\\test.txt");
+            });
+
+            it("should throw when trying to call SaveToFile on a closed stream", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_operation_not_allowed_when_closed: () => {
+                            throw new Error("can't call SaveToFile while stream is closed");
+                        }
+                    }});
+
+                let ado = new ADODBStream(ctx);
+                ado.open();
+                ado.WriteText("hello");
+                ado.close();
+
+                assert.throws(() => ado.SaveToFile("C:\\foo.txt"), "can't call SaveToFile while stream is closed");
 
                 done();
             });
 
+            it("should write a zero-byte file when the stream is empty", (done) => {
+
+                let mock_vfs = {
+                    GetFile: () => {},
+                    AddFile: (path, contents) => {
+                        assert.equal(path, "C:\\empty.txt");
+                        assert.instanceOf(contents, Buffer);
+                        assert.deepEqual(contents, Buffer.alloc(0));
+
+                        done();
+                    }
+                };
+
+                let ctx = Object.assign({}, context, { vfs: mock_vfs }),
+                    ado = new ADODBStream(ctx);
+
+                ado.open();
+                ado.SaveToFile("C:\\empty.txt");
+            });
+
+            it("should throw if the path contains invalid characters", (done) => {
+
+                // Error thrown when file path is invalid:
+                /*
+                 name Error
+                 number -2146825284
+                 description Write to file failed.
+                 message Write to file failed.
+                 */
+
+            });
+
             // TODO:
             //
-            //  - can we call saveToFile on a closed stream()?
-            //  - throw if the file already exists on disk
+            //  - what about when the file path is invalid?
+            //
+            //  - what about when the file path does not exist?
+            //
+            //  - throw if the file already exists on disk - throws this:
+            //      name Error
+            //      number -2146825284
+            //      description Write to file failed.
+            //      message Write to file failed.
+            //
             //  - check charset is applied correctly (no BOM written in ASCII mode)
+            //
+            //  - if stream.size === 50, and .pos == 25, and #SaveToFile is called, what is saved?
+            //
+
         });
     });
 

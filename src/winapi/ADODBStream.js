@@ -635,7 +635,22 @@ class JS_ADODBStream extends Component {
     }
 
     savetofile (path, opt) {
-        this.stream.save_to_file(path, opt);
+        try {
+            this.stream.save_to_file(path, opt);
+        }
+        catch (e) {
+
+            if (e.message.includes("the stream is not open")) {
+                this.context.exceptions.throw_operation_not_allowed_when_closed(
+                    "ADODB.Stream",
+                    "Cannot call SaveToFile when the stream is closed.",
+                    "Unable to save file using the SaveToFile method when the stream " +
+                        "is closed.  Ensure the stream is open before saving."
+                );
+            }
+
+            throw e;
+        }
     }
 
     loadfromfile (file) {

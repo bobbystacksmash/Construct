@@ -1,5 +1,7 @@
 * Tasks
 
+** TODO Move and rename ~absFileSystemObject~ to somewhere more sane (will break vfs).
+
 ** Saving results
 
 When running queries/etc in Construct, it would be good if we could

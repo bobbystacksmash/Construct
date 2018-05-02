@@ -27,14 +27,50 @@ class AbsFileSystemObject {
 	this.__contents       = args.contents || "";
     }
 
-    static Parse(path) {
+    /*
+     * ValidatePath
+     * ============
+     *
+     * Performs path validation.  If the `path' is valid,
+     * `ValidatePath' returns `null'.  However, if the path is
+     * invalid, it returns an exception.
+     *
+     */
+    static ValidatePath (path) {
+
+        // RESERVED CHARACTER USAGE IN PATHS
+        //
+        //  https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
+        //
+        // Microsoft list the following characters as being illegal in
+        // NFTS paths:
+        //
+        //   < (less than)
+        //   > (greater than)
+        //   : (colon)
+        //   " (double quote)
+        //   / (forward slash)
+        //   \ (backslash)
+        //   | (vertical bar or pipe)
+        //   ? (question mark)
+        //   * (asterisk)
+        //
+        if (/[<>:"/\\\|?*]/.test(path)) {
+            //throw new Error("The supplied path contains an illegal path character.");
+        }
+    }
+
+
+    static Parse (path) {
+
+        this.ValidatePath(path);
 
 	// Replace all forward slashes with back slashes...
 	path = path.replace(/\//, "\\").toLowerCase();
 	path = path.replace(/\\\\/, "");
 
 	let ends_with_path_sep = /\/$/.test(path);
-	
+
 	let parsed_path   = pathlib.parse(path),
 	    path_parts    = parsed_path.dir.split(/\\/),
 	    volume_letter = parsed_path.root.replace(/\\/g, "").toLowerCase();
