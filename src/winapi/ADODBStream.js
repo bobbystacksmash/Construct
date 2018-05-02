@@ -648,6 +648,15 @@ class JS_ADODBStream extends Component {
                         "is closed.  Ensure the stream is open before saving."
                 );
             }
+            else if (e.message.includes("path contains an illegal path character")) {
+                this.context.exceptions.throw_write_to_file_failed(
+                    "ADODB.Stream",
+                    "Unable to write to the file - the path is invalid",
+                    "The file cannot be written to because the specified path contains illegal " +
+                        "characters.  Please see the MSDN documentation for which caracters are " +
+                        "not permitted in Windows paths."
+                );
+            }
 
             throw e;
         }

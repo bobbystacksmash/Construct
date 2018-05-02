@@ -203,6 +203,16 @@ class ExceptionHandler extends Component {
             source, summary, details
         );
     }
+
+    throw_write_to_file_failed (source, summary, details) {
+        this.throw(
+            "Error",
+            "Write to file failed.",
+            -2146825284,
+            "Write to file failed.",
+            source, summary, details
+        );
+    }
 }
 
 module.exports = ExceptionHandler;

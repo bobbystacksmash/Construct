@@ -12,7 +12,7 @@ class AbsFileSystemObject {
 
 	args = args || {};
 
-	this.Attributes       = null; // Int
+	this.Attributes           = null; // Int
 	this.DateCreated      = null; // date
 	this.DateLastAccessed = null; // date
 	this.DateLastModified = null; // date
@@ -55,8 +55,9 @@ class AbsFileSystemObject {
         //   ? (question mark)
         //   * (asterisk)
         //
-        if (/[<>:"/\\\|?*]/.test(path)) {
-            //throw new Error("The supplied path contains an illegal path character.");
+
+        if (/[<>\^"]/.test(path)) {
+            throw new Error("The supplied path contains an illegal path character.");
         }
     }
 

@@ -1202,6 +1202,31 @@ describe("ADODBStream", () => {
 
             it("should throw if the path contains invalid characters", (done) => {
 
+                let vfs = new VirtualFileSystem({ register: () => {} }),
+                    ctx = Object.assign({}, context, {
+                        vfs: vfs,
+                        exceptions: {
+                            throw_write_to_file_failed: () => {
+                                throw new Error("invalid path");
+                            }
+                        }
+                    });
+
+                // TODO:
+                //
+                //  - need to separate FILE NAME from FILE PATH...
+                //    what constitutes a valid path is an invalid FILE.
+                //
+
+                let ado = new ADODBStream(ctx);
+                ado.open();
+                ado.WriteText("abcd");
+
+                assert.throws(() => ado.SaveToFile("<foo>/bar/baz.txt"), "invalid path");
+                assert.throws(() => ado.SaveToFile("C:\\foo^bar"), "invalid path");
+                assert.throws(() => ado.SaveToFile("C:\"foo"), "invalid path");
+                done();
+
                 // Error thrown when file path is invalid:
                 /*
                  name Error

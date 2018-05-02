@@ -125,6 +125,9 @@ class VirtualFileSystem {
 
     AddFile (path, contents, opts) {
 
+        // Check that the path is valid
+        AbsFileSystemObject.ValidatePath(path);
+
 	opts = opts || {};
 	if (!opts.hasOwnProperty("overwrite")) opts.overwrite = false;
 	const overwrite = opts.overwrite;
