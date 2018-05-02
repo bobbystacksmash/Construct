@@ -1223,36 +1223,80 @@ describe("ADODBStream", () => {
                 assert.throws(() => ado.SaveToFile("C:\\\|foobar"), "invalid path");
                 assert.throws(() => ado.SaveToFile("C:\\foob?ar"), "invalid path");
                 assert.throws(() => ado.SaveToFile("C:\\foob*ar"), "invalid path");
-                //assert.throws(() => ado.SaveToFile("C:\"foo"), "invalid path");
+
                 done();
-
-                // Error thrown when file path is invalid:
-                /*
-                 name Error
-                 number -2146825284
-                 description Write to file failed.
-                 message Write to file failed.
-                 */
-
             });
 
-            // TODO:
-            //
-            //  - what about when the file path is invalid?
-            //
-            //  - what about when the file path does not exist?
-            //
-            //  - throw if the file already exists on disk - throws this:
-            //      name Error
-            //      number -2146825284
-            //      description Write to file failed.
-            //      message Write to file failed.
-            //
-            //  - check charset is applied correctly (no BOM written in ASCII mode)
-            //
-            //  - if stream.size === 50, and .pos == 25, and #SaveToFile is called, what is saved?
-            //
+            it("should throw if the file already exists and adSaveCreateNotexist is set", (done) => {
 
+                let vfs = new VirtualFileSystem({ register: () => {} }),
+                    ctx = Object.assign({}, context, {
+                        vfs: vfs,
+                        exceptions: {
+                            throw_write_to_file_failed: () => {
+                                throw new Error("file exists");
+                            }
+                        }
+                    });
+
+                const fp = "C:\\Users\\Test\\foo.txt";
+                vfs.AddFile(fp, "testing");
+
+                let ado = new ADODBStream(ctx);
+                ado.open();
+                ado.WriteText("abcd");
+
+                ado.position = 0;
+                assert.throws(() => ado.SavetoFile(fp), "file exists");
+
+                done();
+            });
+
+            it("should not write a BOM for an ASCII stream", (done) => {
+
+                let mock_vfs = {
+                    GetFile: () => {},
+                    AddFile: (path, contents) => {
+                        assert.equal(path, "C:\\ascii-file.txt");
+                        assert.instanceOf(contents, Buffer);
+                        assert.deepEqual(contents, Buffer.from("testing"));
+
+                        done();
+                    }
+                };
+
+                let ctx = Object.assign({}, context, { vfs: mock_vfs }),
+                    ado = new ADODBStream(ctx);
+
+                ado.open();
+                ado.charset = "ASCII";
+                ado.WriteText("testing");
+                ado.SaveToFile("C:\\ascii-file.txt");
+            });
+
+            it("should write the whole stream, regardless of .position", (done) => {
+
+                let mock_vfs = {
+                    GetFile: () => {},
+                    AddFile: (path, contents) => {
+                        assert.equal(path, "C:\\whole-buffer-file.txt");
+                        assert.instanceOf(contents, Buffer);
+                        assert.deepEqual(contents, Buffer.from("01234567890"));
+
+                        done();
+                    }
+                };
+
+                let ctx = Object.assign({}, context, { vfs: mock_vfs }),
+                    ado = new ADODBStream(ctx);
+
+                ado.open();
+                ado.charset = "ASCII";
+                ado.WriteText("01234567890");
+                ado.position = 5;
+
+                ado.SaveToFile("C:\\whole-buffer-file.txt");
+            });
         });
     });
 

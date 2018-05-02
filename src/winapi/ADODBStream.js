@@ -666,6 +666,14 @@ class JS_ADODBStream extends Component {
                         "Windows filenames."
                 );
             }
+            else if (e.message.includes("file already exists")) {
+                this.context.exceptions.throw_write_to_file_failed(
+                    "ADODB.Stream",
+                    "Unable to write to the file - the file already exists.",
+                    `Unable to write to file: ${path} because this file already exists and the option ` +
+                        "value passed to SaveToFile is the default value (do not overwrite if exists)."
+                );
+            }
 
             throw e;
         }
