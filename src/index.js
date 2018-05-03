@@ -47,7 +47,7 @@ function util_get_table_string(data, title) {
  * COMMAND: Load File
  * ==================
  */
-const help_load_file = 
+const help_load_file =
 `Load a JScript file from the filesystem.  Once loaded, the code will be ` +
       `analysed and preapred for inspection.`;
 
@@ -89,7 +89,7 @@ function cmd_load_file(args) {
         catch (e) {
             self.log("Error with runnable:", e.message);
 	    console.trace(e);
-	    
+
             // TODO: Add a method for "method missing" -- include GH link.
             // TODO: Handle this far, far better!
             reject(e);
@@ -110,10 +110,10 @@ vorpal
  * COMMAND: `net`
  * ===============
  */
-const CMDHELP_net = 
+const CMDHELP_net =
 `During the runtime execution of a script (see \`load FILE\`), events are
   generated and captured.  The \`net\` command will dump a list of all URLs
-  extracted at runtime from the script by hooking well-known INET objects, 
+  extracted at runtime from the script by hooking well-known INET objects,
   such as XMLHttpRequest.`;
 
 function CMD_net (args, callback) {
@@ -122,7 +122,7 @@ function CMD_net (args, callback) {
 
     // TODO: Add an option to show which route handler was invoked
     //       for any given URL.
-    
+
     let safety       = args.options.safe    || false,
         show_domains = args.options.domains || false,
         show_event   = args.options.event   || false,
@@ -136,7 +136,7 @@ function CMD_net (args, callback) {
     }
 
     let net_requests = runtime.events.filter((e) => /.*XMLHTTP.*::Send$/i.test(e.event));
-    
+
     if (net_requests.length === 0) {
         console.log(``);
         console.log(` Zero runtime events known to establish network connections were `);
@@ -176,8 +176,8 @@ function CMD_net (args, callback) {
 	console.log(hexy.hexy(req[1]));
     });
 
-    
-    
+
+
     let uniq_hostnames = _.uniqBy(all_hostnames, x => x[0]),
 	uniq_hrefs     = _.uniqBy(all_hrefs, x => x[0]);
 
@@ -234,7 +234,7 @@ vorpal
  * COMMAND: deceive
  * ================
  */
-const CMDHELP_deceive = 
+const CMDHELP_deceive =
 `Sometimes a script will test its environment and decide (for a great many
 reasons) that execution should not continue.  The \`deceive\` command is a
 series of tests which attempts to jiggle environmental factors the script may
@@ -250,7 +250,7 @@ function CMD_deceive (args, callback) {
  * COMMAND: timeline
  * =================
  */
-const CMDHELP_timeline = 
+const CMDHELP_timeline =
 `Display a list of events in the order they were emitted from the running
   script.`
 
@@ -264,14 +264,14 @@ function cmd_show_timeline (args, callback) {
     }
 
     let events = runtime.events.map((e, i) => {
-        
+
         var event    = e.event.replace("WINAPI.", ""),
             axo_test = /^(ActiveXObject)\.new\.(.+)$/.exec(event);
 
         if (axo_test) {
             event = `new ${axo_test[1]}("${axo_test[2]}")`;
         }
-        
+
         return [i, event ];
     });
 
@@ -292,7 +292,7 @@ vorpal
  * =====================
  */
 
-const help_summary = 
+const help_summary =
 `This is summary help. FIXME. FIXME. FIXME.`;
 
 function cmd_show_summary(args, callback) {
@@ -323,7 +323,7 @@ function try_find_execution_date_range(code) {
     const HIGHWATER_MARK = 30.0;
 
     let start_date           = new Date(), // TODO: Let the user specify this date...
-        search_date          = start_date.getTime()
+        search_date          = start_date.getTime(),
         num_days_to_test     = 90*24,
         subtract_from_date   = 1000*60*60,
         statement_coverage   = [],
