@@ -2117,7 +2117,7 @@ describe("ADODBStream", () => {
         // - if mode is changed to read only and then a write is
         //   attempted, it throws.
         // - mode cannot be SET while stream is open
-        // -
+        //
         it("should have mode = 0 when object is closed", (done) => {
 
             let ado = new ADODBStream(context);
