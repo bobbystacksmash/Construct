@@ -1300,7 +1300,7 @@ describe("ADODBStream", () => {
         });
     });
 
-    /*describe("properties", () => {
+    describe("properties", () => {
 
         describe(".LineSeparator", () => {
 
@@ -1471,8 +1471,11 @@ describe("ADODBStream", () => {
 
                 ado.type = TEXT_STREAM;
 
-                assert.equal(ado.size, 4);
+                assert.equal(ado.size, 10);
                 assert.equal(ado.position, 0);
+
+                ado.position = 0;
+                assert.equal(ado.ReadText(), "abcd");
 
                 done();
             });
@@ -2185,5 +2188,5 @@ describe("ADODBStream", () => {
 
             done();
         });
-    });*/
+    });
 });
