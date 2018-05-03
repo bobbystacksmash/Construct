@@ -2093,6 +2093,21 @@ describe("ADODBStream", () => {
             done();
         });
 
+        it("should throw if .state is assigned to", (done) => {
+
+            let ctx = Object.assign({}, context, {
+                exceptions: {
+                    throw_wrong_argc_or_invalid_prop_assign: () => {
+                        throw new Error("cannot assign to .state");
+                    }
+                }});
+
+
+            let ado = new ADODBStream(ctx);
+            assert.throws(() => ado.State = "xx", "cannot assign to .state");
+            done();
+        });
+
     });
 
     describe(".Mode", () => {

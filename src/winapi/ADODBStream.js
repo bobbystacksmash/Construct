@@ -174,6 +174,7 @@ class JS_ADODBStream extends Component {
         return this.stream.EOS;
     }
     set eos (_) {
+        this.ee.emit("@ADODBStream.EOS [SET]", arguments);
         this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
             "ADODB.Stream",
             "Cannot set EOS using a property.",
@@ -241,10 +242,16 @@ class JS_ADODBStream extends Component {
     }
 
     get state () {
+        this.ee.emit("@ADODBStream.State [GET]", this.stream.state);
         return this.stream.state;
     }
     set state (_) {
-
+        this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            "ADODB.Stream",
+            "State is read only.",
+            "The state of an ADODB Stream cannot be set from the outside.  " +
+                "The state changes as the stream is manipulated via its methods."
+        );
     }
 
     get size () {
