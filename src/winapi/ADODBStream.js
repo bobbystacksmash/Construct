@@ -136,9 +136,11 @@ class JS_ADODBStream extends Component {
     }
 
     get lineseparator () {
+        this.ee.emit("@ADODBStream.LineSeparator [GET]", this.stream.separator);
         return this.stream.separator;
     }
     set lineseparator (line_sep_opt) {
+        this.ee.emit("@ADODBStream.LineSeparator [SET]", arguments);
 
         if (this._is_binary_stream()) {
 
@@ -168,16 +170,25 @@ class JS_ADODBStream extends Component {
     }
 
     get eos () {
+        this.ee.emit("@ADODBStream.EOS [GET]", this.stream.EOS);
         return this.stream.EOS;
     }
     set eos (_) {
-        // TODO: does this throw?
+        this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
+            "ADODB.Stream",
+            "Cannot set EOS using a property.",
+            "The EOS property cannot be updated via a property.  To set the end " +
+                "of stream position, use the SetEOS method.  To determine the current " +
+                "position, use the Position property."
+        );
     }
 
     get type () {
+        this.ee.emit("@ADODBStream.Type [GET]", this.stream.type);
         return this.stream.type;
     }
     set type(stream_type) {
+        this.ee.emit("@ADODBStream.Type [SET]", arguments);
 
         if (this.stream.stream_is_open && this.stream.position !== 0) {
             this.context.exceptions.throw_operation_not_permitted_in_context(
@@ -235,7 +246,6 @@ class JS_ADODBStream extends Component {
     set state (_) {
 
     }
-
 
     get size () {
         return this.stream.size;

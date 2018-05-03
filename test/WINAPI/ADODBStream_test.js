@@ -1554,6 +1554,23 @@ describe("ADODBStream", () => {
             done();
         });
 
+        it("should throw when trying to assign to .EOS", (done) => {
+
+            let ctx = Object.assign({}, context, {
+                exceptions: {
+                    throw_args_wrong_type_or_out_of_range_or_conflicted: () => {
+                        throw new Error("cannot assign to EOS");
+                    }
+                }
+            });
+
+            let ado = new ADODBStream(ctx);
+
+            assert.throws(() => ado.EOS = 12, "cannot assign to EOS");
+
+            done();
+        });
+
     });
 
     describe(".size", () => {
