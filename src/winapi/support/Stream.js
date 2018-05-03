@@ -80,6 +80,12 @@ class Stream {
         return this.stream_is_open === false;
     }
 
+    get cancel () {
+        if (this.is_closed) {
+            throw new Error("Cannot cancel when stream is closed");
+        }
+    }
+
     set position (p) {
 
         if (p === 0) {

@@ -52,10 +52,11 @@ class JS_ADODBStream extends Component {
     }
 
     get mode () {
+        this.ee.emit("@ADODBStream.Mode [GET]");
         return this.stream.mode;
     }
     set mode (mode) {
-
+        this.ee.emit("@ADODBStream.Mode [SET]", arguments);
         if (this.stream.is_open) {
             this.context.exceptions.throw_operation_not_allowed_when_object_is_open(
                 "ADODB.Stream",
@@ -79,6 +80,7 @@ class JS_ADODBStream extends Component {
     }
 
     get charset () {
+        this.ee.emit("@ADODBStream.Charset [GET]");
 
         if (this._is_binary_stream()) {
             this.context.exceptions.throw_operation_not_permitted_in_context(
@@ -94,6 +96,7 @@ class JS_ADODBStream extends Component {
         return this.stream.charset;
     }
     set charset (new_charset) {
+        this.ee.emit("@ADODBStream.Charset [SET]", new_charset);
 
         if (this._is_binary_stream()) {
             this.context.exceptions.throw_operation_not_permitted_in_context(
@@ -680,11 +683,51 @@ class JS_ADODBStream extends Component {
     }
 
     loadfromfile (file) {
-        this.stream.load_from_file(file);
+
+        try {
+            this.stream.load_from_file(file);
+        }
+        catch (e) {
+
+            if (e.message.includes("Unable to load file")) {
+                this.context.exceptions.throw_file_could_not_be_opened(
+                    "ADODB.Stream",
+                    "Attempting to load file failed: " + file,
+                    "The loading of a file has failed because this file could " +
+                        "not be found.  Ensure the filename is correct and the " +
+                        "file exists on the filesystem."
+                );
+            }
+            else if (e.message.includes("the stream is not open")) {
+                this.context.exceptions.throw_operation_not_allowed_when_closed(
+                    "ADODB.Stream",
+                    "Cannot load while the stream is closed.",
+                    "The stream must be open in order for the file to be loaded. " +
+                        "Please call .open() on this stream to allow loading from " +
+                        "a file."
+                );
+            }
+
+            throw e;
+        }
     }
 
     cancel () {
 
+        try {
+            this.stream.cancel();
+        }
+        catch (e) {
+
+            if (e.message.includes("Cannot cancel when stream is closed")) {
+                this.context.exceptions.throw_operation_not_allowed_when_closed(
+                    "ADODB.Stream",
+                    "Cannot call Cancel while the stream is closed.",
+                    "The stream must be open in order for Cancel to be called. " +
+                        "Please ensure the stream is open before calling Cancel."
+                );
+            }
+        }
     }
 }
 

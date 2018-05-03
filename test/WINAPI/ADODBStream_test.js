@@ -1298,6 +1298,153 @@ describe("ADODBStream", () => {
                 ado.SaveToFile("C:\\whole-buffer-file.txt");
             });
         });
+
+        describe("#LoadFromFile", () => {
+
+            it("should support loading from a file in binary mode", (done) => {
+
+                let vfs = new VirtualFileSystem({ register: () => {} }),
+                    ctx = Object.assign({}, context, { vfs: vfs });
+
+                vfs.AddFile("C:\\test.bin", Buffer.from([0xFF, 0xFE, 0xFD, 0xFC]));
+
+                let ado = new ADODBStream(ctx);
+                ado.open();
+                ado.type = 1;
+
+                assert.equal(ado.size, 0);
+                assert.equal(ado.position, 0);
+
+                ado.LoadFromFile("C:\\test.bin");
+
+                assert.equal(ado.size, 4);
+                assert.equal(ado.position, 0);
+
+                done();
+            });
+
+            it("should throw if the file cannot be found", (done) => {
+
+                let vfs = new VirtualFileSystem({ register: () => {} }),
+                    ctx = Object.assign({}, context, {
+                        vfs: vfs,
+                        exceptions: {
+                            throw_file_could_not_be_opened: () => {
+                                throw new Error("file cannot be opened");
+                            }
+                        }
+                    });
+
+                let ado = new ADODBStream(ctx);
+                ado.open();
+                ado.type = 1;
+
+                assert.equal(ado.size, 0);
+                assert.equal(ado.position, 0);
+
+                assert.throws(() =>
+                              ado.LoadFromFile("C:\\test.bin"),
+                              "file cannot be opened");
+
+                assert.equal(ado.size, 0);
+                assert.equal(ado.position, 0);
+
+                done();
+            });
+
+            it("should throw if the file path is invalid", (done) => {
+
+                let vfs = new VirtualFileSystem({ register: () => {} }),
+                    ctx = Object.assign({}, context, {
+                        vfs: vfs,
+                        exceptions: {
+                            throw_file_could_not_be_opened: () => {
+                                throw new Error("invalid path");
+                            }
+                        }
+                    });
+
+                let ado = new ADODBStream(ctx);
+                ado.open();
+                ado.type = 1;
+
+                assert.equal(ado.size, 0);
+                assert.equal(ado.position, 0);
+
+                assert.throws(() => ado.LoadFromFile(","), "invalid path");
+
+                assert.equal(ado.size, 0);
+                assert.equal(ado.position, 0);
+
+                done();
+            });
+
+            it("should throw when trying to load while stream is closed", (done) => {
+
+                let vfs = new VirtualFileSystem({ register: () => {} }),
+                    ctx = Object.assign({}, context, {
+                        vfs: vfs,
+                        exceptions: {
+                            throw_operation_not_allowed_when_closed: () => {
+                                throw new Error("not allowed when closed");
+                            }
+                        }
+                    });
+
+                vfs.AddFile("C:\\test.bin", Buffer.from("abcd"));
+
+                let ado = new ADODBStream(ctx);
+
+                assert.throws(
+                    () => ado.LoadFromFile("C:\\test.bin"),
+                              "not allowed when closed");
+
+                done();
+            });
+
+            it("should overwrite the contents of the existing stream", (done) => {
+
+                let vfs = new VirtualFileSystem({ register: () => {} }),
+                    ctx = Object.assign({}, context, { vfs: vfs });
+
+                vfs.AddFile("C:\\test.txt", Buffer.from("abcd"));
+
+                let ado = new ADODBStream(ctx);
+                ado.open();
+                ado.type = TEXT_STREAM;
+
+                ado.WriteText("this is a test");
+
+                assert.equal(ado.size, 30);
+                assert.equal(ado.size, 30);
+
+                ado.LoadFromFile("C:\\test.txt");
+
+                assert.equal(ado.size, 6);
+                assert.equal(ado.position, 0);
+
+                done();
+            });
+        });
+
+        describe("#Cancel", () => {
+
+            it("should throw if the stream closed and cancel is called", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_operation_not_allowed_when_closed: () => {
+                            throw new Error("cancel not allowed when closed");
+                        }
+                    }
+                });
+
+                let ado = new ADODBStream(ctx);
+
+                assert.throws(() =>  ado.cancel(), "cancel not allowed when closed");
+                done();
+            });
+        });
     });
 
     describe("properties", () => {

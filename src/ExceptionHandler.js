@@ -204,6 +204,16 @@ class ExceptionHandler extends Component {
         );
     }
 
+    throw_file_could_not_be_opened (source, summary, details) {
+        this.throw(
+            "Error",
+            "File could not be opened.",
+            -2146825286,
+            "File could not be opened.",
+            source, summary, details
+        );
+    }
+
     throw_write_to_file_failed (source, summary, details) {
         this.throw(
             "Error",
