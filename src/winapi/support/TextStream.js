@@ -89,7 +89,9 @@ class TextStream extends Stream {
 
         this.linesep = opt;
     }
-
+    get separator () {
+        return this.linesep;
+    }
 
     getsep (type) {
 

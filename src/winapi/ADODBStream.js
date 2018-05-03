@@ -136,7 +136,7 @@ class JS_ADODBStream extends Component {
     }
 
     get lineseparator () {
-
+        return this.stream.separator;
     }
     set lineseparator (line_sep_opt) {
 

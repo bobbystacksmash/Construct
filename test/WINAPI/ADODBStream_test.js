@@ -1516,7 +1516,22 @@ describe("ADODBStream", () => {
 
                     done();
                 });
+            });
 
+            it("should support fetching the lineseparator value", (done) => {
+
+                const CR   = 13,
+                      CRLF = -1,
+                      LF   = 10;
+
+                let ado = new ADODBStream(context);
+
+                [CR, CRLF, LF].forEach((sep) => {
+                    assert.doesNotThrow(() => ado.LineSeparator = sep);
+                    assert.equal(ado.LineSeparator, sep);
+                });
+
+                done();
             });
         });
     });
