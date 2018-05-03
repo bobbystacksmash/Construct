@@ -11,7 +11,7 @@ const proxify   = require("../proxify2");
  * invoking its properties and methods, and it is always available
  * from any script file. The WScript object provides access to
  * information such as:
- * 
+ *
  *  > command-line arguments,
  *  > the name of the script file,
  *  > the host file name,
@@ -38,7 +38,7 @@ class JS_WScript extends Component {
 	this.ee = this.context.emitter;
     }
 
-    // 
+    //
     // PROPERTIES
     // ==========
 
@@ -64,7 +64,7 @@ class JS_WScript extends Component {
 	return full_name;
     }
 
-    
+
     // Interactive https://msdn.microsoft.com/en-us/library/b48sxsw0(v=vs.84).aspx
     get interactive () {
 	let interactive = this.context.ENVIRONMENT.Interactive;
@@ -80,15 +80,15 @@ class JS_WScript extends Component {
 	return name;
     }
 
-    
+
     // Path              https://msdn.microsoft.com/en-us/library/sw3e6ehs(v=vs.84).aspx
     get path () {
 	let path = this.context.ENVIRONMENT.Path;
 	this.ee.emit("@WScript::Path", path);
 	return path;
     }
-    
-    
+
+
     // ScriptFullName    https://msdn.microsoft.com/en-us/library/cc5ywscw(v=vs.84).aspx
     get scriptfullname () {
 	let script_full_name = this.context.ENVIRONMENT.ScriptFullName;
@@ -122,7 +122,7 @@ class JS_WScript extends Component {
 	this.ee.emit("@WScript::StdOut", "ERROR: NOT IMPLEMENTED!");
 	return null;
     }
-    
+
 
     // Version https://msdn.microsoft.com/en-us/library/kaw07b53(v=vs.84).aspx
     get version () {
@@ -175,6 +175,10 @@ class JS_WScript extends Component {
     disconnectobject () {
 	this.ee.emit("@WScript::DisconnectObject", "ERROR: NOT IMPLEMENTED!");
     }
+
+    sleep (ms) {
+        this.context.skew_time_ahead_by(ms);
+    }
 }
 
 
@@ -182,4 +186,3 @@ module.exports = function create(context) {
     let wscript = new JS_WScript(context);
     return proxify(context, wscript);
 };
-
