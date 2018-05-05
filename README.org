@@ -15,3 +15,4 @@ the RC is published.
 | ~Scripting.FilesystemObject~ needs to be implemented / plugin support. | TODO   |
 | Much like the VFS, we need a VREG (Virtual REGistry).                  | TODO   |
 | Should ship with some default plugins which handle net requests.       | TODO   |
+#+CAPTION: List of TODO items for alpha RC.
