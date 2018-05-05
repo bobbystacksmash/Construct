@@ -19,7 +19,7 @@ class HostContext {
 	    "Media Center PC 6.0; .NET4.0C)";
 
 	this.DEBUG = true;
-	
+
 	this.hooks = {
 	    network: []
 	};
@@ -75,7 +75,7 @@ class HostContext {
 	    Arguments: [],
 	    BuildVersion: 1,
 	    FullName: "C:\\Windows\\System32\\cscript.exe",
-	    Name: "FIXME_NAME_PROP",
+	    Name: "Windows Script Host",
 	    Path: "Echo CWD",
 	    ScriptFullName: "Full path of the currently running script",
 	    ScriptName: "the .js file",
@@ -83,7 +83,7 @@ class HostContext {
 	    StdIn: null,
 	    StdOut: null,
 	    Version: 2
-	    
+
 	    // TODO:
 	    // - processes
 	    // - env vars
@@ -101,7 +101,7 @@ class HostContext {
 	this.component_register = [];
 
 	this.components = {};
-	
+
 	//
 	// The emitter is how all events in Construct are passed
 	// around.
@@ -140,13 +140,13 @@ class HostContext {
 	this.components["Exceptions"] = new ExceptionHandler(this);
 	this.register("Exceptions", this.components["Exceptions"]);
 	this.exceptions = this.components["Exceptions"];
-	
+
 	// =============
 	// ActiveXObject
 	// =============
 	this.components["ActiveXObject"] = new JScript_ActiveXObject(this);
 	this.register("ActiveXObject", this.components["ActiveXObject"]);
-	
+
 	// =======
 	// D A T E
 	// =======
@@ -171,7 +171,7 @@ class HostContext {
     get_opt (name) {
 	// TODO: Add code here which lets runtime code ask questions
 	// of the Construct config.
-	
+
     }
 
     skew_time_ahead_by (ms) {
@@ -200,7 +200,7 @@ class HostContext {
 	if (! this.hooks.network.hasOwnProperty(method)) {
 	    this.hooks.network[method] = [];
 	}
-	
+
 	this.hooks.network[method].push({
 	    match: (a) => (addr instanceof RegExp) ? addr.test(a) : a.includes(addr),
 	    desc: description,
@@ -233,12 +233,12 @@ class HostContext {
 	};
 
 	method = method.toUpperCase();
-	
+
 	if (!this.hooks.network.hasOwnProperty(method)) {
 	    return default_nethook;
 	}
 
-	
+
 	let hook = this.hooks.network[method].find((hook) => hook.match(addr));
 
 	if (!hook) {

@@ -56,6 +56,14 @@ class JS_WScript extends Component {
 	return build_version;
     }
 
+    set buildversion (_) {
+        // READ ONLY PROPERTY
+        this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            "WScript",
+            "The .BuildVersion property cannot be set.",
+            "The .BuildVersion property cannot be set."
+        );
+    }
 
     // FullName https://msdn.microsoft.com/en-us/library/z00t383b(v=vs.84).aspx
     get fullname () {
@@ -64,12 +72,24 @@ class JS_WScript extends Component {
 	return full_name;
     }
 
+    set fullname (_) {
+        // READ ONLY PROPERTY
+        this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            "WScript",
+            "The .FullName property cannot be set.",
+            "The .FullName property cannot be set."
+        );
+    }
 
     // Interactive https://msdn.microsoft.com/en-us/library/b48sxsw0(v=vs.84).aspx
     get interactive () {
 	let interactive = this.context.ENVIRONMENT.Interactive;
 	this.ee.emit("@WScript::Interactive", interactive);
 	return interactive;
+    }
+
+    set interactive (_) {
+        this.ee.emit("@WScript::Interactive", arguments);
     }
 
 
@@ -80,12 +100,31 @@ class JS_WScript extends Component {
 	return name;
     }
 
+    set name (_) {
+        this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            "WScript",
+            "Cannot set .Name",
+            "The .Name property is read-only."
+        );
+    }
 
-    // Path              https://msdn.microsoft.com/en-us/library/sw3e6ehs(v=vs.84).aspx
+
+    // Path https://msdn.microsoft.com/en-us/library/sw3e6ehs(v=vs.84).aspx
+    //
+    // Returns the name of the directory containing the host
+    // executable (CScript.exe or WScript.exe).
     get path () {
 	let path = this.context.ENVIRONMENT.Path;
 	this.ee.emit("@WScript::Path", path);
 	return path;
+    }
+
+    set path (_) {
+        this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            "WScript",
+            "Cannot set .Path",
+            "The .Path property is read-only."
+        );
     }
 
 
@@ -96,6 +135,14 @@ class JS_WScript extends Component {
 	return script_full_name;
     }
 
+    set scriptfullname (_) {
+        this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            "WScript",
+            "Cannot set .ScriptFullName",
+            "The .ScriptFullName property is read-only."
+        );
+    }
+
 
     // ScriptName        https://msdn.microsoft.com/en-us/library/3faf1xkh(v=vs.84).aspx
     get scriptname () {
@@ -104,6 +151,13 @@ class JS_WScript extends Component {
 	return script_name;
     }
 
+    set scriptname (_) {
+        this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            "WScript",
+            "Cannot set .ScriptName",
+            "The .ScriptName property is read-only."
+        );
+    }
 
     // StdErr https://msdn.microsoft.com/en-us/library/hyez2k48(v=vs.84).aspx
     get stderr () {
