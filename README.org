@@ -1,10 +1,17 @@
 #+TITLE: Construct
 #+OPTIONS: toc:2
 
-* About
+* Alpha Release Checklist
 
-Here is where we describe Construct in detail.
+Construct is nearing an alpha release candidate.  This table tracks
+the existing high level TODO items which need to be completed before
+the RC is published.
 
-** Testing a subheading
-
-Subheading stuff goes here.
+| Task                                                                   | Status |
+|------------------------------------------------------------------------+--------|
+| Unify the event format for all {GET,SET} properties and methods.       | TODO   |
+| The documentation needs to be written.                                 | TODO   |
+| Need to add support for saving output results to the local filesystem. | TODO   |
+| ~Scripting.FilesystemObject~ needs to be implemented / plugin support. | TODO   |
+| Much like the VFS, we need a VREG (Virtual REGistry).                  | TODO   |
+| Should ship with some default plugins which handle net requests.       | TODO   |
