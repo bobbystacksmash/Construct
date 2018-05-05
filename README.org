@@ -9,6 +9,8 @@ the RC is published.
 
 | Task                                                                   | Status |
 |------------------------------------------------------------------------+--------|
+| ~WshShell~ needs lots of attention.                                    | TODO   |
+| Add reading list / references to README.                               | TODO   |
 | Unify the event format for all {GET,SET} properties and methods.       | TODO   |
 | The documentation needs to be written.                                 | TODO   |
 | Need to add support for saving output results to the local filesystem. | TODO   |

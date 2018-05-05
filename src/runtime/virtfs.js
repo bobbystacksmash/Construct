@@ -13,6 +13,13 @@ class VirtualFileSystem {
         this.volume["c:"] = new FolderObject(context, "c:", true);
     }
 
+    BuildPath (some_path, new_path_part) {
+        // I *really* wanted to just use path.win32.join(...) here,
+        //but it seems that Windows doesn't do any validation of the
+        //paths it creates, while the Node Pathlib does.
+        return [some_path, new_path_part].join("\\");
+    }
+
     VolumeExists (volume_label) {
 	return this.volume.hasOwnProperty(volume_label.toLowerCase());
     }
@@ -204,7 +211,6 @@ class VirtualFileSystem {
 
 	    // Copy files first...
 	    var file_copy_result = src_cwd.Files.every((f) => {
-		console.log(`Copying file from ${f.Path} to ${dst_cwd.Path}`);
 
 		// Does this file exist in dst?
 		let dst_existing_file = dst_cwd.Files.findIndex((x) => x.Name === f.Name);
@@ -243,8 +249,6 @@ class VirtualFileSystem {
 	    // Let's now loop through all sub folders, applying copies to them...
 	    let sf_copy_result = src_cwd.SubFolders.every((f) => {
 
-		console.log(`For-Eaching sf: ${f.Path}`);
-
 		// Does this subfolder exist in dst?
 		let dst_existing_subfolder =
 		    dst_cwd.SubFolders.find((x) => x.Name === f.Name);
@@ -256,9 +260,7 @@ class VirtualFileSystem {
 		}
 
 		if (!dst_existing_subfolder) {
-		    console.log(`Adding subfolder ${dst_cwd.Path}\\${f.Name}`);
 		    dst_existing_subfolder = self.AddFolder(`${dst_cwd.Path}\\${f.Name}`);
-		    console.log("++ ADDED", dst_existing_subfolder.Path);
 		}
 
 		return walk(f, dst_existing_subfolder);
@@ -282,9 +284,6 @@ class VirtualFileSystem {
 
 	let src_folder = this.GetFolder(src_folder_path),
 	    dest_folder = this.GetFolder(dest_folder_path);
-
-	console.log(`CopyFolderInToFolder, src:${src_folder.Name}`,
-		    `dst:${dest_folder.Name}.`);
 
 	if (!src_folder) {
 	    result.reason = `The source path (${src_folder_path}) does not exist.`;
@@ -325,13 +324,9 @@ class VirtualFileSystem {
 
 	(function walk () {
 
-	    console.log(`w: src:${cwd_src.Name}, dst:${cwd_dst.Name}`);
-
 	    // Do any files in src match any in dst?
 	    let src_dst_files_uniq = cwd_src.Files.every((src_file) => {
 		return cwd_dst.Files.every((dst_file) => {
-		    console.log(`Does ${dst_file.Name} ===`,
-				`${src_file.Name}`);
 		    return dst_file.Name === src_file.Name;
 		});
 	    });
@@ -354,9 +349,6 @@ class VirtualFileSystem {
 		// found to clash with an existing foldername, and the
 		// overwrite flag means we must not alter or replace it.
 		cont = false;
-		console.log("=== subfolder collision ===");
-		console.log(`'${cwd_dst.Name}' contains a subfolder with the name:`,
-			    `'${cwd_src.Name}'.`);
 		return false;
 	    }
 
