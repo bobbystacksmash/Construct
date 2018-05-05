@@ -177,12 +177,19 @@ class JS_WScript extends Component {
 	return null;
     }
 
-
     // Version https://msdn.microsoft.com/en-us/library/kaw07b53(v=vs.84).aspx
     get version () {
 	let version = this.context.ENVIRONMENT.Version;
 	this.ee.emit("@WScript.Version", version);
 	return version;
+    }
+
+    set version (_) {
+        this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            "WScript",
+            "Cannot set .Version property",
+            "The .Version property is read-only."
+        );
     }
 
 

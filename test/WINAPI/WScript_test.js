@@ -208,14 +208,54 @@ describe("WScript", () => {
         });
 
         describe(".StdErr", () => {
-
+            //
+            // TODO
+            // Not yet implemented.
+            //
         });
 
+        describe(".StdIn", () => {
+            //
+            // TODO
+            // Not yet implemented.
+            //
+        });
 
-        describe(".StdIn", () => {});
-        describe(".StdOut", () => {});
-        describe(".Version", () => {});
+        describe(".StdOut", () => {
+            //
+            // TODO
+            // Not yet implemented.
+            //
+        });
 
+        describe(".Version", () => {
+
+            it("should return the version", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    ENVIRONMENT: { Version: "5.8" }
+                });
+
+                let wsh = new WScript(ctx);
+
+                assert.equal(wsh.Version, "5.8");
+                done();
+            });
+
+            it("should throw if .Version is assigned to", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_wrong_argc_or_invalid_prop_assign: () => {
+                            throw new Error("version is read only");
+                        }
+                    }});
+
+                let wsh = new WScript(ctx);
+                assert.throws(() => wsh.Version = "yes", "version is read only");
+                done();
+            });
+        });
     });
 
     describe("Methods", () => {
