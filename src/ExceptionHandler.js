@@ -223,6 +223,16 @@ class ExceptionHandler extends Component {
             source, summary, details
         );
     }
+
+    throw_could_not_locate_automation_class (source, summary, details, class_name) {
+        this.throw(
+            "RangeError",
+            `Could not locate automation class named "${class_name}".`,
+            -2147352567,
+            `Could not locate automation class named "${class_name}".`,
+            source, summary, details
+        );
+    }
 }
 
 module.exports = ExceptionHandler;

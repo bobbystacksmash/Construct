@@ -1,5 +1,6 @@
-const Component = require("../Component");
-const proxify   = require("../proxify2");
+const Component       = require("../Component");
+const proxify         = require("../proxify2");
+const create_instance = require("../winapi/support/create_instance");
 
 /* MSDN: https://msdn.microsoft.com/en-us/library/at5ydy31(v=vs.84).aspx
  *
@@ -35,6 +36,7 @@ class JS_WScript extends Component {
 
     constructor (context) {
 	super(context, "WScript");
+        this.context = context;
 	this.ee = this.context.emitter;
     }
 
@@ -196,49 +198,62 @@ class JS_WScript extends Component {
     //
     // METHODS
     // =======
+    //
+    connectobject () {
+	this.ee.emit("@WScript::ConnectObject", "ERROR: NOT IMPLEMENTED!");
+    }
+
+    createobject (type) {
+
+        try {
+            let instance = create_instance(this.context, type);
+            return instance;
+        }
+        catch (e) {
+
+            if (e.message.includes("Unknown instance type")) {
+                this.context.exceptions.throw_could_not_locate_automation_class(
+                    "WScript",
+                    "CreateObject cannot create an object for the given type.",
+                    `Unable to create an object because type: "${type}" is unknown ` +
+                        "or not supported by the sandbox at this time.",
+                    type
+                );
+            }
+
+            throw e;
+        }
+    }
+
+    disconnectobject () {
+	this.ee.emit("@WScript::DisconnectObject", "ERROR: NOT IMPLEMENTED!");
+    }
+
     echo (...args) {
 	let msg = args.join(" ");
 	this.ee.emit("@WScript::Echo", { msg: msg }, arguments);
+
+        this.context.write_to_ouput_buf(msg);
 
 	if (this.context.output_behaviour === "repl") {
 	    console.log(" > ", ...args);
 	}
     }
 
-
     getobject () {
 	this.ee.emit("@WScript::GetObject", "ERROR: NOT IMPLEMENTED!");
     }
 
-
-    quit () {
-	this.ee.emit("@WScript::Quit", "ERROR: NOT IMPLEMENTED!");
-	// TODO
+    quit (exit_code) {
+	this.ee.emit("@WScript::Quit", exit_code);
+        this.context.shutdown(exit_code);
     }
 
-
     sleep (ms) {
+        let old_time = this.context.epoch;
 	this.context.skew_time_ahead_by(ms);
-	console.log("@WScript::Sleep", "ERROR: NOT IMPLEMENTED!", arguments);
-	this.ee.emit("@WScript::Sleep", "ERROR: NOT IMPLEMENTED!");
-    }
-
-    createobject () {
-	this.ee.emit("@WScript::CreateObject", "ERROR: NOT IMPLEMENTED!");
-    }
-
-
-    connectobject () {
-	this.ee.emit("@WScript::ConnectObject", "ERROR: NOT IMPLEMENTED!");
-    }
-
-
-    disconnectobject () {
-	this.ee.emit("@WScript::DisconnectObject", "ERROR: NOT IMPLEMENTED!");
-    }
-
-    sleep (ms) {
-        this.context.skew_time_ahead_by(ms);
+        let new_time = this.context.epoch;
+	this.ee.emit("@WScript::Sleep", { old_time: old_time, new_time: new_time });
     }
 }
 

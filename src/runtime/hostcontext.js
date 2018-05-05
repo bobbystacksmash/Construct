@@ -28,6 +28,8 @@ class HostContext {
 	// This is hacky. Need to fix it.
 	this.output_behaviour = "repl";
 
+        this.output_buf = [];
+
 	this.ENVIRONMENT = {
 	    UserLevel: "SYSTEM",
 	    Variables: {
@@ -251,6 +253,11 @@ class HostContext {
 
     get_component(name) {
 	return this.components[name];
+    }
+
+
+    write_to_output_buf (...args) {
+        this.output_buf.push(args.join(" "));
     }
 }
 

@@ -261,13 +261,129 @@ describe("WScript", () => {
     describe("Methods", () => {
 
         describe("#ConnectObject", () => {});
-        describe("#CreateObject", () => {});
-        describe("#DisconnectObject", () => {});
-        describe("#Echo", () => {});
-        describe("#GetObject", () => {});
-        describe("#Quit", () => {});
-        describe("#Sleep", () => {});
+        describe("#CreateObject", () => {
 
+            it("should support creating different object types", (done) => {
+
+                let wsh = new WScript(context);
+                let ado = wsh.CreateObject("ADODB.Stream");
+
+                ado.open();
+                ado.WriteText("ado stream!");
+                ado.position = 0;
+
+                assert.equal(ado.ReadText(), "ado stream!");
+
+                // We won't bother working with all of these types,
+                // but just check that none of them throws...
+                ["microsoft.xmlhttp", "wscript.shell", "shell.application", "adodb.stream"].forEach((x) => {
+                    assert.doesNotThrow(() => wsh.CreateObject(x));
+                });
+
+                done();
+            });
+
+            it("should throw when asked to create an instance that does not exist", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_could_not_locate_automation_class: (cls, summary, desc, type) => {
+
+                            assert.equal(type, "unknown.instance.type");
+                            throw new Error("instance not found");
+                        }
+                    }});
+
+                let wsh = new WScript(ctx);
+
+                assert.throws(() => wsh.CreateObject("unknown.instance.type"), "instance not found");
+                done();
+            });
+        });
+
+        describe("#DisconnectObject", () => {
+            //
+            // TODO
+            // Not yet implemented.
+            //
+        });
+
+        describe("#Echo", () => {
+
+            it("should write the args to the output buffer", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    write_to_ouput_buf: (msg) => {
+                        assert.deepEqual(msg, "test foo bar baz");
+                        done();
+                    }
+                });
+
+                let wsh = new WScript(ctx);
+                wsh.Echo("test", "foo", "bar", "baz");
+            });
+
+            it("should write CRLF to the output buf when passed no args", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    write_to_ouput_buf: (msg) => {
+                        assert.deepEqual(msg, "");
+                        done();
+                    }
+                });
+
+                let wsh = new WScript(ctx);
+                wsh.Echo();
+            });
+        });
+
+        describe("#GetObject", () => {
+            //
+            // TODO
+            // Not yet implemented.
+            //
+        });
+
+        describe("#Quit", () => {
+
+            it("should call the appropriate script-shutdown routine", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    shutdown: () => done()
+                });
+
+                (new WScript(ctx)).Quit(12);
+            });
+
+            it("should pass a shutdown value", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    shutdown: (x) => {
+                        assert.equal(x, 12);
+                        done();
+                    }
+                });
+
+                (new WScript(ctx)).Quit(12);
+            });
+        });
+
+        describe("#Sleep", () => {
+
+            it("should pass ms on to the skew time function", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    skew_time_ahead_by: (ms) => {
+                        assert.equal(ms, 1200);
+                        done();
+                    }
+                });
+
+                let wsh = new WScript(ctx);
+                wsh.Sleep(1200);
+            });
+
+        });
     });
 
 });
