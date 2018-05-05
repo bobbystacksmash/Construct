@@ -14,7 +14,7 @@ let mock_context = {
 
 describe("VirtualFileSystem Module", function () {
 
-    xdescribe("Registration", () => {
+    /*xdescribe("Registration", () => {
 
 	it("Should register itself.", (done) => {
 	    new VirtualFileSystem({
@@ -24,7 +24,7 @@ describe("VirtualFileSystem Module", function () {
 		}
 	    });
 	});
-    });
+    });*/
 
     describe("Volumes", () => {
 
@@ -367,4 +367,41 @@ describe("VirtualFileSystem Module", function () {
 	});
     });
 
+    describe("Wildcards", () => {
+
+        describe("#GetFileList", () => {
+
+            it("should return a single file when no wildcard is used", (done) => {
+
+                let vfs = new VirtualFileSystem({ register: () => {} });
+                vfs.AddFile("C:\\temp\\test.txt");
+                assert.deepEqual(vfs.GetFileList("C:\\temp\\test.txt"), ["C:\\temp\\test.txt"]);
+                done();
+            });
+
+            it("should return a normalized path", (done) => {
+                let vfs = new VirtualFileSystem({ register: () => {} });
+                vfs.AddFile("C:\\foo\\bar\\baz.txt", "hello");
+                assert.deepEqual(vfs.GetFileList("C:\\foo\\bar\\..\\bar\\baz.txt"), ["C:\\foo\\bar\\baz.txt"]);
+                done();
+            });
+
+            it("should throw if the path contains a wildcard", (done) => {
+
+                let vfs = new VirtualFileSystem({ register: () => {} });
+                assert.throws(() => vfs.GetFileList("C:\\foo\\*\\bar\\baz.txt"), "Path contains invalid characters.");
+                done();
+            });
+
+            it("should return [] if the filepath cannot be found", (done) => {
+
+                let vfs = new VirtualFileSystem({ register: () => {} });
+                vfs.AddFile("C:\\Users\\Testing\\hello.txt");
+
+                assert.deepEqual(vfs.GetFileList("C:\\Users\\DoesNotExist\\hello.txt"), []);
+                done();
+            });
+
+        });
+    });
 });

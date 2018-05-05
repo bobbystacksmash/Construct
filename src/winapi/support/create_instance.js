@@ -2,6 +2,7 @@ const JScript_XMLHttpRequestBase = require("../XMLHttpRequestBase");
 const JScript_WshShell           = require("../WshShell");
 const JScript_ShellApplication   = require("../ShellApplication");
 const JScript_ADODBStream        = require("../ADODBStream");
+const JScript_FileSystemObject   = require("../ADODBStream");
 
 function create_instance (context, type) {
 
@@ -38,6 +39,10 @@ function create_instance (context, type) {
     case "adodb.stream":
 	let ado = new JScript_ADODBStream(context);
 	return ado;
+
+    case "scripting.filesystemobject":
+        let fso = new JScript_FileSystemObject(context);
+        return fso;
 
     default:
         throw new Error("Unknown instance type: " + type);

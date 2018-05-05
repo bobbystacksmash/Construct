@@ -9,7 +9,7 @@ the RC is published.
 
 | Task                                                                   | Status |
 |------------------------------------------------------------------------+--------|
-| ~WshShell~ needs lots of attention.                                    | TODO   |
+| ~WshShell~ needs lots of attention (ENV VARS live here).               | TODO   |
 | Add reading list / references to README.                               | TODO   |
 | Unify the event format for all {GET,SET} properties and methods.       | TODO   |
 | The documentation needs to be written.                                 | TODO   |
@@ -18,3 +18,11 @@ the RC is published.
 | Much like the VFS, we need a VREG (Virtual REGistry).                  | TODO   |
 | Should ship with some default plugins which handle net requests.       | TODO   |
 #+CAPTION: List of TODO items for alpha RC.
+
+
+* References
+
+ - Lomax, P., 2003. _VBScript in a Nutshell_. O'Reilly Media, Incorporated.
+ - Nebbett, G., 2000. _Windows NT/2000 Native API Reference_. Sams.
+ - Yosifovich, P., 2017. _Windows Internals, Part 1: System architecture, processes, threads, memory management, and more (7th Edition)_. Microsoft Press.
+ - E., M., 2016. _Troubleshooting with the Windows Sysinternals Tools (2nd Edition)_. Microsoft Press.

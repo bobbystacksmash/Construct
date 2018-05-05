@@ -13,6 +13,60 @@ class VirtualFileSystem {
         this.volume["c:"] = new FolderObject(context, "c:", true);
     }
 
+    // References:
+    //
+    //  - https://blogs.msdn.microsoft.com/jeremykuhne/2017/06/04/wildcards-in-windows/
+    //  - https://msdn.microsoft.com/en-us/library/windows/desktop/aa364419(v=vs.85).aspx
+    //  - https://ss64.com/nt/syntax-wildcards.html
+    //  - https://superuser.com/questions/475874/how-does-the-windows-rename-command-interpret-wildcards/475875#475875
+    //  - https://blogs.msdn.microsoft.com/oldnewthing/20071217-00/?p=24143/
+    //
+    // Supports the fetching of files which match the given
+    // `filepath'.  Supports Windows wildcards for filenames only.
+    //
+    GetFileList (filepath) {
+
+        let normpath = pathlib.normalize(filepath);
+
+        // First, we can just wing it and see if the file exists...
+        if (this.GetFile(normpath)) {
+            return [normpath];
+        }
+
+        // No dice - maybe the path is invalid?
+        // If this throws, we won't handle it - the caller can.
+        AbsFileSystemObject.ThrowIfInvalidPath(normpath);
+
+        // Still here? We need to do some work...
+        let parsed_path = AbsFileSystemObject.Parse(normpath);
+
+        if (this.GetFolder(parsed_path.dir) === false) {
+            // The folder doesn't exist, so we can't match any files.
+            return [];
+        }
+
+        // If we reach here, then we know that:
+        //
+        //  - the path is a valid path
+        //  - the path exists
+        //  - the path could be a wildcard path
+        //
+        // Let's convert Windows wildcards in to a regexp and build a
+        // filelist using that.
+        //
+        console.log(parsed_path);
+
+
+        // We throw [this] if the path contains a wildcard:
+        //   name TypeError
+        //   message Invalid procedure call or argument
+        //   number -2146828283
+        //   description Invalid procedure call or argument
+        //
+
+        return [];
+    }
+
     BuildPath (some_path, new_path_part) {
         // I *really* wanted to just use path.win32.join(...) here,
         //but it seems that Windows doesn't do any validation of the
