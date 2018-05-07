@@ -11,6 +11,7 @@ the RC is published.
 |------------------------------------------------------------------------+--------|
 | Rename, move, and update code surrounding ~AbsFileSystemObject.js~.    | TODO   |
 | ~WshShell~ needs lots of attention (ENV VARS live here).               | TODO   |
+| Add a built-in ~man~ or ~help~ command for usage within Construct.     | TODO   |
 | Add reading list / references to README.                               | TODO   |
 | Unify the event format for all {GET,SET} properties and methods.       | TODO   |
 | The README.org needs to be written.                                    | TODO   |
