@@ -9,6 +9,7 @@ the RC is published.
 
 | Task                                                                   | Status |
 |------------------------------------------------------------------------+--------|
+| Rename, move, and update code surrounding ~AbsFileSystemObject.js~.    | TODO   |
 | ~WshShell~ needs lots of attention (ENV VARS live here).               | TODO   |
 | Add reading list / references to README.                               | TODO   |
 | Unify the event format for all {GET,SET} properties and methods.       | TODO   |
@@ -21,7 +22,6 @@ the RC is published.
 | Files in the ~winapi~ and ~runtime~ folders are scattered. Organise.   | TODO   |
 | Separate ~load~ from ~run~ front-end commands.                         | TODO   |
 | Add a command to GET/SET/SAVE/LOAD the Construct config (simple JSON). | TODO   |
-|                                                                        |        |
 #+CAPTION: List of TODO items for alpha RC.
 
 
