@@ -13,6 +13,7 @@ the RC is published.
 | ~WshShell~ needs lots of attention (ENV VARS live here).               | TODO   |
 | Add a built-in ~man~ or ~help~ command for usage within Construct.     | TODO   |
 | Add reading list / references to README.                               | TODO   |
+| Trap exceptions up to REPL and present a pre-written issue desc + link | TODO   |
 | Unify the event format for all {GET,SET} properties and methods.       | TODO   |
 | The README.org needs to be written.                                    | TODO   |
 | Need to write some usage wiki articles.                                | TODO   |

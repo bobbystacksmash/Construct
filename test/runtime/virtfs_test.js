@@ -26,7 +26,7 @@ describe("VirtualFileSystem Module", function () {
 	});
     });*/
 
-    describe("Volumes", () => {
+    /*describe("Volumes", () => {
 
 	it("Should be created with a volume: 'C:'.", (done) => {
 
@@ -299,13 +299,7 @@ describe("VirtualFileSystem Module", function () {
 		    { overwrite: true }
 		);
 
-		/*
-		 * We expect that `dst' will contain the following files:
-		 *
-		 *  - alpha.txt(src)
-		 *  - bravo.txt(dst)
-		 *  - charlie.txt(src)
-		 */
+
 		assert.equal(
 		    vfs.GetFile("C:\\stage\\dst\\alpha.txt").__contents,
 		    "src:alpha contents"
@@ -365,11 +359,40 @@ describe("VirtualFileSystem Module", function () {
 		done();
 	    });
 	});
-    });
+    });*/
 
     describe("Wildcards", () => {
 
-        describe("#GetFileList", () => {
+        describe("#NormaliseFilename", () => {
+
+            it("should change all '?' to '>'", (done) => {
+
+                let vfs   = new VirtualFileSystem({ register: () => {} }),
+                    tests = [
+                        { path: "f??.txt", exp: "f>>.txt" },
+                        { path: "foo.txt", exp: "foo.txt" },
+                        { path: "???.txt", exp: ">>>.txt" }
+                    ];
+
+                tests.forEach((t) => assert.equal(vfs._NormaliseFilename(t.path), t.exp));
+                done();
+            });
+
+            it(`should change all '.*' or '.?' in to '"'`, (done) => {
+
+                let vfs   = new VirtualFileSystem({ register: () => {} }),
+                    tests = [
+                        { path: "f.*.txt", exp: `f".txt` },
+                    ];
+
+                tests.forEach((t) => assert.equal(vfs._NormaliseFilename(t.path), t.exp));
+                done();
+
+            });
+
+        });
+
+        xdescribe("#GetFileList", () => {
 
             it("should return a single file when no wildcard is used", (done) => {
 

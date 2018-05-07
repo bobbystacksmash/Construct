@@ -9,12 +9,50 @@ class VirtualFileSystem {
     constructor(context) {
 	this.context = context;
 	this.volume = {};
-
         this.volume["c:"] = new FolderObject(context, "c:", true);
     }
 
+    //
+    // Based on the information extracted from this article:
+    //
+    //   - https://blogs.msdn.microsoft.com/jeremykuhne/2017/06/04/wildcards-in-windows/
+    //
+    // this method will attempt to perform replacements of wildcard
+    // characters in the following order:
+    //
+    //   1.  All '.' followed by either '?' or '*' are changed to '"'.
+    //   2.  All '?' are changed to '>'.
+    //   3.  A path ending in '*' that has a period
+
+    _NormaliseFilename (filename) {
+
+        // As documented below, as part of normalisation, Windows
+        // removes paths which *end* in a period.  In order for our
+        // wildcard normaliser to copy this behaviour, we need to
+        // track whether or not our path ended with a period, and
+        // remove it if it does.
+        //
+        //  - https://blogs.msdn.microsoft.com/jeremykuhne/2016/04/21/path-normalization/
+        //    (See section "Trimming Characters")
+        //
+        let filename_ends_with_period = /\.$/.test(filename);
+
+        let normalised_filename = filename
+                .replace(/\.$/,      '')
+                .replace(/\.[?*]/g, '"')
+                .replace(/\?/g,     ">");
+
+        if (filename_ends_with_period && /\*$/.test(normalised_filename)) {
+            normalised_filename = normalised_filename.replace(/\*$/, "<");
+        }
+
+        return normalised_filename;
+    }
+
+
     // References:
     //
+    //  - https://www.dostips.com/forum/viewtopic.php?f=3&t=6207
     //  - https://blogs.msdn.microsoft.com/jeremykuhne/2017/06/04/wildcards-in-windows/
     //  - https://msdn.microsoft.com/en-us/library/windows/desktop/aa364419(v=vs.85).aspx
     //  - https://ss64.com/nt/syntax-wildcards.html
@@ -24,7 +62,14 @@ class VirtualFileSystem {
     // Supports the fetching of files which match the given
     // `filepath'.  Supports Windows wildcards for filenames only.
     //
+    _FilenameMatches () {
+
+    }
+
     GetFileList (filepath) {
+
+        this.NormaliseFilename(filepath);
+
 
         let normpath = pathlib.normalize(filepath);
 
