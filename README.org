@@ -12,17 +12,23 @@ the RC is published.
 | ~WshShell~ needs lots of attention (ENV VARS live here).               | TODO   |
 | Add reading list / references to README.                               | TODO   |
 | Unify the event format for all {GET,SET} properties and methods.       | TODO   |
-| The documentation needs to be written.                                 | TODO   |
+| The README.org needs to be written.                                    | TODO   |
+| Need to write some usage wiki articles.                                | TODO   |
 | Need to add support for saving output results to the local filesystem. | TODO   |
 | ~Scripting.FilesystemObject~ needs to be implemented / plugin support. | TODO   |
 | Much like the VFS, we need a VREG (Virtual REGistry).                  | TODO   |
 | Should ship with some default plugins which handle net requests.       | TODO   |
+| Files in the ~winapi~ and ~runtime~ folders are scattered. Organise.   | TODO   |
+| Separate ~load~ from ~run~ front-end commands.                         | TODO   |
+| Add a command to GET/SET/SAVE/LOAD the Construct config (simple JSON). | TODO   |
+|                                                                        |        |
 #+CAPTION: List of TODO items for alpha RC.
 
 
 * References
-
+** Books
  - Lomax, P., 2003. _VBScript in a Nutshell_. O'Reilly Media, Incorporated.
  - Nebbett, G., 2000. _Windows NT/2000 Native API Reference_. Sams.
  - Yosifovich, P., 2017. _Windows Internals, Part 1: System architecture, processes, threads, memory management, and more (7th Edition)_. Microsoft Press.
  - E., M., 2016. _Troubleshooting with the Windows Sysinternals Tools (2nd Edition)_. Microsoft Press.
+** Websites
