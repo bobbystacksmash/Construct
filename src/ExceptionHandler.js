@@ -57,7 +57,7 @@ class ExceptionHandler extends Component {
         this._throw(
             "Error",
             "Path not found",
-            -0, // TODO
+            -2146828112,
             "Path not found",
             source,
             summary,
@@ -230,6 +230,16 @@ class ExceptionHandler extends Component {
             `Could not locate automation class named "${class_name}".`,
             -2147352567,
             `Could not locate automation class named "${class_name}".`,
+            source, summary, details
+        );
+    }
+
+    throw_file_already_exists (source, summary, details) {
+        this.throw(
+            "Error",
+            "File already exists",
+            -2146828230,
+            "File already exists",
             source, summary, details
         );
     }

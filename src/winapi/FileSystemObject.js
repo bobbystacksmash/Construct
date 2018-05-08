@@ -40,17 +40,44 @@ class FileSystemObject extends Component {
 
     // Copies one or more files from one location to another.
     CopyFile () {
-
+        // TODO: Blocked on wildcard implementation.
     }
 
     // Recursively copies a folder from one location to another.
     CopyFolder () {
-
+        // TODO: Blocked on wildcard implementation.
     }
 
-    // Creates a folder.
-    CreateFolder () {
+    // Creates a single new folder in the `path' specified and returns
+    // its Folder object.
+    CreateFolder (path) {
 
+        // Does this path already exist?
+        try {
+            if (this.vfs.GetFolder(path)) {
+                this.context.exceptions.throw_file_already_exists(
+                    "Scripting.FileSystemObject",
+                    "snake",
+                    "plane"
+                );
+            }
+
+        }
+        catch (e) {
+
+            if (e.message.includes("Unknown volume")) {
+                this.context.exceptions.throw_path_not_found(
+                    "Scripting.FileSystemObject",
+                    "Volume could not be found.",
+                    "CreateFolder was called with a volume in a path which does " +
+                        "not exist."
+                );
+            }
+
+            throw e;
+        }
+
+        return this.vfs.AddFolder(path);
     }
 
     // Creates a specified file name and returns a TextStream object
@@ -82,8 +109,8 @@ class FileSystemObject extends Component {
 
     // Returns true if a specified folder exists; false if it does
     // not.
-    FolderExists () {
-
+    FolderExists (pathspec) {
+        return (this.vfs.GetFolder(pathspec)) ? true : false;
     }
 
     // Returns a complete and unambiguous path from a provided path
@@ -130,7 +157,7 @@ class FileSystemObject extends Component {
 
     // Returns a Folder object corresponding to the folder in a
     // specified path.
-    GetFolder () {
+    GetFolder (path) {
 
     }
 

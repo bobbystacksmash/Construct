@@ -33,4 +33,7 @@ the RC is published.
  - Nebbett, G., 2000. _Windows NT/2000 Native API Reference_. Sams.
  - Yosifovich, P., 2017. _Windows Internals, Part 1: System architecture, processes, threads, memory management, and more (7th Edition)_. Microsoft Press.
  - E., M., 2016. _Troubleshooting with the Windows Sysinternals Tools (2nd Edition)_. Microsoft Press.
+ - Soulami, T., 2012. _Inside Windows Debugging: A Practical Guide to Debugging and Tracing Strategies in Windows_. Microsoft Press.
+ - Microsoft Corp., 2002. _Microsoft Windows 2000 scripting guide_. Microsoft Press, 2003.
+
 ** Websites

@@ -132,7 +132,7 @@ class VirtualFileSystem {
 	let parsed_path = AbsFileSystemObject.Parse(path);
 
 	if (!this.VolumeExists(parsed_path.volume)) {
-	    return false;
+            throw new Error("Unknown volume");
 	}
 
 	var cwd = this.GetVolume(parsed_path.volume),
@@ -210,8 +210,7 @@ class VirtualFileSystem {
 	let parsed_path = AbsFileSystemObject.Parse(path);
 
 	if (!this.VolumeExists(parsed_path.volume)) {
-	    console.log(`!-- UNKNOWN VOLUME "${parsed_path.volume}" --!`);
-	    return false;
+            throw new Error("Unknown volume");
 	}
 
 	var cwd  = this.GetVolume(parsed_path.volume),
