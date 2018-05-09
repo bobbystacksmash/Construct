@@ -74,6 +74,15 @@ class FileSystemObject extends Component {
                 );
             }
 
+            if (e.message.includes("Path contains invalid characters.")) {
+                this.context.exceptions.throw_bad_filename_or_number(
+                    "Scripting.FileSystemObject",
+                    "Cannot create folder -- path is invalid.",
+                    "Unable to create the folder requested because some part of the " +
+                        "path string is invalid."
+                );
+            }
+
             throw e;
         }
 

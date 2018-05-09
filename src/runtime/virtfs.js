@@ -131,6 +131,8 @@ class VirtualFileSystem {
 
 	let parsed_path = AbsFileSystemObject.Parse(path);
 
+        AbsFileSystemObject.ThrowIfInvalidPath(parsed_path.base);
+
 	if (!this.VolumeExists(parsed_path.volume)) {
             throw new Error("Unknown volume");
 	}

@@ -243,6 +243,16 @@ class ExceptionHandler extends Component {
             source, summary, details
         );
     }
+
+    throw_bad_filename_or_number (source, summary, details) {
+        this.throw(
+            "Error",
+            "Bad file name or number",
+            -2146828236,
+            "Bad file name or number",
+            source, summary, details
+        );
+    }
 }
 
 module.exports = ExceptionHandler;
