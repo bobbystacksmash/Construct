@@ -1,6 +1,34 @@
 
-const TextStream = require("./TextStream");
+const SupportTextStream = require("./support/TextStream");
 
+//
+// Abstract Input/Output Stream
+// ============================
+//
+// Unfortunately, there are two TextStreams within this project.
+// There's the support TextStream, and the WINAPI TextStream.  The
+// support version is intended to support the ADODB Stream's
+// text-mode, while the WINAPI TextStream is the WINAPI TextStream
+// which represents either a file or an IO stream.
+//
+// The purpose of this AbstractIOStream is to focus entirely upon the
+// specifics of stream-to-file operations, suh as:
+//
+//   - closing a stream
+//   - skipping lines
+//   - writing to a stream
+//   - etc.
+//
+// However, the AbstractIOStream does NOT attempt to match any of
+// Window's expected behaviour (like detailed exception messages), nor
+// does it support any kind of eventing.  Instead, all of these
+// details are handled upstream by the WINAPI TextStream.
+//
+// Given that the support TextStream does provide much of the
+// implementation detail we require for this class (such as file
+// save/loading, and writing to a stream), the AbstractIOStream will
+// make *heavy* use of this support class.
+//
 class AbstractIOStream {
 
     constructor (context) {

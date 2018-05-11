@@ -1,4 +1,4 @@
-// https://msdn.microsoft.com/en-us/library/2z9ffy99(v=vs.84).aspx
+// https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/windows-scripting/z9ty6h50(v=vs.84)
 
 const Component = require("../Component");
 const proxify   = require("../proxify2");
@@ -91,7 +91,8 @@ class FileSystemObject extends Component {
 
     // Creates a specified file name and returns a TextStream object
     // that can be used to read from or write to the file.
-    CreateTextFile () {
+    CreateTextFile (filename, overwrite, unicode) {
+
 
     }
 

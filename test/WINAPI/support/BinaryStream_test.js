@@ -1,7 +1,7 @@
 const assert = require("chai").assert;
-const BinaryStream = require("../../src/winapi/support/BinaryStream");
-const TextStream = require("../../src/winapi/support/TextStream");
-const VirtualFileSystem = require("../../src/runtime/virtfs");
+const BinaryStream = require("../../../src/winapi/support/BinaryStream");
+const TextStream = require("../../../src/winapi/support/TextStream");
+const VirtualFileSystem = require("../../../src/runtime/virtfs");
 
 describe("BinaryStream", () => {
 
