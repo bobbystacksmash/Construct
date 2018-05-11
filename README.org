@@ -24,6 +24,7 @@ the RC is published.
 | Files in the ~winapi~ and ~runtime~ folders are scattered. Organise.   | TODO   |
 | Separate ~load~ from ~run~ front-end commands.                         | TODO   |
 | Add a command to GET/SET/SAVE/LOAD the Construct config (simple JSON). | TODO   |
+| Separate CLI opts from Construct CORE so they're not tightly coupled.  | TODO   |
 #+CAPTION: List of TODO items for alpha RC.
 
 
