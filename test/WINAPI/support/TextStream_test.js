@@ -1297,4 +1297,43 @@ describe("TextStream", () => {
             done();
         });
     });
+
+    describe("#pos_lookahead_matches", () => {
+
+        it("should return True if lookahead matches", (done) => {
+
+            let ts = new TextStream(context);
+            ts.open();
+            ts.charset = "ASCII";
+            ts.put("Hello, World!");
+            ts.position = 0;
+
+            assert.isTrue(ts.pos_lookahead_matches(Buffer.from("Hello")));
+
+            done();
+        });
+
+        it("should return False is incoming buf is empty", (done) => {
+
+            let ts = new TextStream(context);
+            ts.open();
+            ts.charset = "ASCII";
+            ts.put("Hello, World!");
+            ts.position = 0;
+
+            assert.isFalse(ts.pos_lookahead_matches(Buffer.alloc(0)));
+            done();
+        });
+
+        it("should return False if pos is already at the end of the stream", (done) => {
+
+            let ts = new TextStream(context);
+            ts.open();
+            ts.charset = "ASCII";
+            ts.put("Hello, World!");
+
+            assert.isFalse(ts.pos_lookahead_matches(Buffer.from("hello")));
+            done();
+        });
+    });
 });

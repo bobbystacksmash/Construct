@@ -364,6 +364,19 @@ class TextStream extends Stream {
 
         return bs;
     }
+
+    // Allows the looking ahead from the current pos to see if the
+    // following buffer bytes matches that passed as an argument.
+    // Does not alter the position, or alter the object's internal
+    // state in any way.  Will return True if the next bytes exactly
+    // match `buf', or False otherwise.
+    pos_lookahead_matches (buf) {
+
+        if (buf.byteLength === 0) return false;
+
+        let existing_buf = this.buffer.slice(this.pos, buf.byteLength);
+        return buf.equals(existing_buf);
+    }
 }
 
 module.exports = TextStream;
