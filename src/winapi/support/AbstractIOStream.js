@@ -1,5 +1,4 @@
-
-const SupportTextStream = require("./support/TextStream");
+const SupportTextStream = require("./TextStream");
 
 //
 // Abstract Input/Output Stream
@@ -31,8 +30,23 @@ const SupportTextStream = require("./support/TextStream");
 //
 class AbstractIOStream {
 
-    constructor (context) {
-        this.stream = new TextStream(context);
+    constructor (context, filespec, can_read, can_write, encoding) {
+        this.stream = new SupportTextStream(context);
+
+        this.backed_by = filespec;
+        this.can_read  = can_read;
+        this.can_write = can_write;
+        this.encoding  = encoding;
+
+        this.stream = new SupportTextStream(context);
+        this.stream.charset = encoding;
+        this.stream.open();
+
+        // Let's load the contents of `filepath' in to our stream:
+        //
+        // TODO: Look at 'filespec' and add in Std{In,Out,Err} stuff here...
+        //
+        this.stream.load_from_file(filespec);
     }
 
     //
@@ -41,10 +55,13 @@ class AbstractIOStream {
 
     // Returns True if the end-of-a-line marker has been reached, or
     // False if not.
-    get atendofline () {}
+    get AtEndOfLine () {
+        let stream_eol_sep = this.stream.getsep();
+        return this.stream.pos_lookahead_matches(stream_eol_sep);
+    }
 
     // Read-Only - this throws.
-    set atendofline (_) {}
+    set AtEndOfLine (_) {}
 
     // Returns True if the end of a stream has been reached, or False
     // if not.
@@ -76,7 +93,9 @@ class AbstractIOStream {
 
     // Reads a specified number of characters from a TextStream file
     // and returns the resulting string.
-    read () {}
+    Read (n_chars) {
+        return this.stream.fetch_n_chars(n_chars);
+    }
 
     // Reads an entire TextStream file and returns the resulting
     // string.
@@ -110,3 +129,5 @@ class AbstractIOStream {
     // =========
     SerialiseToStream () {}
 }
+
+module.exports = AbstractIOStream;

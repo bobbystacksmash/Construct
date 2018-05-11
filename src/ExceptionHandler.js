@@ -52,6 +52,14 @@ class ExceptionHandler extends Component {
         throw err;
     }
 
+    throw_file_not_found (source, summary, details) {
+        this._throw(
+            "Error",
+            "File not found",
+            -2146828235,
+            "File not found"
+        );
+    }
 
     throw_path_not_found (source, summary, details) {
         this._throw(
@@ -253,6 +261,17 @@ class ExceptionHandler extends Component {
             source, summary, details
         );
     }
+
+    throw_input_past_end_of_file (source, summary, details) {
+        this.throw(
+            "Error",
+            "Input past end of file",
+            -2146828226,
+            "Input past end of file",
+            source, summary, details
+        );
+    }
+
 }
 
 module.exports = ExceptionHandler;

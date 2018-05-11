@@ -374,7 +374,7 @@ class TextStream extends Stream {
 
         if (buf.byteLength === 0) return false;
 
-        let existing_buf = this.buffer.slice(this.pos, buf.byteLength);
+        let existing_buf = this.buffer.slice(this.pos, this.pos + buf.byteLength);
         return buf.equals(existing_buf);
     }
 }
