@@ -362,6 +362,10 @@ class Stream {
         return file.__contents;
     }
 
+    is_pos_EOS () {
+        return this.pos >= this.buffer.byteLength;
+    }
+
 }
 
 module.exports = Stream;

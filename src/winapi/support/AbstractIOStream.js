@@ -60,15 +60,11 @@ class AbstractIOStream {
         return this.stream.pos_lookahead_matches(stream_eol_sep);
     }
 
-    // Read-Only - this throws.
-    set AtEndOfLine (_) {}
-
     // Returns True if the end of a stream has been reached, or False
     // if not.
-    get atendofstream ( ) {}
-
-    // Read-Only - this throws.
-    set atendofstream (_) {}
+    get AtEndOfStream () {
+        return this.stream.is_pos_EOS();
+    }
 
     // Returns the current column number of the current character
     // position within the stream.
