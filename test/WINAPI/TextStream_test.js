@@ -211,8 +211,51 @@ describe("TextStream", () => {
 
     describe("Methods", () => {
 
-        describe("#Close", () => {});
+        describe("#Close", () => {
+
+            it("should allow #Close to be called multiple times without throwing", (done) => {
+
+                context.vfs.AddFile("C:\\foo.txt", "aaaa");
+                let ts = new TextStream(context, "C:\\foo.txt");
+
+                assert.doesNotThrow(() => ts.close());
+                assert.doesNotThrow(() => ts.close());
+                assert.doesNotThrow(() => ts.close());
+
+                done();
+            });
+
+            it("should throw if any params are passed to #Close()", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_wrong_argc_or_invalid_prop_assign: () => {
+                            throw new Error("cannot pass params to close");
+                        }
+                    }});
+
+                let ts = new TextStream(ctx, "C:\\foo.txt");
+                assert.throws(() => ts.Close(true), "cannot pass params to close");
+
+                done();
+            });
+
+            xit("should flush the stream contents to the file when #Close is called", (done) => {
+
+                context.vfs.AddFile("C:\\foo.txt", "aaaa");
+                let ts = new TextStream(context, "C:\\foo.txt");
+
+            });
+
+            // TODO:
+            //
+            //  - what if an arg is passed to #Close?
+            //  - should write the stream contents to the file
+        });
+
         describe("#Read", () => {
+
+            // TODO: add read/write only tests
 
             xit("should return the scalar-num chars requested to be read", (done) => {
 
@@ -230,13 +273,27 @@ describe("TextStream", () => {
             // TODO: add tests her for can_read, can_write modes.
 
         });
-        describe("#ReadAll", () => {});
-        describe("#ReadLine", () => {});
-        describe("#Skip", () => {});
-        describe("#SkipLine", () => {});
-        describe("#Write", () => {});
-        describe("#WriteBlankLines", () => {});
-        describe("#WriteLine", () => {});
 
+        describe("#ReadAll", () => {
+            // TODO: add read/write only tests
+        });
+        describe("#ReadLine", () => {
+            // TODO: add read/write only tests
+        });
+        describe("#Skip", () => {
+            // TODO: add read/write only tests
+        });
+        describe("#SkipLine", () => {
+            // TODO: add read/write only tests
+        });
+        describe("#Write", () => {
+            // TODO: add read/write only tests
+        });
+        describe("#WriteBlankLines", () => {
+            // TODO: add read/write only tests
+        });
+        describe("#WriteLine", () => {
+            // TODO: add read/write only tests
+        });
     });
 });

@@ -46,6 +46,11 @@ class AbstractIOStream {
         //
         // TODO: Look at 'filespec' and add in Std{In,Out,Err} stuff here...
         //
+
+        if (context.vfs.GetFile(filespec) === false) {
+            context.vfs.AddFile(filespec);
+        }
+
         this.stream.load_from_file(filespec);
     }
 
@@ -86,7 +91,9 @@ class AbstractIOStream {
     // ===========
 
     // Closes the stream.
-    close () {}
+    Close () {
+        this.stream.close();
+    }
 
     // Reads a specified number of characters from a TextStream file
     // and returns the resulting string.
