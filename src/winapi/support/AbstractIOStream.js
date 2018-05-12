@@ -115,7 +115,17 @@ class AbstractIOStream {
 
         this._throw_if_read_forbidden();
 
-        return this.stream.fetch_n_chars(n_chars);
+        if (this.stream.is_pos_EOS() && this.stream.position > 0) {
+            throw new Error("At EOS");
+        }
+
+        let read_str = this.stream.fetch_n_chars(n_chars);
+
+        if (read_str === 0) {
+            throw new Error("Cannot call Read on an empty file");
+        }
+
+        return read_str;
     }
 
     // Reads an entire TextStream file and returns the resulting
@@ -123,6 +133,10 @@ class AbstractIOStream {
     ReadAll () {
 
         this._throw_if_read_forbidden();
+
+        if (this.stream.is_pos_EOS() && this.stream.position > 0) {
+            throw new Error("At EOS");
+        }
 
         let file_contents = this.stream.fetch_all();
 

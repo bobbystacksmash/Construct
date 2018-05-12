@@ -289,6 +289,37 @@ describe("TextStream", () => {
 
                 done();
             });
+
+            it("should throw if #Read is called beyond the bounds of the stream", (done) => {
+
+                const contents = "aaaabbbb";
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_input_past_end_of_file: () => {
+                            throw new Error("read attempted at EOS");
+                        }
+                    }});
+
+                ctx.vfs.AddFile("C:\\foo.txt", contents);
+                let ts = new TextStream(ctx, "C:\\foo.txt");
+
+                assert.equal(ts.Read(8), contents);
+                assert.throws(() => ts.Read(1), "read attempted at EOS");
+
+                done();
+            });
+
+            it("should read up to the EOS if the num-chars are greater than stream length", (done) => {
+
+                context.vfs.AddFile("C:\\foo.txt", "1234567890");
+                let ts = new TextStream(context, "C:\\foo.txt");
+
+                assert.equal(ts.Read(6), "123456");
+                assert.equal(ts.Read(6), "7890");
+
+                done();
+            });
         });
 
         describe("#ReadAll", () => {
@@ -338,7 +369,26 @@ describe("TextStream", () => {
 
                 assert.equal(ts.ReadAll(), contents);
 
-                // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                done();
+            });
+
+            it("should throw if #ReadAll is called twice", (done) => {
+
+                const contents = "aaaabbbb\r\nccccdddd";
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_input_past_end_of_file: () => {
+                            throw new Error("at EOS");
+                        }
+                    }});
+
+                ctx.vfs.AddFile("C:\\foo.txt", contents);
+                let ts = new TextStream(ctx, "C:\\foo.txt");
+
+                assert.equal(ts.ReadAll(), contents);
+                assert.throws(() => ts.ReadAll(), "at EOS");
+
                 done();
             });
 
