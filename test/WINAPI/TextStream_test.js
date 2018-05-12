@@ -155,12 +155,57 @@ describe("TextStream", () => {
                 context.vfs.AddFile("C:\\foo.txt", "abc");
                 let ts = new TextStream(ctx, "C:\\foo.txt");
 
-                assert.throws(() => ts.Column = 1, "blah");
+                assert.throws(() => ts.Column = 1, "cannot set .Column");
                 done();
             });
         });
 
         describe(".Line", () => {
+
+            it("should return 1 if the stream is empty", (done) => {
+
+                context.vfs.AddFile("C:\\empty.txt");
+                let ts = new TextStream(context, "C:\\empty.txt");
+
+                assert.equal(ts.Line, 1);
+
+                done();
+            });
+
+            it("should return the correct line number", (done) => {
+
+                context.vfs.AddFile("C:\\foo.txt", "aaaa\r\nbbbb\r\n");
+                let ts = new TextStream(context, "C:\\foo.txt");
+
+                let expected = [
+                    1, 1, 1, 1, 1, 1,
+                    2, 2, 2, 2, 2, 2
+                ];
+
+                expected.forEach((exp) => {
+                    assert.equal(ts.line, exp);
+                    ts.Read(1);
+                });
+
+                done();
+            });
+
+            it("should throw if .Line is assigned to", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_wrong_argc_or_invalid_prop_assign: () => {
+                            throw new Error("cannot set .Line");
+                        }
+                    }});
+
+                context.vfs.AddFile("C:\\foo.txt", "abc");
+                let ts = new TextStream(ctx, "C:\\foo.txt");
+
+                assert.throws(() => ts.Line = 1, "cannot set .Line");
+
+                done();
+            });
         });
     });
 

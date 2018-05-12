@@ -74,7 +74,9 @@ class AbstractIOStream {
 
     // Read-only property that returns the current line number in a
     // TextStream file.
-    get line ( ) {}
+    get Line ( ) {
+        return this.stream.line();
+    }
 
     // Read-Only - this throws.
     set line (_) {}
