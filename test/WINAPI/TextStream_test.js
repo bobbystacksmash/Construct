@@ -255,9 +255,10 @@ describe("TextStream", () => {
 
         describe("#Read", () => {
 
-            // TODO: add read/write only tests
+            // TODO: if the number of cars to be read is more than are
+            // left in the stream, all chars are read.
 
-            xit("should return the scalar-num chars requested to be read", (done) => {
+            it("should return the scalar-num chars requested to be read", (done) => {
 
                 context.vfs.AddFile("C:\\foo.txt", "aaaabbbbccccdddd");
                 let ts = new TextStream(context, "C:\\foo.txt");
@@ -270,12 +271,77 @@ describe("TextStream", () => {
                 done();
             });
 
-            // TODO: add tests her for can_read, can_write modes.
+            it("should throw 'bad file mode' if opened in write-mode", (done) => {
 
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_bad_file_mode: () => {
+                            throw new Error("read mode disabled");
+                        }
+                    }});
+
+                const CAN_READ  = false,
+                      CAN_WRITE = true;
+
+                let ts = new TextStream(ctx, "C:\\foo.txt", CAN_READ, CAN_WRITE);
+
+                assert.throws(() => ts.Read(1), "read mode disabled");
+
+                done();
+            });
         });
 
         describe("#ReadAll", () => {
-            // TODO: add read/write only tests
+
+            it("should throw 'bad file mode' if opened in write-mode", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_bad_file_mode: () => {
+                            throw new Error("read all: read mode forbidden");
+                        }
+                    }});
+
+                const CAN_READ  = false,
+                      CAN_WRITE = true;
+
+                let ts = new TextStream(ctx, "C:\\foo.txt", CAN_READ, CAN_WRITE);
+
+                assert.throws(() => ts.ReadAll(), "read all: read mode forbidden");
+
+                done();
+            });
+
+            it("should throw a 'bad file mode' if #ReadAll is called on an empty file", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_bad_file_mode: () => {
+                            throw new Error("read all: read mode forbidden");
+                        }
+                    }});
+
+                ctx.vfs.AddFile("C:\\empty.txt");
+                let ts = new TextStream(ctx, "C:\\empty.txt");
+
+                assert.throws(() => ts.ReadAll(), "read all: read mode forbidden");
+
+                done();
+            });
+
+            it("should read all chars from the file", (done) => {
+
+                const contents = "aaaabbbb\r\nccccdddd";
+
+                context.vfs.AddFile("C:\\foo.txt", contents);
+                let ts = new TextStream(context, "C:\\foo.txt");
+
+                assert.equal(ts.ReadAll(), contents);
+
+                // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                done();
+            });
+
         });
         describe("#ReadLine", () => {
             // TODO: add read/write only tests

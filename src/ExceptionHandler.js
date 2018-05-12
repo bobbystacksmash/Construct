@@ -272,6 +272,15 @@ class ExceptionHandler extends Component {
         );
     }
 
+    throw_bad_file_mode (source, summary, details) {
+        this.throw(
+            "Error",
+            "Bad file mode",
+            -2146828234,
+            "Bad file mode"
+        );
+    }
+
 }
 
 module.exports = ExceptionHandler;

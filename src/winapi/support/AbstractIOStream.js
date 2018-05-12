@@ -31,6 +31,10 @@ const SupportTextStream = require("./TextStream");
 class AbstractIOStream {
 
     constructor (context, filespec, can_read, can_write, encoding) {
+
+        if (can_read  === undefined || can_read  === null) can_read  = true;
+        if (can_write === undefined || can_write === null) can_write = false;
+
         this.stream = new SupportTextStream(context);
 
         this.backed_by = filespec;
@@ -87,6 +91,16 @@ class AbstractIOStream {
     set line (_) {}
 
     //
+    // Utility Methods
+    // ===============
+    _throw_if_read_forbidden () {
+
+        if (this.can_read === false) {
+            throw new Error("Reading is forbidden");
+        }
+    }
+
+    //
     // WIN METHODS
     // ===========
 
@@ -98,12 +112,26 @@ class AbstractIOStream {
     // Reads a specified number of characters from a TextStream file
     // and returns the resulting string.
     Read (n_chars) {
+
+        this._throw_if_read_forbidden();
+
         return this.stream.fetch_n_chars(n_chars);
     }
 
     // Reads an entire TextStream file and returns the resulting
     // string.
-    readall () {}
+    ReadAll () {
+
+        this._throw_if_read_forbidden();
+
+        let file_contents = this.stream.fetch_all();
+
+        if (file_contents === 0) {
+            throw new Error("Cannot call ReadAll on an empty file");
+        }
+
+        return file_contents;
+    }
 
     // Reads an entire line (up to, but not including, the newline
     // character) from a TextStream file and returns the resulting
