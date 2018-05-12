@@ -109,6 +109,55 @@ describe("TextStream", () => {
         });
 
         describe(".Column", () => {
+
+            it("should report the column as '1' if the backing file is empty", (done) => {
+
+                context.vfs.AddFile("C:\\empty.txt");
+                let ts = new TextStream(context, "C:\\empty.txt");
+
+                assert.equal(ts.Column, 1);
+                done();
+            });
+
+            it("should correctly report the column for multi-line files", (done) => {
+
+                context.vfs.AddFile("C:\\multiline.txt", "abc\r\ndef");
+                let ts = new TextStream(context, "C:\\multiline.txt");
+
+                assert.equal(ts.Column, 1);
+
+                let expected = [
+                    { col: 1, chr: "a"  },
+                    { col: 2, chr: "b"  },
+                    { col: 3, chr: "c"  },
+                    { col: 4, chr: "\r" },
+                    { col: 5, chr: "\n" },
+                    { col: 1, chr: "d"  }
+                ];
+
+                expected.forEach((exp) => {
+                    assert.equal(ts.Column,  exp.col);
+                    assert.equal(ts.Read(1), exp.chr);
+                });
+
+                done();
+            });
+
+            it("should throw if .Column is assigned-to", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_wrong_argc_or_invalid_prop_assign: () => {
+                            throw new Error("cannot set .Column");
+                        }
+                    }});
+
+                context.vfs.AddFile("C:\\foo.txt", "abc");
+                let ts = new TextStream(ctx, "C:\\foo.txt");
+
+                assert.throws(() => ts.Column = 1, "blah");
+                done();
+            });
         });
 
         describe(".Line", () => {

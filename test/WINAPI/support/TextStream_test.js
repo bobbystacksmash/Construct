@@ -1399,4 +1399,38 @@ describe("TextStream", () => {
             done();
         });
     });
+
+    describe("#line", () => {
+
+        it("should return line 1 when the stream is empty", (done) => {
+
+            let ts = new TextStream(context);
+            ts.open();
+
+            assert.equal(ts.line(), 1);
+            done();
+        });
+
+        it("should return the current line number correctly", (done) => {
+
+            let ts = new TextStream(context);
+            ts.open();
+            ts.charset = "ASCII";
+
+            ts.put("aaaa\r\nbbbb\r\n");
+            ts.position = 0;
+
+            assert.equal(ts.position, 0);
+
+            assert.equal(ts.line(), 1);
+
+            ts.skipline();
+            assert.equal(ts.line(), 2);
+
+            ts.skipline();
+            assert.equal(ts.line(), 3);
+
+            done();
+        });
+    });
 });

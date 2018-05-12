@@ -380,6 +380,9 @@ class TextStream extends Stream {
     // TextStream that `pos' is pointing-at.  Columns end with the
     // stream's line separator.  The first column is always column 0.
     column () {
+
+        if (this.buffer.byteLength === 0) return 1;
+
         //
         // What follows is not a very elegant algorithm for finding
         // the current column, however I am more concerned with
@@ -419,6 +422,41 @@ class TextStream extends Stream {
         }
 
         return column_vector[this.pos];
+    }
+
+    line () {
+
+        if (this.buffer.byteLength === 0 || this.pos === 0) return 1;
+
+        let curr_line      = 1,
+            curr_position  = 0,
+            line_separator = Buffer.from(this.getsep()),
+            line_vector    = [],
+            eol_exit       = true;
+
+        while (curr_position < this.buffer.byteLength) {
+
+            eol_exit = false;
+
+            if (this.pos_lookahead_matches(line_separator, curr_position)) {
+
+                // See #column() for algorithm.
+
+                for (let i = 0; i < line_separator.byteLength; i++) {
+                    line_vector[curr_position++] = curr_line;
+                }
+
+                curr_line++;
+                eol_exit = true;
+                continue;
+            }
+
+            line_vector[curr_position++] = curr_line;
+        }
+
+        if (this.pos === this.buffer.byteLength) return curr_line++;
+
+        return line_vector[this.pos];
     }
 }
 

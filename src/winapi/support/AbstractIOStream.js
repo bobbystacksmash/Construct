@@ -68,10 +68,9 @@ class AbstractIOStream {
 
     // Returns the current column number of the current character
     // position within the stream.
-    get column ( ) {}
-
-    // Read-Only - this throws.
-    set column (_) {}
+    get Column ( ) {
+        return this.stream.column();
+    }
 
     // Read-only property that returns the current line number in a
     // TextStream file.
