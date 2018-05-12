@@ -52,12 +52,6 @@ class TextStream extends Stream {
     set charset (charset) {
 
         if (this.pos !== 0) {
-            /*
-             name Error
-             number -2146825069
-             description Operation is not allowed in this context.
-             message Operation is not allowed in this context.
-            */
             throw new Error("Cannot change charset when position is not zero");
         }
 
@@ -370,12 +364,61 @@ class TextStream extends Stream {
     // Does not alter the position, or alter the object's internal
     // state in any way.  Will return True if the next bytes exactly
     // match `buf', or False otherwise.
-    pos_lookahead_matches (buf) {
+    pos_lookahead_matches (buf, pos) {
+
+        if (pos === undefined || pos === null) {
+            pos = this.pos;
+        }
 
         if (buf.byteLength === 0) return false;
 
-        let existing_buf = this.buffer.slice(this.pos, this.pos + buf.byteLength);
+        let existing_buf = this.buffer.slice(pos, pos + buf.byteLength);
         return buf.equals(existing_buf);
+    }
+
+    // The `column' method returns the current column within the
+    // TextStream that `pos' is pointing-at.  Columns end with the
+    // stream's line separator.  The first column is always column 0.
+    column () {
+        //
+        // What follows is not a very elegant algorithm for finding
+        // the current column, however I am more concerned with
+        // correctness and over grace at this time.
+        //
+        let curr_column    = 1,
+            curr_position  = 0,
+            line_separator = Buffer.from(this.getsep()),
+            column_vector  = [];
+
+        if (this.pos === 0) return curr_column;
+
+        while (curr_position < this.buffer.byteLength) {
+
+            if (this.pos_lookahead_matches(line_separator, curr_position)) {
+                //
+                // We now know that `line_separator.byteLength' ahead
+                // of us is a new line, so we can fill in column
+                // fields all the way to the new line.
+                //
+                // |"A"|"B"|"C"|CR|LF|"D"|"E"|...
+                //           ^
+                //           |
+                //   From here, we know CR and LF follow,
+                //   so we can fill-in the column info in our array,
+                //   and advance the PTR forward to "D".
+                //
+                for (let i = 0; i < line_separator.byteLength; i++) {
+                    column_vector[curr_position++] = curr_column++;
+                }
+
+                curr_column = 1;
+                continue;
+            }
+
+            column_vector[curr_position++] = curr_column++;
+        }
+
+        return column_vector[this.pos];
     }
 }
 

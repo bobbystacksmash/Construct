@@ -1336,4 +1336,67 @@ describe("TextStream", () => {
             done();
         });
     });
+
+    describe("#column", () => {
+
+        it("should return '1' when pos is '0' (column numbering starts at 1)", (done) => {
+
+            let ts = new TextStream(context);
+            ts.open();
+            ts.charset = "ASCII";
+            ts.put("abcd");
+            ts.position = 0;
+
+            assert.equal(ts.column(), 1);
+
+            done();
+        });
+
+        it("should correctly return columns using the default linesep", (done) => {
+
+            let ts = new TextStream(context);
+            ts.open();
+            ts.charset = "ASCII";
+
+            let str = "aaaa\r\nbbbb\r\n";
+
+            ts.put(str);
+            ts.position = 0;
+
+            var chars = ts.fetch_n_chars(4);
+
+            assert.equal(chars, "aaaa");
+            assert.equal(ts.position, 4);
+
+            // POS | 0 | 1 | 2 | 3 |  4 |  5 | 6 | 7 | 8 |
+            //     |---|---|---|---|----|----|---|---|---|
+            // CHR | a | a | a | a | CR | LF | b | b | b |
+            //     |---|---|---|---|----|----|---|---|---|
+            // COL | 1 | 2 | 3 | 4 |  5 |  6 | 1 | 2 | 3 |
+            //     |   |   |   |   | __ |    | * |   |   |
+            //                       /
+            //                      /
+            //               pos is now here...
+            assert.equal(ts.column(), 5);
+
+            // See diagram above ... we start at POSITION(6)...
+            let asserts = [
+                { pos:  6, col: 1, chr: "b"  },
+                { pos:  7, col: 2, chr: "b"  },
+                { pos:  8, col: 3, chr: "b"  },
+                { pos:  9, col: 4, chr: "b"  },
+                { pos: 10, col: 5, chr: "\r" },
+                { pos: 11, col: 6, chr: "\n" }
+            ];
+
+            asserts.forEach((a) => {
+                ts.position = a.pos;
+                assert.equal(ts.position, a.pos);
+                assert.equal(ts.column(), a.col);
+                assert.equal(ts.fetch_n_chars(1), a.chr);
+            });
+
+            done();
+        });
+    });
 });
