@@ -176,7 +176,23 @@ class AbstractIOStream {
     }
 
     // Skips the next line when reading a TextStream file.
-    skipline () {}
+    SkipLine () {
+
+        this._throw_if_read_forbidden();
+
+        // All we do do skip a line is to read a line and not return
+        // the line.
+        try {
+            this.ReadLine();
+        }
+        catch (e) {
+            if (e.message.includes("ReadLine on an empty file")) {
+                throw new Error("Cannot call SkipLine on an empty file");
+            }
+
+            throw e;
+        }
+    }
 
     // Writes a specified string to a TextStream file.
     write () {}

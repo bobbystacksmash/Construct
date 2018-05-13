@@ -555,12 +555,85 @@ describe("TextStream", () => {
                 assert.equal(ts.Read(1), "d");
 
                 done();
+            });
+        });
 
+        describe("#SkipLine", () => {
+
+            it("should throw if the file is open in write-mode", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_bad_file_mode: () => {
+                            throw new Error("cannot skipline in write-only mode");
+                        }
+                    }});
+
+                const CAN_READ  = false,
+                      CAN_WRITE = true;
+
+                let ts = new TextStream(ctx, "C:\\foo.txt", CAN_READ, CAN_WRITE);
+
+                assert.throws(() => ts.SkipLine(), "cannot skipline in write-only mode");
+
+                done();
             });
 
-        });
-        describe("#SkipLine", () => {
-            // TODO: add read/write only tests
+            it("should successfully skip lines when called", (done) => {
+
+                context.vfs.AddFile("C:\\skipline.txt", "aaaa\r\nbbbb\r\ncccc\r\n");
+
+                let ts = new TextStream(context, "C:\\skipline.txt");
+
+                ts.SkipLine();
+                assert.equal(ts.Read(4), "bbbb");
+
+                ts.SkipLine();
+                assert.equal(ts.Read(4), "cccc");
+
+                done();
+            });
+
+            it("should throw if the file to read is empty", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_bad_file_mode: () => {
+                            throw new Error("empty file");
+                        }
+                    }});
+
+                ctx.vfs.AddFile("C:\\empty.txt");
+
+                let ts = new TextStream(ctx, "C:\\empty.txt");
+
+                assert.throws(() => ts.SkipLine(), "empty file");
+
+                done();
+            });
+
+            it("should throw if SkipLine is attempted beyond the end of the stream", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_input_past_end_of_file: () => {
+                            throw new Error("skip beyond length of stream");
+                        }
+                    }});
+
+                ctx.vfs.AddFile("C:\\file.txt", "aaaa\r\nbbbb\r\ncccc\r\n");
+
+                let ts = new TextStream(ctx, "C:\\file.txt");
+
+                assert.doesNotThrow(() => ts.SkipLine());
+                assert.doesNotThrow(() => ts.SkipLine());
+                assert.doesNotThrow(() => ts.SkipLine());
+
+                assert.throws(() => ts.SkipLine(), "skip beyond length of stream");
+
+                done();
+            });
+
         });
         describe("#Write", () => {
             // TODO: add read/write only tests
