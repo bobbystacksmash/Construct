@@ -316,6 +316,9 @@ class Stream {
         // | adSaveCreateNotExist  |   1   | Default. Creates new file if not exists. |
         // | adSaveCreateOverWrite |   2   | Creates new or overwrites existing file. |
         //
+
+        let overwrite_file = false;
+
         if (save_opt === undefined || save_opt === null) {
             save_opt = this.SAVE_OPTIONS_ENUM.adSaveCreateNotExist;
         }
@@ -328,11 +331,7 @@ class Stream {
             }
         }
         else if (save_opt === this.SAVE_OPTIONS_ENUM.adSaveCreateOverWrite) {
-            //
-            // We do not need to code for the case where the value ===
-            // adSaveCreateOverWrite, as the output is the same -- the
-            // file will be created if not exists, or updated if it does.
-            //
+            overwrite_file = true;
         }
         else {
             throw new Error("Unknown save option passed to save_to_file");
@@ -341,7 +340,7 @@ class Stream {
         let fsbuf = Buffer.alloc(this.buffer.byteLength || 0);
         this.buffer.copy(fsbuf, 0);
 
-        this.vfs.AddFile(path, fsbuf);
+        this.vfs.AddFile(path, fsbuf, { overwrite: overwrite_file });
         this.position = 0;
     }
 

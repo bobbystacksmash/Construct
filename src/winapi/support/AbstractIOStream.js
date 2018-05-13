@@ -30,19 +30,31 @@ const SupportTextStream = require("./TextStream");
 //
 class AbstractIOStream {
 
-    constructor (context, filespec, can_read, can_write, encoding) {
+    constructor (context, filespec, can_read, write_mode, encoding) {
 
-        if (can_read  === undefined || can_read  === null) can_read  = true;
-        if (can_write === undefined || can_write === null) can_write = false;
+        this.WRITE_MODE_ENUM = {
+            CANNOT_WRITE: 0, // Writing is forbidden.
+            CAN_WRITE:    1, // File PTR is placed at pos 0.
+            APPEND_ONLY:  2  // File PTR is positioned at EOS, cannot move further back.
+        };
+
+        if (can_read   === undefined || can_read   === null) can_read  = true;
+        if (write_mode === undefined || write_mode === null) write_mode = 0;
+
+        if (write_mode !== this.WRITE_MODE_ENUM.CANNOT_WRITE &&
+            write_mode !== this.WRITE_MODE_ENUM.CAN_WRITE &&
+            write_mode !== this.WRITE_MODE_ENUM.APPEND_ONLY) {
+            throw new Error("Unknown write mode:", write_mode);
+        }
 
         this.stream = new SupportTextStream(context);
 
-        this.backed_by = filespec;
-        this.can_read  = can_read;
-        this.can_write = can_write;
-        this.encoding  = encoding;
+        this.backed_by  = filespec;
+        this.can_read   = can_read;
+        this.write_mode = write_mode;
+        this.encoding   = encoding;
 
-        this.stream = new SupportTextStream(context);
+        this.stream         = new SupportTextStream(context);
         this.stream.charset = encoding;
         this.stream.open();
 
@@ -56,6 +68,7 @@ class AbstractIOStream {
         }
 
         this.stream.load_from_file(filespec);
+
     }
 
     //
@@ -94,9 +107,18 @@ class AbstractIOStream {
     // Utility Methods
     // ===============
     _throw_if_read_forbidden () {
-
         if (this.can_read === false) {
             throw new Error("Reading is forbidden");
+        }
+    }
+
+    _throw_if_write_forbidden () {
+
+        // TODO: IF IN APPEND-ONLY MODE
+        //         DO NOT ALLOW A WRITE BEFORE EOS POS
+
+        if (this.write_mode === this.WRITE_MODE_ENUM.CANNOT_WRITE) {
+            throw new Error("Writing is forbidden");
         }
     }
 
@@ -195,7 +217,22 @@ class AbstractIOStream {
     }
 
     // Writes a specified string to a TextStream file.
-    write () {}
+    Write (msg) {
+
+        this._throw_if_write_forbidden();
+
+        this.stream.put(msg);
+        const pos = this.stream.position;
+
+        // Other Stream implementations require that saving to the
+        // file resets the positional counter.  This is not the case
+        // for TextStreams used by the FSO, so we reset position to be
+        // the EOS.
+
+        const overwrite_if_exists = 2;
+        this.stream.save_to_file(this.backed_by, overwrite_if_exists);
+        this.stream.position = pos;
+    }
 
     // Writes a specified number of newline characters to a TextStream
     // file.

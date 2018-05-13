@@ -9,6 +9,12 @@ var context = null;
 
 const new_vfs = () => new VirtualFileSystem({ register: () => {} });
 
+const CAN_READ     = true,
+      CANNOT_READ  = false,
+      CAN_WRITE    = 1,
+      CAN_APPEND   = 2,
+      CANNOT_WRITE = 0;
+
 describe("TextStream", () => {
 
     // A TextStream can represent either a:
@@ -277,10 +283,7 @@ describe("TextStream", () => {
                         }
                     }});
 
-                const CAN_READ  = false,
-                      CAN_WRITE = true;
-
-                let ts = new TextStream(ctx, "C:\\foo.txt", CAN_READ, CAN_WRITE);
+                let ts = new TextStream(ctx, "C:\\foo.txt", CANNOT_READ, CAN_WRITE);
 
                 assert.throws(() => ts.Read(1), "read mode disabled");
 
@@ -330,10 +333,7 @@ describe("TextStream", () => {
                         }
                     }});
 
-                const CAN_READ  = false,
-                      CAN_WRITE = true;
-
-                let ts = new TextStream(ctx, "C:\\foo.txt", CAN_READ, CAN_WRITE);
+                let ts = new TextStream(ctx, "C:\\foo.txt", CANNOT_READ, CAN_WRITE);
 
                 assert.throws(() => ts.ReadAll(), "read all: read mode forbidden");
 
@@ -402,10 +402,7 @@ describe("TextStream", () => {
                         }
                     }});
 
-                const CAN_READ  = false,
-                      CAN_WRITE = true;
-
-                let ts = new TextStream(ctx, "C:\\foo.txt", CAN_READ, CAN_WRITE);
+                let ts = new TextStream(ctx, "C:\\foo.txt", CANNOT_READ, CAN_WRITE);
 
                 assert.throws(() => ts.ReadLine(), "read line: read mode forbidden");
 
@@ -493,10 +490,7 @@ describe("TextStream", () => {
 
                 ctx.vfs.AddFile("C:\\foo.txt", "contents...");
 
-                const CAN_READ  = false,
-                      CAN_WRITE = true;
-
-                let ts = new TextStream(ctx, "C:\\foo.txt", CAN_READ, CAN_WRITE);
+                let ts = new TextStream(ctx, "C:\\foo.txt", CANNOT_READ, CAN_WRITE);
 
                 assert.throws(() => ts.Skip(5), "cannot call #Skip in write-only mode");
 
@@ -569,10 +563,7 @@ describe("TextStream", () => {
                         }
                     }});
 
-                const CAN_READ  = false,
-                      CAN_WRITE = true;
-
-                let ts = new TextStream(ctx, "C:\\foo.txt", CAN_READ, CAN_WRITE);
+                let ts = new TextStream(ctx, "C:\\foo.txt", CANNOT_READ, CAN_WRITE);
 
                 assert.throws(() => ts.SkipLine(), "cannot skipline in write-only mode");
 
@@ -635,12 +626,52 @@ describe("TextStream", () => {
             });
 
         });
+
         describe("#Write", () => {
-            // TODO: add read/write only tests
+
+            it("should throw if #Write is attempted on a read-only stream", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_bad_file_mode: () => {
+                            throw new Error("cannot call #Write in read-only mode");
+                        }
+                    }});
+
+                ctx.vfs.AddFile("C:\\foo.txt", "contents...");
+
+                let ts = new TextStream(ctx, "C:\\foo.txt", CAN_READ, CANNOT_WRITE);
+
+                assert.throws(() => ts.Write("hello"), "cannot call #Write in read-only mode");
+
+                done();
+            });
+
+            it("should continually update the file after each call to #Write", (done) => {
+
+                context.vfs.AddFile("C:\\file.txt");
+
+                let ts = new TextStream(context, "C:\\file.txt", CANNOT_READ, CAN_WRITE);
+
+                ts.Write("aaaa");
+                assert.equal(context.vfs.GetFile("C:\\file.txt").contents, "aaaa");
+
+                ts.Write("bbbb");
+                assert.equal(context.vfs.GetFile("C:\\file.txt").contents, "aaaabbbb");
+
+                ts.Write("cccc");
+                assert.equal(context.vfs.GetFile("C:\\file.txt").contents, "aaaabbbbcccc");
+
+                done();
+            });
+
+            // TODO: throw an appropriate message if an invalid arg is sent to #Write.
         });
+
         describe("#WriteBlankLines", () => {
             // TODO: add read/write only tests
         });
+
         describe("#WriteLine", () => {
             // TODO: add read/write only tests
         });
