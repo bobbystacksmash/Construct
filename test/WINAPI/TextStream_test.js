@@ -255,9 +255,6 @@ describe("TextStream", () => {
 
         describe("#Read", () => {
 
-            // TODO: if the number of cars to be read is more than are
-            // left in the stream, all chars are read.
-
             it("should return the scalar-num chars requested to be read", (done) => {
 
                 context.vfs.AddFile("C:\\foo.txt", "aaaabbbbccccdddd");
@@ -393,8 +390,78 @@ describe("TextStream", () => {
             });
 
         });
+
         describe("#ReadLine", () => {
-            // TODO: add read/write only tests
+
+            it("should throw if the file is open in write-mode", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_bad_file_mode: () => {
+                            throw new Error("read line: read mode forbidden");
+                        }
+                    }});
+
+                const CAN_READ  = false,
+                      CAN_WRITE = true;
+
+                let ts = new TextStream(ctx, "C:\\foo.txt", CAN_READ, CAN_WRITE);
+
+                assert.throws(() => ts.ReadLine(), "read line: read mode forbidden");
+
+                done();
+            });
+
+            it("should successfully read the first line", (done) => {
+
+                context.vfs.AddFile("C:\\multi-line.txt", "aaaa\r\nbbbb\r\ncccc\r\n");
+                let ts = new TextStream(context, "C:\\multi-line.txt");
+
+                assert.equal(ts.ReadLine(), "aaaa");
+                assert.equal(ts.ReadLine(), "bbbb");
+                assert.equal(ts.ReadLine(), "cccc");
+
+                done();
+            });
+
+            it("should throw if a read is attempted past the EOF", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_input_past_end_of_file: () => {
+                            throw new Error("read past EOF");
+                        }
+                    }});
+
+                ctx.vfs.AddFile("C:\\multi-line.txt", "aaaa\r\nbbbb\r\n");
+
+                let ts = new TextStream(ctx, "C:\\multi-line.txt");
+
+                assert.doesNotThrow(() => ts.ReadLine());
+                assert.doesNotThrow(() => ts.ReadLine());
+
+                assert.throws(() => ts.ReadLine(), "read past EOF");
+
+                done();
+            });
+
+            it("should throw if the file is empty", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_input_past_end_of_file: () => {
+                            throw new Error("empty file");
+                        }
+                    }});
+
+                ctx.vfs.AddFile("C:\\empty.txt");
+
+                let ts = new TextStream(ctx, "C:\\empty.txt");
+
+                assert.throws(() => ts.ReadLine(), "empty file");
+
+                done();
+            });
         });
         describe("#Skip", () => {
             // TODO: add read/write only tests

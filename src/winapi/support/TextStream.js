@@ -139,15 +139,7 @@ class TextStream extends Stream {
 
     fetch_line () {
 
-        if (this.pos === 0) {
-            this.pos = 2;
-        }
-
         if (! this.buffer || this.buffer.byteLength === 0 || this.pos === this.buffer.byteLength) {
-            return "";
-        }
-
-        if (this.pos === this.buffer.byteLength) {
             return "";
         }
 

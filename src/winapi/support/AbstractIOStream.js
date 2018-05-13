@@ -150,7 +150,21 @@ class AbstractIOStream {
     // Reads an entire line (up to, but not including, the newline
     // character) from a TextStream file and returns the resulting
     // string.
-    readline () {}
+    ReadLine () {
+
+        this._throw_if_read_forbidden();
+
+        if (this.stream.is_pos_EOS() && this.stream.position > 0) {
+            throw new Error("At EOS");
+        }
+        else if (this.stream.size === 0) {
+            throw new Error("Cannot call ReadLine on an empty file");
+        }
+
+        let line = this.stream.fetch_line();
+
+        return line;
+    }
 
     // Skips a specified number of characters when reading a
     // TextStream file.
