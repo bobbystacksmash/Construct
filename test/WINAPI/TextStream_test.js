@@ -245,18 +245,6 @@ describe("TextStream", () => {
 
                 done();
             });
-
-            xit("should flush the stream contents to the file when #Close is called", (done) => {
-
-                context.vfs.AddFile("C:\\foo.txt", "aaaa");
-                let ts = new TextStream(context, "C:\\foo.txt");
-
-            });
-
-            // TODO:
-            //
-            //  - what if an arg is passed to #Close?
-            //  - should write the stream contents to the file
         });
 
         describe("#Read", () => {
@@ -647,6 +635,20 @@ describe("TextStream", () => {
                 done();
             });
 
+            it("should overwrite the contents of a file if opened in write mode", (done) => {
+
+                context.vfs.AddFile("C:\\overwrite.txt", "overwriteme");
+
+                let ts = new TextStream(context, "C:\\overwrite.txt", CANNOT_READ, CAN_WRITE);
+
+                assert.equal(context.vfs.GetFile("C:\\overwrite.txt").contents, "overwriteme");
+
+                ts.Write("hello, world!");
+                assert.equal(context.vfs.GetFile("C:\\overwrite.txt").contents, "hello, world!");
+
+                done();
+            });
+
             it("should continually update the file after each call to #Write", (done) => {
 
                 context.vfs.AddFile("C:\\file.txt");
@@ -665,15 +667,134 @@ describe("TextStream", () => {
                 done();
             });
 
-            // TODO: throw an appropriate message if an invalid arg is sent to #Write.
+            it("should append only to the file when opened in append mode", (done) => {
+
+                context.vfs.AddFile("C:\\file.txt", "aaaa");
+
+                let ts = new TextStream(context, "C:\\file.txt", CANNOT_READ, CAN_APPEND);
+
+                ts.Write("bbbb");
+
+                assert.equal(context.vfs.GetFile("C:\\file.txt").contents, "aaaabbbb");
+
+                done();
+            });
+
+            it("should convert numbers to strings before writing them", (done) => {
+
+                let ts = new TextStream(context, "C:\\file.txt", CANNOT_READ, CAN_WRITE);
+
+                ts.Write("aaaa");
+                ts.Write(10);
+
+                assert.equal(context.vfs.GetFile("C:\\file.txt").contents, "aaaa10");
+
+                done();
+            });
+
+            it("should auto-join an array in to a single string if an array is passed", (done) => {
+
+                let ts = new TextStream(context, "C:\\file.txt", CANNOT_READ, CAN_WRITE);
+
+                ts.Write([
+                    "hello",
+                    "world",
+                    42
+                ]);
+
+                assert.equal(context.vfs.GetFile("C:\\file.txt").contents, "helloworld42");
+
+                done();
+            });
+
+            it("should write '[object Object]' to the file if an obj is passed", (done) => {
+
+                let ts = new TextStream(context, "C:\\file.txt", CANNOT_READ, CAN_WRITE);
+
+                ts.Write({});
+
+                assert.equal(context.vfs.GetFile("C:\\file.txt").contents, "[object Object]");
+
+                done();
+            });
         });
 
         describe("#WriteBlankLines", () => {
-            // TODO: add read/write only tests
+
+            it("should throw if #WriteBlankLines is attempted on a read-only stream", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_bad_file_mode: () => {
+                            throw new Error("cannot call #WriteBlankLines in read-only mode");
+                        }
+                    }});
+
+                ctx.vfs.AddFile("C:\\foo.txt", "contents...");
+
+                let ts = new TextStream(ctx, "C:\\foo.txt", CAN_READ, CANNOT_WRITE);
+
+                assert.throws(() => ts.WriteBlankLines(2), "cannot call #WriteBlankLines in read-only mode");
+
+                done();
+            });
+
+            it("should write the total number of blank lines to the file", (done) => {
+
+                context.vfs.AddFile("C:\\linetest.txt");
+
+                let ts = new TextStream(context, "C:\\linetest.txt", CANNOT_READ, CAN_WRITE);
+
+                ts.WriteBlankLines(2);
+                assert.deepEqual(
+                    context.vfs.GetFile("C:\\linetest.txt").contents,
+                    Buffer.from("\r\n\r\n")
+                );
+
+                ts.WriteBlankLines(3);
+                assert.deepEqual(
+                    context.vfs.GetFile("C:\\linetest.txt").contents,
+                    Buffer.from("\r\n\r\n\r\n\r\n\r\n")
+                );
+
+                done();
+            });
         });
 
         describe("#WriteLine", () => {
-            // TODO: add read/write only tests
+
+            it("should throw if #WriteLine is attempted on a read-only stream", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_bad_file_mode: () => {
+                            throw new Error("cannot call #WriteLine in read-only mode");
+                        }
+                    }});
+
+                ctx.vfs.AddFile("C:\\foo.txt", "contents...");
+
+                let ts = new TextStream(ctx, "C:\\foo.txt", CAN_READ, CANNOT_WRITE);
+
+                assert.throws(() => ts.WriteLine("hello"), "cannot call #WriteLine in read-only mode");
+
+                done();
+            });
+
+            it("should successfully write text with a newline", (done) => {
+
+                context.vfs.AddFile("C:\\file.txt");
+
+                let ts = new TextStream(context, "C:\\file.txt", CANNOT_READ, CAN_WRITE);
+
+                ts.WriteLine("abcd");
+                ts.WriteLine("1234");
+
+                assert.equal(context.vfs.GetFile("C:\\file.txt").contents, "abcd\r\n1234\r\n");
+                done();
+            });
+
+
         });
     });
 });

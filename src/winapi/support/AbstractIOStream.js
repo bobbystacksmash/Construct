@@ -100,8 +100,9 @@ class AbstractIOStream {
         return this.stream.line();
     }
 
-    // Read-Only - this throws.
-    set line (_) {}
+    get LineSeparator () {
+        return this.stream.getsep();
+    }
 
     //
     // Utility Methods
@@ -217,9 +218,28 @@ class AbstractIOStream {
     }
 
     // Writes a specified string to a TextStream file.
-    Write (msg) {
+    Write (msg, append_this) {
 
         this._throw_if_write_forbidden();
+
+        if (typeof msg == "number") {
+            msg = "" + msg;
+        }
+        else if (msg instanceof Array) {
+            msg = msg.join("");
+        }
+        else if (typeof msg === "object") {
+            msg = msg.toString();
+        }
+
+        if (this.write_mode === this.WRITE_MODE_ENUM.APPEND_ONLY) {
+            msg = `${this.stream.fetch_all()}${msg}`;
+            this.stream.position = 0;
+        }
+
+        if (append_this) {
+            msg = `${msg}${append_this}`;
+        }
 
         this.stream.put(msg);
         const pos = this.stream.position;
@@ -236,16 +256,37 @@ class AbstractIOStream {
 
     // Writes a specified number of newline characters to a TextStream
     // file.
-    writeblanklines () {}
+    WriteBlankLines (num_lines_to_write) {
+
+        this._throw_if_write_forbidden();
+
+        try {
+            const sep = this.stream.getsep();
+
+            for (let i = 0; i < num_lines_to_write; i++) {
+                this.Write(sep);
+            }
+        }
+        catch (e) {
+            throw e;
+        }
+    }
 
     // Writes a specified string and newline character to a TextStream
     // file.
-    writeline () {}
+    WriteLine (msg) {
 
-    //
-    // OVERRIDES
-    // =========
-    SerialiseToStream () {}
+        this._throw_if_write_forbidden();
+
+        try {
+            const sep = this.stream.getsep();
+            this.Write(msg, sep);
+        }
+        catch (e) {
+            throw e;
+        }
+    }
+
 }
 
 module.exports = AbstractIOStream;
