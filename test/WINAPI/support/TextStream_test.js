@@ -1433,4 +1433,59 @@ describe("TextStream", () => {
             done();
         });
     });
+
+    describe("#skip_n_chars", () => {
+
+        it("should successfully skip the correct number of ASCII characters", (done) => {
+
+            let ts = new TextStream(context);
+
+            ts.charset = "ASCII";
+            ts.open();
+            ts.put("aaaabbbbccccdddd");
+            ts.position = 0;
+
+            ts.skip_n_chars(4);
+            assert.equal(ts.fetch_n_chars(4), "bbbb");
+
+            ts.skip_n_chars(4);
+            assert.equal(ts.fetch_n_chars(4), "dddd");
+
+            done();
+        });
+
+        it("should successfully skip the correct number of UTF-16 characters", (done) => {
+
+            let ts = new TextStream(context);
+
+            ts.open();
+            ts.put("aaaabbbbccccdddd");
+            ts.position = 2; // BOM for UTF-16 streams
+
+            ts.skip_n_chars(4);
+            assert.equal(ts.fetch_n_chars(4), "bbbb");
+
+            ts.skip_n_chars(4);
+            assert.equal(ts.fetch_n_chars(4), "dddd");
+
+            done();
+        });
+
+        it("should throw if a skip is attempted beyond the bounds of the stream", (done) => {
+
+            let ts = new TextStream(context);
+            const content = "aaaabbbbccccdddd";
+
+            ts.charset = "ASCII";
+            ts.open();
+            ts.put(content);
+            ts.position = 0;
+
+            assert.doesNotThrow(() => ts.skip_n_chars(16));
+            assert.throws(() => ts.skip_n_chars(1), "Cannot skip beyond buffer length");
+
+            done();
+
+        });
+    });
 });

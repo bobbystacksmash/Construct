@@ -450,6 +450,18 @@ class TextStream extends Stream {
 
         return line_vector[this.pos];
     }
+
+    skip_n_chars (n_chars) {
+
+        const buffer_length = this.buffer.byteLength,
+              skip_distance = this.pos + (n_chars * this._charset.bytes_width);
+
+        if (skip_distance > buffer_length) {
+            throw new Error("Cannot skip beyond buffer length");
+        }
+
+        this.pos = skip_distance;
+    }
 }
 
 module.exports = TextStream;
