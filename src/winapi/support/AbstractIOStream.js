@@ -168,7 +168,12 @@ class AbstractIOStream {
 
     // Skips a specified number of characters when reading a
     // TextStream file.
-    skip () {}
+    Skip (n_chars) {
+
+        this._throw_if_read_forbidden();
+
+        this.stream.skip_n_chars(n_chars);
+    }
 
     // Skips the next line when reading a TextStream file.
     skipline () {}

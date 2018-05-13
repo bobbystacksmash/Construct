@@ -462,9 +462,102 @@ describe("TextStream", () => {
 
                 done();
             });
+
+            it("should not re-sync the file between reads if the file changes on disk", (done) => {
+
+                context.vfs.AddFile("C:\\file.txt", "aaaa\r\nbbbb\r\ncccc");
+
+                let ts = new TextStream(context, "C:\\file.txt");
+
+                assert.equal(ts.ReadLine(), "aaaa");
+
+                // Update the file...
+                context.vfs.AddFile("C:\\file.txt", "aaa\r\nZZZZ\r\ncccc");
+
+                assert.equal(ts.ReadLine(), "bbbb");
+
+                done();
+            });
         });
+
         describe("#Skip", () => {
-            // TODO: add read/write only tests
+
+            it("should throw if called while the stream is in write-only mode", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_bad_file_mode: () => {
+                            throw new Error("cannot call #Skip in write-only mode");
+                        }
+                    }});
+
+                ctx.vfs.AddFile("C:\\foo.txt", "contents...");
+
+                const CAN_READ  = false,
+                      CAN_WRITE = true;
+
+                let ts = new TextStream(ctx, "C:\\foo.txt", CAN_READ, CAN_WRITE);
+
+                assert.throws(() => ts.Skip(5), "cannot call #Skip in write-only mode");
+
+                done();
+            });
+
+            it("should skip the correct number of characters", (done) => {
+
+                context.vfs.AddFile("C:\\foo.txt", "aaaabbbbccccdddd");
+
+                let ts = new TextStream(context, "C:\\foo.txt");
+
+                assert.equal(ts.Read(2), "aa");
+                ts.Skip(2);
+                assert.equal(ts.Read(4), "bbbb");
+                ts.Skip(4);
+                assert.equal(ts.Read(4), "dddd");
+
+                done();
+            });
+
+            it("should throw if supplied an invalid (negative number) argument", (done) => {
+
+                let ctx = Object.assign({}, context, {
+                    exceptions: {
+                        throw_invalid_fn_arg: () => {
+                            throw new Error("negative numbers not allowed");
+                        }
+                    }});
+
+                ctx.vfs.AddFile("C:\\empty.txt");
+
+                let ts = new TextStream(ctx, "C:\\empty.txt");
+
+                assert.throws(() => ts.Skip(-10), "negative numbers not allowed");
+
+                done();
+            });
+
+            it("should not advance the stream ptr if passed a zero skip value", (done) => {
+
+                context.vfs.AddFile("C:\\foo.txt", "abcd");
+
+                let ts = new TextStream(context, "C:\\foo.txt");
+
+                ts.Skip(0);
+                assert.equal(ts.Read(1), "a");
+
+                ts.Skip(0);
+                assert.equal(ts.Read(1), "b");
+
+                ts.Skip(0);
+                assert.equal(ts.Read(1), "c");
+
+                ts.Skip(0);
+                assert.equal(ts.Read(1), "d");
+
+                done();
+
+            });
+
         });
         describe("#SkipLine", () => {
             // TODO: add read/write only tests
