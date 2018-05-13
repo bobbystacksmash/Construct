@@ -10,6 +10,8 @@ the RC is published.
 | Task                                                                   | Status |
 |------------------------------------------------------------------------+--------|
 | Rename, move, and update code surrounding ~AbsFileSystemObject.js~.    | TODO   |
+| Add basic support (syntax rewriter?) for alerting if JS is browser.    | TODO   |
+| Add better exception handling to the REPL environment.                 | TODO   |
 | ~WshShell~ needs lots of attention (ENV VARS live here).               | TODO   |
 | Add a built-in ~man~ or ~help~ command for usage within Construct.     | TODO   |
 | Add reading list / references to README.                               | TODO   |
