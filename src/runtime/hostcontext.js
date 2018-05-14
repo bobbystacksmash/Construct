@@ -30,6 +30,8 @@ class HostContext {
 
         this.output_buf = [];
 
+        this.CONFIG
+
 	this.ENVIRONMENT = {
 	    UserLevel: "SYSTEM",
 	    Variables: {
@@ -78,7 +80,7 @@ class HostContext {
 	    BuildVersion: 1,
 	    FullName: "C:\\Windows\\System32\\cscript.exe",
 	    Name: "Windows Script Host",
-	    Path: "Echo CWD",
+	    Path: "C:\\Users\\Construct", // FIXME - this should REALLY be configurable.
 	    ScriptFullName: "Full path of the currently running script",
 	    ScriptName: "the .js file",
 	    StdErr: null,
@@ -173,7 +175,11 @@ class HostContext {
     get_opt (name) {
 	// TODO: Add code here which lets runtime code ask questions
 	// of the Construct config.
+    }
 
+    get_env (var_name) {
+        if (! this.ENVIRONMENT.hasOwnProperty(var_name)) return null;
+        return this.ENVIRONMENT[var_name];
     }
 
     skew_time_ahead_by (ms) {

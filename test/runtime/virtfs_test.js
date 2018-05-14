@@ -7,8 +7,13 @@ let mock_date = {
     getTime: () => any_date_will_do.getTime()
 };
 
+var ENVIRONMENT = {
+    autovivify: true
+};
+
 let mock_context = {
     date: mock_date,
+    get_env: (e) => ENVIRONMENT[e],
     register: () => {}
 };
 
@@ -26,7 +31,7 @@ describe("VirtualFileSystem Module", function () {
 	});
     });*/
 
-    /*describe("Volumes", () => {
+    describe("Volumes", () => {
 
 	it("Should be created with a volume: 'C:'.", (done) => {
 
@@ -40,7 +45,7 @@ describe("VirtualFileSystem Module", function () {
 
 	it("Should allow volumes to be fetched.", (done) => {
 
-	    let vfs = new VirtualFileSystem({ register: () => {} }),
+	    let vfs = new VirtualFileSystem(mock_context),
 		vol = vfs.GetVolume("C:");
 
 	    assert.equal(vol.constructor.name, "FolderObject");
@@ -55,28 +60,44 @@ describe("VirtualFileSystem Module", function () {
 
 	    it("Should support adding a new file.", (done) => {
 
-		let vfs  = new VirtualFileSystem({ register: () => {} }),
+		let vfs  = new VirtualFileSystem(mock_context),
 		    newf = vfs.AddFile("C:\\foo.txt", "And did those feet in ancient times...");
 
-		assert.equal(newf.__contents, "And did those feet in ancient times...");
+		assert.equal(newf.contents, "And did those feet in ancient times...");
 		assert.equal(newf.Name, "foo.txt");
 		assert.equal(newf.constructor.name, "FileObject");
 		done();
 	    });
+
+            it("should fail to add a folder path if auto-vivification is not enabled", (done) => {
+
+                let ctx = Object.assign({}, mock_context, {
+                    get_env: (e) => {
+                        if (e === "autovivify") return false;
+                        return ENVIRONMENT[e];
+                    }
+                });
+
+                let vfs = new VirtualFileSystem(ctx);
+
+                assert.throws(() => vfs.AddFile("C:\\do\\not\\auto\\create\\dirs"), "path does not exist.");
+
+                done();
+            });
 	});
 
 	describe("Getting", () => {
 
 	    it("Should support getting a file if it exists.", (done) => {
 
-		let vfs = new VirtualFileSystem({ register: () => {} }),
+		let vfs = new VirtualFileSystem(mock_context),
 		    file = vfs.AddFile("C:\\a\\b.txt", "Bring me my charoit of fire.");
 
 		const the_file = vfs.GetFile("C:\\a\\b.txt");
 
 		assert.equal(file, the_file);
 		assert.equal(file.Name, the_file.Name);
-		assert.equal(file.__contents, the_file.__contents);
+		assert.equal(file.contents, the_file.contents);
 		done();
 	    });
 	});
@@ -85,7 +106,7 @@ describe("VirtualFileSystem Module", function () {
 
 	    it("Should support file deletion.", (done) => {
 
-		let vfs  = new VirtualFileSystem({ register: () => {} });
+		let vfs  = new VirtualFileSystem(mock_context);
 		var file = vfs.AddFile("C:\\a.txt", "Bring me my bow of burning gold.");
 		assert.equal(file.Name,  "a.txt");
 
@@ -107,7 +128,7 @@ describe("VirtualFileSystem Module", function () {
 		let src_path = "C:\\foo\\bar\\baz\\test.txt",
 		    dst_path = "C:\\destination\\filedir";
 
-		let vfs = new VirtualFileSystem({ register: () => {} }),
+		let vfs = new VirtualFileSystem(mock_context),
 		    src = vfs.AddFile(src_path, "Bring me my bow of burning gold."),
 		    dst_dir = vfs.AddFolder(dst_path);
 
@@ -122,7 +143,7 @@ describe("VirtualFileSystem Module", function () {
 
 	    it("Should overwrite an existing file if configured.", (done) => {
 
-		let vfs = new VirtualFileSystem({ register: () => {} }),
+		let vfs = new VirtualFileSystem(mock_context),
 
 		    // Copy this...
 		    fl1 = vfs.AddFile("C:\\foo\\bar.txt",
@@ -144,7 +165,7 @@ describe("VirtualFileSystem Module", function () {
 
 	    it("Should fail when trying to overwrite an existing file.", (done) => {
 
-		let vfs = new VirtualFileSystem({ register: () => {} }),
+		let vfs = new VirtualFileSystem(mock_context),
 		    fl1 = vfs.AddFile("C:\\foo\\bar.txt"),
 		    fl2 = vfs.AddFile("C:\\baz\\bar.txt"),
 		    res = vfs.CopyFileToFolder("C:\\foo\\bar.txt",
@@ -163,7 +184,7 @@ describe("VirtualFileSystem Module", function () {
 
 	    it("Should support adding a new folder.", (done) => {
 
-		let vfs = new VirtualFileSystem({ register: () => {} }),
+		let vfs = new VirtualFileSystem(mock_context),
 		    fld = vfs.AddFolder("C:\\foo\\bar\\baz");
 
 		assert.equal(fld.Type, "File Folder");
@@ -189,7 +210,7 @@ describe("VirtualFileSystem Module", function () {
 
 	    it("Should support getting an existing folder.", (done) => {
 
-		let vfs = new VirtualFileSystem({ register: () => {} }),
+		let vfs = new VirtualFileSystem(mock_context),
 		    fld = vfs.AddFolder("C:\\testing\\foo\\bar");
 
 		let get_folder = vfs.GetFolder("C:\\testing\\foo");
@@ -203,7 +224,7 @@ describe("VirtualFileSystem Module", function () {
 
 	    it("Should support folder deletion.", (done) => {
 
-		let vfs = new VirtualFileSystem({ register: () => {} });
+		let vfs = new VirtualFileSystem(mock_context);
 
 		vfs.AddFolder("C:\\foo\\bar\\baz\\b0rk\\bark");
 		vfs.AddFolder("C:\\foo\\bar\\a\\b\\c\\d");
@@ -223,7 +244,7 @@ describe("VirtualFileSystem Module", function () {
 
 	    it("Should support copying a folder.", (done) => {
 
-		let vfs = new VirtualFileSystem({ register: () => {} });
+		let vfs = new VirtualFileSystem(mock_context);
 
 		// Let's create our folder that we'll copy, and put some files
 		// and subfolders inside of it.
@@ -245,14 +266,14 @@ describe("VirtualFileSystem Module", function () {
 		assert.equal(dst_folder.SubFolders[0].ParentFolder, dst_folder);
 		assert.equal(dst_folder.SubFolders[0].Files.length, 1);
 		assert.equal(dst_folder.SubFolders[0].Files[0].Name, "foo.txt");
-		assert.equal(dst_folder.SubFolders[0].Files[0].__contents,
+		assert.equal(dst_folder.SubFolders[0].Files[0].contents,
 			     "Bring me my spear...");
 		done();
 	    });
 
 	    it("Should not overwrite elements if any file or folder names clash.", (done) => {
 
-		let vfs = new VirtualFileSystem({ register: () => {} });
+		let vfs = new VirtualFileSystem(mock_context);
 
 		// Source.
 		vfs.AddFolder("C:\\alpha\\bravo");
@@ -279,7 +300,7 @@ describe("VirtualFileSystem Module", function () {
 
 	    it("Should overwrite existing destination files if overwrite:true.", (done) => {
 
-		let vfs = new VirtualFileSystem({ register: () => {} });
+		let vfs = new VirtualFileSystem(mock_context);
 
 		// Source folder.
 		vfs.AddFolder("C:\\stage\\src");
@@ -335,7 +356,7 @@ describe("VirtualFileSystem Module", function () {
 
 	    it("should support copying in to the root volume.", (done) => {
 
-		let vfs = new VirtualFileSystem({ register: () => {} });
+		let vfs = new VirtualFileSystem(mock_context);
 
 		// Create some files/folders which will serve as our 'src'.
 		vfs.AddFolder("C:\\foo\\bar\\baz\\byte\\b0rk");
@@ -359,15 +380,15 @@ describe("VirtualFileSystem Module", function () {
 		done();
 	    });
 	});
-    });*/
+    });
 
-    describe("Wildcards", () => {
+    xdescribe("Wildcards", () => {
 
         describe("#NormaliseFilename", () => {
 
             it("should change all '?' to '>'", (done) => {
 
-                let vfs   = new VirtualFileSystem({ register: () => {} }),
+                let vfs   = new VirtualFileSystem(mock_context),
                     tests = [
                         { path: "f??.txt", exp: "f>>.txt" },
                         { path: "foo.txt", exp: "foo.txt" },
@@ -380,7 +401,7 @@ describe("VirtualFileSystem Module", function () {
 
             it(`should change all '.*' or '.?' in to '"'`, (done) => {
 
-                let vfs   = new VirtualFileSystem({ register: () => {} }),
+                let vfs   = new VirtualFileSystem(mock_context),
                     tests = [
                         { path: "f.*.txt", exp: `f".txt` },
                     ];
@@ -396,14 +417,14 @@ describe("VirtualFileSystem Module", function () {
 
             it("should return a single file when no wildcard is used", (done) => {
 
-                let vfs = new VirtualFileSystem({ register: () => {} });
+                let vfs = new VirtualFileSystem(mock_context);
                 vfs.AddFile("C:\\temp\\test.txt");
                 assert.deepEqual(vfs.GetFileList("C:\\temp\\test.txt"), ["C:\\temp\\test.txt"]);
                 done();
             });
 
             it("should return a normalized path", (done) => {
-                let vfs = new VirtualFileSystem({ register: () => {} });
+                let vfs = new VirtualFileSystem(mock_context);
                 vfs.AddFile("C:\\foo\\bar\\baz.txt", "hello");
                 assert.deepEqual(vfs.GetFileList("C:\\foo\\bar\\..\\bar\\baz.txt"), ["C:\\foo\\bar\\baz.txt"]);
                 done();
@@ -411,14 +432,14 @@ describe("VirtualFileSystem Module", function () {
 
             it("should throw if the path contains a wildcard", (done) => {
 
-                let vfs = new VirtualFileSystem({ register: () => {} });
+                let vfs = new VirtualFileSystem(mock_context);
                 assert.throws(() => vfs.GetFileList("C:\\foo\\*\\bar\\baz.txt"), "Path contains invalid characters.");
                 done();
             });
 
             it("should return [] if the filepath cannot be found", (done) => {
 
-                let vfs = new VirtualFileSystem({ register: () => {} });
+                let vfs = new VirtualFileSystem(mock_context);
                 vfs.AddFile("C:\\Users\\Testing\\hello.txt");
 
                 assert.deepEqual(vfs.GetFileList("C:\\Users\\DoesNotExist\\hello.txt"), []);

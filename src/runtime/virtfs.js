@@ -127,6 +127,14 @@ class VirtualFileSystem {
 	return this.volume[volume_label.toLowerCase()];
     }
 
+    FolderExists (path) {
+        return this.GetFolder(path) !== false;
+    }
+
+    FileExists (path) {
+        return this.GetFile(path) !== false;
+    }
+
     GetFolder (path) {
 
 	let parsed_path = AbsFileSystemObject.Parse(path);
@@ -243,12 +251,16 @@ class VirtualFileSystem {
         AbsFileSystemObject.ThrowIfInvalidPath(parsed_path.base, { file: true });
         AbsFileSystemObject.ThrowIfInvalidPath(parsed_path.dir);
 
+        if (this.FileExists(path) === false && this.context.get_env("autovivify") === false) {
+            throw new Error("Cannot create file -- path does not exist.");
+        }
+
         if (typeof contents === "String" || contents instanceof String) {
             contents = Buffer.from(contents, "utf16le");
         }
         else if (!contents instanceof Buffer) {
-            throw new Error("Cannot add file contents that " +
-                            "isn't either a String or Buffer.");
+            throw new Error("Cannot add file contents which are neither " +
+                            "a string or a Buffer instance.");
         }
         else if (contents === null || contents === undefined) {
             contents = Buffer.alloc(0);
