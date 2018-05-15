@@ -135,7 +135,7 @@ describe("Scripting.FileSystemObject", () => {
                 let fso = MakeFSO({
                     exceptions: {
                         throw_bad_filename_or_number: () => {
-                            throw new Error("bad pathname")
+                            throw new Error("bad pathname");
                         }
                     }
                 });
@@ -161,6 +161,24 @@ describe("Scripting.FileSystemObject", () => {
                 assert.throws(() => fso.CreateTextFile("foo*.txt"),       "wildcards not permitted");
                 assert.throws(() => fso.CreateTextFile("C:\\foo>.txt"),   "wildcards not permitted");
                 assert.throws(() => fso.CreateTextFile("C:\\*\\foo.txt"), "wildcards not permitted");
+
+                done();
+            });
+
+            it("should throw if overwriting is is disabled", (done) => {
+
+                let fso = MakeFSO({
+                    exceptions: {
+                        throw_file_already_exists: () => {
+                            throw new Error("file exists...");
+                        }
+                    }
+                });
+
+                ctx.vfs.AddFile("C:\\file.txt", "abcd");
+
+                const OVERWRITE = false;
+                assert.throws(() => fso.CreateTextFile("C:\\file.txt", OVERWRITE), "file exists...");
 
                 done();
             });
@@ -198,6 +216,20 @@ describe("Scripting.FileSystemObject", () => {
                 assert.throws(() => fso.CreateTextFile("C:\\bogus\\path.txt"), "autoviv blocked create");
 
                 done();
+            });
+
+            xit("TODO should throw if trying to overwrite an existing file", (done) => {
+
+                let fso = MakeFSO({
+                    exceptions: {
+                        throw_bad_filename_or_number: () => {
+                            throw new Error("File exists - overwrite is false")
+                        }
+                    }
+                });
+
+                done();
+
             });
 
 

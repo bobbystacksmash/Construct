@@ -96,6 +96,10 @@ class FileSystemObject extends Component {
     // that can be used to read from or write to the file.
     CreateTextFile (filespec, overwrite, unicode) {
 
+        if (overwrite === undefined || overwrite === null) {
+            overwrite = false;
+        }
+
         try {
 
             let file_parts = FSOHelper.Parse(filespec),
@@ -117,6 +121,16 @@ class FileSystemObject extends Component {
             // TODO: there is code missing here -- need overwrite mode stuff.
             //
             // This will throw if auto-vivification is disabled:
+
+            if (overwrite === false && this.context.vfs.FileExists(file_parts.orig_path)) {
+                this.context.exceptions.throw_file_already_exists(
+                    "Scripting.FileSystemObject",
+                    "Cannot create file while Overwrite is false",
+                    "Unable to create a textfile which already exists on " +
+                        "disk while the Overwrite property is set to false."
+                );
+            }
+
             this.context.vfs.AddFile(file_parts.orig_path);
         }
         catch (e) {
