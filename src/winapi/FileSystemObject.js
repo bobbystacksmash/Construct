@@ -140,7 +140,6 @@ class FileSystemObject extends Component {
                 );
             }
 
-            console.log(">>>>>>>>>>", e.message, e.stack);
             throw e;
         }
     }
