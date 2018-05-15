@@ -30,7 +30,9 @@ class HostContext {
 
         this.output_buf = [];
 
-        this.CONFIG
+        this.CONFIG = {
+            "autovivify": true
+        };
 
 	this.ENVIRONMENT = {
 	    UserLevel: "SYSTEM",
@@ -175,6 +177,11 @@ class HostContext {
     get_opt (name) {
 	// TODO: Add code here which lets runtime code ask questions
 	// of the Construct config.
+    }
+
+    get_cfg (cfg_item) {
+        if (! this.CONFIG.hasOwnProperty(cfg_item)) return null;
+        return this.CONFIG[cfg_item];
     }
 
     get_env (var_name) {

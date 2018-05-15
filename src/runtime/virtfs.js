@@ -251,8 +251,8 @@ class VirtualFileSystem {
         AbsFileSystemObject.ThrowIfInvalidPath(parsed_path.base, { file: true });
         AbsFileSystemObject.ThrowIfInvalidPath(parsed_path.dir);
 
-        if (this.FileExists(path) === false && this.context.get_env("autovivify") === false) {
-            throw new Error("Cannot create file -- path does not exist.");
+        if (this.FileExists(path) === false && this.context.get_cfg("autovivify") === false) {
+            throw new Error("Cannot create file -- path does not exist and autovivify disabled.");
         }
 
         if (typeof contents === "String" || contents instanceof String) {

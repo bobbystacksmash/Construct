@@ -2,20 +2,50 @@ const assert = require("chai").assert;
 const FSO = require("../../src/winapi/FileSystemObject");
 const VirtualFileSystem = require("../../src/runtime/virtfs");
 
-let context = {
-    epoch: 1,
-    ENVIRONMENT: { Arguments: { "foo": "bar" } },
-    emitter: { emit: () => {} },
-    exceptions: {},
-    vfs: {}
-};
-
 var ctx = null;
 
-beforeEach(() => {
-    let vfs = new VirtualFileSystem({ register: () => {} });
-    ctx = Object.assign({}, context, { vfs: vfs });
-});
+function MakeFSO (opts) {
+
+    opts = opts || {};
+
+    opts.exceptions  = opts.exceptions  || {};
+    opts.environment = opts.environment || {};
+    opts.config      = opts.config      || {};
+
+    var default_env = {
+        Path: "C:\\Users\\Construct"
+    };
+
+    var default_cfg = {
+        "autovivify": true
+    };
+
+
+    let env = Object.assign({}, default_env, opts.ENVIRONMENT),
+        cfg = Object.assign({}, default_cfg, opts.config);
+
+    let context = {
+        epoch: 1,
+        ENVIRONMENT: env,
+        CONFIG: cfg,
+        emitter: { emit: () => {} },
+        exceptions: {},
+        vfs: {},
+        get_env: (e) => env[e],
+        get_cfg: (c) => cfg[c]
+    };
+
+    let new_ctx = Object.assign({}, context, opts);
+
+    let vfs = new VirtualFileSystem(new_ctx);
+    new_ctx.vfs = vfs;
+
+    // We set this just so code outside of this function can access
+    // the created context object should it need to.
+    ctx = new_ctx;
+
+    return new FSO(new_ctx);
+}
 
 describe("Scripting.FileSystemObject", () => {
 
@@ -24,37 +54,41 @@ describe("Scripting.FileSystemObject", () => {
 
     describe("Methods", () => {
 
-        describe("#BuildPath", () => {
+        xdescribe("#BuildPath", () => {
 
             it("should build a path from two parts", (done) => {
-                assert.equal((new FSO(ctx)).BuildPath("foo", "bar"), "foo\\bar");
 
-                assert.equal((new FSO(ctx)).BuildPath("\\\\foo\\bar", "testing\\test.txt"),
+                let fso = MakeFSO();
+
+                assert.equal(fso.BuildPath("foo", "bar"), "foo\\bar");
+                assert.equal(fso.BuildPath("\\\\foo\\bar", "testing\\test.txt"),
                              "\\\\foo\\bar\\testing\\test.txt");
                 done();
             });
 
             it("should just combine the two parts, not check if they're valid", (done) => {
-                let fso = new FSO(ctx);
+
+                let fso = MakeFSO();
+
                 assert.equal(fso.BuildPath("C:\\foo\\bar", "../../../baz"),
                              "C:\\foo\\bar\\../../../baz");
                 done();
             });
         });
 
-        describe("#CopyFile", () => {
+        xdescribe("#CopyFile", () => {
             // TODO - blocked on wildcards
         });
 
-        describe("#CopyFolder", () => {
+        xdescribe("#CopyFolder", () => {
             // TODO - blocked on wildcards
         });
 
-        describe("#CreateFolder", () => {
+        xdescribe("#CreateFolder", () => {
 
             it("should successfully create/return a folder", (done) => {
 
-                let fso = new FSO(ctx);
+                let fso = MakeFSO();
                 assert.isFalse(fso.FolderExists("C:\\foo\\bar"));
 
                 let dir = fso.CreateFolder("C:\\foo\\bar");
@@ -65,14 +99,14 @@ describe("Scripting.FileSystemObject", () => {
 
             it("should throw if the folder already exists", (done) => {
 
-                ctx = Object.assign({}, ctx, {
+                let fso = MakeFSO({
                     exceptions: {
                         throw_file_already_exists: () => {
                             throw new Error("dir exists");
                         }
-                    }});
+                    }
+                });
 
-                let fso = new FSO(ctx);
                 fso.CreateFolder("C:\\foo\\bar");
 
                 assert.throws(() => fso.CreateFolder("C:\\foo\\bar"), "dir exists");
@@ -81,14 +115,14 @@ describe("Scripting.FileSystemObject", () => {
 
             it("should throw 'path not found' if volume does not exist", (done) => {
 
-                ctx = Object.assign({}, ctx, {
+                let fso = MakeFSO({
                     exceptions: {
                         throw_path_not_found: () => {
                             throw new Error("drive not found");
                         }
-                    }});
+                    }
+                });
 
-                let fso = new FSO(ctx);
                 assert.throws(() => fso.CreateFolder("F:\\foo\\bar"), "drive not found");
                 done();
             });
@@ -98,14 +132,14 @@ describe("Scripting.FileSystemObject", () => {
             //  - what if the path is invalid?
             it("should throw if the path is invalid", (done) => {
 
-                ctx = Object.assign({}, ctx, {
+                let fso = MakeFSO({
                     exceptions: {
                         throw_bad_filename_or_number: () => {
-                            throw new Error("bad pathname");
+                            throw new Error("bad pathname")
                         }
-                    }});
+                    }
+                });
 
-                let fso = new FSO(ctx);
                 assert.throws(() => fso.CreateFolder("C:\\<*.."), "bad pathname");
                 done();
             });
@@ -115,12 +149,60 @@ describe("Scripting.FileSystemObject", () => {
 
         describe("#CreateTextFile", () => {
 
+            it("should throw 'bad filename or number' if a wildcard appears in the filename", (done) => {
+
+                let fso = MakeFSO({
+                    exceptions: {
+                        throw_bad_filename_or_number: () => {
+                            throw new Error("wildcards not permitted");
+                        }
+                    }});
+
+                assert.throws(() => fso.CreateTextFile("foo*.txt"),       "wildcards not permitted");
+                assert.throws(() => fso.CreateTextFile("C:\\foo>.txt"),   "wildcards not permitted");
+                assert.throws(() => fso.CreateTextFile("C:\\*\\foo.txt"), "wildcards not permitted");
+
+                done();
+            });
+
+            it("should create the text file in the CWD if no path is given", (done) => {
+
+                let fso = MakeFSO();
+
+                assert.isFalse(ctx.vfs.GetFile("C:\\Users\\Construct\\file.txt"));
+                fso.CreateTextFile("file.txt");
+                assert.equal(ctx.vfs.GetFile("C:\\Users\\Construct\\file.txt").constructor.name, "FileObject");
+
+                done();
+            });
+
+            it("should create a file even if the path is partial", (done) => {
+
+                let fso = new FSO(ctx);
+
+                assert.isFalse(ctx.vfs.GetFile("C:\\relative.txt"));
+                fso.CreateTextFile("../../relative.txt");
+                assert.equal(ctx.vfs.GetFile("C:\\relative.txt").constructor.name, "FileObject");
+
+                done();
+            });
+
+            it("should throw if the filepath does not exist", (done) => {
+
+                let fso = MakeFSO({
+                    exceptions: {
+                        throw_bad_filename_or_number: () => { throw new Error("autoviv blocked create") }
+                    },
+                    config: { autovivify: false } });
+
+                assert.throws(() => fso.CreateTextFile("C:\\bogus\\path.txt"), "autoviv blocked create");
+
+                done();
+            });
+
+
             // TODO:
             //
-            //  - throw if wildcard chars are used in filename
-            //  - should create a file in CWD if no path specified
-            //  - if script has full path but that path does not exist, should throw
-            //    - may be an opportunity to test auto-vivify FS feature?
             //  - the default overwrite value is false
             //  - Unicode is the default encoding scheme, else use ASCII.
         });

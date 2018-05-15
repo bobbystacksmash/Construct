@@ -7,13 +7,13 @@ let mock_date = {
     getTime: () => any_date_will_do.getTime()
 };
 
-var ENVIRONMENT = {
+var CONFIG = {
     autovivify: true
 };
 
 let mock_context = {
     date: mock_date,
-    get_env: (e) => ENVIRONMENT[e],
+    get_cfg: (v) => CONFIG[v],
     register: () => {}
 };
 
@@ -72,15 +72,18 @@ describe("VirtualFileSystem Module", function () {
             it("should fail to add a folder path if auto-vivification is not enabled", (done) => {
 
                 let ctx = Object.assign({}, mock_context, {
-                    get_env: (e) => {
-                        if (e === "autovivify") return false;
-                        return ENVIRONMENT[e];
+                    get_cfg: (v) => {
+                        if (v === "autovivify") return false;
+                        return CONFIG[v];
                     }
                 });
 
                 let vfs = new VirtualFileSystem(ctx);
 
-                assert.throws(() => vfs.AddFile("C:\\do\\not\\auto\\create\\dirs"), "path does not exist.");
+                assert.throws(
+                    () => vfs.AddFile("C:\\do\\not\\auto\\create\\dirs"),
+                    "path does not exist and autovivify disabled."
+                );
 
                 done();
             });

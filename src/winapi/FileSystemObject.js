@@ -2,10 +2,13 @@
 
 const Component = require("../Component");
 const proxify   = require("../proxify2");
+const FSOHelper = require("../absFileSystemObject");
+const win32path = require("path").win32;
 
 class FileSystemObject extends Component {
 
     constructor (context) {
+
 	super(context, "FileSystemObject");
         this.context = context;
 
@@ -91,9 +94,55 @@ class FileSystemObject extends Component {
 
     // Creates a specified file name and returns a TextStream object
     // that can be used to read from or write to the file.
-    CreateTextFile (filename, overwrite, unicode) {
+    CreateTextFile (filespec, overwrite, unicode) {
 
+        try {
 
+            let file_parts = FSOHelper.Parse(filespec),
+                cwd        = this.context.get_env("Path");
+
+            if (file_parts.dir === "") {
+                file_parts = FSOHelper.Parse(`${cwd}\\${file_parts.base}`);
+            }
+            else if (file_parts.root === "") {
+
+                // This is a relative path...
+                let relative_path = win32path.join(cwd, filespec);
+                file_parts = FSOHelper.Parse(relative_path);
+            }
+
+            FSOHelper.ThrowIfInvalidPath(file_parts.base, { file: true });
+            FSOHelper.ThrowIfInvalidPath(file_parts.orig_path);
+
+            // TODO: there is code missing here -- need overwrite mode stuff.
+            //
+            // This will throw if auto-vivification is disabled:
+            this.context.vfs.AddFile(file_parts.orig_path);
+        }
+        catch (e) {
+
+            if (e.message.includes("contains invalid characters")) {
+                this.context.exceptions.throw_bad_filename_or_number(
+                    "Scripting.FileSystemObject",
+                    "Cannot create file -- illegal chars in filename.",
+                    "The file cannot be created because it contains illegal characters " +
+                        "which are forbidden in Windows filenames."
+                );
+            }
+            else if (e.message.includes("path does not exist and autovivify disabled")) {
+                this.context.exceptions.throw_bad_filename_or_number(
+                    "Scripting.FileSystemObject",
+                    "Cannot create the requested file because the parent path does not exist.",
+                    "By default, Construct allows path 'autovivification' which will auto-create " +
+                        "folder paths if they do not exist.  This error is seen because a path " +
+                        "create event was attempted, but the path does not exist and autovivify " +
+                        "is disabled."
+                );
+            }
+
+            console.log(">>>>>>>>>>", e.message, e.stack);
+            throw e;
+        }
     }
 
     // Deletes a specified file.
