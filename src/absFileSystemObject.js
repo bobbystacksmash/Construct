@@ -57,7 +57,7 @@ class AbsFileSystemObject {
         //   ? (question mark)
         //   * (asterisk)
         //
-
+        //
         // The following code is adopted from:
         //
         //   - https://github.com/jonschlinkert/is-invalid-path/blob/master/index.js
@@ -68,7 +68,8 @@ class AbsFileSystemObject {
         //
         // Remove the volume lable from the beginning of the path,
         // such as: `C:\'
-        let path_root = pathlib.parse(path).root;
+        //
+        let path_root = pathlib.parse(pathlib.normalize(path)).root;
         if (path_root) {
             path = path.slice(path_root.length);
         }
