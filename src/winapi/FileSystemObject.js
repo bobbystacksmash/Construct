@@ -5,7 +5,7 @@ const proxify   = require("../proxify2");
 const FSOHelper = require("../absFileSystemObject");
 const win32path = require("path").win32;
 
-class FileSystemObject extends Component {
+class JS_FileSystemObject extends Component {
 
     constructor (context) {
 
@@ -269,4 +269,7 @@ class FileSystemObject extends Component {
 }
 
 
-module.exports = FileSystemObject;
+module.exports = function create(context) {
+    let fso = new JS_FileSystemObject(context);
+    return proxify(context, fso);
+};
