@@ -12,8 +12,10 @@ the RC is published.
 | Rename, move, and update code surrounding ~AbsFileSystemObject.js~.    | TODO   |
 | Add basic support (syntax rewriter?) for alerting if JS is browser.    | TODO   |
 | Add better exception handling to the REPL environment.                 | TODO   |
+| For ExceptionHandler throws -- trap and display these in a nice way.   | TODO   |
 | ~WshShell~ needs lots of attention (ENV VARS live here).               | TODO   |
 | Add a built-in ~man~ or ~help~ command for usage within Construct.     | TODO   |
+| Do basic groundwork to later support syntax rewriting.                 | TODO   |
 | Add reading list / references to README.                               | TODO   |
 | Trap exceptions up to REPL and present a pre-written issue desc + link | TODO   |
 | Unify the event format for all {GET,SET} properties and methods.       | TODO   |
