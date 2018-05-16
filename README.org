@@ -3,9 +3,9 @@
 
 * Alpha Release Checklist
 
-Construct is nearing an alpha release candidate.  This table tracks
-the existing high level TODO items which need to be completed before
-the RC is published.
+Construct is nearing an alpha release candidate, codename: "St. Sunday
+Crag".  This table tracks the existing high level TODO items which
+need to be completed before the RC is published.
 
 | Task                                                                   | Status |
 |------------------------------------------------------------------------+--------|
@@ -31,7 +31,6 @@ the RC is published.
 | Separate CLI opts from Construct CORE so they're not tightly coupled.  | TODO   |
 #+CAPTION: List of TODO items for alpha RC.
 
-
 * References
 ** Books
  - Lomax, P., 2003. _VBScript in a Nutshell_. O'Reilly Media, Incorporated.
@@ -40,5 +39,3 @@ the RC is published.
  - E., M., 2016. _Troubleshooting with the Windows Sysinternals Tools (2nd Edition)_. Microsoft Press.
  - Soulami, T., 2012. _Inside Windows Debugging: A Practical Guide to Debugging and Tracing Strategies in Windows_. Microsoft Press.
  - Microsoft Corp., 2002. _Microsoft Windows 2000 scripting guide_. Microsoft Press, 2003.
-
-** Websites
