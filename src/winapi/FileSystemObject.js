@@ -1,9 +1,11 @@
 // https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/windows-scripting/z9ty6h50(v=vs.84)
 
-const Component = require("../Component");
-const proxify   = require("../proxify2");
-const FSOHelper = require("../absFileSystemObject");
-const win32path = require("path").win32;
+const Component     = require("../Component");
+const proxify       = require("../proxify2");
+const FSOHelper     = require("../absFileSystemObject");
+const JS_TextStream = require("./TextStream");
+const win32path     = require("path").win32;
+
 
 class JS_FileSystemObject extends Component {
 
@@ -100,6 +102,10 @@ class JS_FileSystemObject extends Component {
             overwrite = false;
         }
 
+        if (unicode === undefined || unicode === null) {
+            unicode = false;
+        }
+
         try {
 
             let file_parts = FSOHelper.Parse(filespec),
@@ -131,7 +137,15 @@ class JS_FileSystemObject extends Component {
                 );
             }
 
-            this.context.vfs.AddFile(file_parts.orig_path);
+            let file = this.context.vfs.AddFile(file_parts.orig_path);
+
+            return new JS_TextStream(
+                this.context,
+                file.Path,
+                false, // CAN READ?   No.
+                1,
+                unicode
+            );
         }
         catch (e) {
 
@@ -144,7 +158,7 @@ class JS_FileSystemObject extends Component {
                 );
             }
             else if (e.message.includes("path does not exist and autovivify disabled")) {
-                this.context.exceptions.throw_bad_filename_or_number(
+                this.context.exceptions.throw_path_not_found(
                     "Scripting.FileSystemObject",
                     "Cannot create the requested file because the parent path does not exist.",
                     "By default, Construct allows path 'autovivification' which will auto-create " +

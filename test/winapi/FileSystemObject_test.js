@@ -176,9 +176,9 @@ describe("Scripting.FileSystemObject", () => {
                 });
 
                 ctx.vfs.AddFile("C:\\file.txt", "abcd");
-
                 const OVERWRITE = false;
                 assert.throws(() => fso.CreateTextFile("C:\\file.txt", OVERWRITE), "file exists...");
+                assert.equal(ctx.vfs.GetFile("C:\\file.txt").contents, "abcd");
 
                 done();
             });
@@ -209,34 +209,70 @@ describe("Scripting.FileSystemObject", () => {
 
                 let fso = MakeFSO({
                     exceptions: {
-                        throw_bad_filename_or_number: () => { throw new Error("autoviv blocked create") }
+                        throw_path_not_found: () => { throw new Error("path not found (av:false)") }
                     },
                     config: { autovivify: false } });
 
-                assert.throws(() => fso.CreateTextFile("C:\\bogus\\path.txt"), "autoviv blocked create");
+                assert.throws(() => fso.CreateTextFile("C:\\bogus\\path.txt"), "path not found (av:false)");
 
                 done();
             });
 
-            xit("TODO should throw if trying to overwrite an existing file", (done) => {
+            it("should return a TextStream instance", (done) => {
 
-                let fso = MakeFSO({
-                    exceptions: {
-                        throw_bad_filename_or_number: () => {
-                            throw new Error("File exists - overwrite is false")
-                        }
-                    }
-                });
+                let fso = MakeFSO(),
+                    ts  = fso.CreateTextFile("file.txt");
+
+                let ts_api = [
+                    "Read", "ReadAll", "ReadLine", "Skip", "SkipLine",
+                    "Write", "WriteBlankLines", "WriteLine"
+                ];
+
+                ts_api.forEach((method) => assert.isFunction(ts[method]));
 
                 done();
-
             });
 
+            it("should open a text file and then fail to write to it by default", (done) => {
 
-            // TODO:
-            //
-            //  - the default overwrite value is false
-            //  - Unicode is the default encoding scheme, else use ASCII.
+                ctx.vfs.AddFile("C:\\file.txt", "Hello, World!");
+
+                let fso = MakeFSO();
+
+                var ts;
+                assert.doesNotThrow(() => ts = fso.CreateTextFile("C:\\file.txt"));
+                assert.doesNotThrow(() => ts.write("overwrite successful"));
+
+                assert.equal(ctx.vfs.GetFile("C:\\file.txt").contents, "overwrite successful");
+
+                done();
+            });
+
+            it("should write unicode if signalled to do so", (done) => {
+
+                let fso = MakeFSO(),
+                    ts  = fso.CreateTextFile("C:\\unicode.txt", true, true);
+
+                ts.Write("7-bit ASCII or GTFO...");
+
+                let filebuf = ctx.vfs.GetFile("C:\\unicode.txt").contents;
+
+                assert.deepEqual(
+                    filebuf.slice(0, 8),
+                    Buffer.from([
+                        0xFF, // BOM
+                        0xFE, // BOM
+                        0x37, // '7'
+                        0x00, //
+                        0x2d, // '-'
+                        0x00, //
+                        0x62, // 'b'
+                        0x00, //
+                    ])
+                );
+
+                done();
+            });
         });
 
         describe("#DeleteFile", NOOP);

@@ -6,9 +6,13 @@ const AbstractIOStream = require("./support/AbstractIOStream");
 
 class JS_TextStream extends Component {
 
-    constructor (context, backing_stream_spec, can_read, can_write, encoding) {
+    constructor (context, backing_stream_spec, can_read, can_write, use_unicode) {
 
-        encoding = encoding || "ascii";
+        let charset = "ASCII";
+
+        if (use_unicode) {
+            charset = "Unicode";
+        }
 
         super(context, "TextStream");
 
@@ -21,7 +25,7 @@ class JS_TextStream extends Component {
             backing_stream_spec,
             can_read,
             can_write,
-            encoding
+            charset
         );
     }
 
@@ -359,7 +363,7 @@ class JS_TextStream extends Component {
     }
 }
 
-module.exports = function create(context, backing_stream_spec, can_read, can_write, encoding) {
-    let ts = new JS_TextStream(context, backing_stream_spec, can_read, can_write);
+module.exports = function create(context, backing_stream_spec, can_read, can_write, use_unicode) {
+    let ts = new JS_TextStream(context, backing_stream_spec, can_read, can_write, use_unicode);
     return proxify(context, ts);
 };
