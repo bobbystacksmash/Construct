@@ -2,7 +2,7 @@ const JScript_XMLHttpRequestBase = require("../XMLHttpRequestBase");
 const JScript_WshShell           = require("../WshShell");
 const JScript_ShellApplication   = require("../ShellApplication");
 const JScript_ADODBStream        = require("../ADODBStream");
-const JScript_FileSystemObject   = require("../ADODBStream");
+const JScript_FileSystemObject   = require("../FileSystemObject");
 
 function create_instance (context, type) {
 
