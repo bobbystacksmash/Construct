@@ -24,8 +24,8 @@ class JS_FileSystemObject extends Component {
 
     // Returns a Drives collection consisting of all Drive objects
     // available on the local machine.
-    get Drives () {}
-    set Drives (_) {}
+    get drives () {}
+    set drives (_) {}
 
     //
     // METHODS
@@ -36,24 +36,24 @@ class JS_FileSystemObject extends Component {
     // concatenation method, rather than a filesystem method.  It does
     // not check that either path exists, or if the path is valid.
     //
-    BuildPath (existing_path, new_path_part) {
+    buildpath (existing_path, new_path_part) {
         this.ee.emit("FileSystemObject::BuildPath", arguments);
         return this.vfs.BuildPath(existing_path, new_path_part);
     }
 
     // Copies one or more files from one location to another.
-    CopyFile () {
+    copyfile () {
         // TODO: Blocked on wildcard implementation.
     }
 
     // Recursively copies a folder from one location to another.
-    CopyFolder () {
+    copyfolder () {
         // TODO: Blocked on wildcard implementation.
     }
 
     // Creates a single new folder in the `path' specified and returns
     // its Folder object.
-    CreateFolder (path) {
+    createfolder (path) {
 
         // Does this path already exist?
         try {
@@ -94,7 +94,7 @@ class JS_FileSystemObject extends Component {
 
     // Creates a specified file name and returns a TextStream object
     // that can be used to read from or write to the file.
-    CreateTextFile (filespec, overwrite, unicode) {
+    createtextfile (filespec, overwrite, unicode) {
 
         if (overwrite === undefined || overwrite === null) {
             overwrite = false;
@@ -159,111 +159,111 @@ class JS_FileSystemObject extends Component {
     }
 
     // Deletes a specified file.
-    DeleteFile () {
+    deletefile () {
 
     }
 
     // Deletes a specified folder and its contents.
-    DeleteFolder () {
+    deletefolder () {
 
     }
 
     // Returns true if the specified drive exists; false if it does
     // not.
-    DriveExists () {
+    driveexists () {
 
     }
 
     // Returns true if a specified file exists; false if it does not.
-    FileExists () {
+    fileexists () {
 
     }
 
     // Returns true if a specified folder exists; false if it does
     // not.
-    FolderExists (pathspec) {
+    folderexists (pathspec) {
         return (this.vfs.GetFolder(pathspec)) ? true : false;
     }
 
     // Returns a complete and unambiguous path from a provided path
     // specification.
-    GetAbsolutePathName () {
+    getabsolutepathname () {
 
     }
 
     // Returns a string containing the base name of the last
     // component, less any file extension, in a path.
-    GetBaseName () {
+    getbasename () {
 
     }
 
     // Returns a Drive object corresponding to the drive in a
     // specified path.
-    GetDrive () {
+    getdrive () {
 
     }
 
     // Returns a string containing the name of the drive for a
     // specified path.
-    GetDriveName () {
+    getdrivename () {
 
     }
 
     // Returns a string containing the extension for the last
     // component in a path.
-    GetExtensionName () {
+    getextensionname () {
 
     }
 
     // Returns a File object corresponding to the file in a specified
     // path.
-    GetFile () {
+    getfile () {
 
     }
 
     // Returns the last component of specified path that is not part
     // of the drive specification.
-    GetFileName () {
+    getfilename () {
 
     }
 
     // Returns a Folder object corresponding to the folder in a
     // specified path.
-    GetFolder (path) {
+    getfolder (path) {
 
     }
 
     // Returns a string containing the name of the parent folder of
     // the last component in a specified path.
-    GetParentFolderName () {
+    getparentfoldername () {
 
     }
 
     // Returns the special folder object specified.
-    GetSpecialFolder () {
+    getspecialfolder () {
 
     }
 
     // Returns a randomly generated temporary file or folder name that
     // is useful for performing operations that require a temporary
     // file or folder.
-    GetTempName () {
+    gettempname () {
 
     }
 
     // Moves one or more files from one location to another.
-    MoveFile () {
+    movefile () {
 
     }
 
     // Moves one or more folders from one location to another.
-    MoveFolder () {
+    movefolder () {
 
     }
 
     // Opens a specified file and returns a TextStream object that can
     // be used to read from, write to, or append to the file.
-    OpenTextFile () {
+    opentextfile () {
 
     }
 }
