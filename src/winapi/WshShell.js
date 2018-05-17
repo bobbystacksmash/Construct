@@ -241,6 +241,38 @@ class JS_WshShell extends Component {
     exec () {
     }
 
+    //
+    // ExpandEnvironmentStrings
+    // ~~~~~~~~~~~~~~~~~~~~~~~~
+    //
+    // MSDN: https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/windows-scripting/dy8116cf%28v%3dvs.84%29
+    //
+    // SYNOPSIS
+    // ========
+    //
+    // When given a string which contains environment variables,
+    // `ExpandEnvironmentStrings' will return the string with these
+    // environment variables expanded.  For example:
+    //
+    //   INPUT  => "%AppData%"
+    //   OUTPUT => "C:\Users\<user>\AppData\Roaming"
+    //
+    //
+    // CONSTRUCT SPECIFIC INFORMATION
+    // ==============================
+    //
+    // Environment variables are available via the `get_env' method of
+    // `this.context'.  TODO: Add plugin hooks here.
+    //
+    expandenvironmentstrings (str) {
+
+        this.ee.emit("@WshShell.ExpandEnvironmentStrings", arguments);
+
+        // Environment variables are enclosed between '%' characters.
+        // Fetch a list of all of these params from our input `str':
+        /// TODO...
+    }
+
     regread (key) {
         console.log("WshShell.RegRead", arguments);
     }
