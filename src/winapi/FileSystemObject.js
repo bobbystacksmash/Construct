@@ -39,13 +39,39 @@ class JS_FileSystemObject extends Component {
     // not check that either path exists, or if the path is valid.
     //
     buildpath (existing_path, new_path_part) {
-        this.ee.emit("FileSystemObject::BuildPath", arguments);
+        this.ee.emit("FileSystemObject::BuildPath", existing_path, new_path_part);
         return this.vfs.BuildPath(existing_path, new_path_part);
     }
 
     // Copies one or more files from one location to another.
-    copyfile () {
-        // TODO: Blocked on wildcard implementation.
+    copyfile (source, destination, overwrite_files) {
+
+        this.ee.emit("FileSystemObject::CopyFile", source, destination, overwrite_files);
+
+        try {
+            this.vfs.CopyFileToFolder(source, destination);
+        }
+        catch (e) {
+
+            if (e.message.includes("Source file not found")) {
+                this.context.exceptions.throw_file_not_found(
+                    "Scripting.FileSystemObject",
+                    "Unable to find src file.",
+                    "The CopyFile operation was not completely successful because the " +
+                        `file: ${source} could not be found.`
+                );
+            }
+            else if (e.message.includes("Destination folder not found")) {
+                this.context.exceptions.throw_path_not_found(
+                    "Scripting.FileSystemObject",
+                    "Unable to find destination folder.",
+                    "The CopyFile operation was not completely successful because the " +
+                        `destination folder: ${destination} could not be found.`
+                );
+            }
+
+            throw e;
+        }
     }
 
     // Recursively copies a folder from one location to another.

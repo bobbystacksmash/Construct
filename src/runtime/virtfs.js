@@ -488,16 +488,20 @@ class VirtualFileSystem {
 	let src_file = this.GetFile(src_file_path);
 
 	if (!src_file) {
-	    console.log(`Cannot copy ${src_file_path}`,
-			`to ${dest_file_path} - file not found.`);
+            throw new Error("Source file not found");
 	    return false;
 	}
 
+        // TODO: Add auto-vivification here.
+        if (! this.FolderExists(dest_file_path)) {
+            throw new Error("Destination folder not found");
+        }
+
 	// Second, we shouldn't overwrite the file if it already exists..
 	if (this.GetFile(dest_file_path) && overwrite === false) {
-	    /*console.log(`Cannot copy ${src_file_path}`,
+	    console.log(`Cannot copy ${src_file_path}`,
 			`to ${dest_file_path} - dst file exists and `,
-			`overwrite is ${overwrite}.`);*/
+			`overwrite is ${overwrite}.`);
 	    return false;
 	}
 

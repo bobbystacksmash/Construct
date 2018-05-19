@@ -54,7 +54,7 @@ describe("Scripting.FileSystemObject", () => {
 
     describe("Methods", () => {
 
-        xdescribe("#BuildPath", () => {
+        describe("#BuildPath", () => {
 
             it("should build a path from two parts", (done) => {
 
@@ -76,15 +76,62 @@ describe("Scripting.FileSystemObject", () => {
             });
         });
 
-        xdescribe("#CopyFile", () => {
+        describe("#CopyFile", () => {
+
+            xit("should throw file not found if src file does not exist", (done) => {
+
+                fso = MakeFSO({
+                    exceptions: {
+                        throw_file_not_found: () => {
+                            throw new Error("cannot find src file");
+                        }
+                    }
+                });
+
+                assert.throws(() => fso.CopyFile("missing.txt", "foo.txt"), "cannot find src file");
+
+                done();
+            });
+
+            it("should throw path not found if the dest dir does not exist", (done) => {
+
+                fso = MakeFSO({
+                    exceptions: {
+                        throw_path_not_found: () => {
+                            throw new Error("cannot find dest dir");
+                        }
+                    }
+                });
+
+                ctx.vfs.AddFile("C:\\file.txt");
+
+                assert.throws(() => fso.CopyFile("C:\\file.txt", "C:\\FOOBAR"), "cannot find dest dir");
+
+                done();
+            });
+
+            xit("should copy a relative path to another relative path", (done) => {
+
+                ctx.vfs.AddFile("C:\\Users\\Construct\\file_a.txt", "hello, world!");
+                let fso = MakeFSO();
+
+                fso.CopyFile("file_a.txt", "file_b.txt");
+
+                assert.equal(ctx.vfs.GetFile("C:\\Users\\Construct\\file_b.txt"), "blah");
+
+                done();
+            });
+
+            xit("should support copying wildcards", (done) => {
+
+            });
+        });
+
+        describe("#CopyFolder", () => {
             // TODO - blocked on wildcards
         });
 
-        xdescribe("#CopyFolder", () => {
-            // TODO - blocked on wildcards
-        });
-
-        xdescribe("#CreateFolder", () => {
+        describe("#CreateFolder", () => {
 
             it("should successfully create/return a folder", (done) => {
 
