@@ -48,8 +48,21 @@ class JS_FileSystemObject extends Component {
 
         this.ee.emit("FileSystemObject::CopyFile", source, destination, overwrite_files);
 
+        //
+        // TODO:
+        //
+        //  - Add something like `vfs.ExpandFilespec' here to return
+        //  - an array of paths for wildcarding.
+        //
+
         try {
-            this.vfs.CopyFileToFolder(source, destination);
+
+            let source_path_full      = this.vfs.ExpandPath(source),
+                destination_path_full = this.vfs.ExpandPath(destination);
+
+            console.log(`copy ${source_path_full} -> ${destination_path_full}`);
+
+            this.vfs.CopyFileToFolder(source_path_full, destination_path_full);
         }
         catch (e) {
 

@@ -93,7 +93,7 @@ describe("Scripting.FileSystemObject", () => {
                 done();
             });
 
-            it("should throw path not found if the dest dir does not exist", (done) => {
+            xit("should throw path not found if the dest dir does not exist", (done) => {
 
                 fso = MakeFSO({
                     exceptions: {
@@ -110,10 +110,10 @@ describe("Scripting.FileSystemObject", () => {
                 done();
             });
 
-            xit("should copy a relative path to another relative path", (done) => {
+            it("should copy a relative path to another relative path", (done) => {
 
-                ctx.vfs.AddFile("C:\\Users\\Construct\\file_a.txt", "hello, world!");
                 let fso = MakeFSO();
+                ctx.vfs.AddFile("C:\\Users\\Construct\\file_a.txt", "hello, world!");
 
                 fso.CopyFile("file_a.txt", "file_b.txt");
 

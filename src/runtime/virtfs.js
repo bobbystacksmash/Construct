@@ -3,6 +3,7 @@ const _          = require("lodash");
 const FolderObject = require("../winapi/FolderObject");
 const FileObject   = require("../winapi/FileObject");
 const AbsFileSystemObject = require("../absFileSystemObject");
+const is_relative  = require("is-relative");
 
 class VirtualFileSystem {
 
@@ -475,14 +476,69 @@ class VirtualFileSystem {
 	return cont;
     }
 
+    ExpandPath (path) {
+
+        if (is_relative(path)) {
+            path = pathlib.join(this.context.get_env("Path"), path);
+        }
+
+        return pathlib.normalize(path);
+
+    }
+
+    Parse (path) {
+
+	// Replace all forward slashes with back slashes...
+	path = path.replace(/\//, "\\").toLowerCase();
+	path = path.replace(/\\\\/, "");
+
+	let ends_with_path_sep = /\/$/.test(path);
+
+        try {
+	    var parsed_path   = pathlib.parse(path),
+	        path_parts    = parsed_path.dir.split(/\\/),
+	        volume_letter = parsed_path.root.replace(/\\/g, "").toLowerCase();
+        }
+        catch (e) {
+
+        }
+
+	parsed_path.volume             = volume_letter;
+	parsed_path.assumed_folder     = ends_with_path_sep;
+	parsed_path.orig_path          = path;
+	parsed_path.orig_path_parts    = path.split("\\");
+	parsed_path.orig_path_parts_mv = parsed_path.orig_path_parts.slice(1);
+
+	return parsed_path;
+    }
+
     CopyFileToFolder (src_file_path, dest_file_path, opts) {
 
 	opts = opts || { overwrite: false };
 	const overwrite = opts.overwrite;
 
-	let src_file_name = pathlib.basename(src_file_path);
+        let src_file_parts = this.Parse(this.ExpandPath(src_file_path)),
+            src_file_name  = src_file_parts.base;
 
-	dest_file_path += `\\${src_file_name}`;
+        // Logic for coyping a file is:
+        //
+        //   - if a folder exists in DEST which matches the copied file's name
+        //     THROW PERMISSION DENIED, for example:
+        //
+        //     DIR: "C:\\Foo", "C:\\Foo\\Bar".
+        //     copy ("C:\\Foo\\file.txt", "C:\\Foo\\Bar") - perm denied.
+        //     copy ("C:\\Foo\\file.txt", "C:\\Foo\\Bar\\") - copies 'file.txt' in to Bar.
+
+        // Is the destination location a path or an actual file?
+        if (opts.hasOwnProperty("destination_filename") === false) {
+            opts.destination_filename = src_file_name;
+        }
+        else {
+            let dst_path_parts = this.Parse(this.ExpandPath(dest_file_path));
+            console.log("=-----", dst_path_parts);
+        }
+
+	dest_file_path = pathlib.join(dest_file_path, opts.destination_filename);
 
 	// First, make sure the source file actually exists...
 	let src_file = this.GetFile(src_file_path);
