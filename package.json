@@ -29,6 +29,7 @@
     "http-status": "^1.0.1",
     "iconv-lite": "^0.4.21",
     "install": "^0.10.4",
+    "is-relative": "^1.0.0",
     "istanbul": "^0.4.5",
     "js-beautify": "^1.7.4",
     "lodash": "^4.17.4",
