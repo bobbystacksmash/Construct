@@ -512,6 +512,8 @@ class VirtualFileSystem {
 	return parsed_path;
     }
 
+
+
     CopyFileToFolder (src_file_path, dest_file_path, opts) {
 
 	opts = opts || { overwrite: false };
@@ -526,9 +528,9 @@ class VirtualFileSystem {
         //     THROW PERMISSION DENIED, for example:
         //
         //     DIR: "C:\\Foo", "C:\\Foo\\Bar".
-        //     copy ("C:\\Foo\\file.txt", "C:\\Foo\\Bar") - perm denied.
+        //     Copy file.txt to "Bar" - copy ("C:\\Foo\\file.txt", "C:\\Foo\\Bar") - perm denied.
         //     copy ("C:\\Foo\\file.txt", "C:\\Foo\\Bar\\") - copies 'file.txt' in to Bar.
-
+        //
         // Is the destination location a path or an actual file?
         if (opts.hasOwnProperty("destination_filename") === false) {
             opts.destination_filename = src_file_name;
