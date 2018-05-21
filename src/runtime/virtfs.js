@@ -136,6 +136,11 @@ class VirtualFileSystem {
         return this.GetFile(path) !== false;
     }
 
+    GetFilename (path) {
+        return this.Parse(this.ExpandPath(path)).base;
+    }
+
+
     GetFolder (path) {
 
 	let parsed_path = AbsFileSystemObject.Parse(path);
@@ -513,7 +518,6 @@ class VirtualFileSystem {
     }
 
 
-
     CopyFileToFolder (src_file_path, dest_file_path, opts) {
 
 	opts = opts || { overwrite: false };
@@ -532,6 +536,9 @@ class VirtualFileSystem {
         //     copy ("C:\\Foo\\file.txt", "C:\\Foo\\Bar\\") - copies 'file.txt' in to Bar.
         //
         // Is the destination location a path or an actual file?
+        //
+
+
         if (opts.hasOwnProperty("destination_filename") === false) {
             opts.destination_filename = src_file_name;
         }
