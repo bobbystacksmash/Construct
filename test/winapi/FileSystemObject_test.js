@@ -78,7 +78,7 @@ describe("Scripting.FileSystemObject", () => {
 
         describe("#CopyFile", () => {
 
-            xit("should throw file not found if src file does not exist", (done) => {
+            it("should throw file not found if src file does not exist", (done) => {
 
                 fso = MakeFSO({
                     exceptions: {
@@ -93,7 +93,7 @@ describe("Scripting.FileSystemObject", () => {
                 done();
             });
 
-            xit("should throw path not found if the dest dir does not exist", (done) => {
+            it("should throw path not found if the dest dir does not exist", (done) => {
 
                 fso = MakeFSO({
                     exceptions: {
@@ -110,7 +110,7 @@ describe("Scripting.FileSystemObject", () => {
                 done();
             });
 
-            xit("should throw if a file copy-to operation matches destination folder (ambiguous)", (done) => {
+            it("should throw if a file copy-to operation matches destination folder (ambiguous)", (done) => {
 
                 let fso = MakeFSO({
                     exceptions: {
@@ -135,7 +135,12 @@ describe("Scripting.FileSystemObject", () => {
                 ctx.vfs.AddFile("C:\\Users\\Construct\\file_a.txt");
                 ctx.vfs.AddFolder("C:\\Users\\Construct\\bar");
 
+                assert.isFalse(ctx.vfs.FileExists("C:\\Users\\Construct\\bar\\file_a.txt"));
+                assert.isTrue(ctx.vfs.FileExists("C:\\Users\\Construct\\file_a.txt"));
+
                 assert.doesNotThrow(() => fso.CopyFile("file_a.txt", "bar/"));
+
+                assert.isTrue(ctx.vfs.FileExists("C:\\Users\\Construct\\bar\\file_a.txt"));
 
                 done();
             });

@@ -555,6 +555,8 @@ class VirtualFileSystem {
 
 	let ends_with_path_sep = /[\\/]$/.test(path);
 
+        path = path.replace(/[\\/]+$/, "");
+
         try {
 	    var parsed_path   = pathlib.parse(path),
 	        path_parts    = parsed_path.dir.split(/\\/),
@@ -588,17 +590,19 @@ class VirtualFileSystem {
 
         // Begin a series to checks to determine whether we can safely
         // copy this file to its destination...
-        //
-        // Is the destination filename the same as a folder in the
-        // same location?
+        let src_file_obj    = this.GetFile(parsed_src_path.normalised),
+            dest_folder_obj = this.GetFolder(parsed_dest_path.normalised);
 
-        //console.log(opts.dest_is_folder, dest_path, this.GetFolder(dest_path));
-
-        if (parsed_dest_path.assumed_folder && this.GetFolder(parsed_dest_path.normalised)) {
+        if (parsed_dest_path.assumed_folder && dest_folder_obj) {
             return this.CopyFileToFolder(parsed_src_path.normalised, parsed_dest_path.normalised);
         }
-
-        if (this.GetFolder(parsed_dest_path.normalised)) {
+        else if (src_file_obj === false) {
+            throw new Error("Source file not found");
+        }
+        else if (dest_folder_obj === false) {
+            throw new Error("Destination folder not found");
+        }
+        else if (dest_folder_obj) {
             // Here? Then the file is a folder. Throw a permission
             // denied message.
             throw new Error("Cannot copy file - destination name is ambiguous");
@@ -610,59 +614,31 @@ class VirtualFileSystem {
 
     CopyFileToFolder (src_file_path, dest_file_path, opts) {
 
-	opts = opts || { overwrite: false };
-	const overwrite = opts.overwrite;
+        opts = opts || { overwrite: false };
+        const overwrite = opts.overwrite;
 
-        let src_file_parts = this.Parse(this.ExpandPath(src_file_path)),
-            src_file_name  = src_file_parts.base;
+        let src_file_name = pathlib.basename(src_file_path);
 
-        // Logic for coyping a file is:
-        //
-        //   - if a folder exists in DEST which matches the copied file's name
-        //     THROW PERMISSION DENIED, for example:
-        //
-        //     DIR: "C:\\Foo", "C:\\Foo\\Bar".
-        //     Copy file.txt to "Bar" - copy ("C:\\Foo\\file.txt", "C:\\Foo\\Bar") - perm denied.
-        //     copy ("C:\\Foo\\file.txt", "C:\\Foo\\Bar\\") - copies 'file.txt' in to Bar.
-        //
-        // Is the destination location a path or an actual file?
-        //
+        dest_file_path += `\\${src_file_name}`;
 
+        // First, make sure the source file actually exists...
+        let src_file = this.GetFile(src_file_path);
 
-        if (opts.hasOwnProperty("destination_filename") === false) {
-            opts.destination_filename = src_file_name;
-        }
-        else {
-            let dst_path_parts = this.Parse(this.ExpandPath(dest_file_path));
-            console.log("=-----", dst_path_parts);
+        if (!src_file) {
+            console.log(`Cannot copy ${src_file_path}`,
+                        `to ${dest_file_path} - file not found.`);
+            return false;
         }
 
-	dest_file_path = pathlib.join(dest_file_path, opts.destination_filename);
-
-	// First, make sure the source file actually exists...
-	let src_file = this.GetFile(src_file_path);
-
-	if (!src_file) {
-            throw new Error("Source file not found");
-	    return false;
-	}
-
-        // TODO: Add auto-vivification here.
-        if (! this.FolderExists(dest_file_path)) {
-            throw new Error("Destination folder not found");
+        // Second, we shouldn't overwrite the file if it already exists..
+        if (this.GetFile(dest_file_path) && overwrite === false) {
+            return false;
         }
 
-	// Second, we shouldn't overwrite the file if it already exists..
-	if (this.GetFile(dest_file_path) && overwrite === false) {
-	    console.log(`Cannot copy ${src_file_path}`,
-			`to ${dest_file_path} - dst file exists and `,
-			`overwrite is ${overwrite}.`);
-	    return false;
-	}
-
-	let result = this.AddFile(dest_file_path, src_file.contents, opts);
-	return result;
+        let result = this.AddFile(dest_file_path, src_file.contents, opts);
+        return result;
     }
+
 
     DeleteFile (path) {
 
