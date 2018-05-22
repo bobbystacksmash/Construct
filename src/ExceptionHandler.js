@@ -277,7 +277,18 @@ class ExceptionHandler extends Component {
             "Error",
             "Bad file mode",
             -2146828234,
-            "Bad file mode"
+            "Bad file mode",
+            source, summary, details
+        );
+    }
+
+    throw_permission_denied (source, summary, details) {
+        this.throw(
+            "Error",
+            "Permission denied",
+            -2146828218,
+            "Permission denied",
+            source, summary, details
         );
     }
 

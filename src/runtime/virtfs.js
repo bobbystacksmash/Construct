@@ -143,7 +143,7 @@ class VirtualFileSystem {
 
     GetFolder (path) {
 
-	let parsed_path = AbsFileSystemObject.Parse(path);
+	let parsed_path = this.Parse(path);
 
         AbsFileSystemObject.ThrowIfInvalidPath(parsed_path.base);
 
@@ -488,7 +488,63 @@ class VirtualFileSystem {
         }
 
         return pathlib.normalize(path);
+    }
 
+    /*
+     * ThrowIfInvalidPath
+     * ==================
+     *
+     * Performs path validation.  If the `path' is valid,
+     * `ValidatePath' returns `null'.  However, if the path is
+     * invalid, it raises an exception.
+     *
+     */
+    ThrowIfInvalidPath (path, options) {
+
+        options = options || { file: false };
+
+        // RESERVED CHARACTER USAGE IN FILENAMES
+        //
+        //  https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
+        //
+        // Microsoft list the following characters as being illegal in
+        // NFTS paths:
+        //
+        //   < (less than)
+        //   > (greater than)
+        //   : (colon)
+        //   " (double quote)
+        //   / (forward slash)
+        //   \ (backslash)
+        //   | (vertical bar or pipe)
+        //   ? (question mark)
+        //   * (asterisk)
+        //
+        //
+        // The following code is adopted from:
+        //
+        //   - https://github.com/jonschlinkert/is-invalid-path/blob/master/index.js
+        //
+        // Unable to use this library as it adds a senseless condition
+        // to check if the OS is Windows.
+        //
+        //
+        // Remove the volume lable from the beginning of the path,
+        // such as: `C:\'
+        //
+        let path_root = pathlib.parse(pathlib.normalize(path)).root;
+        if (path_root) {
+            path = path.slice(path_root.length);
+        }
+
+        if (options.file) {
+            if (/[<>:"/\\|?*]/.test(path)) {
+                throw new Error("Filename contains invalid characters.");
+            }
+        }
+        else if (/[<>:"|?*]/.test(path)) {
+            throw new Error("Path contains invalid characters.");
+        }
     }
 
     Parse (path) {
@@ -497,7 +553,7 @@ class VirtualFileSystem {
 	path = path.replace(/\//, "\\").toLowerCase();
 	path = path.replace(/\\\\/, "");
 
-	let ends_with_path_sep = /\/$/.test(path);
+	let ends_with_path_sep = /[\\/]$/.test(path);
 
         try {
 	    var parsed_path   = pathlib.parse(path),
@@ -510,11 +566,45 @@ class VirtualFileSystem {
 
 	parsed_path.volume             = volume_letter;
 	parsed_path.assumed_folder     = ends_with_path_sep;
+        parsed_path.normalised         = this.ExpandPath(path);
+        parsed_path.assumed_relative   = is_relative(path);
 	parsed_path.orig_path          = path;
-	parsed_path.orig_path_parts    = path.split("\\");
+	parsed_path.orig_path_parts    = path.split("\\").filter(x => x !== "");
 	parsed_path.orig_path_parts_mv = parsed_path.orig_path_parts.slice(1);
 
 	return parsed_path;
+    }
+
+
+    CopyFile (src_path, dest_path, opts) {
+
+        opts = opts || { overwrite: false };
+
+        // TODO: Validate that the dest_file does not contain illegal
+        // characters...
+
+        let parsed_src_path  = this.Parse(src_path),
+            parsed_dest_path = this.Parse(dest_path);
+
+        // Begin a series to checks to determine whether we can safely
+        // copy this file to its destination...
+        //
+        // Is the destination filename the same as a folder in the
+        // same location?
+
+        //console.log(opts.dest_is_folder, dest_path, this.GetFolder(dest_path));
+
+        if (parsed_dest_path.assumed_folder && this.GetFolder(parsed_dest_path.normalised)) {
+            return this.CopyFileToFolder(parsed_src_path.normalised, parsed_dest_path.normalised);
+        }
+
+        if (this.GetFolder(parsed_dest_path.normalised)) {
+            // Here? Then the file is a folder. Throw a permission
+            // denied message.
+            throw new Error("Cannot copy file - destination name is ambiguous");
+        }
+
+        return false;
     }
 
 

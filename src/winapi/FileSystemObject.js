@@ -56,17 +56,21 @@ class JS_FileSystemObject extends Component {
         //
 
         try {
-
-            let source_path_full      = this.vfs.ExpandPath(source),
-                destination_path_full = this.vfs.ExpandPath(destination);
-
-            console.log(`copy ${source_path_full} -> ${destination_path_full}`);
-
-            this.vfs.CopyFileToFolder(source_path_full, destination_path_full);
+            this.vfs.CopyFile(source, destination);
         }
         catch (e) {
 
-            if (e.message.includes("Source file not found")) {
+            if (e.message.includes("destination name is ambiguous")) {
+                this.context.exceptions.throw_permission_denied(
+                    "Scripting.FileSystemObject",
+                    "Cannot copy to destination because the destination filename is ambiguous.",
+                    "This error indicates that a file-copy operation has not succeeded due to " +
+                        "a name-collision in the destination.  For example, if the destination " +
+                        "of a copy is the filename 'foo', yet a folder exists in the same location " +
+                        "also named 'foo', this error is thrown."
+                );
+            }
+            else if (e.message.includes("Source file not found")) {
                 this.context.exceptions.throw_file_not_found(
                     "Scripting.FileSystemObject",
                     "Unable to find src file.",

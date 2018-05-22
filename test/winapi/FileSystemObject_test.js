@@ -110,18 +110,37 @@ describe("Scripting.FileSystemObject", () => {
                 done();
             });
 
-            it("should copy a relative path to another relative path", (done) => {
+            xit("should throw if a file copy-to operation matches destination folder (ambiguous)", (done) => {
 
-                let fso = MakeFSO();
-                ctx.vfs.AddFile("C:\\Users\\Construct\\file_a.txt", "hello, world!");
+                let fso = MakeFSO({
+                    exceptions: {
+                        throw_permission_denied: () => {
+                            throw new Error("file copy is ambiguous");
+                        }
+                    }
+                });
 
-                fso.CopyFile("file_a.txt", "file_b.txt");
+                ctx.vfs.AddFile("C:\\Users\\Construct\\file_a.txt");
+                ctx.vfs.AddFolder("C:\\Users\\Construct\\bar");
 
-                assert.equal(ctx.vfs.GetFile("C:\\Users\\Construct\\file_b.txt"), "blah");
+                assert.throws(() => fso.CopyFile("file_a.txt", "bar"), "file copy is ambiguous");
 
                 done();
             });
 
+            it("should copy in to a directory when a path ends with a trailing slash", (done) => {
+
+                let fso = MakeFSO();
+
+                ctx.vfs.AddFile("C:\\Users\\Construct\\file_a.txt");
+                ctx.vfs.AddFolder("C:\\Users\\Construct\\bar");
+
+                assert.doesNotThrow(() => fso.CopyFile("file_a.txt", "bar/"));
+
+                done();
+            });
+
+            // TODO
             xit("should support copying wildcards", (done) => {
 
             });
