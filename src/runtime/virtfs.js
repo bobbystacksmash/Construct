@@ -4,10 +4,10 @@
 //const is_relative  = require("is-relative");
 
 const memfs  = require("memfs").fs;
-const memvol = require("memfs").vol;
+const Volume = require("memfs").Volume;
 const ufs    = require("unionfs");
 const linkfs = require("linkfs");
-const spy    = require("spyfs");
+const spy    = require("spyfs").spy;
 
 // SpyFS: https://github.com/streamich/spyfs
 // MemFS:   https://github.com/streamich/memfs
@@ -17,12 +17,40 @@ const spy    = require("spyfs");
 class VirtualFileSystem {
 
     constructor(context) {
+
 	this.context = context;
         this.ee = this.context.emitter;
+        this.epoch = context.epoch;
 
-        this.vfs = spy(memfs);
+        this.volumes = {
+            "c": new Volume
+        };
+
+
+        this.volume_C = this.volumes.c;
+
+        this._InitFS();
     }
 
+    _InitFS () {
+        this.volume_C.mkdirpSync("/Users/Construct/Desktop");
+        this.volume_C.mkdirpSync("/Users/Construct/My Documents");
+    }
+
+    // TODO: some kind of volume reconcile function should correctly
+    // wire-up all paths<->volumes.
+
+    DumpFS () {
+        return this.volume_C.toJSON();
+    }
+
+    CopyFile (src, dest, opts) {
+        this.volume_C.copyFileSync(src, dest, opts);
+    }
+
+    WriteFile (file, data, options) {
+        this.volume_C.writeFileSync(file, data, options);
+    }
 
 
 
