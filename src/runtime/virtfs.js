@@ -1,17 +1,31 @@
-const pathlib    = require("path").win32;
-const _          = require("lodash");
-const FolderObject = require("../winapi/FolderObject");
-const FileObject   = require("../winapi/FileObject");
-const AbsFileSystemObject = require("../absFileSystemObject");
-const is_relative  = require("is-relative");
+//const FolderObject = require("../winapi/FolderObject");
+//const FileObject   = require("../winapi/FileObject");
+//const AbsFileSystemObject = require("../absFileSystemObject");
+//const is_relative  = require("is-relative");
+
+const memfs  = require("memfs").fs;
+const memvol = require("memfs").vol;
+const ufs    = require("unionfs");
+const linkfs = require("linkfs");
+const spy    = require("spyfs");
+
+// SpyFS: https://github.com/streamich/spyfs
+// MemFS:   https://github.com/streamich/memfs
+// UnionFS: https://github.com/streamich/unionfs
+// LinkFS:  https://github.com/streamich/linkfs
 
 class VirtualFileSystem {
 
     constructor(context) {
 	this.context = context;
-	this.volume = {};
-        this.volume["c:"] = new FolderObject(context, "c:", true);
+        this.ee = this.context.emitter;
+
+        this.vfs = spy(memfs);
     }
+
+
+
+
 
     //
     // Based on the information extracted from this article:
@@ -25,7 +39,7 @@ class VirtualFileSystem {
     //   2.  All '?' are changed to '>'.
     //   3.  A path ending in '*' that has a period
 
-    _NormaliseFilename (filename) {
+    /*_NormaliseFilename (filename) {
 
         // As documented below, as part of normalisation, Windows
         // removes paths which *end* in a period.  In order for our
@@ -287,13 +301,12 @@ class VirtualFileSystem {
 	return cwd.AddFile(fo, opts);
     }
 
-    /*
-     * Given a source folder path and a folder destination, this method
-     * copies the contents of src in to the destination.  For example, consider
-     * the src dir to be called `foo', and it contains one file `bar.txt', and
-     * our destination -- `baz.txt'.  Calling CopyFolderContentsToFolder(src, dst)
-     * will copy `bar.txt' in to `baz'.
-     */
+    // * Given a source folder path and a folder destination, this method
+    // * copies the contents of src in to the destination.  For example, consider
+    // * the src dir to be called `foo', and it contains one file `bar.txt', and
+    // * our destination -- `baz.txt'.  Calling CopyFolderContentsToFolder(src, dst)
+    // * will copy `bar.txt' in to `baz'.
+    //
     CopyFolderContentsToFolder (src_folder_path, dest_folder_path, opts) {
 
 	opts = opts || { merge: true };
@@ -320,8 +333,6 @@ class VirtualFileSystem {
 
 	// Here?  Great!  This means we have a src and dst folders.
 	// Let's begin trying to copy between 'em.
-	/*var src_cwd = src_folder,
-	  dst_cwd = dst_folder;*/
 
 	var self = this;
 
@@ -490,15 +501,15 @@ class VirtualFileSystem {
         return pathlib.normalize(path);
     }
 
-    /*
-     * ThrowIfInvalidPath
-     * ==================
-     *
-     * Performs path validation.  If the `path' is valid,
-     * `ValidatePath' returns `null'.  However, if the path is
-     * invalid, it raises an exception.
-     *
-     */
+    //
+    // ThrowIfInvalidPath
+    // ==================
+    //
+    // Performs path validation.  If the `path' is valid,
+    // `ValidatePath' returns `null'.  However, if the path is
+    // invalid, it raises an exception.
+    //
+    //
     ThrowIfInvalidPath (path, options) {
 
         options = options || { file: false };
@@ -557,8 +568,11 @@ class VirtualFileSystem {
 
         path = path.replace(/[\\/]+$/, "");
 
+        // Experimental
+        let norm_path = this.ExpandPath(path);
+
         try {
-	    var parsed_path   = pathlib.parse(path),
+	    var parsed_path   = pathlib.parse(norm_path),
 	        path_parts    = parsed_path.dir.split(/\\/),
 	        volume_letter = parsed_path.root.replace(/\\/g, "").toLowerCase();
         }
@@ -577,32 +591,44 @@ class VirtualFileSystem {
 	return parsed_path;
     }
 
-
     CopyFile (src_path, dest_path, opts) {
 
-        opts = opts || { overwrite: false };
+        opts = opts || { overwrite: true };
 
         // TODO: Validate that the dest_file does not contain illegal
         // characters...
 
         let parsed_src_path  = this.Parse(src_path),
-            parsed_dest_path = this.Parse(dest_path);
+            parsed_dest_path = this.Parse(dest_path),
+            dest_obj         = null;
 
-        // Begin a series to checks to determine whether we can safely
-        // copy this file to its destination...
-        let src_file_obj    = this.GetFile(parsed_src_path.normalised),
-            dest_folder_obj = this.GetFolder(parsed_dest_path.normalised);
+        if (parsed_dest_path.assumed_folder) {
+            dest_obj = this.GetFolder(parsed_dest_path.normalised);
+        }
+        else {
+            dest_obj = this.GetFile(parsed_dest_path.normalised);
+        }
 
-        if (parsed_dest_path.assumed_folder && dest_folder_obj) {
+        let src_file_obj = this.GetFile(parsed_src_path.normalised),
+            overwrite    = parsed_src_path.base === parsed_dest_path.base;
+
+        if (parsed_dest_path.assumed_folder === false && dest_obj) {
+            return this.CopyFileToFolder(
+                parsed_src_path.normalised,
+                parsed_dest_path.dir,
+                Object.assign(opts, { dest_filename: parsed_dest_path.base })
+            );
+        }
+        else if (parsed_dest_path.assumed_folder && dest_obj) {
             return this.CopyFileToFolder(parsed_src_path.normalised, parsed_dest_path.normalised);
         }
         else if (src_file_obj === false) {
             throw new Error("Source file not found");
         }
-        else if (dest_folder_obj === false) {
+        else if (dest_obj === false) {
             throw new Error("Destination folder not found");
         }
-        else if (dest_folder_obj) {
+        else if (dest_obj) {
             // Here? Then the file is a folder. Throw a permission
             // denied message.
             throw new Error("Cannot copy file - destination name is ambiguous");
@@ -619,7 +645,12 @@ class VirtualFileSystem {
 
         let src_file_name = pathlib.basename(src_file_path);
 
-        dest_file_path += `\\${src_file_name}`;
+        if (opts.hasOwnProperty("dest_filename")) {
+            dest_file_path = pathlib.join(dest_file_path, opts.dest_filename);
+        }
+        else {
+            dest_file_path = pathlib.join(dest_file_path, src_file_name);
+        }
 
         // First, make sure the source file actually exists...
         let src_file = this.GetFile(src_file_path);
@@ -661,7 +692,7 @@ class VirtualFileSystem {
 	// of the folder-to-be-deleted's name, and remove it from
 	// the Subfolders array.
 	return folder.ParentFolder.DeleteSubFolder(folder.Name);
-    }
+    }*/
 }
 
 module.exports = VirtualFileSystem;

@@ -10,6 +10,7 @@ need to be completed before the RC is published.
 | Task                                                                   | Status |
 |------------------------------------------------------------------------+--------|
 | Rename, move, and update code surrounding ~AbsFileSystemObject.js~.    | TODO   |
+| Replace custom VFS with node modules memfs, spyfs, and fs-monkey.      | TODO   |
 | Add basic support (syntax rewriter?) for alerting if JS is browser.    | TODO   |
 | Add better exception handling to the REPL environment.                 | TODO   |
 | For ExceptionHandler throws -- trap and display these in a nice way.   | TODO   |

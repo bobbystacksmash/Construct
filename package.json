@@ -33,6 +33,7 @@
     "is-relative": "^1.0.0",
     "istanbul": "^0.4.5",
     "js-beautify": "^1.7.4",
+    "linkfs": "^2.1.0",
     "lodash": "^4.17.4",
     "memfs": "^2.9.0",
     "minimist": "^1.2.0",
@@ -40,6 +41,7 @@
     "spyfs": "^1.0.2",
     "stack-trace": "0.0.10",
     "text-table": "^0.2.0",
+    "unionfs": "^3.0.2",
     "url-parse": "^1.2.0",
     "vorpal": "^1.12.0",
     "vorpal-autocomplete-fs": "0.0.3"
