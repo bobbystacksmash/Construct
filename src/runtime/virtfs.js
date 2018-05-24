@@ -37,13 +37,27 @@ const spy    = require("spyfs").spy;
 //     qualified paths, with the exception being the methods designed
 //     to normalise and expand paths.
 //
+//   - Wildcards are not supported by the bulk of VFS methods.  All
+//     exported methods will operate only on individual files.
+//     Dedicated methods exist for expanding a wildcard expression in
+//     to a set of files which match the expression.  These methods
+//     should be called to build a list of files to act upon, and then
+//     apply each of the resultant files to whatever VFS function is
+//     required.  For example (psudo code):
+//
+//       let list_of_files = vfs.ExpandWildcards("*.txt");
+//       list_of_files.forEach(fp => vfs.CopyFile(fp, "/some/path");
+//
+//   - TODO: note about C:\\ or /foo/bar in paths.
+//
+//
 //   - Environment variable expansion is NOT handled by the VFS, and
 //     the VFS does not know anything about ENV vars.  This follows
 //     Windows' behaviour.  Code wishing to interact with the VFS
 //     should ensure that `ExpandEnvironmentStrings' (or similar) has
 //     been applied to the paths *BEFORE* they're passed to the VFS.
 //
-//
+
 
 
 class VirtualFileSystem {
