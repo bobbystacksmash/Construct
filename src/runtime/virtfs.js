@@ -1,7 +1,5 @@
-//const FolderObject = require("../winapi/FolderObject");
-//const FileObject   = require("../winapi/FileObject");
-//const AbsFileSystemObject = require("../absFileSystemObject");
-//const is_relative  = require("is-relative");
+const FolderObject = require("../winapi/FolderObject");
+const FileObject   = require("../winapi/FileObject");
 
 const memfs  = require("memfs").fs;
 const Volume = require("memfs").Volume;
@@ -9,10 +7,44 @@ const ufs    = require("unionfs");
 const linkfs = require("linkfs");
 const spy    = require("spyfs").spy;
 
-// SpyFS: https://github.com/streamich/spyfs
-// MemFS:   https://github.com/streamich/memfs
-// UnionFS: https://github.com/streamich/unionfs
-// LinkFS:  https://github.com/streamich/linkfs
+//
+// Construct Virtual File System Design
+// ====================================
+//
+// The Virtual File System (VFS) is designed to mimic a Windows host,
+// right down to the last detail.  Much of the detail, such as
+// throwing correct exceptions (with the correct message and number)
+// is handled higher up by the WINAPI modules themselves.  Under the
+// hood, any WINAPI module wishing to interact with the file system
+// goes through the public interface exposed here.
+//
+// This outline aims to set clear expectations of what WINAPI modules
+// can expect from the VFS, and what the VFS expects of WINAPI
+// modules.
+//
+//
+// Paths
+// ~~~~~
+//
+// Paths on Windows are a mess.  A *REAL* mess.  Construct tries to
+// organise this chaos by laying down the following edicts.  For
+// berevity, the collective noun "files" shall refer to files and
+// directories unless otherwise stated.
+//
+// CONTRACT
+//
+//   - Any methods exported by the VFS will operate only on fully
+//     qualified paths, with the exception being the methods designed
+//     to normalise and expand paths.
+//
+//   - Environment variable expansion is NOT handled by the VFS, and
+//     the VFS does not know anything about ENV vars.  This follows
+//     Windows' behaviour.  Code wishing to interact with the VFS
+//     should ensure that `ExpandEnvironmentStrings' (or similar) has
+//     been applied to the paths *BEFORE* they're passed to the VFS.
+//
+//
+
 
 class VirtualFileSystem {
 
@@ -27,29 +59,53 @@ class VirtualFileSystem {
         };
 
 
-        this.volume_C = this.volumes.c;
+        this.volume_c = this.volumes.c;
 
         this._InitFS();
     }
 
     _InitFS () {
-        this.volume_C.mkdirpSync("/Users/Construct/Desktop");
-        this.volume_C.mkdirpSync("/Users/Construct/My Documents");
+
+        // TODO: Make use of fs.utimesSync(path, atime, mtime)
+        // for altering file {m,a,c,e} times.
+        this.volume_c.mkdirpSync("/Users/Construct/Desktop");
+        this.volume_c.mkdirpSync("/Users/Construct/My Documents");
     }
 
     // TODO: some kind of volume reconcile function should correctly
     // wire-up all paths<->volumes.
 
     DumpFS () {
-        return this.volume_C.toJSON();
+        return this.volume_c.toJSON();
     }
 
     CopyFile (src, dest, opts) {
-        this.volume_C.copyFileSync(src, dest, opts);
+
+        console.log("COPYING...");
+
+        // TODO: Make use of fs.utimesSync(path, atime, mtime)
+        // for altering file {m,a,c,e} times.
+        this.volume_c.copyFileSync(src, dest, opts);
+    }
+
+    // ===========================
+    // L E G A C Y   S U P P O R T
+    // ===========================
+
+    GetFile (filepath) {
+
+    }
+
+    // Support for legacy Construct code
+    AddFile (filepath, data, options) {
+
     }
 
     WriteFile (file, data, options) {
-        this.volume_C.writeFileSync(file, data, options);
+
+        // TODO: Make use of fs.utimesSync(path, atime, mtime)
+        // for altering file {m,a,c,e} times.
+        this.volume_c.writeFileSync(file, data, options);
     }
 
 
