@@ -1,6 +1,8 @@
 const FolderObject = require("../winapi/FolderObject");
 const FileObject   = require("../winapi/FileObject");
 
+const win32path    = require("path").win32;
+
 const memfs  = require("memfs").fs;
 const Volume = require("memfs").Volume;
 const ufs    = require("unionfs");
@@ -33,23 +35,26 @@ const spy    = require("spyfs").spy;
 //
 // CONTRACT
 //
-//   - Any methods exported by the VFS will operate only on fully
-//     qualified paths, with the exception being the methods designed
-//     to normalise and expand paths.
+//   - Any methods exported by the VFS will operate only on absolute
+//     paths, with the exception being the methods designed to
+//     normalise and expand paths.
 //
-//   - Wildcards are not supported by the bulk of VFS methods.  All
-//     exported methods will operate only on individual files.
-//     Dedicated methods exist for expanding a wildcard expression in
-//     to a set of files which match the expression.  These methods
-//     should be called to build a list of files to act upon, and then
-//     apply each of the resultant files to whatever VFS function is
-//     required.  For example (psudo code):
+//   - Wildcards are not supported by any of the VFS methods which
+//     directly interface with the virtual FS.  Dedicated methods
+//     exist for expanding a wildcard expression in to a set of files
+//     which match the expression.  These methods should be called to
+//     build a list of files to act upon, and then apply each of the
+//     resultant files to whatever VFS function is required.
 //
-//       let list_of_files = vfs.ExpandWildcards("*.txt");
-//       list_of_files.forEach(fp => vfs.CopyFile(fp, "/some/path");
+//   - The accepted path types are:
 //
-//   - TODO: note about C:\\ or /foo/bar in paths.
+//       Extended Paths :: \\?C:\foo\bar\baz
+//       Absolute Paths :: C:\foo\bar\baz
 //
+//     All other path types are NOT supported.  This includes:
+//
+//       UNC Paths               :: \\192.168.1.1\foo\bar\baz
+//       Win32 Device Namespaces :: \\.\COM1
 //
 //   - Environment variable expansion is NOT handled by the VFS, and
 //     the VFS does not know anything about ENV vars.  This follows
@@ -57,9 +62,6 @@ const spy    = require("spyfs").spy;
 //     should ensure that `ExpandEnvironmentStrings' (or similar) has
 //     been applied to the paths *BEFORE* they're passed to the VFS.
 //
-
-
-
 class VirtualFileSystem {
 
     constructor(context) {
@@ -74,6 +76,7 @@ class VirtualFileSystem {
 
 
         this.volume_c = this.volumes.c;
+        this.vfs = this.volume_c;
 
         this._InitFS();
     }
@@ -86,28 +89,80 @@ class VirtualFileSystem {
         this.volume_c.mkdirpSync("/Users/Construct/My Documents");
     }
 
-    // TODO: some kind of volume reconcile function should correctly
-    // wire-up all paths<->volumes.
+    //
+    // =========================================
+    // P A T H   S P E C I F I C   M E T H O D S
+    // =========================================
+    //
+    // This family of methods operate only on paths and do not
+    // interact with the underlying filesystem in any way.
+    //
 
-    DumpFS () {
-        return this.volume_c.toJSON();
+    // ExpandPath
+    // ==========
+    //
+    // This method accepts an incoming `pathspec' and attempts to
+    // expand the pathspec.  Pathspec expansion includes:
+    //
+    //   - Environment variable expansion and replacement.
+    //   - Wildcard matching.
+    //   - Path normalisation.
+    //
+    ExpandPath (pathspec, opts) {
+
     }
 
-    CopyFile (src, dest, opts) {
-
-        console.log("COPYING...");
-
-        // TODO: Make use of fs.utimesSync(path, atime, mtime)
-        // for altering file {m,a,c,e} times.
-        this.volume_c.copyFileSync(src, dest, opts);
+    // Normalise
+    // =========
+    //
+    // Given a relative path, `Normalise' will attempt to normalise
+    // the path, meaning all '..' and '.' segments are resolved, and
+    // path separator values are unified.
+    //
+    // All paths given to `Normalise' MUST have already had
+    // environment variables expanded.
+    //
+    Normalise (path) {
+        return win32path.normalize(path);
     }
 
+
+    // Resolve
+    // =======
+    //
+    // Attempts to resolve a path -- meaning the path will parsed, and
+    // a absolute path will be constructed.  If an absolute path
+    // cannot be constructed, `Resolve' will throw an error.
+    //
+    Resolve (path) {
+
+        let norm_path = this.Normalise(path);
+
+        if (/^[^\\/]/.test(norm_path)) {
+
+        }
+
+        return norm_path;
+    }
+
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // !! All methods from this point on operate only on absolute paths !!
+    // !! as discussed in the design document at the top of this file.  !!
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+
+    //
     // ===========================
     // L E G A C Y   S U P P O R T
     // ===========================
-
-    GetFile (filepath) {
-
+    //
+    // These methods are implemented to lessen the pain of migrating
+    // away from the *old* Construct VFS and in to the new, `memfs'
+    // era.
+    //
+    CopyFile (src, dest, opts) {
+        console.log(`copying ${src} -> ${dest}`);
     }
 
     // Support for legacy Construct code
