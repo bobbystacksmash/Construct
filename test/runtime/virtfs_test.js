@@ -58,15 +58,18 @@ describe("Virtual File System", () => {
                 {
                     input:  " %FOO% %foo% %Foo% %fOO% ",
                     output: " FOO! FOO! FOO! FOO! "
+                },
+                {
+                    input: "there are foo baz bar no bar environment vars here",
+                    output: "there are foo baz bar no bar environment vars here"
                 }
             ];
 
             tests.forEach(t => assert.equal(vfs.ExpandEnvironmentStrings(t.input), t.output));
-
         });
     });
 
-    xdescribe("Paths", () => {
+    describe("Paths", () => {
 
         it("should identify absolute paths", () => {
 
@@ -109,9 +112,59 @@ describe("Virtual File System", () => {
         // blocked on getting the wildcarding code working.
         // .TODO
 
-        // Path Resolution
-        // - env vars
-        // -
+        describe("Path Resolver", () => {
+
+            it("should correctly resolve relative paths", () => {
+
+                let vfs = make_vfs({
+                    environment: {
+                        "appdata": "C:\\Users\\Construct\\AppData\\Roaming"
+                    }
+                });
+
+                // Default path is: "C:\Users\Construct".
+                let paths = [
+                    {
+                        input:  "foo.txt",
+                        output: "C:\\Users\\Construct\\foo.txt"
+                    },
+                    {
+                        input: "../foo.txt",
+                        output: "C:\\Users\\foo.txt"
+                    },
+                    {
+                        input: "../Construct/Desktop/.././Desktop/foo.txt",
+                        output: "C:\\Users\\Construct\\Desktop\\foo.txt"
+                    },
+                    {
+                        input: ".\\foo.txt",
+                        output: "C:\\Users\\Construct\\foo.txt"
+                    },
+                    {
+                        input: "../OtherUser/foo.txt",
+                        output: "C:\\Users\\OtherUser\\foo.txt"
+                    },
+                    {
+                        input: "%appdata%\\foo.txt",
+                        output: "C:\\Users\\Construct\\AppData\\Roaming\\foo.txt"
+                    },
+                    {
+                        input: "%appdata%",
+                        output: "C:\\Users\\Construct\\AppData\\Roaming"
+                    },
+                    {
+                        input: "test/",
+                        output: "C:\\Users\\Construct\\test\\"
+                    },
+                    {
+                        input: "./test",
+                        output: "C:\\Users\\Construct\\test"
+                    }
+                ];
+
+                paths.forEach(p => assert.equal(vfs.Resolve(p.input), p.output));
+            });
+        });
 
     });
 
