@@ -49,13 +49,24 @@ class JS_FileSystemObject extends Component {
         this.ee.emit("FileSystemObject::CopyFile", source, destination, overwrite_files);
 
         //
-        // TODO:
+        // The FSO supports many different path types.  The only one
+        // it doesn't seem to support are paths which contain
+        // environment variables.
         //
-        //  - Add something like `vfs.ExpandFilespec' here to return
-        //  - an array of paths for wildcarding.
+        // The VFS will only let us perform actions upon the FS if we
+        // use fully qualified paths, however methods are exported
+        // from the VFS class which will allow us to either obtain a
+        // fully-qualified path, or fetch an error informing us that
+        // the path we're trying to expand is b0rked.
         //
+        let source_path = this.vfs.Resolve(source);
+
+        console.log("SOURCE PATH", source_path);
+
+
 
         try {
+            console.log(`copy(${source}, ${destination})`);
             this.vfs.CopyFile(source, destination);
         }
         catch (e) {

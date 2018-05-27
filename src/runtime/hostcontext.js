@@ -185,7 +185,7 @@ class HostContext {
     }
 
     get_env (var_name) {
-        if (! this.ENVIRONMENT.hasOwnProperty(var_name)) return null;
+        if (! this.ENVIRONMENT.hasOwnProperty(var_name)) return undefined;
         return this.ENVIRONMENT[var_name];
     }
 
