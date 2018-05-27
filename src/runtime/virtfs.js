@@ -97,6 +97,105 @@ class VirtualFileSystem {
     // This family of methods operate only on paths and do not
     // interact with the underlying filesystem in any way.
     //
+    // For information on Windows paths and filenames, the following
+    // MSDN article has proved most useful:
+    //
+    //   https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
+    //
+
+    // PathIsAbsolute
+    //
+    // Queries the given `path' and will return TRUE if `path' appears
+    // to be absolute, or FALSE for everything else.
+    //
+    // From the MSDN article (given above), all of the following are
+    // considered relative to the current directory if the path does
+    // not begin with one of the following:
+    //
+    //   - A UNC name of any format, which always start with two
+    //     backslash characters ("\\").
+    //
+    //   - A disk designator with a backslash, for example "C:\" or
+    //     "d:\".
+    //
+    //   - A single backslash, for example, "\directory" or
+    //     "\file.txt". This is also referred to as an absolute path."
+    //
+    PathIsAbsolute (path) {
+
+        // While not strictly part of the path, paths beginning "\\?\"
+        // indicate that the path should be passed to the system with
+        // minimal modification.
+        //
+        //  \\?\C:\Windows\System32\test.dll
+        //
+        if (/^\\\\\?\\/.test(path)) return true;
+
+        // A UNC path is always considered absolute.  UNC paths begin
+        // with a double backslash:
+        //
+        //   \\hostname\foo\bar.txt
+        //
+        if (/^\\./i.test(path)) return true;
+
+
+        // An absolute path can be identified as beginning with a disk
+        // designator, followed by a backslash:
+        //
+        //   C:\foo.txt
+        //   d:\bar\baz.txt
+        //
+        if (/^[a-z]:\\/i.test(path)) return true;
+
+        return false;
+    }
+
+    // PathIsRelative
+    //
+    // Queries the given `path' and returns TRUE if the path appears
+    // to be relative, or FALSE for everything else.
+    //
+    PathIsRelative (path) {
+        // Rather than trying to detect if a path is relative, we just
+        // test if its absolute and return the opposite.
+        return !this.PathIsAbsolute(path);
+    }
+
+    // ExpandEnvironmentStrings
+    // ========================
+    //
+    // Given a `path', will attempt to replace all instances of
+    // environment strings.
+    //
+    ExpandEnvironmentStrings (str) {
+
+        // Environment variables are strings enclosed between
+        // percentage characters, such as:
+        //
+        //   - %PATH%
+        //   - %APPDATA%
+        //   - %COMSPEC%
+        //
+        // We will only expand the vars.  If a variable cannot be
+        // found, it will be left as-is.  We won't validate the
+        // expanded form is even a valid path.
+        //
+
+        const env_var_regexp = /%[a-z0-9_]+%/ig;
+
+        let match = env_var_regexp.exec(str);
+
+        while (match !== null) {
+
+            let env_var_symbol = match[0].toLowerCase().replace(/%/g, ""),
+                env_var_value  = this.context.get_env(env_var_symbol) || match[0];
+
+            str = str.replace(new RegExp(match[0], "gi"), env_var_value);
+            match = env_var_regexp.exec(str);
+        }
+
+        return str;
+    }
 
     // ExpandPath
     // ==========
@@ -117,10 +216,9 @@ class VirtualFileSystem {
     //
     // Given a relative path, `Normalise' will attempt to normalise
     // the path, meaning all '..' and '.' segments are resolved, and
-    // path separator values are unified.
+    // path separator values are changed from '/' to '\'.
     //
-    // All paths given to `Normalise' MUST have already had
-    // environment variables expanded.
+    // Environment variables will not be expanded by Normalise.
     //
     Normalise (path) {
         return win32path.normalize(path);
@@ -130,19 +228,29 @@ class VirtualFileSystem {
     // Resolve
     // =======
     //
-    // Attempts to resolve a path -- meaning the path will parsed, and
-    // a absolute path will be constructed.  If an absolute path
-    // cannot be constructed, `Resolve' will throw an error.
+    // Path resolution is an attempt to make a relative path absolute.
+    // The resolver accepts almost any path type and will make a
+    // best-effort attempt to resolve the incoming path.
+    //
+    // Environment variables are expanded if they can be found, else
+    // they are left as-is.
+    //
+    // Wildcards are considered a path expression, not a path, so they
+    // are ignored.
+    //
+    // .TODO
+    // More thought is needed about how to handle wildcards
+    // passed to the resolver.
+    // .TODO
     //
     Resolve (path) {
 
-        let norm_path = this.Normalise(path);
+        path = this.Normalise(path);
 
-        if (/^[^\\/]/.test(norm_path)) {
+        // Here begins the mess that is paths on Windows NT...
 
-        }
 
-        return norm_path;
+
     }
 
     //
