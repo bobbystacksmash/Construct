@@ -245,12 +245,14 @@ class VirtualFileSystem {
     //
     Resolve (path) {
 
+        path = this.ExpandEnvironmentStrings(path);
         path = this.Normalise(path);
 
-        // Here begins the mess that is paths on Windows NT...
+        if (this.PathIsRelative(path)) {
+            path = win32path.join(this.context.get_env("path"), path);
+        }
 
-
-
+        return this.Normalise(path);
     }
 
     //
