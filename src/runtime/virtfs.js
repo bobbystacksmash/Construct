@@ -249,6 +249,25 @@ class VirtualFileSystem {
         path = this.Normalise(path);
 
         if (this.PathIsRelative(path)) {
+
+            // Special case handling for instances where we see disk
+            // designator followed by a file or folder name, for
+            // example:
+            //
+            //   C:foo.txt
+            //   C:..\Users
+            //
+            if (/^[a-z]:[^\\]/i.test(path)) {
+                // .CAVEAT1
+                // In our Construct environment the only accessible
+                // volume is 'C:'.  Therefore, if a path coming in
+                // uses a disk designator other than 'c:', we'll
+                // rewrite the path so that it starts 'c:'.
+                // .CAVEAT2
+                // Delete the disk designator (so "c:" or "d:", ...)
+                path = path.replace(/^[a-z]:/i, "");
+            }
+
             path = win32path.join(this.context.get_env("path"), path);
         }
 
