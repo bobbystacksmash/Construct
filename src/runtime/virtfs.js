@@ -225,6 +225,35 @@ class VirtualFileSystem {
     }
 
 
+    // Parse
+    // =====
+    //
+    // Parse returns a structure whose elements represent the
+    // significant parts of the supplied `path'.  The returned
+    // structure is a dictionary with the following entries:
+    //
+    //   * dir
+    //   * root
+    //   * base
+    //   * name
+    //   * ext
+    //
+    // For example (from https://nodejs.org/api/path.html#path_path_parse_path):
+    //
+    //   vfs.Parse('C:\\path\\dir\\file.txt');
+    //   {
+    //     root: 'C:\\',
+    //     dir:  'C:\\path\\dir',
+    //     base: 'file.txt',
+    //     ext:  '.txt',
+    //     name: 'file'
+    //   }
+    //
+    Parse (path) {
+        return win32path.parse(path);
+    }
+
+
     // Resolve
     // =======
     //
@@ -264,7 +293,9 @@ class VirtualFileSystem {
                 // uses a disk designator other than 'c:', we'll
                 // rewrite the path so that it starts 'c:'.
                 // .CAVEAT2
-                // Delete the disk designator (so "c:" or "d:", ...)
+
+                // Delete the disk designator (so "c:" or "d:", ...).
+                // We'll replace this with our ENV CWD path shortly.
                 path = path.replace(/^[a-z]:/i, "");
             }
 
@@ -273,6 +304,8 @@ class VirtualFileSystem {
 
         return this.Normalise(path);
     }
+
+
 
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -290,20 +323,45 @@ class VirtualFileSystem {
     // away from the *old* Construct VFS and in to the new, `memfs'
     // era.
     //
-    CopyFile (src, dest, opts) {
-        console.log(`copying ${src} -> ${dest}`);
+    CopyFile (source, destination, opts) {
+        console.log(`copying ${source} -> ${destination}`);
     }
 
-    // Support for legacy Construct code
+    // FileExists
+    // ==========
+    //
+    // Tests if the given filepath exists.  The value of
+    // auto-vivification does not alter the behaviour of this method.
+    //
+    FileExists (filepath) {
+        return fs.accessSync(filepath);
+    }
+
+
+    // AddFile
+    // =======
+    //
+    // Previous versions of Construct used the method `AddFile' to add
+    // files to the VFS.  This method is added to match this
+    // functionality, however new code really should use `WriteFile'.
+    //
     AddFile (filepath, data, options) {
 
+
+        try {
+            this.vfs.writeFileSync(filepath, data, options);
+        }
+        catch (ex) {
+
+        }
     }
 
-    WriteFile (file, data, options) {
+
+    WriteFile (path, data, options) {
 
         // TODO: Make use of fs.utimesSync(path, atime, mtime)
         // for altering file {m,a,c,e} times.
-        this.volume_c.writeFileSync(file, data, options);
+        this.volume_c.writeFileSync(path, data, options);
     }
 
 

@@ -105,13 +105,33 @@ describe("Virtual File System", () => {
             );
         });
 
+        describe("Path Parser", () => {
+
+            it("should parse paths correctly", () => {
+
+                let vfs = make_vfs();
+
+                assert.deepEqual(
+                    vfs.Parse("C:\\Users\\Construct\\file.txt"),
+                    {
+                        dir: "C:\\Users\\Construct",
+                        base: "file.txt",
+                        ext:  ".txt",
+                        name: "file",
+                        root: "C:\\"
+                    }
+                );
+
+            });
+        });
+
         // Path Expansion
 
-        // .TODO
+        // .TODO1
         // Path expansion tests need to be written.  Getting this
         // fully working is currently blocked on getting the
         // wildcarding code working.
-        // .TODO
+        // .TODO2
         describe("Path Resolver", () => {
 
             it("should correctly resolve relative paths", () => {
@@ -197,10 +217,38 @@ describe("Virtual File System", () => {
 
                 paths.forEach(p => assert.equal(vfs.Resolve(p.input), p.output));
             });
-
         });
-
     });
 
+    /*describe("File and folder existance", () => {
 
+        describe("#FileExists", () => {
+
+            it("should return true if the file exists", () => {
+
+                let vfs = make_vfs();
+
+                vfs.AddFile("C:\\Users\\Construct\\test.txt", "Hello, World!");
+                vfs.AddFile("C:\\Users\\Construct\\Desktop\\abc.txt", "foobar");
+
+            });
+        });
+     });*/
+
+
+    describe("Creating files", () => {
+
+        describe("#AddFile", () => {
+
+            it("should support creating a new file", () => {
+
+                let vfs = make_vfs();
+
+                vfs.AddFile("C:\\Users\\Construct\\test.txt", "Hello, World!");
+
+
+
+            });
+        });
+    });
 });
