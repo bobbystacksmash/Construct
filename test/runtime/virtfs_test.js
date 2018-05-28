@@ -71,6 +71,48 @@ describe("Virtual File System", () => {
 
     describe("Paths", () => {
 
+        describe("Building paths...", () => {
+
+            it("should correctly construct paths", () => {
+
+                let vfs = make_vfs();
+
+                let tests = [
+                    {
+                        input: ["C:", "foo.txt"],
+                        output: "C:foo.txt"
+                    },
+                    {
+                        input: ["C:..", "foo.txt"],
+                        output: "C:..\\foo.txt"
+                    },
+                    {
+                        input: ["C:/Users/Construct/Desktop/", "foo.txt"],
+                        output: "C:/Users/Construct/Desktop/foo.txt"
+                    },
+                    {
+                        input: ["C:/Users/Construct/Desktop", "foo.txt"],
+                        output: "C:/Users/Construct/Desktop\\foo.txt"
+                    },
+                    {
+                        input: ["C:/Users/Construct/Desktop/..", "foo.txt"],
+                        output: "C:/Users/Construct/Desktop/..\\foo.txt"
+                    },
+                    {
+                        input: ["C:\\Users\\Construct\\Desktop\\..\\..\\", "foo.txt"],
+                        output: "C:\\Users\\Construct\\Desktop\\..\\..\\foo.txt"
+                    }
+                ];
+
+                tests.forEach(
+                    t => assert.equal(
+                        vfs.BuildPath(t.input[0], t.input[1]),
+                        t.output
+                    )
+                );
+            });
+        });
+
         it("should identify absolute paths", () => {
 
             let vfs = make_vfs();
@@ -220,7 +262,7 @@ describe("Virtual File System", () => {
         });
     });
 
-    /*describe("File and folder existance", () => {
+    describe("File and folder existence", () => {
 
         describe("#FileExists", () => {
 
@@ -229,14 +271,30 @@ describe("Virtual File System", () => {
                 let vfs = make_vfs();
 
                 vfs.AddFile("C:\\Users\\Construct\\test.txt", "Hello, World!");
-                vfs.AddFile("C:\\Users\\Construct\\Desktop\\abc.txt", "foobar");
+                assert.isTrue(vfs.FileExists("C:\\Users\\Construct\\test.txt"));
+            });
 
+            it("should return false if the file does not exist", () => {
+
+                let vfs = make_vfs();
+                assert.isFalse(vfs.FileExists("C:\\Users\\Blah\\foo.txt"));
             });
         });
-     });*/
 
+        describe("#FolderExists", () => {
 
-    describe("Creating files", () => {
+            it("should return true if the folder exists", () => {
+
+                let vfs = make_vfs();
+
+                assert.isFalse(vfs.FolderExists("C:\\Users\\Construct\\HELLO"));
+                vfs.AddFolder("C:\\Users\\Construct\\HELLO");
+                assert.isTrue(vfs.FolderExists("C:\\Users\\Construct\\HELLO"));
+            });
+        });
+     });
+
+    describe("File manipulations", () => {
 
         describe("#AddFile", () => {
 
@@ -244,10 +302,56 @@ describe("Virtual File System", () => {
 
                 let vfs = make_vfs();
 
+                assert.isFalse(vfs.FileExists("C:\\Users\\Construct\\test.txt"));
                 vfs.AddFile("C:\\Users\\Construct\\test.txt", "Hello, World!");
+                assert.isTrue(vfs.FileExists("C:\\Users\\Construct\\test.txt"));
+            });
+        });
 
+        describe("#CopyFile", () => {
 
+            it("should copy a file from one location to another", () => {
 
+                let vfs = make_vfs();
+
+                vfs.AddFile("C:\\Users\\Construct\\Desktop\\foo.txt", "Hello, World!");
+                assert.isFalse(vfs.FileExists("C:\\Users\\Construct\\Desktop\\bar.txt"));
+                vfs.CopyFile(
+                    "C:\\Users\\Construct\\Desktop\\foo.txt",
+                    "C:\\Users\\Construct\\Desktop\\bar.txt"
+                );
+                assert.isTrue(vfs.FileExists("C:\\Users\\Construct\\Desktop\\bar.txt"));
+            });
+
+            it("should overwrite an existing file by default", () => {
+
+                let vfs = make_vfs();
+
+                vfs.AddFile("C:\\Users\\Construct\\Desktop\\foo.txt", "Hello, World!");
+                vfs.AddFile("C:\\Users\\Construct\\Desktop\\bar.txt", "1234567890");
+
+                vfs.CopyFile(
+                    "C:\\Users\\Construct\\Desktop\\foo.txt",
+                    "C:\\Users\\Construct\\Desktop\\bar.txt"
+                );
+
+                assert.deepEqual(
+                    vfs.ReadFileContents("C:\\Users\\Construct\\Desktop\\bar.txt", "ascii"),
+                    "Hello, World!"
+                );
+            });
+
+            it("should throw if trying to copy a file while the destination filename exists", () => {
+
+                let vfs = make_vfs();
+
+                vfs.AddFile("C:\\foo.txt", "Foobar!");
+                vfs.AddFile("C:\\bar.txt", "Barbaz!");
+
+                assert.throws(
+                    () => vfs.CopyFile("C:\\foo.txt", "C:\\bar.txt", { overwrite: false }),
+                    "EEXIST: file already exists"
+                );
             });
         });
     });

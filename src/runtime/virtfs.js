@@ -25,6 +25,31 @@ const spy    = require("spyfs").spy;
 // modules.
 //
 //
+// File System Organisation
+// ~~~~~~~~~~~~~~~~~~~~~~~~
+//
+// By design, the Construct VFS only supports the "C:" volume as this
+// keeps things simple.  Due to the way the underlying `memfs' module
+// works, paths are stored much like Unix paths, with disk designators
+// removed and all backslashes replaced to forward slashes.  This is
+// an internal representation only, and all paths should be correctly
+// formatted before being returned.  For example:
+//
+//   "C:\Foo\BAR.TXT" --[ BECOMES ]--> "/foo/bar.txt"
+//
+// Notice that the disk designator is removed and the whole path is
+// lower-cased.  The lower casing is a feature of NTFS.  To correctly
+// reconcile a mixed case path, we maintain a lookup table which
+// maps external paths to those used internally by Construct.
+//
+//
+// Synchronous vs. Asynchronous
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//
+// Construct does not support asynchronous file access.  All file
+// system operations are performed synchronously.
+//
+//
 // Paths
 // ~~~~~
 //
@@ -35,16 +60,15 @@ const spy    = require("spyfs").spy;
 //
 // CONTRACT
 //
-//   - Any methods exported by the VFS will operate only on absolute
+//   - Most methods exported by the VFS will operate only on absolute
 //     paths, with the exception being the methods designed to
 //     normalise and expand paths.
 //
 //   - Wildcards are not supported by any of the VFS methods which
-//     directly interface with the virtual FS.  Dedicated methods
-//     exist for expanding a wildcard expression in to a set of files
-//     which match the expression.  These methods should be called to
-//     build a list of files to act upon, and then apply each of the
-//     resultant files to whatever VFS function is required.
+//     directly access the virtual FS.  Dedicated methods exist for
+//     expanding a wildcard expression in to a set of files which
+//     match the expression.  These methods should be called to build
+//     a list of files, then each file is "applied" to the FS.
 //
 //   - The accepted path types are:
 //
@@ -56,11 +80,10 @@ const spy    = require("spyfs").spy;
 //       UNC Paths               :: \\192.168.1.1\foo\bar\baz
 //       Win32 Device Namespaces :: \\.\COM1
 //
-//   - Environment variable expansion is NOT handled by the VFS, and
-//     the VFS does not know anything about ENV vars.  This follows
-//     Windows' behaviour.  Code wishing to interact with the VFS
-//     should ensure that `ExpandEnvironmentStrings' (or similar) has
-//     been applied to the paths *BEFORE* they're passed to the VFS.
+//   - Environment variable expansion is handled by the VFS, but only
+//     via the `ExpandEnvironmentStrings' and `Resolve' methods.  No
+//     other VFS methods know anything about ENV vars.  This follows
+//     Windows' behaviour.
 //
 class VirtualFileSystem {
 
@@ -74,6 +97,8 @@ class VirtualFileSystem {
             "c": new Volume
         };
 
+        this.extern_to_intern_paths = {};
+
 
         this.volume_c = this.volumes.c;
         this.vfs = this.volume_c;
@@ -81,12 +106,65 @@ class VirtualFileSystem {
         this._InitFS();
     }
 
+    // [PRIVATE] InitFS
+    // ================
+    //
+    // Handles VFS setup when the VFS is constructed.  Responsible for
+    // loading paths from the Construct config, as well as setting up
+    // a base file system.
+    //
     _InitFS () {
 
-        // TODO: Make use of fs.utimesSync(path, atime, mtime)
-        // for altering file {m,a,c,e} times.
-        this.volume_c.mkdirpSync("/Users/Construct/Desktop");
-        this.volume_c.mkdirpSync("/Users/Construct/My Documents");
+        // .TODO1
+        // The VFS does not load any paths from a configuration file.
+        // When this feature is added, this method will handle this.
+        // .TODO2
+
+        // .TODO1
+        // There's currently a limitation with the VFS where NTFS
+        // {m,a,c,e} times are not derived from the epoch.  This needs
+        // to be updated so that we don't get weird file metadata when
+        // running under a different timestamp.
+        // .TODO2
+
+        const basic_fs_setup = [
+            "C:\\Users\\Construct\\Desktop",
+            "C:\\Users\\Construct\\My Documents"
+        ];
+
+        basic_fs_setup.forEach(p => this.vfs.mkdirpSync(this._ToInternalPath(p)));
+    }
+
+    // [PRIVATE] ToInternalPath
+    // ========================
+    //
+    // Given an `extern_path', so named because it's the path known to
+    // the JScript we're running, convert the path to its internal
+    // representation.  This includes performing the following
+    // alterations:
+    //
+    //   - Lower-casing the entire path.
+    //   - Removing the disk designator.
+    //   - Switch all \ separators to /.
+    //
+    _ToInternalPath (extern_path) {
+
+        let internal_path = extern_path
+            .toLowerCase()
+            .replace(/^[a-z]:/ig, "")
+            .replace(/\\/g, "/");
+
+        this.extern_to_intern_paths[extern_path] = internal_path;
+        return internal_path;
+    }
+
+    // GetVFS
+    // ======
+    //
+    // Returns a JSON representation of the VFS.
+    //
+    GetVFS () {
+        return this.vfs.toJSON();
     }
 
     //
@@ -102,8 +180,17 @@ class VirtualFileSystem {
     //
     //   https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
     //
+    BuildPath (existing_path, new_path_part) {
+
+        if (/^[a-z]:$/i.test(existing_path) || /[\\/]$/.test(existing_path)) {
+            return `${existing_path}${new_path_part}`;
+        }
+
+        return `${existing_path}\\${new_path_part}`;
+    }
 
     // PathIsAbsolute
+    // ==============
     //
     // Queries the given `path' and will return TRUE if `path' appears
     // to be absolute, or FALSE for everything else.
@@ -151,6 +238,7 @@ class VirtualFileSystem {
     }
 
     // PathIsRelative
+    // ==============
     //
     // Queries the given `path' and returns TRUE if the path appears
     // to be relative, or FALSE for everything else.
@@ -180,7 +268,6 @@ class VirtualFileSystem {
         // found, it will be left as-is.  We won't validate the
         // expanded form is even a valid path.
         //
-
         const env_var_regexp = /%[a-z0-9_]+%/ig;
 
         let match = env_var_regexp.exec(str);
@@ -314,17 +401,43 @@ class VirtualFileSystem {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
 
+    // CopyFile
+    // ========
     //
-    // ===========================
-    // L E G A C Y   S U P P O R T
-    // ===========================
-    //
-    // These methods are implemented to lessen the pain of migrating
-    // away from the *old* Construct VFS and in to the new, `memfs'
-    // era.
+    // Copies the file from `source' to `destination'.  By default,
+    // `destination' is overwritten if it already exists.  Destination
+    // must be an absolute filepath, and not just a path to a folder.
+    // To copy a file in to a folder, see `CopyFileToFolder'.
     //
     CopyFile (source, destination, opts) {
-        console.log(`copying ${source} -> ${destination}`);
+
+        const isource      = this._ToInternalPath(source),
+              idestination = this._ToInternalPath(destination);
+
+        opts = opts || {};
+
+        var flags = 0;
+
+        if (opts.overwrite === false) {
+            flags = memfs.constants.COPYFILE_EXCL;
+        }
+
+        this.vfs.copyFileSync(isource, idestination, flags);
+    }
+
+    // ReadFileContents
+    // ================
+    //
+    // Reads and returns the file contents.  If `encoding' is
+    // supplied, will attempt to decode the file contents according to
+    // the encoding scheme.  If no encoding is set a Buffer is
+    // returned.
+    ReadFileContents (filepath, encoding) {
+
+        const ipath = this._ToInternalPath(filepath),
+              buf   = this.vfs.readFileSync(ipath, encoding);
+
+        return buf;
     }
 
     // FileExists
@@ -333,10 +446,46 @@ class VirtualFileSystem {
     // Tests if the given filepath exists.  The value of
     // auto-vivification does not alter the behaviour of this method.
     //
+    // .TODO1
+    // Investigate whether auto-vivification should be considered when
+    // asking if a file exists.  I believe it should be used, but this
+    // needs some research.
+    // .TODO2
+    //
     FileExists (filepath) {
-        return fs.accessSync(filepath);
+
+        try {
+            this.vfs.accessSync(this._ToInternalPath(filepath));
+            return true;
+        }
+        catch (_) {
+            return false;
+        }
     }
 
+    // FolderExists
+    // ============
+    //
+    // Tests if the given folder path exists, returning true if it
+    // does, and false otherwise.  Auto-vivification does not alter
+    // the behaviour of this method.
+    //
+    // .TODO1
+    // Investigate whether auto-vivification should be applied to
+    // folders.  The result of folders should match whatever is
+    // decided for files.
+    // .TODO2
+    //
+    FolderExists (folderpath) {
+
+        try {
+            this.vfs.accessSync(this._ToInternalPath(folderpath));
+            return true;
+        }
+        catch (_) {
+            return false;
+        }
+    }
 
     // AddFile
     // =======
@@ -347,13 +496,40 @@ class VirtualFileSystem {
     //
     AddFile (filepath, data, options) {
 
+        let ipath = this._ToInternalPath(filepath);
+        this.vfs.writeFileSync(ipath, data, options);
+    }
 
-        try {
-            this.vfs.writeFileSync(filepath, data, options);
-        }
-        catch (ex) {
+    // AddFolder
+    // =========
+    //
+    // Creates a new directory tree.  If the path does not exist, and
+    // auto-vivification is enabled, `AddFolder' will create the
+    // entire folder path.
+    //
+    AddFolder (folderpath, options) {
 
+        if (!this.FolderExists(folderpath)) {
+
+            let ipath = this._ToInternalPath(folderpath);
+            this.vfs.mkdirpSync(ipath);
         }
+    }
+
+    // GetFile
+    // =======
+    //
+    // If the supplied `path' represents a file, then a WINAPI
+    // FileObject instance is returned.  If the file cannot be found,
+    // then false is returned.
+    //
+    GetFile (filepath) {
+
+        let ipath = this._ToInternalPath(filepath);
+
+        let filebuf = this.vfs.readSync(ipath);
+
+        console.log(filebuf);
     }
 
 
@@ -363,8 +539,6 @@ class VirtualFileSystem {
         // for altering file {m,a,c,e} times.
         this.volume_c.writeFileSync(path, data, options);
     }
-
-
 
 
     //
