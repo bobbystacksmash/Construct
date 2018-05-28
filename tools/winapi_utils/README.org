@@ -1,0 +1,13 @@
+* Windows API Utilities
+
+This directory contains source code for various Windows utilities,
+each written to provide information relating to different Win API
+functionality.
+
+
+** FindFirstFile
+
+The wildcarding implementation for the VFS is derived from data
+extracted from the output of the ~find_first_file.cc~ program.  Given
+a single argument, it will pass this to ~FindFirstFile~, printing the
+subsequent names of each file in the CWD until no more files are found.
