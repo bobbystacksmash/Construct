@@ -3,8 +3,6 @@ const FileObject   = require("../winapi/FileObject");
 const win32path    = require("path").win32;
 const memfs        = require("memfs").fs;
 const Volume       = require("memfs").Volume;
-var   rewire       = require("rewire");
-var   proxyquire   = require("proxyquire");
 
 //
 // Construct Virtual File System Design
@@ -30,7 +28,7 @@ var   proxyquire   = require("proxyquire");
 // works, paths are stored much like Unix paths, with disk designators
 // removed and all backslashes replaced to forward slashes.  This is
 // an internal representation only, and all paths should be correctly
-// formatted before being returned.  For example:
+// translated on the way in, as well as on the way out. For example:
 //
 //   "C:\Foo\BAR.TXT" --[ BECOMES ]--> "/foo/bar.txt"
 //
@@ -142,6 +140,7 @@ class VirtualFileSystem {
     //   - Lower-casing the entire path.
     //   - Removing the disk designator.
     //   - Switch all \ separators to /.
+    //   - Store the original path in the path dictionary.
     //
     _ToInternalPath (extern_path) {
 
@@ -175,6 +174,14 @@ class VirtualFileSystem {
     // MSDN article has proved most useful:
     //
     //   https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
+    //
+
+    // BuildPath
+    // ~~~~~~~~~
+    //
+    // Given an `existing_path', appends the `new_path_part' to it.
+    // Behaviour is copied from the FileSystemObject's BuildPath
+    // method with regards to when folder separators are added.
     //
     BuildPath (existing_path, new_path_part) {
 
@@ -220,7 +227,6 @@ class VirtualFileSystem {
         //   \\hostname\foo\bar.txt
         //
         if (/^\\./i.test(path)) return true;
-
 
         // An absolute path can be identified as beginning with a disk
         // designator, followed by a backslash:
