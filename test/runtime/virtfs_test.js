@@ -323,6 +323,18 @@ describe("Virtual File System", () => {
                 assert.isTrue(vfs.FileExists("C:\\Users\\Construct\\Desktop\\bar.txt"));
             });
 
+            it("should ignore case when copying files", () => {
+
+                let vfs = make_vfs();
+
+                vfs.AddFile("C:\\USERS\\CONSTRUCT\\DESKTOP\\FOO.TXT", "HELLO WORLD!");
+                vfs.CopyFile("c:\\users\\construct\\desktop\\foo.txt",
+                             "C:\\USERS\\CONSTRUCT\\DESKTOP\\BAR.txt");
+
+                assert.isTrue(vfs.FileExists("c:\\users\\construct\\desktop\\BAR.txt"));
+            });
+
+
             it("should overwrite an existing file by default", () => {
 
                 let vfs = make_vfs();
@@ -353,6 +365,97 @@ describe("Virtual File System", () => {
                     "EEXIST: file already exists"
                 );
             });
+        });
+
+        describe("#DeleteFile", () => {
+
+            it("should support deleting a file", () => {
+
+                let vfs = make_vfs();
+
+                vfs.AddFile("C:\\foo.txt", "Hello");
+                assert.isTrue(vfs.FileExists("C:\\foo.txt"));
+
+                vfs.DeleteFile("C:\\foo.txt");
+                assert.isFalse(vfs.FileExists("C:\\foo.txt"));
+            });
+
+            it("should support deleting folders as well as files", () => {
+
+                let vfs = make_vfs();
+
+                vfs.AddFolder("C:\\Foo\\Bar");
+                assert.isTrue(vfs.FolderExists("C:\\Foo\\Bar"));
+                vfs.DeleteFile("C:\\Foo\\Bar");
+                assert.isFalse(vfs.FolderExists("C:\\Foo\\Bar"));
+            });
+
+            it("should ignore case when deleting a file", () => {
+
+                let vfs = make_vfs();
+
+                vfs.AddFile("C:\\FOO.TXT", "FOOBAR");
+                assert.isTrue(vfs.FileExists("C:\\FOO.TXT"));
+
+                vfs.DeleteFile("c:\\foo.txt");
+                assert.isFalse(vfs.FileExists("C:\\FOO.TxT"));
+            });
+        });
+
+        describe("#RenameFile", () => {
+
+            it("should allow the moving of a file when the dest file does not exist", () => {
+
+                let vfs = make_vfs();
+
+                vfs.AddFile("C:\\foo.txt");
+                assert.isFalse(vfs.FileExists("C:\\bar.txt"));
+
+                vfs.Rename("C:\\foo.txt", "C:\\bar.txt");
+                assert.isTrue(vfs.FileExists("C:\\bar.txt"));
+            });
+
+            it("should throw if the source file cannot be found", () => {
+                let vfs = make_vfs();
+                assert.throws(() => vfs.Rename("C:\\foo.txt", "C:\\bar.txt"), "ENOENT: no such file or directory");
+            });
+        });
+
+        describe("#CopyFolder", () => {
+
+            it("should copy a folder and all the contents to a new location", () => {
+
+                let vfs = make_vfs();
+
+                vfs.AddFolder("C:\\foo\\bar\\baz");
+                vfs.AddFile("C:\\foo\\bar\\baz\\blah.txt", "Hello, World!");
+
+                assert.isFalse(vfs.FolderExists("C:\\dest"));
+                assert.isFalse(vfs.FileExists("C:\\dest\\foo\\bar\\baz\\blah.txt"));
+
+                // The folder path does not end with a '\', meaning we
+                // want foo copied in to dest.
+                vfs.CopyFolder("C:\\foo", "C:\\dest");
+                assert.isTrue(vfs.FileExists("C:\\dest\\foo\\bar\\baz\\blah.txt"));
+            });
+
+            it("should copy the folder contents if specified by a trailing path separator", () => {
+
+                let vfs = make_vfs();
+
+                vfs.AddFolder("C:\\foo\\bar\\baz");
+                vfs.AddFile("C:\\foo\\bar\\baz\\blah.txt", "Hello, World!");
+
+                assert.isFalse(vfs.FolderExists("C:\\dest"));
+                assert.isFalse(vfs.FileExists("C:\\dest\\foo\\bar\\baz\\blah.txt"));
+
+                // The folder path does not end with a '\', meaning we
+                // want foo copied in to dest.
+                vfs.CopyFolder("C:\\foo\\", "C:\\dest");
+
+                assert.isTrue(vfs.FileExists("C:\\dest\\bar\\baz\\blah.txt"));
+            });
+
         });
     });
 });

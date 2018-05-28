@@ -1,13 +1,10 @@
 const FolderObject = require("../winapi/FolderObject");
 const FileObject   = require("../winapi/FileObject");
-
 const win32path    = require("path").win32;
-
-const memfs  = require("memfs").fs;
-const Volume = require("memfs").Volume;
-const ufs    = require("unionfs");
-const linkfs = require("linkfs");
-const spy    = require("spyfs").spy;
+const memfs        = require("memfs").fs;
+const Volume       = require("memfs").Volume;
+var   rewire       = require("rewire");
+var   proxyquire   = require("proxyquire");
 
 //
 // Construct Virtual File System Design
@@ -98,7 +95,6 @@ class VirtualFileSystem {
         };
 
         this.extern_to_intern_paths = {};
-
 
         this.volume_c = this.volumes.c;
         this.vfs = this.volume_c;
@@ -425,6 +421,10 @@ class VirtualFileSystem {
         this.vfs.copyFileSync(isource, idestination, flags);
     }
 
+    CopyDirectoryStructure (source, destination) {
+
+    }
+
     // ReadFileContents
     // ================
     //
@@ -432,6 +432,7 @@ class VirtualFileSystem {
     // supplied, will attempt to decode the file contents according to
     // the encoding scheme.  If no encoding is set a Buffer is
     // returned.
+    //
     ReadFileContents (filepath, encoding) {
 
         const ipath = this._ToInternalPath(filepath),
@@ -498,6 +499,83 @@ class VirtualFileSystem {
 
         let ipath = this._ToInternalPath(filepath);
         this.vfs.writeFileSync(ipath, data, options);
+    }
+
+    // DeleteFile
+    // ==========
+    //
+    // Removes the file.
+    //
+    DeleteFile (filepath) {
+
+        const ipath = this._ToInternalPath(filepath);
+        this.vfs.unlinkSync(ipath);
+    }
+
+    // Rename
+    // ======
+    //
+    // Renames a given `source' to `destination'.
+    //
+    Rename (source, destination, options) {
+
+        const isource      = this._ToInternalPath(source),
+              idestination = this._ToInternalPath(destination);
+
+        this.vfs.renameSync(isource, idestination);
+    }
+
+    // MoveFolder
+    // ==========
+    //
+    // Moves a `source' folder to a `destination'.  All internal files
+    // and folders are also moved.
+    //
+    CopyFolder (source, destination) {
+
+        let isource      = this._ToInternalPath(source),
+            idestination = this._ToInternalPath(destination);
+
+        let vfs = this.vfs;
+
+        if (vfs.statSync(isource).isDirectory() && ! /\/$/.test(isource)) {
+            try {
+                vfs.mkdirpSync(`${idestination}/${isource}`);
+            }
+            catch (_) {}
+
+            isource      = `${isource}/`;
+            idestination = `${idestination}/${isource}`;
+        }
+
+        function recursive_copy (isrc, idest) {
+
+            let list_of_files  = vfs.readdirSync(isrc);
+
+            list_of_files.forEach(f => {
+
+                let isrc_this_file  = `${isrc}/${f}`,
+                    idest_this_file = `${idest}/${f}`;
+
+                if (vfs.statSync(isrc_this_file).isDirectory()) {
+
+                    try {
+                        vfs.mkdirpSync(idest_this_file);
+                    }
+                    catch (_) {
+                        // Folder already exists, do nothing.
+                    }
+
+                    recursive_copy(isrc_this_file, idest_this_file);
+                }
+                else {
+                    // This is a file...
+                    vfs.copyFileSync(isrc_this_file, idest_this_file);
+                }
+            });
+        }
+
+        recursive_copy(isource, idestination);
     }
 
     // AddFolder
