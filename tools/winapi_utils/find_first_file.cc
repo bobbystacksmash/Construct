@@ -5,29 +5,29 @@
 
 void _tmain(int argc, TCHAR *argv[])
 {
-	WIN32_FIND_DATA FindFileData;
-	HANDLE hFind;
+  WIN32_FIND_DATA FindFileData;
+  HANDLE hFind;
 
-	if (argc != 2)
-	{
-		_tprintf(TEXT("Usage: %s WILDCARD_EXPR\n"), argv[0]);
-		return;
-	}
+  if (argc != 2)
+    {
+      _tprintf(TEXT("Usage: %s WILDCARD_EXPR\n"), argv[0]);
+      return;
+    }
 
-	hFind = FindFirstFile(argv[1], &FindFileData);
-	if (hFind == INVALID_HANDLE_VALUE)
-	{
-		printf("FindFirstFile failed (%d)\n", GetLastError());
-		return;
-	}
-	else
-	{
-		_tprintf(TEXT("%s\n"), FindFileData.cFileName);
-	}
+  hFind = FindFirstFile(argv[1], &FindFileData);
+  if (hFind == INVALID_HANDLE_VALUE)
+    {
+      printf("FindFirstFile failed (%d)\n", GetLastError());
+      return;
+    }
+  else
+    {
+      _tprintf(TEXT("%s|%s\n"), FindFileData.cFileName, FindFileData.cAlternateFileName);
+    }
 
-	while (FindNextFile(hFind, &FindFileData)) {
-		_tprintf(TEXT("%s\n"), FindFileData.cFileName);
-	}
+  while (FindNextFile(hFind, &FindFileData)) {
+    _tprintf(TEXT("%s|%s\n"), FindFileData.cFileName, FindFileData.cAlternateFileName);
+  }
 
-	FindClose(hFind);
+  FindClose(hFind);
 }
