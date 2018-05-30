@@ -8,46 +8,40 @@ supported in evidence collected from running ~FindFirstFile~ on a
 Windows host.
 
 Finally, ~FindFirstFile~ performs normalisation before wildcard
-translation rules are applied.  Therefore, we need to ensure that we
-also perform the same normalisation, unless the path begins ~\\?\~,
-which is a request for us not to alter the path in any way.
+translation rules are applied, unless the path begins ~\\?\~, which is
+Windows' method of saying "do not normalise this path".  See the
+[[Wildcard Normalisation Rules]] below for translations.
 
-** List of phrases and terms
-
- - "wildcard character" :: Represents any one of the characters listed
-      in the [[Wildcard Opcodes]] table.
+** Algorithm
 
 
-#+BEGIN_SRC dot :file images/test-dot.png :cmdline -Kdot -Tpng
-graph foo {
-size="1,1"
-a [label="Foo"]
-b [shape=box]
-a -- b -- c [color=blue];
-b -- d [style=dotted];
-}
-#+END_SRC
+** Wildcard Symbols
 
-#+RESULTS:
-[[file:images/test-dot.png]]
+| SYMBOL | TAGGED NAME | DESCRIPTION                              |
+|--------+-------------+------------------------------------------|
+| <c>    | <c>         | <40>                                     |
+| *      | ASTERISK    | Matches zero or more characters.         |
+| ?      | QMARK       | Matches exactly one character.           |
+| <      | DOS_STAR    | Matches zero or more characters until encountering and matching the final period in the name |
+| >      | DOS_QM      | Matches any single character, or zero if to the left of a period or the end of the string- or contiguous to other > that are in said position. |
+| "      | DOS_DOT     | Matches a period or zero characters at the end of the string. ~ |
+| .      | PERIOD      | A literal dot/periot, but with special significance. |
 
 
-** Wildcard Opcodes
+** Wildcard Normalisation Rules
 
-| OP CODE | TAGGED NAME | DESCRIPTION                              |
-|---------+-------------+------------------------------------------|
-| <c>     | <c>         | <40>                                     |
-| *       | ASTERISK    | Matches zero or more characters.         |
-| ?       | QMARK       | Matches exactly one character.           |
-| <       | DOS_STAR    | Matches zero or more characters until encountering and matching the final period in the name |
-| >       | DOS_QM      | Matches any single character, or zero if to the left of a period or the end of the string- or contiguous to other > that are in said position. |
-| "       | DOS_DOT     | Matches a period or zero characters at the end of the string. ~ |
-| .       | PERIOD      | A literal dot/periot, but with special significance. |
+According to J. Kuhne, almost every path which gets passed to the
+Windows API gets normalised.  Normalisation does:
 
-** Wildcard Translation Rules
+  * Canonicalises component/directory separators.
+  * Applies current directories to partially qualified (relative) paths.
+  * Evaluates relative directory components (current . and parent ..).
+  * Trims certain characters
 
-According to J. Kuhne, Windows changes your wildcards.  The following
-table outlines the translation rules.
+
+
+will change your wildcards, The below table tracks the wildcard
+translations.
 
 | RULE                                                                             |
 |----------------------------------------------------------------------------------|
