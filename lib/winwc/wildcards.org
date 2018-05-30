@@ -1,0 +1,57 @@
+* Matching Windows Wildcard Behaviour
+
+Matching wildcards in Windows is messy.  This document outlines the
+design for how we mimic Windows' wildcarding behaviour.
+
+For sanity, all of the input data used to compile this document is
+supported in evidence collected from running ~FindFirstFile~ on a
+Windows host.
+
+Finally, ~FindFirstFile~ performs normalisation before wildcard
+translation rules are applied.  Therefore, we need to ensure that we
+also perform the same normalisation, unless the path begins ~\\?\~,
+which is a request for us not to alter the path in any way.
+
+** List of phrases and terms
+
+ - "wildcard character" :: Represents any one of the characters listed
+      in the [[Wildcard Opcodes]] table.
+
+
+#+BEGIN_SRC dot :file images/test-dot.png :cmdline -Kdot -Tpng
+graph foo {
+size="1,1"
+a [label="Foo"]
+b [shape=box]
+a -- b -- c [color=blue];
+b -- d [style=dotted];
+}
+#+END_SRC
+
+#+RESULTS:
+[[file:images/test-dot.png]]
+
+
+** Wildcard Opcodes
+
+| OP CODE | TAGGED NAME | DESCRIPTION                              |
+|---------+-------------+------------------------------------------|
+| <c>     | <c>         | <40>                                     |
+| *       | ASTERISK    | Matches zero or more characters.         |
+| ?       | QMARK       | Matches exactly one character.           |
+| <       | DOS_STAR    | Matches zero or more characters until encountering and matching the final period in the name |
+| >       | DOS_QM      | Matches any single character, or zero if to the left of a period or the end of the string- or contiguous to other > that are in said position. |
+| "       | DOS_DOT     | Matches a period or zero characters at the end of the string. ~ |
+| .       | PERIOD      | A literal dot/periot, but with special significance. |
+
+** Wildcard Translation Rules
+
+According to J. Kuhne, Windows changes your wildcards.  The following
+table outlines the translation rules.
+
+| RULE                                                                             |
+|----------------------------------------------------------------------------------|
+| <80>                                                                             |
+| All '?' are changed to '>'.                                                      |
+| All '.?' or '.*' are changed to '"'.                                             |
+| A path ending in '*' that had a final period before normalising is changed to '<'. |
