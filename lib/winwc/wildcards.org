@@ -12,7 +12,26 @@ translation rules are applied, unless the path begins ~\\?\~, which is
 Windows' method of saying "do not normalise this path".  See the
 [[Wildcard Normalisation Rules]] below for translations.
 
-** Algorithm
+** Lexical Analysis
+
+The lexer accepts a file expression as an input, and converts this
+expression in to a series of tokens.  The example below shows the
+input and the tokenised output.
+
+Input: ~foo<.<~:
+
+#+BEGIN_SRC c
+[
+  LITERAL("f"),
+  LITERAL("o"),
+  LITERAL("o"),
+  SYMBOL("DOS_STAR"),
+  LITERAL("."),
+  LITERAL("DOS_STAR")
+]
+#+END_SRC
+
+
 
 
 ** Wildcard Symbols
