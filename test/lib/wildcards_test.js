@@ -5,7 +5,7 @@ const wildcard_match = require("../../lib/winwc/interpreter");
 
 describe("Wildcard Matcher", () => {
 
-    describe("< DOS_STAR (also known as '*')", () => {
+    describe("DOS_STAR(<)", () => {
 
         it("should match all when used on its own", () => {
 
@@ -113,6 +113,27 @@ describe("Wildcard Matcher", () => {
 
         it("should be ignored if at the end of a pattern", () => {
             assert.isTrue(wildcard_match('foo.txt"""', "foo.txt"));
+        });
+    });
+
+    describe("ASTERISK(*) - greedy wildcard matcher, zero or more times", () => {
+
+        it("should successfully match all of these patterns", () => {
+
+            let matches = [
+                "foo.txt", "NO_DOT", "a.b.c.d.e", "f", "hello", "any_char"
+            ];
+
+            matches.forEach(m => assert.isTrue(wildcard_match("*", m)));
+        });
+
+        it("should match if there are multiple ASTERISKS appearing together", () => {
+
+            let matches = [
+                "a", "aa", "aaa", "aaab", "aaa.txt", "foo_bar", "HELLO", "testing"
+            ];
+
+            matches.forEach(m => assert.isTrue(wildcard_match("****", m)));
         });
     });
 });
