@@ -20,10 +20,14 @@ describe("Wildcard Matcher", () => {
 
             let wildcards = [
                 "foo.txt<", "foo.tx<t", "foo.t<xt", "foo.<txt",
-                "foo<.txt", "fo<o.txt", "f<oo.txt", "<foo.txt"
+                "foo<.txt", "fo<o.txt", "f<oo.txt", "<foo.txt",
             ];
 
             wildcards.forEach(w => assert.isTrue(wildcard_match(w, "foo.txt"), `Matching: PAT(${w}) to FILENAME(foo.txt)`));
+        });
+
+        it("should ignore multiple '<<<<'", () => {
+            assert.isTrue(wildcard_match("f<<<<.txt", "foo.txt"));
         });
     });
 });
