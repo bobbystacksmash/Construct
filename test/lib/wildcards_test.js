@@ -92,6 +92,27 @@ describe("Wildcard Matcher", () => {
         it("should match with chars after the ext dot", () => {
             assert.isTrue(wildcard_match(">>>.txt", "foo.txt"));
         });
+    });
 
+    describe("'\"' DOS_DOT, matches literal dots or nothing if at the end of the string", () => {
+
+        it("should match a dot", () => {
+            assert.isTrue(wildcard_match('abc"""txt', "abc...txt"));
+        });
+
+        it("should match any dot, even at the end", () => {
+
+            let matches = [
+                { pattern: 'foo"txt',     filename: "foo.txt" },
+                { pattern: 'a"1"b"2"txt', filename: "a.1.b.2.txt" },
+                { pattern: 'a.1"b.2"txt', filename: "a.1.b.2.txt" },
+            ];
+
+            matches.forEach(m => assert.isTrue(wildcard_match(m.pattern, m.filename)));
+        });
+
+        it("should be ignored if at the end of a pattern", () => {
+            assert.isTrue(wildcard_match('foo.txt"""', "foo.txt"));
+        });
     });
 });
