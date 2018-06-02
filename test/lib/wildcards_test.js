@@ -26,8 +26,72 @@ describe("Wildcard Matcher", () => {
             wildcards.forEach(w => assert.isTrue(wildcard_match(w, "foo.txt"), `Matching: PAT(${w}) to FILENAME(foo.txt)`));
         });
 
-        it("should ignore multiple '<<<<'", () => {
+        it("should correctly handle multiple '<<<<'", () => {
             assert.isTrue(wildcard_match("f<<<<.txt", "foo.txt"));
+            assert.isFalse(wildcard_match("f<<<.txt", "bar.txt"));
         });
+
+        it("should match filenames ending with dots or without", () => {
+
+            let filenames = [
+                "foo", "foo.", "no_dot"
+            ];
+
+            filenames.forEach(fn => assert.isTrue(wildcard_match("<.", fn)));
+        });
+    });
+
+    describe("> DOS_QM, also known as '?'", () => {
+
+        it("should not match if middle char is '.'", () => {
+            assert.isFalse(wildcard_match("a>c", "a.c"));
+        });
+
+        it("should match if repeated multiple times before the last '.'", () => {
+
+            let matching_filenames = [
+                "foo.exe", "bar.exe", "baz.exe"
+            ];
+
+            matching_filenames.forEach(fn => assert.isTrue(wildcard_match(">>>>.exe", fn)));
+        });
+
+        it("should match exactly one char", () => {
+
+            let matching_filenames = [
+                "f", "fo", "foo", "fox", "fod", "aaa", "xyz"
+            ];
+
+            let non_matching_filenames = [
+                "abcd", "a.txt", "a.c"
+            ];
+
+            matching_filenames.forEach(fn => assert.isTrue(wildcard_match(">>>", fn)));
+            non_matching_filenames.forEach(fn => assert.isFalse(wildcard_match(">>>", fn), `>>> ${fn}`));
+        });
+
+        it("should match if pattern is similar to '>>>>.>>>>'", () => {
+
+            let matching_filenames = [
+                "a.1", "ab.12", "abc.123", "abcd.1234",
+                "abc."
+            ];
+
+            let non_matching_filenames = [
+                "no_dot", "abcde.1234"
+            ];
+
+            matching_filenames.forEach(fn => assert.isTrue(wildcard_match(">>>>.>>>>", fn), `>>>>.>>>> ${fn}`));
+            //matching_filenames.forEach(fn => assert.isFalse(wildcard_match(">>>>.>>>>", fn)));
+        });
+
+        it("should match either side of the dot", () => {
+            assert.isTrue(wildcard_match(">.>", "a.c"));
+        });
+
+        it("should match with chars after the ext dot", () => {
+            assert.isTrue(wildcard_match(">>>.txt", "foo.txt"));
+        });
+
     });
 });
