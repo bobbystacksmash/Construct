@@ -25,10 +25,14 @@ symbols are interpreted by Windows when matching against a filename.
   "   :: Matches either a literal period, or zero chars at the end of
   the string.
 
-  ~<~ :: DOS_STAR Matches zero or more characters until encountering
-  and matching the final period in the name. (DOS_STAR)
+  ~<~ :: Matches zero or more characters until encountering and
+  matching the last-occurring period in the filename.
 
   ~>~ :: DOS_QM
+
+I derived these definitions from this [[https://blogs.msdn.microsoft.com/jeremykuhne/2017/06/04/wildcards-in-windows/][Wildcards in Windows]] MSDN blog
+post, and my own experiments using ~find_first_file.cc~ in the
+~tools/winaup_utils~ folder of this project.
 
 ** Lexical Analysis
 
