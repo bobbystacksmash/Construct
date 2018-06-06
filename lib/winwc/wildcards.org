@@ -12,39 +12,27 @@ translation rules are applied, unless the path begins ~\\?\~, which is
 Windows' method of saying "do not normalise this path".  See the
 [[Wildcard Normalisation Rules]] below for translations.
 
+
+** Match Symbols
+
+Detailed below are the textual descriptions of how different match
+symbols are interpreted by Windows when matching against a filename.
+
+  ~*~ :: Matches any filename character, zero or more times.
+
+  ~?~ :: Matches any filename character exactly once.
+
+  "   :: Matches either a literal period, or zero chars at the end of
+  the string.
+
+  ~<~ :: DOS_STAR Matches zero or more characters until encountering
+  and matching the final period in the name. (DOS_STAR)
+
+  ~>~ :: DOS_QM
+
 ** Lexical Analysis
 
-The lexer accepts a file expression as an input, and converts this
-expression in to a series of tokens.  The example below shows the
-input and the tokenised output.
 
-Input: ~foo<.<~:
-
-#+BEGIN_SRC c
-[
-  LITERAL("f"),
-  LITERAL("o"),
-  LITERAL("o"),
-  SYMBOL("DOS_STAR"),
-  LITERAL("."),
-  LITERAL("DOS_STAR")
-]
-#+END_SRC
-
-
-
-
-** Wildcard Symbols
-
-| SYMBOL | TAGGED NAME | DESCRIPTION                              |
-|--------+-------------+------------------------------------------|
-| <c>    | <c>         | <40>                                     |
-| *      | ASTERISK    | Matches zero or more characters.         |
-| ?      | QMARK       | Matches exactly one character.           |
-| <      | DOS_STAR    | Matches zero or more characters until encountering and matching the final period in the name |
-| >      | DOS_QM      | Matches any single character, or zero if to the left of a period or the end of the string- or contiguous to other > that are in said position. |
-| "      | DOS_DOT     | Matches a period or zero characters at the end of the string. ~ |
-| .      | PERIOD      | A literal dot/periot, but with special significance. |
 
 
 ** Wildcard Normalisation Rules
@@ -59,12 +47,9 @@ Windows API gets normalised.  Normalisation does:
 
 
 
-will change your wildcards, The below table tracks the wildcard
-translations.
-
-| RULE                                                                             |
-|----------------------------------------------------------------------------------|
-| <80>                                                                             |
-| All '?' are changed to '>'.                                                      |
-| All '.?' or '.*' are changed to '"'.                                             |
+| RULE                                                                               |
+|------------------------------------------------------------------------------------|
+| All '?' are changed to '>'.                                                        |
+| All '.?' or '.*' are changed to '"'.                                               |
 | A path ending in '*' that had a final period before normalising is changed to '<'. |
+|                                                                                    |
