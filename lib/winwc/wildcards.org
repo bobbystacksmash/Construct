@@ -15,10 +15,57 @@ Windows' method of saying "do not normalise this path".  See the
 
 ** Match Symbols
 
-Detailed below are the textual descriptions of how different match
-symbols are interpreted by Windows when matching against a filename.
+  | Character | Name     |
+  |-----------+----------|
+  | *         | ASTERISK |
+  | ?         | QMARK    |
+  | <         | DOS_STAR |
+  | >         | DOS_QM   |
+  | "         | DOS_DOT  |
 
-  ~*~ :: Matches any filename character, zero or more times.
+Match symbols <, >, and " use "MS DOS semantics", meaning the filename
+is treated as if it were in DOS' 8.3 format.  This is explained in
+excellent detail in this [[https://blogs.msdn.microsoft.com/oldnewthing/20071217-00/?p=24143/][blog post]].
+
+*** ~DOS_QM(>)~
+
+MS DOS uses 8.3 format, which states that all filenames are 11
+characters long with an implicit DOT between characters 8 and 9.
+~DOS_QM~ matches using DOS semantics.
+
+#+BEGIN_EXAMPLE
+| 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |     | 9 | 10 | 11 |
+|---|---|---|---|---|---|---|---|-----|---|----|----|
+| H | e | l | l | o | ^ | ^ | ^ | DOT | t |  x |  t |
+#+END_EXAMPLE
+
+It's easier to show DOS_QM matching than to explain it:
+
+  | Index | Pattern         | Match? |
+  |-------+-----------------+--------|
+  | 1     | ">.txt"         | FALSE  |
+  | 2     | ">>.txt"        | FALSE  |
+  | 3     | ">>>.txt"       | FALSE  |
+  | 4     | ">>>>.txt"      | FALSE  |
+  | 5     | ">>>>>.txt"     | TRUE   |
+  | 6     | ">>>>>>.txt"    | TRUE   |
+  | 7     | ">>>>>>>.txt"   | TRUE   |
+  | 8     | ">>>>>>>>.txt"  | TRUE   |
+  | 9     | ">>>>>>>>>.txt" | TRUE   |
+
+In its simplest form, ~DOS_QM~ matches exactly one character.  We can
+see from the table above that the filename part (~Hello~) starts
+matching once we have five ~DOS_QM~ characters, which is to be
+expected:
+
+#+BEGIN_EXAMPLE
+Filename: | H | e | l | l | o | ^ | ^ | ^ | DOT | t | x | t |
+Pattern:  | > | > | > | > | > |   |   |   | DOT | t | x | t |
+Match?    | T | T | T | T | T |   |   |   |  T  | T | T | T |
+#+END_EXAMPLE
+
+
+
 
   ~?~ :: Matches any filename character exactly once.
 
@@ -33,6 +80,8 @@ symbols are interpreted by Windows when matching against a filename.
 I derived these definitions from this [[https://blogs.msdn.microsoft.com/jeremykuhne/2017/06/04/wildcards-in-windows/][Wildcards in Windows]] MSDN blog
 post, and my own experiments using ~find_first_file.cc~ in the
 ~tools/winaup_utils~ folder of this project.
+
+
 
 ** Lexical Analysis
 
