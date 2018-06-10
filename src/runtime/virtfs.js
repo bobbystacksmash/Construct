@@ -3,6 +3,7 @@ const FileObject   = require("../winapi/FileObject");
 const win32path    = require("path").win32;
 const memfs        = require("memfs").fs;
 const Volume       = require("memfs").Volume;
+const md5          = require("md5");
 
 //
 // Construct Virtual File System Design
@@ -80,6 +81,11 @@ const Volume       = require("memfs").Volume;
 //     other VFS methods know anything about ENV vars.  This follows
 //     Windows' behaviour.
 //
+//   - Short filenames (in 8.3 form) are supported.  Some of the
+//     handling surrounding 8.3 names gets weird once there's ~10
+//     similar files in the name, as we use a mixture of hash and
+//     hope.  Not great.
+//
 class VirtualFileSystem {
 
     constructor(context) {
@@ -96,6 +102,35 @@ class VirtualFileSystem {
 
         this.volume_c = this.volumes.c;
         this.vfs = this.volume_c;
+
+        // This is the implementation for storing shortnames.  Any
+        // time a file or folder is created, we add a shortname entry
+        // in to this table.  The keys are absolute filepaths, where
+        // each value is the shortname of the pointed-to file or
+        // folder.  For example, given the following:
+        //
+        //   C:\HelloWorld
+        //   C:\HelloWorld\Bar
+        //   C:\HelloWorld\Bar\textfile3.txt
+        //   C:\HelloWorld\Bar\textfile2.txt
+        //   C:\HelloWorld\Bar\textfile1.txt
+        //
+        // Entries in our shortname table look like:
+        //
+        // | Absolute Path                   | Shortname Value |
+        // |---------------------------------|-----------------|
+        // | C:\HelloWorld                   | HELLOW~1        |
+        // | C:\HelloWorld\Bar               | BAR             |
+        // | C:\HelloWorld\Bar\textfile3.txt | TEXTFI~1.TXT    |
+        // | C:\HelloWorld\Bar\textfile2.txt | TEXTFI~2.TXT    |
+        // | C:\HelloWorld\Bar\textfile1.txt | TEXTFI~3.TXT    |
+        //
+        // Any time we want to get the shortname values, we can hand
+        // the absolute path to the file/folder and quickly get the
+        // value.  All of this so we can have "real-ish" wildcard
+        // matching. O_o
+        //
+        this.shortname_table = {};
 
         this._InitFS();
     }
@@ -127,6 +162,61 @@ class VirtualFileSystem {
         ];
 
         basic_fs_setup.forEach(p => this.vfs.mkdirpSync(this._ToInternalPath(p)));
+    }
+
+    // [PRIVATE] UpdateShortnameTable
+    // ==============================
+    //
+    // Each time a file or folder is created, deleted, moved, or
+    // copied, we need to update the shortname table.  This function
+    // handles the maintenance of the `shortname_table', ensuring that
+    // new files are written correctly, and old files are
+    // appropriately removed, etc.
+    //
+    // Files and folders in VFS are created in the UNIX `mkdir -p'
+    // fashion.  Therefore, it's entirely possible that the entire
+    // `abspath' is brand new, and none of its parts exist in the
+    // shortname table.  We may need to create shortnames for every
+    // part of `abspath'.
+    //
+    _UpdateShortnameTable (ipath, opts) {
+
+        opts = opts || { delete: false };
+
+        let path_parts = ipath.split("/").filter(x => !!x);
+
+        if (path_parts.length === 1) {
+            // This is in the root volume, so we don't need any
+            // complicated looping.  Instead, we can just try/save the
+            // shortname.
+            if (!this.shortname_table.hasOwnProperty(path_parts[0])) {
+                this.shortname_table[ipath] = this.GetShortName(ipath);
+            }
+
+            return;
+        }
+
+        path_parts.reduce((previous_path, curr_path_item)  => {
+
+            console.log("IPATH PART>", previous_path, curr_path_item);
+
+            if (!previous_path.startsWith("/")) previous_path = "/" + previous_path;
+
+            let path = `${previous_path}/${curr_path_item}`;
+
+            if (!this.shortname_table.hasOwnProperty(previous_path)) {
+                this.shortname_table[path] = this.GetShortName(previous_path);
+            }
+
+            if (!this.shortname_table.hasOwnProperty(path)) {
+                this.shortname_table[path] = this.GetShortName(path);
+            }
+
+            return path;
+        });
+
+        console.log("-----------------------");
+        console.log(this.shortname_table);
     }
 
     // [PRIVATE] ToInternalPath
@@ -190,6 +280,116 @@ class VirtualFileSystem {
         }
 
         return `${existing_path}\\${new_path_part}`;
+    }
+
+    // [PRIVATE] ToShortName
+    // =====================
+    //
+    // Implements part of the algorithm associated with converting a
+    // long filename (LFN) to a short filename (SFN).  Has no
+    // knowledge of other files or folders in the same folder, so
+    // relies upon flags passed via `opts'.
+    //
+    _ToShortName (filename, opts) {
+
+        opts = opts || { index: 1, hashed: false };
+
+        // The filename is upper-cased.
+        filename = filename.toUpperCase();
+
+        // Extensions are optional.
+        let extension = win32path.extname(filename),
+            namepart  = win32path.basename(filename, extension);
+
+        // Extension *includes* the DOT, hense why we substr(0, 4).
+        if (extension.length >= 3) extension = extension.substr(0, 4);
+
+        let filename_length_before_dot_strip = namepart.length;
+
+        //  Commas, square brackets, semicolons, equals signs (=),
+        //  and plus signs (+) are all converted to an underscore.
+        namepart = namepart.replace(/[,\[\];=+]/g, "_");
+
+        // All periods are removed.
+        namepart = namepart.replace(".", "");
+
+        if (opts.hashed === true) {
+
+            // We usually end up here if there's been a filename
+            // collision and we need to revert to using a hash in the
+            // filename.  We need to truncate the filename to (at
+            // most) the first two letters of the namepart, followed
+            // by four hexadecimal digits.
+            namepart = namepart.substr(0, 2);
+
+            let hashpart = md5(filename).substr(0, 4).toUpperCase();
+
+            return namepart + hashpart + "~1" + extension;
+        }
+
+        // DEFAULT BEHAVIOUR:
+        // If longer than eight characters, the file name is truncated
+        // to the first six, followed by "~" and the opts.index:
+        if (filename_length_before_dot_strip > 8) namepart = namepart.substr(0, 6) + `~${opts.index}`;
+        return namepart + extension;
+    }
+
+    // GetShortName
+    // ============
+    //
+    // Given an internal path (`ipath'), attempts to figure out what
+    // the shortname for the file should be.
+    //
+    GetShortName (ipath) {
+
+        // We get given the whole path, where the basename part of the
+        // path contains the file or folder we'll be generating a
+        // shortname for...
+        let parsed    = win32path.parse(ipath),
+            dir       = parsed.dir;
+
+        const snt = this.shortname_table;
+
+        for (let i = 1; i <= 4; i++) {
+
+            let numeric_shortname = this._ToShortName(parsed.name, { index: i });
+
+            let shortname_used_already = Object.keys(snt)
+                    .filter(k => snt[k] === numeric_shortname)
+                    .filter(k => win32path.parse(k).dir === dir);
+
+            if (shortname_used_already && shortname_used_already.length) {
+                // This shortname is taken -- go around again and try
+                // another.
+                continue;
+            }
+
+            // Still here? We've got an unused shortname.
+            return numeric_shortname;
+        }
+
+        // If we're here it means that we've maxed-out the number of
+        // numeric filename collisions we're allowed, so we need to
+        // use the hashed filename value instead.  This behaviour is
+        // taken from Wikipedia 8.3 filename section: "VFAT and
+        // Computer-generated 8.3 filenames":
+        //
+        //   > On all NT versions including Windows 2000 and later, if
+        //   > at least 4 files or folders already exist with the same
+        //   > extension and first 6 characters in their short names,
+        //   > the stripped LFN is instead truncated to the first 2
+        //   > letters of the basename (or 1 if the basename has only
+        //   > 1 letter), followed by 4 hexadecimal digits derived
+        //   > from an undocumented hash of the filename, followed by
+        //   > a tilde, followed by a single digit, followed by a
+        //   > period ., followed by the first 3 characters of the
+        //   > extension.
+        //
+        // https://en.wikipedia.org/wiki/8.3_filename#VFAT_and_Computer-generated_8.3_filenames
+        //
+        let hashed_shortname = this._ToShortName(parsed.name, { hashed: true });
+
+        return hashed_shortname;
     }
 
     // PathIsAbsolute
@@ -315,6 +515,8 @@ class VirtualFileSystem {
 
 
     // Parse
+
+
     // =====
     //
     // Parse returns a structure whose elements represent the
@@ -400,6 +602,8 @@ class VirtualFileSystem {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // !! All methods from this point on operate only on absolute paths !!
     // !! as discussed in the design document at the top of this file.  !!
+    // !!                                                               !!
+    // !! NOTE: MS-DOS style shortnames are considered absolute paths.  !!
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
 
@@ -504,6 +708,7 @@ class VirtualFileSystem {
     AddFile (filepath, data, options) {
 
         let ipath = this._ToInternalPath(filepath);
+        this._UpdateShortnameTable(ipath);
         this.vfs.writeFileSync(ipath, data, options);
     }
 
@@ -584,6 +789,20 @@ class VirtualFileSystem {
         recursive_copy(isource, idestination);
     }
 
+    // FolderListContents
+    // ==================
+    //
+    // Given an absolute path to a directory, returns an array
+    // containing all of the files located within the folder.
+    //
+    FolderListContents (folderpath) {
+
+        let ipath    = this._ToInternalPath(folderpath),
+            contents = this.vfs.readdirSync(ipath);
+
+        return contents;
+    }
+
     // AddFolder
     // =========
     //
@@ -597,6 +816,7 @@ class VirtualFileSystem {
 
             let ipath = this._ToInternalPath(folderpath);
             this.vfs.mkdirpSync(ipath);
+            this._UpdateShortnameTable(ipath);
         }
     }
 
