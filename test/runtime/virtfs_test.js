@@ -38,7 +38,44 @@ function make_vfs (opts) {
 
 describe("Virtual File System", () => {
 
-    describe("Environment variables", () => {
+    describe("TEMPORARY :: Testing the shortname_table is updated correctly", () => {
+
+        it("testing shortname_table updates", () => {
+
+            let vfs = make_vfs();
+
+            vfs.AddFolder("C:\\helloworld1");
+            vfs.AddFolder("C:\\helloworld2");
+            vfs.AddFolder("C:\\helloworld3");
+            vfs.AddFolder("C:\\helloworld4");
+            vfs.AddFolder("C:\\helloworld5");
+            vfs.AddFolder("C:\\helloworld6");
+        });
+    });
+
+    /*xdescribe("Long File Names (LFNs) and Short File Names (SFNs)", () => {
+
+
+
+        it("should correctly convert an LFN to a SFN", () => {
+
+            let vfs = make_vfs();
+
+            let tests = [
+                [ "textfile.txt", "TEXTFILE.TXT" ],
+                [ ".leading_dot", "LEADIN~1"     ],
+                [ "SomeStuff.aspx", "SOMEST~1.ASP" ],
+                [ "linux.tar.gz",   "LINUXT~1.GZ" ],
+                [ "TESTING",        "TESTING"     ],
+                [ "test.txt", "TEST.TXT" ],
+            ];
+
+            tests.forEach(t => assert.equal(vfs.GetShortName(t[0]), t[1]));
+
+        });
+    });
+
+    xdescribe("Environment variables", () => {
 
         it("should correctly expand environment variables", () => {
 
@@ -69,7 +106,7 @@ describe("Virtual File System", () => {
         });
     });
 
-    describe("Paths", () => {
+    xdescribe("Paths", () => {
 
         describe("Building paths...", () => {
 
@@ -262,7 +299,7 @@ describe("Virtual File System", () => {
         });
     });
 
-    describe("File and folder existence", () => {
+    xdescribe("File and folder existence", () => {
 
         describe("#FileExists", () => {
 
@@ -294,7 +331,7 @@ describe("Virtual File System", () => {
         });
      });
 
-    describe("File manipulations", () => {
+    xdescribe("File manipulations", () => {
 
         describe("#AddFile", () => {
 
@@ -457,5 +494,5 @@ describe("Virtual File System", () => {
             });
 
         });
-    });
+    });*/
 });
