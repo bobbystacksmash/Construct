@@ -338,7 +338,18 @@ class VirtualFileSystem {
     // ============
     //
     // Given an internal path (`ipath'), attempts to figure out what
-    // the shortname for the file should be.
+    // the shortname for the file should be.  Invalid or disallowed
+    // 8.3 characters are either removed or changed to an underscore.
+    //
+    // There are two types of shortname:
+    //
+    //   1. Truncated: "HelloWorld.txt" => "HELLOW~1.TXT"
+    //   2. Truncated + hashed: "HelloWorld.txt" => "HEAF43~1.TXT"
+    //
+    // By default we always try and create a type #1 shortname.  However,
+    // if there already exists 4 files which match ours, we switch to #2
+    // which takes an md5sum of the filename and includes the first four
+    // bytes of the md5sum in the filename.
     //
     GetShortName (ipath) {
 
@@ -629,6 +640,7 @@ class VirtualFileSystem {
         }
 
         this.vfs.copyFileSync(isource, idestination, flags);
+        this._UpdateShortnameTable(idestination);
     }
 
     CopyDirectoryStructure (source, destination) {
@@ -708,8 +720,8 @@ class VirtualFileSystem {
     AddFile (filepath, data, options) {
 
         let ipath = this._ToInternalPath(filepath);
-        this._UpdateShortnameTable(ipath);
         this.vfs.writeFileSync(ipath, data, options);
+        this._UpdateShortnameTable(ipath);
     }
 
     // DeleteFile
@@ -721,6 +733,7 @@ class VirtualFileSystem {
 
         const ipath = this._ToInternalPath(filepath);
         this.vfs.unlinkSync(ipath);
+        this._UpdateShortnameTable(ipath, { delete: true });
     }
 
     // Rename
@@ -734,13 +747,14 @@ class VirtualFileSystem {
               idestination = this._ToInternalPath(destination);
 
         this.vfs.renameSync(isource, idestination);
+        this._UpdateShortnameTable(idestination, { rename: true });
     }
 
-    // MoveFolder
+    // CopyFolder
     // ==========
     //
-    // Moves a `source' folder to a `destination'.  All internal files
-    // and folders are also moved.
+    // Copies a `source' folder to a `destination'.  All internal
+    // files and folders are also copied.
     //
     CopyFolder (source, destination) {
 
