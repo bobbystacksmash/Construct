@@ -156,12 +156,20 @@ class VirtualFileSystem {
         // running under a different timestamp.
         // .TODO2
 
+        // .TODO1
+        // It looks as though on a WIN7 system, there's no
+        // "C:\Users\BLAH\My Documents" folder (just "Documents"),
+        // however it's still possible to `cd' in to "My Documents".
+        // Needs more investigation to see WTF is going on.
+        // .TODO2
         const basic_fs_setup = [
             "C:\\Users\\Construct\\Desktop",
-            "C:\\Users\\Construct\\My Documents"
+            "C:\\Users\\Construct\\Documents"
         ];
 
-        basic_fs_setup.forEach(p => this.vfs.mkdirpSync(this._ToInternalPath(p)));
+        basic_fs_setup.forEach(p => {
+            this.AddFolder(p);
+        });
     }
 
     // [PRIVATE] UpdateShortnameTable
@@ -186,37 +194,24 @@ class VirtualFileSystem {
         let path_parts = ipath.split("/").filter(x => !!x);
 
         if (path_parts.length === 1) {
-            // This is in the root volume, so we don't need any
-            // complicated looping.  Instead, we can just try/save the
-            // shortname.
-            if (!this.shortname_table.hasOwnProperty(path_parts[0])) {
-                this.shortname_table[ipath] = this.GetShortName(ipath);
+
+            let path = `/${path_parts[0]}`;
+            if (! this.shortname_table.hasOwnProperty(path)) {
+                this.shortname_table[path] = this.GetShortName(path);
             }
 
             return;
         }
 
-        path_parts.reduce((previous_path, curr_path_item)  => {
+        let curr_path = "";
 
-            console.log("IPATH PART>", previous_path, curr_path_item);
+        for (let i = 0; i < path_parts.length; i++) {
+            curr_path += "/" + path_parts[i];
 
-            if (!previous_path.startsWith("/")) previous_path = "/" + previous_path;
-
-            let path = `${previous_path}/${curr_path_item}`;
-
-            if (!this.shortname_table.hasOwnProperty(previous_path)) {
-                this.shortname_table[path] = this.GetShortName(previous_path);
+            if (! this.shortname_table.hasOwnProperty(curr_path)) {
+                this.shortname_table[curr_path] = this.GetShortName(path_parts[i]);
             }
-
-            if (!this.shortname_table.hasOwnProperty(path)) {
-                this.shortname_table[path] = this.GetShortName(path);
-            }
-
-            return path;
-        });
-
-        console.log("-----------------------");
-        console.log(this.shortname_table);
+        }
     }
 
     // [PRIVATE] ToInternalPath
@@ -224,8 +219,7 @@ class VirtualFileSystem {
     //
     // Given an `extern_path', so named because it's the path known to
     // the JScript we're running, convert the path to its internal
-    // representation.  This includes performing the following
-    // alterations:
+    // representation.
     //
     //   - Lower-casing the entire path.
     //   - Removing the disk designator.
@@ -235,9 +229,11 @@ class VirtualFileSystem {
     _ToInternalPath (extern_path) {
 
         let internal_path = extern_path
-            .toLowerCase()
-            .replace(/^[a-z]:/ig, "")
-            .replace(/\\/g, "/");
+                .toLowerCase()
+                .replace(/^[a-z]:/ig, "")
+                .replace(/\\/g, "/");
+
+        //console.log(this.shortname_table);
 
         this.extern_to_intern_paths[extern_path] = internal_path;
         return internal_path;
@@ -310,8 +306,11 @@ class VirtualFileSystem {
         //  and plus signs (+) are all converted to an underscore.
         namepart = namepart.replace(/[,\[\];=+]/g, "_");
 
+        // All spaces are removed.
+        namepart = namepart.replace(/\s+/g, "");
+
         // All periods are removed.
-        namepart = namepart.replace(".", "");
+        namepart = namepart.replace(/\./g, "");
 
         if (opts.hashed === true) {
 
