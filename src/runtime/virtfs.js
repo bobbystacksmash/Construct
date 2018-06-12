@@ -129,7 +129,20 @@ class VirtualFileSystem {
         // the absolute path to the file/folder and quickly get the
         // value.  All of this so we can have "real-ish" wildcard
         // matching. O_o
+
+        // .TODO1
+        // There's possibly quite a serious bug here.  We assume that
+        // all filepaths are made up of only long filename parts
+        // ("HelloWorld" instead of "HELLOW~1"), but that's not the
+        // case.  It's perfectly valid to create the folder
+        // "HELLOW~1", which totally messes up the shortname table as
+        // you'd end up with entries such as:
         //
+        // | C:\HelloWorld | HELLOW~1 |
+        // | C:\HELLO~1    | HELLOW~1 |
+        //
+        // Need to do some testing to see if this is a *real* problem.
+        // .TODO2
         this.shortname_table = {};
 
         this._InitFS();
