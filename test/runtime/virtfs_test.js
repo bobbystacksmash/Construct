@@ -38,7 +38,55 @@ function make_vfs (opts) {
 
 describe("Virtual File System", () => {
 
-    describe("TEMPORARY :: Testing the shortname_table is updated correctly", () => {
+    describe("Long and short filename handling", () => {
+
+        xit("should correctly identify long and short filenames", () => {
+
+            let vfs = make_vfs();
+
+            let shortnames = [
+                "HELLOW~1",
+                "a",
+                "abc",
+                "foo.txt",
+                "a.b.c"
+            ];
+
+            let longnames = [
+                "foo.bar.baz",
+                "HelloWorld.txt",
+                "HELLOWORLD"
+            ];
+
+            shortnames.forEach(sn => assert.isTrue(vfs.IsShortName(sn)));
+            longnames.forEach(ln => assert.isFalse(vfs.IsShortName(ln), `Longname: ${ln}`));
+        });
+
+        it("should return a folder when using a shortname path", () => {
+
+            let vfs = make_vfs();
+
+            //assert.isFalse(vfs.FolderExists("C:\\HelloWorld"));
+            assert.isFalse(vfs.FolderExists("C:\\HELLOW~1"));
+
+            vfs.AddFolder("C:\\HelloWorld");
+            assert.isTrue(vfs.FolderExists("C:\\HELLOW~1"));
+            assert.isTrue(vfs.FolderExists("C:\\HelloWorld"));
+        });
+
+        it("should return a folder when mixing long and shortnames", () => {
+
+            let vfs = make_vfs();
+
+            assert.isFalse(vfs.FolderExists("C:\\HelloWorld\\testing123"));
+
+            vfs.AddFolder("C:\\HelloWorld\\testing123");
+
+            assert.isTrue(vfs.FolderExists("C:\\HELLOW~1\\TESTIN~1"));
+        });
+    });
+
+    xdescribe("TEMPORARY :: Testing the shortname_table is updated correctly", () => {
 
         it("testing shortname_table updates", () => {
 

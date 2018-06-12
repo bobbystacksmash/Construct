@@ -175,22 +175,20 @@ class VirtualFileSystem {
         // however it's still possible to `cd' in to "My Documents".
         // Needs more investigation to see WTF is going on.
         // .TODO2
-        const basic_fs_setup = [
+        /*const basic_fs_setup = [
             "C:\\Users\\Construct\\Desktop",
             "C:\\Users\\Construct\\Documents"
         ];
 
         basic_fs_setup.forEach(p => {
             this.AddFolder(p);
-        });
+        });*/
 
-        this.AddFolder("C:\\Users\\CONSTRUCT\\DESKTOP\\helloworld");
+        /*this.AddFolder("C:\\Users\\CONSTRUCT\\DESKTOP\\helloworld");
         this.AddFolder("C:\\Windows\\blah\\CONSTR~1");
         this.AddFolder("C:\\Construct\\test");
 
-        this.AddFolder("C:\\CONSTR~1\\test\\foo");
-
-        console.log(this.shortname_table);
+         this.AddFolder("C:\\CONSTR~1\\test\\foo");*/
     }
 
     // [PRIVATE] UpdateShortnameTable
@@ -207,6 +205,12 @@ class VirtualFileSystem {
     // `abspath' is brand new, and none of its parts exist in the
     // shortname table.  We may need to create shortnames for every
     // part of `abspath'.
+    //
+    // Each time a file or folder is moved or copied, it cannot carry
+    // its previously generated shortname with it.  This is because
+    // it's entirely possible that when a longname is shortened, the
+    // shortname value will collide with some existing file or folder.
+    // Each copy/move, we re-compute the shortname values.
     //
     _UpdateShortnameTable (ipath, opts) {
 
@@ -235,35 +239,85 @@ class VirtualFileSystem {
         }
     }
 
-    // [PRIVATE] ExpandPathToLongName
+    // IsShortName
+    // ===========
+    //
+    // Returns TRUE if the given path-part looks as though it could be
+    // a shortfile name, otherwise returns FALSE.  There is a caveat
+    // which says that just because the `path_part' is a *valid*
+    // shortname, it does not mean that the shortname definitely
+    // exists.
+    //
+    IsShortName (path_part) {
+
+        if (path_part.length <= 8) {
+            return true;
+        }
+
+        if ((path_part.match(/\./g) || []).length > 1) {
+            // Shortnames may only have a single dot in their name --
+            // any more than that and this isn't a shortname.
+            return false;
+        }
+
+        if (path_part.includes(".")) {
+
+            let name_and_ext_parts = path_part.split("."),
+                namepart = name_and_ext_parts[0],
+                extpart  = name_and_ext_parts[1];
+
+            if (namepart.length > 0 && namepart.length <= 8) {
+                if (extpart.length <= 3) { // Extensions are optional.
+
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // [PRIVATE] ResolveFileAndFolderNames
     // ==============================
     //
     // Given an internal path representation, attempts to rewrite all
     // valid shortname file/folder names in to their long name.
     //
-    _ExpandPathToLongName (ipath) {
+    _ResolveFileAndFolderNames (ipath) {
 
         const snt = this.shortname_table;
+
+        if (Object.keys(snt).length === 0) {
+            return ipath;
+        }
 
         let parts = ipath.split("/").filter(p => !!p),
             curr_path = "";
 
         parts.forEach(part => {
 
-            if (! part.includes("~")) {
+            if (! this.IsShortName(part)) {
                 curr_path += `/${part}`;
                 return;
             }
 
-            let shortnames = Object.keys(snt)
+            let longname_for_part = Object
+                    .keys(snt)
                     .filter(k => snt[k].toLowerCase() === part.toLowerCase())
-                    .filter(p => {
-                        console.log(">", p);
-                        return true;
-                    });
+                    .map(k => k.replace("/", ""));
 
+
+            console.log("@@@@@@ PARTS:", longname_for_part);
+            console.log(">>>>>> PATH PART:", part, "TRANSLATED TO:", longname_for_part[0]);
+
+
+            part = longname_for_part[0];
+
+            // We rewrite the path to be the translated version, using
+            // the long filename rather than the short name.
             curr_path += `/${part}`;
         });
+
+        return curr_path;
     }
 
     // [PRIVATE] ToInternalPath
@@ -296,8 +350,7 @@ class VirtualFileSystem {
         // contains a tilde, we try and resolve the long version
         // of the name.
         //
-        this._ExpandPathToLongName(internal_path);
-
+        internal_path = this._ResolveFileAndFolderNames(internal_path);
 
         this.extern_to_intern_paths[extern_path] = internal_path;
         return internal_path;
@@ -762,10 +815,12 @@ class VirtualFileSystem {
     // decided for files.
     // .TODO2
     //
-    FolderExists (folderpath) {
+    FolderExists (folderpath, opts) {
+
+        let ipath = this._ToInternalPath(folderpath);
 
         try {
-            this.vfs.accessSync(this._ToInternalPath(folderpath));
+            this.vfs.accessSync(ipath);
             return true;
         }
         catch (_) {
