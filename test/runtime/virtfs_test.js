@@ -44,12 +44,12 @@ describe("Virtual File System", () => {
 
             let vfs = make_vfs();
 
-            vfs.AddFolder("C:\\helloworld1");
+            /*vfs.AddFolder("C:\\helloworld1");
             vfs.AddFolder("C:\\helloworld2");
             vfs.AddFolder("C:\\helloworld3");
             vfs.AddFolder("C:\\helloworld4");
             vfs.AddFolder("C:\\helloworld5");
-            vfs.AddFolder("C:\\helloworld6");
+            vfs.AddFolder("C:\\helloworld6");*/
         });
     });
 

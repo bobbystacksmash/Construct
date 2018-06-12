@@ -170,6 +170,14 @@ class VirtualFileSystem {
         basic_fs_setup.forEach(p => {
             this.AddFolder(p);
         });
+
+        this.AddFolder("C:\\Users\\CONSTRUCT\\DESKTOP\\helloworld");
+        this.AddFolder("C:\\Windows\\blah\\CONSTR~1");
+        this.AddFolder("C:\\Construct\\test");
+
+        this.AddFolder("C:\\CONSTR~1\\test\\foo");
+
+        console.log(this.shortname_table);
     }
 
     // [PRIVATE] UpdateShortnameTable
@@ -214,6 +222,37 @@ class VirtualFileSystem {
         }
     }
 
+    // [PRIVATE] ExpandPathToLongName
+    // ==============================
+    //
+    // Given an internal path representation, attempts to rewrite all
+    // valid shortname file/folder names in to their long name.
+    //
+    _ExpandPathToLongName (ipath) {
+
+        const snt = this.shortname_table;
+
+        let parts = ipath.split("/").filter(p => !!p),
+            curr_path = "";
+
+        parts.forEach(part => {
+
+            if (! part.includes("~")) {
+                curr_path += `/${part}`;
+                return;
+            }
+
+            let shortnames = Object.keys(snt)
+                    .filter(k => snt[k].toLowerCase() === part.toLowerCase())
+                    .filter(p => {
+                        console.log(">", p);
+                        return true;
+                    });
+
+            curr_path += `/${part}`;
+        });
+    }
+
     // [PRIVATE] ToInternalPath
     // ========================
     //
@@ -233,7 +272,19 @@ class VirtualFileSystem {
                 .replace(/^[a-z]:/ig, "")
                 .replace(/\\/g, "/");
 
-        //console.log(this.shortname_table);
+        // It's perfectly valid for JScript code to hand us shortname
+        // versions of any file or folder.  For instance, the path we
+        // get handed, after internal path normalisation may look
+        // something like:
+        //
+        //   /PROGRA~1/Notepad++/NOTEPA~1.EXE
+        //
+        // We simply split on '/', and then for each name which
+        // contains a tilde, we try and resolve the long version
+        // of the name.
+        //
+        this._ExpandPathToLongName(internal_path);
+
 
         this.extern_to_intern_paths[extern_path] = internal_path;
         return internal_path;
