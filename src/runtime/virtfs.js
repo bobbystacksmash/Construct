@@ -2,6 +2,7 @@ const FolderObject = require("../winapi/FolderObject");
 const FileObject   = require("../winapi/FileObject");
 const win32path    = require("path").win32;
 const memfs        = require("memfs").fs;
+const linkfs       = require("linkfs").link;
 const Volume       = require("memfs").Volume;
 const md5          = require("md5");
 
@@ -86,6 +87,70 @@ const md5          = require("md5");
 //     similar files in the name, as we use a mixture of hash and
 //     hope.  Not great.
 //
+
+function make_mem_ntfs_proxy (memfs) {
+
+    let memfs_sans_proxy = memfs;
+    let shortname_num = 0;
+
+    function ntfs_mkdirSync (path, mode) {
+
+        // A wrapper around `fs.mkdirSync' which will create a symlink
+        // with a shortname which points-to the directory being
+        // created.
+        console.log("ntfs_mkdir", path);
+        let ret = memfs_sans_proxy.mkdirSync(path, mode);
+
+        let dirname  = win32path.dirname(path),
+            basename = win32path.basename(path);
+
+        if (basename.length <= 8) {
+            return ret;
+        }
+
+        let shortname    = basename.substr(0, 6).toUpperCase() + "~" + ++shortname_num,
+            symlink_path = `${dirname}/${shortname}`;
+
+        memfs_sans_proxy.symlinkSync(path, symlink_path, "junction");
+
+        return ret;
+    };
+
+    function ntfs_readdirSync (path, options) {
+
+        console.log("ntfs_readdirSync(" + path + ")");
+
+        let dir_contents = memfs_sans_proxy.readdirSync(path);
+
+        if (dir_contents.length === 0) return dir_contents;
+
+        // Filter out all symbolic links:
+        return dir_contents.filter(f => {
+            return ! memfs_sans_proxy
+                .lstatSync(`${path}/${f}`)
+                .isSymbolicLink();
+        });
+    }
+
+    return new Proxy(memfs, {
+
+        get: function (target, propkey) {
+
+            switch (propkey) {
+            case "mkdirSync":
+                return ntfs_mkdirSync;
+
+            case "readdirSync":
+                return ntfs_readdirSync;
+
+            default:
+                return memfs[propkey];
+            }
+        }
+    });
+};
+
+
 class VirtualFileSystem {
 
     constructor(context) {
@@ -101,49 +166,16 @@ class VirtualFileSystem {
         this.extern_to_intern_paths = {};
 
         this.volume_c = this.volumes.c;
-        this.vfs = this.volume_c;
+        this.vfs = make_mem_ntfs_proxy(this.volume_c);
 
-        // This is the implementation for storing shortnames.  Any
-        // time a file or folder is created, we add a shortname entry
-        // in to this table.  The keys are absolute filepaths, where
-        // each value is the shortname of the pointed-to file or
-        // folder.  For example, given the following:
-        //
-        //   C:\HelloWorld
-        //   C:\HelloWorld\Bar
-        //   C:\HelloWorld\Bar\textfile3.txt
-        //   C:\HelloWorld\Bar\textfile2.txt
-        //   C:\HelloWorld\Bar\textfile1.txt
-        //
-        // Entries in our shortname table look like:
-        //
-        // | Absolute Path                   | Shortname Value |
-        // |---------------------------------|-----------------|
-        // | C:\HelloWorld                   | HELLOW~1        |
-        // | C:\HelloWorld\Bar               | BAR             |
-        // | C:\HelloWorld\Bar\textfile3.txt | TEXTFI~1.TXT    |
-        // | C:\HelloWorld\Bar\textfile2.txt | TEXTFI~2.TXT    |
-        // | C:\HelloWorld\Bar\textfile1.txt | TEXTFI~3.TXT    |
-        //
-        // Any time we want to get the shortname values, we can hand
-        // the absolute path to the file/folder and quickly get the
-        // value.  All of this so we can have "real-ish" wildcard
-        // matching. O_o
+        this.vfs.mkdirSync("/HelloWorld");
+        this.vfs.mkdirSync("/HelloWorld/Construct");
 
-        // .TODO1
-        // There's possibly quite a serious bug here.  We assume that
-        // all filepaths are made up of only long filename parts
-        // ("HelloWorld" instead of "HELLOW~1"), but that's not the
-        // case.  It's perfectly valid to create the folder
-        // "HELLOW~1", which totally messes up the shortname table as
-        // you'd end up with entries such as:
-        //
-        // | C:\HelloWorld | HELLOW~1 |
-        // | C:\HELLO~1    | HELLOW~1 |
-        //
-        // Need to do some testing to see if this is a *real* problem.
-        // .TODO2
-        this.shortname_table = {};
+        console.log("----------------------");
+        console.log(JSON.stringify(this.vfs.readdirSync("/HelloWorld"), null, 2));
+        console.log("----------------------");
+
+        console.log(this.vfs.toJSON());
 
         this._InitFS();
     }
@@ -302,9 +334,7 @@ class VirtualFileSystem {
 
             let longname_for_part = Object
                     .keys(snt)
-                    .filter(k => snt[k].toLowerCase() === part.toLowerCase())
-                    .map(k => k.replace("/", ""));
-
+                    .filter(k => snt[k].toLowerCase() === part.toLowerCase());
 
             console.log("@@@@@@ PARTS:", longname_for_part);
             console.log(">>>>>> PATH PART:", part, "TRANSLATED TO:", longname_for_part[0]);
