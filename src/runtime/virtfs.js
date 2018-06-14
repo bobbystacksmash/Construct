@@ -151,10 +151,58 @@ function make_mem_ntfs_proxy (memfs) {
         return namepart + extension;
     }
 
-    function make_shortname_link (path) {
+    function get_symlinks_in_dir (path) {
+        return memfs_sans_proxy
+            .readdirSync(path)
+            .filter(f => memfs_sans_proxy.lstatSync(`${path}/${f}`).isSymbolicLink());
+    }
 
-        // TODO: Add code for making shortname symlinks here.
+    function make_shortname_and_link (path) {
 
+        let basename = win32path.basename(path),
+            dirname  = win32path.dirname(path);
+
+        // TODO: Early-out if there is no need to create a shortlink.
+        if (basename.length <= 8) {
+            console.log("EXITING LINKER: no need to create shortname for", path);
+            return;
+        }
+
+        for (let i = 1; i <= 4; i++) {
+
+            let possible_shortname_lnk = generate_shortname(basename, { index: i });
+
+            let lnk_path = (dirname === "/")
+                    ? `/${possible_shortname_lnk}`
+                    : `${dirname}/${possible_shortname_lnk}`;
+
+            try {
+                memfs_sans_proxy.symlinkSync(path, lnk_path, "junction");
+                return;
+            }
+            catch (e) {
+            }
+        }
+
+        console.log("SWITCHING TO HASHED LNK");
+
+        // If we haven't exited this function by now, it means there
+        // are already four shortname files present in this dir, so we
+        // switch from using numbers in the shortname to parts of a hash.
+        for (let i = 0; i < 10; i++) {
+
+            let sn_hashed_lnk = generate_shortname("" + basename + i, { hashed: true}),
+                lnk_path = (dirname === "/")
+                    ? `/${sn_hashed_lnk}`
+                    : `${dirname}/${sn_hashed_lnk}`;
+
+            try {
+                memfs_sans_proxy.symlinkSync(path, lnk_path, "junction");
+                return;
+            }
+            catch (e) {
+            }
+        }
     }
 
 
@@ -166,19 +214,8 @@ function make_mem_ntfs_proxy (memfs) {
         // A wrapper around `fs.mkdirSync' which will create a symlink
         // with a shortname which points-to the directory being
         // created.
-        let ret      = memfs_sans_proxy.mkdirSync(path, mode),
-            dirname  = win32path.dirname(path),
-            basename = win32path.basename(path);
-
-        if (basename.length <= 8) {
-            return ret;
-        }
-
-        let shortname    = basename.substr(0, 6).toUpperCase() + "~" + ++shortname_num,
-            symlink_path = `${dirname}/${shortname}`;
-
-        memfs_sans_proxy.symlinkSync(path, symlink_path, "junction");
-
+        let ret = memfs_sans_proxy.mkdirSync(path, mode);
+        make_shortname_and_link(path);
         return ret;
     };
 
@@ -275,14 +312,6 @@ class VirtualFileSystem {
 
         this.vfs.mkdirSync("/HelloWorld");
         this.vfs.mkdirSync("/HelloWorld/Construct");
-
-        this.vfs.writeFileSync("/HelloWorld/Construct/somelongfile.txt", "foobar");
-
-        console.log("----------------------");
-        console.log(JSON.stringify(this.vfs.readdirSync("/HelloWorld/Construct"), null, 2));
-        console.log("----------------------");
-
-        console.log(this.vfs.toJSON());
 
         this._InitFS();
     }
