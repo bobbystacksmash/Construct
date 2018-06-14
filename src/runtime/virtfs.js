@@ -93,15 +93,75 @@ function make_mem_ntfs_proxy (memfs) {
     let memfs_sans_proxy = memfs;
     let shortname_num = 0;
 
+
+    // [PRIVATE] ToShortName
+    // =====================
+    //
+    // Implements part of the algorithm associated with converting a
+    // long filename (LFN) to a short filename (SFN).  Has no
+    // knowledge of the filesystem -- it will just create a shortname
+    // from the long filename given to it.  Use the `opts' hash to
+    // configure behaviour, such as whether the shortname should be a
+    // hashed version of the name.
+    //
+    function create_shortname (filename, opts) {
+
+        opts = opts || { index: 1, hashed: false };
+
+        // The filename is upper-cased.
+        filename = filename.toUpperCase();
+
+        // Extensions are optional.
+        let extension = win32path.extname(filename),
+            namepart  = win32path.basename(filename, extension);
+
+        // Extension *includes* the DOT, hense why we substr(0, 4).
+        if (extension.length >= 3) extension = extension.substr(0, 4);
+
+        let filename_length_before_dot_strip = namepart.length;
+
+        //  Commas, square brackets, semicolons, equals signs (=),
+        //  and plus signs (+) are all converted to an underscore.
+        namepart = namepart.replace(/[,\[\];=+]/g, "_");
+
+        // All spaces are removed.
+        namepart = namepart.replace(/\s+/g, "");
+
+        // All periods are removed.
+        namepart = namepart.replace(/\./g, "");
+
+        if (opts.hashed === true) {
+            // We usually end up here if there's been a filename
+            // collision and we need to revert to using a hash in the
+            // filename.  We need to truncate the filename to (at
+            // most) the first two letters of the namepart, followed
+            // by four hexadecimal digits.
+            namepart = namepart.substr(0, 2);
+            let hashpart = md5(filename).substr(0, 4).toUpperCase();
+            return namepart + hashpart + "~1" + extension;
+        }
+
+        // DEFAULT BEHAVIOUR:
+        // If longer than eight characters, the file name is truncated
+        // to the first six, followed by "~" and the opts.index:
+        if (filename_length_before_dot_strip > 8) {
+            namepart = namepart.substr(0, 6) + `~${opts.index}`;
+        }
+
+        return namepart + extension;
+    }
+
+
+    // ntfs_mkdirSync
+    // ==============
+    //
     function ntfs_mkdirSync (path, mode) {
 
         // A wrapper around `fs.mkdirSync' which will create a symlink
         // with a shortname which points-to the directory being
         // created.
-        console.log("ntfs_mkdir", path);
-        let ret = memfs_sans_proxy.mkdirSync(path, mode);
-
-        let dirname  = win32path.dirname(path),
+        let ret      = memfs_sans_proxy.mkdirSync(path, mode),
+            dirname  = win32path.dirname(path),
             basename = win32path.basename(path);
 
         if (basename.length <= 8) {
@@ -116,9 +176,32 @@ function make_mem_ntfs_proxy (memfs) {
         return ret;
     };
 
-    function ntfs_readdirSync (path, options) {
 
-        console.log("ntfs_readdirSync(" + path + ")");
+    // ntfs_writeFileSync
+    // ==================
+    //
+    function ntfs_writeFileSync (file, data, options) {
+
+        let ret = memfs_sans_proxy.writeFileSync(file, data, options),
+            file_parent_dir = win32path.dirname(file),
+            filename        = win32path.basename(file);
+
+        if (filename.length <= 8) {
+            return ret;
+        }
+
+        let shortname = filename.substr(0, 6).toUpperCase() + "~" + ++shortname_num,
+            symlink_path = `${file_parent_dir}/${shortname}`;
+
+        memfs_sans_proxy.symlinkSync(file, symlink_path, "junction");
+
+        return ret;
+    }
+
+    // ntfs_readdirSync
+    // ================
+    //
+    function ntfs_readdirSync (path, options) {
 
         let dir_contents = memfs_sans_proxy.readdirSync(path);
 
@@ -132,20 +215,36 @@ function make_mem_ntfs_proxy (memfs) {
         });
     }
 
+    // TODO methods:
+    //   this.vfs.accessSync
+    //   this.vfs.copyFileSync
+    //   this.vfs = make_mem_ntfs_proxy
+    //   this.vfs.mkdirpSync
+    // * this.vfs.readFileSync
+    // * this.vfs.readSync
+    //   this.vfs.renameSync
+    //   this.vfs.unlinkSync
+    //
+
+
+
+    // ntfs_
+
+    const ntfs_fn_dispatch_table = {
+        "mkdirSync":     ntfs_mkdirSync,
+        "writeFileSync": ntfs_writeFileSync,
+        "readdirSync":   ntfs_readdirSync
+    };
+
     return new Proxy(memfs, {
 
         get: function (target, propkey) {
 
-            switch (propkey) {
-            case "mkdirSync":
-                return ntfs_mkdirSync;
-
-            case "readdirSync":
-                return ntfs_readdirSync;
-
-            default:
-                return memfs[propkey];
+            if (ntfs_fn_dispatch_table.hasOwnProperty(propkey)) {
+                return ntfs_fn_dispatch_table[propkey];
             }
+
+            return memfs_sans_proxy[propkey];
         }
     });
 };
@@ -171,8 +270,10 @@ class VirtualFileSystem {
         this.vfs.mkdirSync("/HelloWorld");
         this.vfs.mkdirSync("/HelloWorld/Construct");
 
+        this.vfs.writeFileSync("/HelloWorld/Construct/snakesonaplane.txt", "foobar");
+
         console.log("----------------------");
-        console.log(JSON.stringify(this.vfs.readdirSync("/HelloWorld"), null, 2));
+        console.log(JSON.stringify(this.vfs.readdirSync("/HelloWorld/Construct"), null, 2));
         console.log("----------------------");
 
         console.log(this.vfs.toJSON());
@@ -423,61 +524,6 @@ class VirtualFileSystem {
         }
 
         return `${existing_path}\\${new_path_part}`;
-    }
-
-    // [PRIVATE] ToShortName
-    // =====================
-    //
-    // Implements part of the algorithm associated with converting a
-    // long filename (LFN) to a short filename (SFN).  Has no
-    // knowledge of other files or folders in the same folder, so
-    // relies upon flags passed via `opts'.
-    //
-    _ToShortName (filename, opts) {
-
-        opts = opts || { index: 1, hashed: false };
-
-        // The filename is upper-cased.
-        filename = filename.toUpperCase();
-
-        // Extensions are optional.
-        let extension = win32path.extname(filename),
-            namepart  = win32path.basename(filename, extension);
-
-        // Extension *includes* the DOT, hense why we substr(0, 4).
-        if (extension.length >= 3) extension = extension.substr(0, 4);
-
-        let filename_length_before_dot_strip = namepart.length;
-
-        //  Commas, square brackets, semicolons, equals signs (=),
-        //  and plus signs (+) are all converted to an underscore.
-        namepart = namepart.replace(/[,\[\];=+]/g, "_");
-
-        // All spaces are removed.
-        namepart = namepart.replace(/\s+/g, "");
-
-        // All periods are removed.
-        namepart = namepart.replace(/\./g, "");
-
-        if (opts.hashed === true) {
-
-            // We usually end up here if there's been a filename
-            // collision and we need to revert to using a hash in the
-            // filename.  We need to truncate the filename to (at
-            // most) the first two letters of the namepart, followed
-            // by four hexadecimal digits.
-            namepart = namepart.substr(0, 2);
-
-            let hashpart = md5(filename).substr(0, 4).toUpperCase();
-
-            return namepart + hashpart + "~1" + extension;
-        }
-
-        // DEFAULT BEHAVIOUR:
-        // If longer than eight characters, the file name is truncated
-        // to the first six, followed by "~" and the opts.index:
-        if (filename_length_before_dot_strip > 8) namepart = namepart.substr(0, 6) + `~${opts.index}`;
-        return namepart + extension;
     }
 
     // GetShortName
