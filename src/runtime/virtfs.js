@@ -104,7 +104,7 @@ function make_mem_ntfs_proxy (memfs) {
     // configure behaviour, such as whether the shortname should be a
     // hashed version of the name.
     //
-    function create_shortname (filename, opts) {
+    function generate_shortname (filename, opts) {
 
         opts = opts || { index: 1, hashed: false };
 
@@ -149,6 +149,12 @@ function make_mem_ntfs_proxy (memfs) {
         }
 
         return namepart + extension;
+    }
+
+    function make_shortname_link (path) {
+
+        // TODO: Add code for making shortname symlinks here.
+
     }
 
 
@@ -270,7 +276,7 @@ class VirtualFileSystem {
         this.vfs.mkdirSync("/HelloWorld");
         this.vfs.mkdirSync("/HelloWorld/Construct");
 
-        this.vfs.writeFileSync("/HelloWorld/Construct/snakesonaplane.txt", "foobar");
+        this.vfs.writeFileSync("/HelloWorld/Construct/somelongfile.txt", "foobar");
 
         console.log("----------------------");
         console.log(JSON.stringify(this.vfs.readdirSync("/HelloWorld/Construct"), null, 2));
