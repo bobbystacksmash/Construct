@@ -184,8 +184,6 @@ function make_mem_ntfs_proxy (memfs) {
             }
         }
 
-        console.log("SWITCHING TO HASHED LNK");
-
         // If we haven't exited this function by now, it means there
         // are already four shortname files present in this dir, so we
         // switch from using numbers in the shortname to parts of a hash.
@@ -214,31 +212,18 @@ function make_mem_ntfs_proxy (memfs) {
         // A wrapper around `fs.mkdirSync' which will create a symlink
         // with a shortname which points-to the directory being
         // created.
-        let ret = memfs_sans_proxy.mkdirSync(path, mode);
+        memfs_sans_proxy.mkdirSync(path, mode);
         make_shortname_and_link(path);
-        return ret;
     };
 
 
     // ntfs_writeFileSync
     // ==================
     //
-    function ntfs_writeFileSync (file, data, options) {
+    function ntfs_writeFileSync (path, data, options) {
 
-        let ret = memfs_sans_proxy.writeFileSync(file, data, options),
-            file_parent_dir = win32path.dirname(file),
-            filename        = win32path.basename(file);
-
-        if (filename.length <= 8) {
-            return ret;
-        }
-
-        let shortname = filename.substr(0, 6).toUpperCase() + "~" + ++shortname_num,
-            symlink_path = `${file_parent_dir}/${shortname}`;
-
-        memfs_sans_proxy.symlinkSync(file, symlink_path, "junction");
-
-        return ret;
+        let ret = memfs_sans_proxy.writeFileSync(path, data, options);
+        make_shortname_and_link(path);
     }
 
     // ntfs_readdirSync
@@ -258,14 +243,33 @@ function make_mem_ntfs_proxy (memfs) {
         });
     }
 
+    // ntfs_renameSync
+    // ===============
+    //
+    function ntfs_renameSync (old_path, new_path) {
+
+        const old_path_dirname  = win32path.dirname(old_path),
+              links_to_old_path = get_symlinks_in_dir(old_path_dirname);
+
+        get_symlinks_in_dir(old_path_dirname)
+            .forEach(link => {
+                const linkpath = `${old_path_dirname}/${link}`;
+                let   linkstr  = memfs_sans_proxy.readlinkSync(linkpath).toLowerCase();
+
+                if (linkstr.toLowerCase() === old_path.toLowerCase()) {
+                    memfs_sans_proxy.unlinkSync(linkpath);
+                }
+            });
+
+        make_shortname_and_link(new_path);
+    }
+
     // TODO methods:
-    //   this.vfs.accessSync
     //   this.vfs.copyFileSync
-    //   this.vfs = make_mem_ntfs_proxy
-    //   this.vfs.mkdirpSync
+    //   this.vfs.mkdirSync
     // * this.vfs.readFileSync
     // * this.vfs.readSync
-    //   this.vfs.renameSync
+    // * this.vfs.renameSync
     //   this.vfs.unlinkSync
     //
 
@@ -274,9 +278,10 @@ function make_mem_ntfs_proxy (memfs) {
     // ntfs_
 
     const ntfs_fn_dispatch_table = {
-        "mkdirSync":     ntfs_mkdirSync,
-        "writeFileSync": ntfs_writeFileSync,
-        "readdirSync":   ntfs_readdirSync
+        mkdirSync:     ntfs_mkdirSync,
+        writeFileSync: ntfs_writeFileSync,
+        readdirSync:   ntfs_readdirSync,
+        renameSync:    ntfs_renameSync
     };
 
     return new Proxy(memfs, {
@@ -312,6 +317,8 @@ class VirtualFileSystem {
 
         this.vfs.mkdirSync("/HelloWorld");
         this.vfs.mkdirSync("/HelloWorld/Construct");
+
+        this.vfs.renameSync("/HelloWorld/Construct", "/HelloWorld/SailingShip");
 
         this._InitFS();
     }
