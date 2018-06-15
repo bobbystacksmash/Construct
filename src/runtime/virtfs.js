@@ -93,9 +93,47 @@ function make_mem_ntfs_proxy (memfs) {
     let memfs_sans_proxy = memfs;
     let shortname_num = 0;
 
+    // IsShortName
+    // ===========
+    //
+    // Returns TRUE if the given path-part looks as though it could be
+    // a shortfile name, otherwise returns FALSE.  There is a caveat
+    // which says that just because the `path_part' is a *valid*
+    // shortname, it does not mean that the shortname definitely
+    // exists.
+    //
+    function is_shortname (filename) {
 
-    // [PRIVATE] ToShortName
-    // =====================
+        if (filename.length <= 8) {
+            return true;
+        }
+
+        if ((filename.match(/\./g) || []).length > 1) {
+            // Shortnames may only have a single dot in their name --
+            // any more than that and this isn't a shortname.
+            return false;
+        }
+
+        if (filename.includes(".")) {
+
+            let name_and_ext_parts = filename.split("."),
+                namepart = name_and_ext_parts[0],
+                extpart  = name_and_ext_parts[1];
+
+            if (namepart.length > 0 && namepart.length <= 8) {
+                if (extpart.length <= 3) { // Extensions are optional.
+                    // .TODO1
+                    // Need to finish the shortname checks...
+                    // .TODO2
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // ToShortName
+    // ===========
     //
     // Implements part of the algorithm associated with converting a
     // long filename (LFN) to a short filename (SFN).  Has no
@@ -137,7 +175,8 @@ function make_mem_ntfs_proxy (memfs) {
             // most) the first two letters of the namepart, followed
             // by four hexadecimal digits.
             namepart = namepart.substr(0, 2);
-            let hashpart = md5(filename).substr(0, 4).toUpperCase();
+            // TODO: the filename is lower-cased...will this hurt us?
+            let hashpart = md5(filename).substr(0, 4).toLowerCase();
             return namepart + hashpart + "~1" + extension;
         }
 
@@ -162,10 +201,28 @@ function make_mem_ntfs_proxy (memfs) {
         let basename = win32path.basename(path),
             dirname  = win32path.dirname(path);
 
-        // TODO: Early-out if there is no need to create a shortlink.
+        // Early-out if there is no need to create a shortlink because
+        // the name is too short.
+        //
+        // TODO check that the shortname is actually a shortname. Is
+        // length alone a good enough test?
         if (basename.length <= 8) {
             console.log("EXITING LINKER: no need to create shortname for", path);
             return;
+        }
+
+        // A symlink which points-to `path' may already exist...
+        let symlinks = get_symlinks_in_dir(dirname);
+
+        for (let i = 0; i < symlinks.length; i++) {
+
+            let target = memfs_sans_proxy.readlinkSync(`${dirname}/${symlinks[i]}`);
+
+            if (target.toLowerCase() === path.toLowerCase()) {
+                // Match!  This means a symlink already points-to
+                // `path', so we've no work left to do.
+                return;
+            }
         }
 
         for (let i = 1; i <= 4; i++) {
@@ -217,6 +274,34 @@ function make_mem_ntfs_proxy (memfs) {
     };
 
 
+    // ntfs_mkdirpSync
+    // ===============
+    //
+    // Construct supports auto-creating folders as soon as they're
+    // asked for.  This method is the main way in which this is
+    // achieved.  It's actually not a core `node(fs)' function -- it's
+    // a convenience function exported by `memfs'.
+    //
+    function ntfs_mkdirpSync (path) {
+
+        memfs_sans_proxy.mkdirpSync(path);
+
+        // Assuming that worked, we need to walk the newly created
+        // path and add symlinks for each path-part.
+        let path_parts = path.split("/").filter(p => !!p);
+        curr_path = "/";
+
+        path_parts.forEach(part => {
+
+            curr_path += (curr_path === "/")
+                ? part
+                : `/${part}`;
+
+            make_shortname_and_link(curr_path);
+        });
+    }
+
+
     // ntfs_writeFileSync
     // ==================
     //
@@ -253,8 +338,8 @@ function make_mem_ntfs_proxy (memfs) {
 
         get_symlinks_in_dir(old_path_dirname)
             .forEach(link => {
-                const linkpath = `${old_path_dirname}/${link}`;
-                let   linkstr  = memfs_sans_proxy.readlinkSync(linkpath).toLowerCase();
+                const linkpath = `${old_path_dirname}/${link}`,
+                      linkstr  = memfs_sans_proxy.readlinkSync(linkpath).toLowerCase();
 
                 if (linkstr.toLowerCase() === old_path.toLowerCase()) {
                     memfs_sans_proxy.unlinkSync(linkpath);
@@ -264,24 +349,43 @@ function make_mem_ntfs_proxy (memfs) {
         make_shortname_and_link(new_path);
     }
 
-    // TODO methods:
-    //   this.vfs.copyFileSync
-    //   this.vfs.mkdirSync
-    // * this.vfs.readFileSync
-    // * this.vfs.readSync
-    // * this.vfs.renameSync
-    //   this.vfs.unlinkSync
+    // ntfs_copyFileSync
+    // =================
     //
+    function ntfs_copyFileSync (src_path, dest_path, flags) {
+        // Hmm, is this right?! Feels a little too easy...
+        memfs_sans_proxy.copyFileSync(src_path, dest_path, flags);
+        make_shortname_and_link(dest_path);
+    }
 
+    // ntfs_unlinkSync
+    // ===============
+    //
+    function ntfs_unlinkSync (path) {
 
+        memfs_sans_proxy.unlinkSync(path);
 
-    // ntfs_
+        const folder_above_path = win32path.dirname(path);
+
+        get_symlinks_in_dir(folder_above_path)
+            .forEach(link => {
+                const linkpath = `${folder_above_path}/${link}`,
+                      linkstr  = memfs_sans_proxy.readlinkSync(linkpath).toLowerCase();
+
+                if (linkstr.toLowerCase() === path.toLowerCase()) {
+                    memfs_sans_proxy.unlinkSync(linkpath);
+                }
+            });
+    }
 
     const ntfs_fn_dispatch_table = {
+        mkdirpSync:    ntfs_mkdirpSync,
         mkdirSync:     ntfs_mkdirSync,
         writeFileSync: ntfs_writeFileSync,
         readdirSync:   ntfs_readdirSync,
-        renameSync:    ntfs_renameSync
+        renameSync:    ntfs_renameSync,
+        unlinkSync:    ntfs_unlinkSync
+
     };
 
     return new Proxy(memfs, {
@@ -314,11 +418,6 @@ class VirtualFileSystem {
 
         this.volume_c = this.volumes.c;
         this.vfs = make_mem_ntfs_proxy(this.volume_c);
-
-        this.vfs.mkdirSync("/HelloWorld");
-        this.vfs.mkdirSync("/HelloWorld/Construct");
-
-        this.vfs.renameSync("/HelloWorld/Construct", "/HelloWorld/SailingShip");
 
         this._InitFS();
     }
@@ -358,143 +457,11 @@ class VirtualFileSystem {
         basic_fs_setup.forEach(p => {
             this.AddFolder(p);
         });*/
-
-        /*this.AddFolder("C:\\Users\\CONSTRUCT\\DESKTOP\\helloworld");
-        this.AddFolder("C:\\Windows\\blah\\CONSTR~1");
-        this.AddFolder("C:\\Construct\\test");
-
-         this.AddFolder("C:\\CONSTR~1\\test\\foo");*/
     }
 
-    // [PRIVATE] UpdateShortnameTable
-    // ==============================
-    //
-    // Each time a file or folder is created, deleted, moved, or
-    // copied, we need to update the shortname table.  This function
-    // handles the maintenance of the `shortname_table', ensuring that
-    // new files are written correctly, and old files are
-    // appropriately removed, etc.
-    //
-    // Files and folders in VFS are created in the UNIX `mkdir -p'
-    // fashion.  Therefore, it's entirely possible that the entire
-    // `abspath' is brand new, and none of its parts exist in the
-    // shortname table.  We may need to create shortnames for every
-    // part of `abspath'.
-    //
-    // Each time a file or folder is moved or copied, it cannot carry
-    // its previously generated shortname with it.  This is because
-    // it's entirely possible that when a longname is shortened, the
-    // shortname value will collide with some existing file or folder.
-    // Each copy/move, we re-compute the shortname values.
-    //
-    _UpdateShortnameTable (ipath, opts) {
 
-        opts = opts || { delete: false };
-
-        let path_parts = ipath.split("/").filter(x => !!x);
-
-        if (path_parts.length === 1) {
-
-            let path = `/${path_parts[0]}`;
-            if (! this.shortname_table.hasOwnProperty(path)) {
-                this.shortname_table[path] = this.GetShortName(path);
-            }
-
-            return;
-        }
-
-        let curr_path = "";
-
-        for (let i = 0; i < path_parts.length; i++) {
-            curr_path += "/" + path_parts[i];
-
-            if (! this.shortname_table.hasOwnProperty(curr_path)) {
-                this.shortname_table[curr_path] = this.GetShortName(path_parts[i]);
-            }
-        }
-    }
-
-    // IsShortName
-    // ===========
-    //
-    // Returns TRUE if the given path-part looks as though it could be
-    // a shortfile name, otherwise returns FALSE.  There is a caveat
-    // which says that just because the `path_part' is a *valid*
-    // shortname, it does not mean that the shortname definitely
-    // exists.
-    //
-    IsShortName (path_part) {
-
-        if (path_part.length <= 8) {
-            return true;
-        }
-
-        if ((path_part.match(/\./g) || []).length > 1) {
-            // Shortnames may only have a single dot in their name --
-            // any more than that and this isn't a shortname.
-            return false;
-        }
-
-        if (path_part.includes(".")) {
-
-            let name_and_ext_parts = path_part.split("."),
-                namepart = name_and_ext_parts[0],
-                extpart  = name_and_ext_parts[1];
-
-            if (namepart.length > 0 && namepart.length <= 8) {
-                if (extpart.length <= 3) { // Extensions are optional.
-
-                }
-            }
-        }
-
-        return false;
-    }
-
-    // [PRIVATE] ResolveFileAndFolderNames
-    // ==============================
-    //
-    // Given an internal path representation, attempts to rewrite all
-    // valid shortname file/folder names in to their long name.
-    //
-    _ResolveFileAndFolderNames (ipath) {
-
-        const snt = this.shortname_table;
-
-        if (Object.keys(snt).length === 0) {
-            return ipath;
-        }
-
-        let parts = ipath.split("/").filter(p => !!p),
-            curr_path = "";
-
-        parts.forEach(part => {
-
-            if (! this.IsShortName(part)) {
-                curr_path += `/${part}`;
-                return;
-            }
-
-            let longname_for_part = Object
-                    .keys(snt)
-                    .filter(k => snt[k].toLowerCase() === part.toLowerCase());
-
-            console.log("@@@@@@ PARTS:", longname_for_part);
-            console.log(">>>>>> PATH PART:", part, "TRANSLATED TO:", longname_for_part[0]);
-
-
-            part = longname_for_part[0];
-
-            // We rewrite the path to be the translated version, using
-            // the long filename rather than the short name.
-            curr_path += `/${part}`;
-        });
-
-        return curr_path;
-    }
-
-    // [PRIVATE] ToInternalPath
-    // ========================
+    // [PRIVATE] ConvertExternalToInternalPath
+    // =======================================
     //
     // Given an `extern_path', so named because it's the path known to
     // the JScript we're running, convert the path to its internal
@@ -503,9 +470,8 @@ class VirtualFileSystem {
     //   - Lower-casing the entire path.
     //   - Removing the disk designator.
     //   - Switch all \ separators to /.
-    //   - Store the original path in the path dictionary.
     //
-    _ToInternalPath (extern_path) {
+    _ConvertExternalToInternalPath (extern_path) {
 
         let internal_path = extern_path
                 .toLowerCase()
@@ -519,14 +485,21 @@ class VirtualFileSystem {
         //
         //   /PROGRA~1/Notepad++/NOTEPA~1.EXE
         //
-        // We simply split on '/', and then for each name which
-        // contains a tilde, we try and resolve the long version
-        // of the name.
+        // The fix for this is to call `memfs.realpathSync', which
+        // will resolve the symlinks in to the LFN version of the
+        // path.  We don't do it here, as this method should just
+        // focus on converting a path from WIN to our UNIX-style:
         //
-        internal_path = this._ResolveFileAndFolderNames(internal_path);
+        //   C:\\HelloWorld -> /helloworld
+        //
 
-        this.extern_to_intern_paths[extern_path] = internal_path;
-        return internal_path;
+        try {
+            let ipath_expanded = this.vfs.realpathSync(internal_path);
+            return ipath_expanded;
+        }
+        catch (e) {
+            return internal_path;
+        }
     }
 
     // GetVFS
@@ -559,82 +532,13 @@ class VirtualFileSystem {
     // Behaviour is copied from the FileSystemObject's BuildPath
     // method with regards to when folder separators are added.
     //
-    BuildPath (existing_path, new_path_part) {
+    BuildPath (win_existing_path, win_new_path_part) {
 
-        if (/^[a-z]:$/i.test(existing_path) || /[\\/]$/.test(existing_path)) {
-            return `${existing_path}${new_path_part}`;
+        if (/^[a-z]:$/i.test(win_existing_path) || /[\\/]$/.test(win_existing_path)) {
+            return `${win_existing_path}${win_new_path_part}`;
         }
 
-        return `${existing_path}\\${new_path_part}`;
-    }
-
-    // GetShortName
-    // ============
-    //
-    // Given an internal path (`ipath'), attempts to figure out what
-    // the shortname for the file should be.  Invalid or disallowed
-    // 8.3 characters are either removed or changed to an underscore.
-    //
-    // There are two types of shortname:
-    //
-    //   1. Truncated: "HelloWorld.txt" => "HELLOW~1.TXT"
-    //   2. Truncated + hashed: "HelloWorld.txt" => "HEAF43~1.TXT"
-    //
-    // By default we always try and create a type #1 shortname.  However,
-    // if there already exists 4 files which match ours, we switch to #2
-    // which takes an md5sum of the filename and includes the first four
-    // bytes of the md5sum in the filename.
-    //
-    GetShortName (ipath) {
-
-        // We get given the whole path, where the basename part of the
-        // path contains the file or folder we'll be generating a
-        // shortname for...
-        let parsed    = win32path.parse(ipath),
-            dir       = parsed.dir;
-
-        const snt = this.shortname_table;
-
-        for (let i = 1; i <= 4; i++) {
-
-            let numeric_shortname = this._ToShortName(parsed.name, { index: i });
-
-            let shortname_used_already = Object.keys(snt)
-                    .filter(k => snt[k] === numeric_shortname)
-                    .filter(k => win32path.parse(k).dir === dir);
-
-            if (shortname_used_already && shortname_used_already.length) {
-                // This shortname is taken -- go around again and try
-                // another.
-                continue;
-            }
-
-            // Still here? We've got an unused shortname.
-            return numeric_shortname;
-        }
-
-        // If we're here it means that we've maxed-out the number of
-        // numeric filename collisions we're allowed, so we need to
-        // use the hashed filename value instead.  This behaviour is
-        // taken from Wikipedia 8.3 filename section: "VFAT and
-        // Computer-generated 8.3 filenames":
-        //
-        //   > On all NT versions including Windows 2000 and later, if
-        //   > at least 4 files or folders already exist with the same
-        //   > extension and first 6 characters in their short names,
-        //   > the stripped LFN is instead truncated to the first 2
-        //   > letters of the basename (or 1 if the basename has only
-        //   > 1 letter), followed by 4 hexadecimal digits derived
-        //   > from an undocumented hash of the filename, followed by
-        //   > a tilde, followed by a single digit, followed by a
-        //   > period ., followed by the first 3 characters of the
-        //   > extension.
-        //
-        // https://en.wikipedia.org/wiki/8.3_filename#VFAT_and_Computer-generated_8.3_filenames
-        //
-        let hashed_shortname = this._ToShortName(parsed.name, { hashed: true });
-
-        return hashed_shortname;
+        return `${win_existing_path}\\${win_new_path_part}`;
     }
 
     // PathIsAbsolute
@@ -656,7 +560,7 @@ class VirtualFileSystem {
     //   - A single backslash, for example, "\directory" or
     //     "\file.txt". This is also referred to as an absolute path."
     //
-    PathIsAbsolute (path) {
+    PathIsAbsolute (win_path) {
 
         // While not strictly part of the path, paths beginning "\\?\"
         // indicate that the path should be passed to the system with
@@ -664,14 +568,14 @@ class VirtualFileSystem {
         //
         //  \\?\C:\Windows\System32\test.dll
         //
-        if (/^\\\\\?\\/.test(path)) return true;
+        if (/^\\\\\?\\/.test(win_path)) return true;
 
         // A UNC path is always considered absolute.  UNC paths begin
         // with a double backslash:
         //
         //   \\hostname\foo\bar.txt
         //
-        if (/^\\./i.test(path)) return true;
+        if (/^\\./i.test(win_path)) return true;
 
         // An absolute path can be identified as beginning with a disk
         // designator, followed by a backslash:
@@ -679,7 +583,7 @@ class VirtualFileSystem {
         //   C:\foo.txt
         //   d:\bar\baz.txt
         //
-        if (/^[a-z]:\\/i.test(path)) return true;
+        if (/^[a-z]:\\/i.test(win_path)) return true;
 
         return false;
     }
@@ -690,10 +594,10 @@ class VirtualFileSystem {
     // Queries the given `path' and returns TRUE if the path appears
     // to be relative, or FALSE for everything else.
     //
-    PathIsRelative (path) {
+    PathIsRelative (win_path) {
         // Rather than trying to detect if a path is relative, we just
         // test if its absolute and return the opposite.
-        return !this.PathIsAbsolute(path);
+        return !this.PathIsAbsolute(win_path);
     }
 
     // ExpandEnvironmentStrings
@@ -760,8 +664,6 @@ class VirtualFileSystem {
 
 
     // Parse
-
-
     // =====
     //
     // Parse returns a structure whose elements represent the
@@ -860,10 +762,10 @@ class VirtualFileSystem {
     // must be an absolute filepath, and not just a path to a folder.
     // To copy a file in to a folder, see `CopyFileToFolder'.
     //
-    CopyFile (source, destination, opts) {
+    CopyFile (win_source_path, win_dest_path, opts) {
 
-        const isource      = this._ToInternalPath(source),
-              idestination = this._ToInternalPath(destination);
+        const isource      = this._ConvertExternalToInternalPath(win_source_path),
+              idestination = this._ConvertExternalToInternalPath(win_dest_path);
 
         opts = opts || {};
 
@@ -874,7 +776,6 @@ class VirtualFileSystem {
         }
 
         this.vfs.copyFileSync(isource, idestination, flags);
-        this._UpdateShortnameTable(idestination);
     }
 
     CopyDirectoryStructure (source, destination) {
@@ -891,7 +792,7 @@ class VirtualFileSystem {
     //
     ReadFileContents (filepath, encoding) {
 
-        const ipath = this._ToInternalPath(filepath),
+        const ipath = this._ConvertExternalToInternalPath(filepath),
               buf   = this.vfs.readFileSync(ipath, encoding);
 
         return buf;
@@ -912,7 +813,7 @@ class VirtualFileSystem {
     FileExists (filepath) {
 
         try {
-            this.vfs.accessSync(this._ToInternalPath(filepath));
+            this.vfs.accessSync(this._ConvertExternalToInternalPath(filepath));
             return true;
         }
         catch (_) {
@@ -933,9 +834,9 @@ class VirtualFileSystem {
     // decided for files.
     // .TODO2
     //
-    FolderExists (folderpath, opts) {
+    FolderExists (win_path, opts) {
 
-        let ipath = this._ToInternalPath(folderpath);
+        let ipath = this._ConvertExternalToInternalPath(win_path);
 
         try {
             this.vfs.accessSync(ipath);
@@ -953,11 +854,10 @@ class VirtualFileSystem {
     // files to the VFS.  This method is added to match this
     // functionality, however new code really should use `WriteFile'.
     //
-    AddFile (filepath, data, options) {
+    AddFile (win_filepath, data, options) {
 
-        let ipath = this._ToInternalPath(filepath);
+        let ipath = this._ConvertExternalToInternalPath(win_filepath);
         this.vfs.writeFileSync(ipath, data, options);
-        this._UpdateShortnameTable(ipath);
     }
 
     // DeleteFile
@@ -967,9 +867,8 @@ class VirtualFileSystem {
     //
     DeleteFile (filepath) {
 
-        const ipath = this._ToInternalPath(filepath);
+        const ipath = this._ConvertExternalToInternalPath(filepath);
         this.vfs.unlinkSync(ipath);
-        this._UpdateShortnameTable(ipath, { delete: true });
     }
 
     // Rename
@@ -979,11 +878,10 @@ class VirtualFileSystem {
     //
     Rename (source, destination, options) {
 
-        const isource      = this._ToInternalPath(source),
-              idestination = this._ToInternalPath(destination);
+        const isource      = this._ConvertExternalToInternalPath(source),
+              idestination = this._ConvertExternalToInternalPath(destination);
 
         this.vfs.renameSync(isource, idestination);
-        this._UpdateShortnameTable(idestination, { rename: true });
     }
 
     // CopyFolder
@@ -994,8 +892,8 @@ class VirtualFileSystem {
     //
     CopyFolder (source, destination) {
 
-        let isource      = this._ToInternalPath(source),
-            idestination = this._ToInternalPath(destination);
+        let isource      = this._ConvertExternalToInternalPath(source),
+            idestination = this._ConvertExternalToInternalPath(destination);
 
         let vfs = this.vfs;
 
@@ -1047,7 +945,7 @@ class VirtualFileSystem {
     //
     FolderListContents (folderpath) {
 
-        let ipath    = this._ToInternalPath(folderpath),
+        let ipath    = this._ConvertExternalToInternalPath(folderpath),
             contents = this.vfs.readdirSync(ipath);
 
         return contents;
@@ -1060,13 +958,12 @@ class VirtualFileSystem {
     // auto-vivification is enabled, `AddFolder' will create the
     // entire folder path.
     //
-    AddFolder (folderpath, options) {
+    AddFolder (win_path, options) {
 
-        if (!this.FolderExists(folderpath)) {
+        if (!this.FolderExists(win_path)) {
 
-            let ipath = this._ToInternalPath(folderpath);
+            let ipath = this._ConvertExternalToInternalPath(win_path);
             this.vfs.mkdirpSync(ipath);
-            this._UpdateShortnameTable(ipath);
         }
     }
 
@@ -1079,7 +976,7 @@ class VirtualFileSystem {
     //
     GetFile (filepath) {
 
-        let ipath = this._ToInternalPath(filepath);
+        let ipath = this._ConvertExternalToInternalPath(filepath);
 
         let filebuf = this.vfs.readSync(ipath);
 
