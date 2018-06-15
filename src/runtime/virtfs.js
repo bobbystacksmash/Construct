@@ -146,8 +146,7 @@ function make_mem_ntfs_proxy (memfs) {
 
         opts = opts || { index: 1, hashed: false };
 
-        // The filename is upper-cased.
-        filename = filename.toUpperCase();
+        filename = filename.toLowerCase();
 
         // Extensions are optional.
         let extension = win32path.extname(filename),
@@ -207,7 +206,7 @@ function make_mem_ntfs_proxy (memfs) {
         // TODO check that the shortname is actually a shortname. Is
         // length alone a good enough test?
         if (basename.length <= 8) {
-            console.log("EXITING LINKER: no need to create shortname for", path);
+            //console.log("EXITING LINKER: no need to create shortname for", path);
             return;
         }
 
@@ -233,11 +232,13 @@ function make_mem_ntfs_proxy (memfs) {
                     ? `/${possible_shortname_lnk}`
                     : `${dirname}/${possible_shortname_lnk}`;
 
+
             try {
                 memfs_sans_proxy.symlinkSync(path, lnk_path, "junction");
                 return;
             }
             catch (e) {
+                console.log("ERR", e);
             }
         }
 
@@ -292,11 +293,9 @@ function make_mem_ntfs_proxy (memfs) {
         curr_path = "/";
 
         path_parts.forEach(part => {
-
             curr_path += (curr_path === "/")
                 ? part
                 : `/${part}`;
-
             make_shortname_and_link(curr_path);
         });
     }
@@ -307,14 +306,74 @@ function make_mem_ntfs_proxy (memfs) {
     //
     function ntfs_writeFileSync (path, data, options) {
 
+        path = ntfs_realpathSync(path);
+
+        const dirname = win32path.dirname(path);
+        ntfs_mkdirpSync(dirname);
+
         let ret = memfs_sans_proxy.writeFileSync(path, data, options);
         make_shortname_and_link(path);
+    }
+
+    // ntfs_realpathSync
+    // =================
+    //
+    function ntfs_realpathSync (path, options) {
+
+        function resolve_symlinks (path) {
+
+            let path_parts = path.split("/").filter(f => !!f),
+                final_path = "",
+                curr_path  = "";
+
+            for (let i = 0; i < path_parts.length; i++) {
+
+                let part = path_parts[i];
+
+                let tmp_path = (curr_path === "/")
+                        ? `/${part}`
+                        : `${curr_path}/${part}`;
+
+                try {
+                    let symlink_points_to    = memfs_sans_proxy.readlinkSync(tmp_path),
+                        remaining_path_parts = path_parts.slice(i+1).join("/");
+
+                    if (!remaining_path_parts) {
+                        return tmp_path;
+                    }
+
+                    return ntfs_realpathSync([symlink_points_to, remaining_path_parts].join("/"));
+                }
+                catch (e) {
+                    curr_path = `${curr_path}/${part}`;
+                }
+            }
+
+            return curr_path;
+        }
+
+        // There is a chance the file may not exist...
+        try {
+            return memfs_sans_proxy.realpathSync(resolve_symlinks(path), options);
+        }
+        catch (e) {
+            if (e.code === "ENOENT") {
+                // It is totally legal for a path not to exist,
+                // despite all of our efforts in trying to resolve it.
+                //
+                // We shall just return the path and let the caller
+                // deal with it.
+                return path;
+            }
+        }
     }
 
     // ntfs_readdirSync
     // ================
     //
     function ntfs_readdirSync (path, options) {
+
+        path = ntfs_realpathSync(path);
 
         let dir_contents = memfs_sans_proxy.readdirSync(path);
 
@@ -384,8 +443,8 @@ function make_mem_ntfs_proxy (memfs) {
         writeFileSync: ntfs_writeFileSync,
         readdirSync:   ntfs_readdirSync,
         renameSync:    ntfs_renameSync,
-        unlinkSync:    ntfs_unlinkSync
-
+        unlinkSync:    ntfs_unlinkSync,
+        realpathSync:  ntfs_realpathSync
     };
 
     return new Proxy(memfs, {
@@ -498,6 +557,7 @@ class VirtualFileSystem {
             return ipath_expanded;
         }
         catch (e) {
+            //console.log(e);
             return internal_path;
         }
     }
@@ -961,7 +1021,6 @@ class VirtualFileSystem {
     AddFolder (win_path, options) {
 
         if (!this.FolderExists(win_path)) {
-
             let ipath = this._ConvertExternalToInternalPath(win_path);
             this.vfs.mkdirpSync(ipath);
         }
@@ -984,12 +1043,12 @@ class VirtualFileSystem {
     }
 
 
-    WriteFile (path, data, options) {
+    /*WriteFile (path, data, options) {
 
         // TODO: Make use of fs.utimesSync(path, atime, mtime)
         // for altering file {m,a,c,e} times.
         this.volume_c.writeFileSync(path, data, options);
-    }
+    }*/
 
 
     //

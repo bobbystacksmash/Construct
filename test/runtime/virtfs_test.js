@@ -40,39 +40,10 @@ describe("Virtual File System", () => {
 
     describe("Long and short filename handling", () => {
 
-        it("TEMP TEST ... just to make sure symlinking works correctly. DELETEME when done", () => {
+        it("should return a folder when using a shortname path", () => {
 
             let vfs = make_vfs();
 
-        });
-
-        xit("should correctly identify long and short filenames", () => {
-
-            let vfs = make_vfs();
-
-            let shortnames = [
-                "HELLOW~1",
-                "a",
-                "abc",
-                "foo.txt",
-                "a.b.c"
-            ];
-
-            let longnames = [
-                "foo.bar.baz",
-                "HelloWorld.txt",
-                "HELLOWORLD"
-            ];
-
-            shortnames.forEach(sn => assert.isTrue(vfs.IsShortName(sn)));
-            longnames.forEach(ln => assert.isFalse(vfs.IsShortName(ln), `Longname: ${ln}`));
-        });
-
-        xit("should return a folder when using a shortname path", () => {
-
-            let vfs = make_vfs();
-
-            //assert.isFalse(vfs.FolderExists("C:\\HelloWorld"));
             assert.isFalse(vfs.FolderExists("C:\\HELLOW~1"));
 
             vfs.AddFolder("C:\\HelloWorld");
@@ -80,38 +51,23 @@ describe("Virtual File System", () => {
             assert.isTrue(vfs.FolderExists("C:\\HelloWorld"));
         });
 
-        xit("should return a folder when mixing long and shortnames", () => {
+        it("should return a folder when mixing long and shortnames", () => {
 
             let vfs = make_vfs();
+            const lfn = "C:\\HelloWorld\\testing123";
 
-            assert.isFalse(vfs.FolderExists("C:\\HelloWorld\\testing123"));
+            assert.isFalse(vfs.FolderExists(lfn));
+            vfs.AddFolder(lfn);
+            assert.isTrue(vfs.FolderExists(lfn));
 
-            vfs.AddFolder("C:\\HelloWorld\\testing123");
-
-            assert.isTrue(vfs.FolderExists("C:\\HELLOW~1\\TESTIN~1"));
+            assert.isTrue(vfs.FolderExists("C:\\HELLOW~1"));
+            assert.isTrue(vfs.FolderExists("C:\\HELLOW~1\\testing123"));
         });
     });
 
-    xdescribe("TEMPORARY :: Testing the shortname_table is updated correctly", () => {
+    xdescribe("Long File Names (LFNs) and Short File Names (SFNs)", () => {
 
-        it("testing shortname_table updates", () => {
-
-            let vfs = make_vfs();
-
-            /*vfs.AddFolder("C:\\helloworld1");
-            vfs.AddFolder("C:\\helloworld2");
-            vfs.AddFolder("C:\\helloworld3");
-            vfs.AddFolder("C:\\helloworld4");
-            vfs.AddFolder("C:\\helloworld5");
-            vfs.AddFolder("C:\\helloworld6");*/
-        });
-    });
-
-    /*xdescribe("Long File Names (LFNs) and Short File Names (SFNs)", () => {
-
-
-
-        it("should correctly convert an LFN to a SFN", () => {
+        xit("should correctly convert an LFN to a SFN", () => {
 
             let vfs = make_vfs();
 
@@ -129,7 +85,7 @@ describe("Virtual File System", () => {
         });
     });
 
-    xdescribe("Environment variables", () => {
+    describe("Environment variables", () => {
 
         it("should correctly expand environment variables", () => {
 
@@ -160,7 +116,7 @@ describe("Virtual File System", () => {
         });
     });
 
-    xdescribe("Paths", () => {
+    describe("Paths", () => {
 
         describe("Building paths...", () => {
 
@@ -353,20 +309,17 @@ describe("Virtual File System", () => {
         });
     });
 
-    xdescribe("File and folder existence", () => {
+    describe("File and folder existence", () => {
 
         describe("#FileExists", () => {
 
             it("should return true if the file exists", () => {
-
                 let vfs = make_vfs();
-
                 vfs.AddFile("C:\\Users\\Construct\\test.txt", "Hello, World!");
                 assert.isTrue(vfs.FileExists("C:\\Users\\Construct\\test.txt"));
             });
 
             it("should return false if the file does not exist", () => {
-
                 let vfs = make_vfs();
                 assert.isFalse(vfs.FileExists("C:\\Users\\Blah\\foo.txt"));
             });
@@ -548,5 +501,5 @@ describe("Virtual File System", () => {
             });
 
         });
-    });*/
+    });
 });
