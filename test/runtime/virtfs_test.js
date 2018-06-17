@@ -65,26 +65,6 @@ describe("Virtual File System", () => {
         });
     });
 
-    xdescribe("Long File Names (LFNs) and Short File Names (SFNs)", () => {
-
-        xit("should correctly convert an LFN to a SFN", () => {
-
-            let vfs = make_vfs();
-
-            let tests = [
-                [ "textfile.txt", "TEXTFILE.TXT" ],
-                [ ".leading_dot", "LEADIN~1"     ],
-                [ "SomeStuff.aspx", "SOMEST~1.ASP" ],
-                [ "linux.tar.gz",   "LINUXT~1.GZ" ],
-                [ "TESTING",        "TESTING"     ],
-                [ "test.txt", "TEST.TXT" ],
-            ];
-
-            tests.forEach(t => assert.equal(vfs.GetShortName(t[0]), t[1]));
-
-        });
-    });
-
     describe("Environment variables", () => {
 
         it("should correctly expand environment variables", () => {
@@ -338,7 +318,7 @@ describe("Virtual File System", () => {
         });
      });
 
-    xdescribe("File manipulations", () => {
+    describe("File manipulations", () => {
 
         describe("#AddFile", () => {
 

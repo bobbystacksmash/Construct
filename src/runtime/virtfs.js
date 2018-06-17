@@ -395,6 +395,8 @@ function make_mem_ntfs_proxy (memfs) {
         const old_path_dirname  = win32path.dirname(old_path),
               links_to_old_path = get_symlinks_in_dir(old_path_dirname);
 
+        memfs_sans_proxy.renameSync(old_path, new_path);
+
         get_symlinks_in_dir(old_path_dirname)
             .forEach(link => {
                 const linkpath = `${old_path_dirname}/${link}`,
@@ -948,22 +950,55 @@ class VirtualFileSystem {
     // ==========
     //
     // Copies a `source' folder to a `destination'.  All internal
-    // files and folders are also copied.
+    // files and folders are also copied.  If the source folder ends
+    // with a trailing path separator, it indicates that the folder's
+    // contents should be copied, rather than the top-level folder.
     //
     CopyFolder (source, destination) {
 
         let isource      = this._ConvertExternalToInternalPath(source),
             idestination = this._ConvertExternalToInternalPath(destination);
 
-        let vfs = this.vfs;
 
-        if (vfs.statSync(isource).isDirectory() && ! /\/$/.test(isource)) {
+        if (source.endsWith("\\") === false) {
+            const isource_basename = win32path.basename(isource);
+            this.vfs.mkdirpSync(`${idestination}/${isource_basename}`);
+            idestination = `${idestination}/${isource_basename}`;
+        }
+
+        const vfs  = this.vfs,
+              self = this;
+
+        recursive_copy(isource, idestination);
+
+        function recursive_copy (src, dst) {
+
+            vfs.readdirSync(src).forEach(item => {
+
+                let srcpath = `${src}/${item}`,
+                    dstpath = `${dst}/${item}`;
+
+                if (vfs.statSync(srcpath).isDirectory()) {
+                    vfs.mkdirpSync(dstpath);
+                    recursive_copy(srcpath, dstpath);
+                }
+                else {
+                    vfs.copyFileSync(srcpath, dstpath);
+                }
+            });
+        }
+
+    }
+
+        /*let vfs = this.vfs;
+
+        if (this.FolderExists(isource) && isource.endsWith("/") === false) {
             try {
-                vfs.mkdirpSync(`${idestination}/${isource}`);
+                this.vfs.mkdirpSync(`${idestination}/${isource}`);
             }
             catch (_) {}
 
-            isource      = `${isource}/`;
+            isource = `${isource}/`;
             idestination = `${idestination}/${isource}`;
         }
 
@@ -995,7 +1030,7 @@ class VirtualFileSystem {
         }
 
         recursive_copy(isource, idestination);
-    }
+    }*/
 
     // FolderListContents
     // ==================
