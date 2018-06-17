@@ -93,8 +93,8 @@ function make_mem_ntfs_proxy (memfs) {
     let memfs_sans_proxy = memfs;
     let shortname_num = 0;
 
-    // IsShortName
-    // ===========
+    // is_shortname
+    // ============
     //
     // Returns TRUE if the given path-part looks as though it could be
     // a shortfile name, otherwise returns FALSE.  There is a caveat
@@ -125,6 +125,7 @@ function make_mem_ntfs_proxy (memfs) {
                     // .TODO1
                     // Need to finish the shortname checks...
                     // .TODO2
+                    return true;
                 }
             }
         }
@@ -132,8 +133,8 @@ function make_mem_ntfs_proxy (memfs) {
         return false;
     }
 
-    // ToShortName
-    // ===========
+    // generate_shortname
+    // ==================
     //
     // Implements part of the algorithm associated with converting a
     // long filename (LFN) to a short filename (SFN).  Has no
@@ -205,7 +206,7 @@ function make_mem_ntfs_proxy (memfs) {
         //
         // TODO check that the shortname is actually a shortname. Is
         // length alone a good enough test?
-        if (basename.length <= 8) {
+        if (is_shortname(basename)) {
             //console.log("EXITING LINKER: no need to create shortname for", path);
             return;
         }
@@ -235,6 +236,7 @@ function make_mem_ntfs_proxy (memfs) {
 
             try {
                 memfs_sans_proxy.symlinkSync(path, lnk_path, "junction");
+
                 return;
             }
             catch (e) {
@@ -261,7 +263,6 @@ function make_mem_ntfs_proxy (memfs) {
         }
     }
 
-
     // ntfs_mkdirSync
     // ==============
     //
@@ -273,7 +274,6 @@ function make_mem_ntfs_proxy (memfs) {
         memfs_sans_proxy.mkdirSync(path, mode);
         make_shortname_and_link(path);
     };
-
 
     // ntfs_mkdirpSync
     // ===============
@@ -299,7 +299,6 @@ function make_mem_ntfs_proxy (memfs) {
             make_shortname_and_link(curr_path);
         });
     }
-
 
     // ntfs_writeFileSync
     // ==================
@@ -354,7 +353,7 @@ function make_mem_ntfs_proxy (memfs) {
 
         // There is a chance the file may not exist...
         try {
-            return memfs_sans_proxy.realpathSync(resolve_symlinks(path), options);
+            path = memfs_sans_proxy.realpathSync(resolve_symlinks(path), options);
         }
         catch (e) {
             if (e.code === "ENOENT") {
@@ -363,9 +362,10 @@ function make_mem_ntfs_proxy (memfs) {
                 //
                 // We shall just return the path and let the caller
                 // deal with it.
-                return path;
             }
         }
+
+        return path;
     }
 
     // ntfs_readdirSync
@@ -446,7 +446,11 @@ function make_mem_ntfs_proxy (memfs) {
         readdirSync:   ntfs_readdirSync,
         renameSync:    ntfs_renameSync,
         unlinkSync:    ntfs_unlinkSync,
-        realpathSync:  ntfs_realpathSync
+        realpathSync:  ntfs_realpathSync,
+        // ==============================
+        // Non-standard `fs' functions
+        // ==============================
+        readdirSymlinks: get_symlinks_in_dir
     };
 
     return new Proxy(memfs, {
@@ -510,14 +514,6 @@ class VirtualFileSystem {
         // however it's still possible to `cd' in to "My Documents".
         // Needs more investigation to see WTF is going on.
         // .TODO2
-        /*const basic_fs_setup = [
-            "C:\\Users\\Construct\\Desktop",
-            "C:\\Users\\Construct\\Documents"
-        ];
-
-        basic_fs_setup.forEach(p => {
-            this.AddFolder(p);
-        });*/
     }
 
 
@@ -1075,6 +1071,42 @@ class VirtualFileSystem {
         let filebuf = this.vfs.readSync(ipath);
 
         console.log(filebuf);
+    }
+
+    // IsFolder
+    // ========
+    //
+    // If the path resolves to a folder, returns TRUE, else returns
+    // FALSE.
+    //
+    IsFolder (filepath) {
+
+        let ipath = this._ConvertExternalToInternalPath(filepath);
+        return this.vfs.lstatSync(ipath).isDirectory();
+    }
+
+    // GetShortName
+    // ============
+    //
+    // Returns the shortname of the last item in `filepath'.
+    //
+    GetShortName (filepath) {
+
+        let ipath = this._ConvertExternalToInternalPath(filepath);
+
+        const basename = win32path.basename(ipath),
+              dirname  = win32path.dirname(ipath),
+              symlinks = this.vfs.readdirSymlinks(dirname);
+
+        for (let i = 0; i < symlinks.length; i++) {
+            let link_ptr = this.vfs.readlinkSync(`${dirname}/${symlinks[i]}`);
+
+            if (link_ptr.toLowerCase() === ipath.toLowerCase()) {
+                return symlinks[i].toUpperCase();
+            }
+        }
+
+        return basename.toUpperCase();
     }
 
 

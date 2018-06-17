@@ -40,6 +40,18 @@ describe("Virtual File System", () => {
 
     describe("Long and short filename handling", () => {
 
+        it("should return the shortname of a longname", () => {
+
+            let vfs = make_vfs();
+
+            vfs.AddFolder("C:\\HelloWorld");
+            assert.isTrue(vfs.FolderExists("C:\\HelloWorld"));
+            assert.isTrue(vfs.FolderExists("C:\\HELLOW~1"));
+
+            assert.equal(vfs.GetShortName("C:\\HelloWorld"), "HELLOW~1");
+
+        });
+
         it("should return a folder when using a shortname path", () => {
 
             let vfs = make_vfs();
