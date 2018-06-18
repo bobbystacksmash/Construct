@@ -494,4 +494,19 @@ describe("Virtual File System", () => {
 
         });
     });
+
+    describe("#FindFiles", () => {
+
+        it("should match successfully literal file or folder names in long and short formats", () => {
+
+            const vfs = make_vfs();
+
+            vfs.AddFolder("C:\\foo");
+            vfs.AddFolder("C:\\fox");
+            vfs.AddFolder("C:\\bar");
+            vfs.AddFile("C:\\box.txt");
+
+            assert.deepEqual(vfs.FindFiles("C:\\", "foo"), [ "c:\\foo" ]);
+        });
+    });
 });

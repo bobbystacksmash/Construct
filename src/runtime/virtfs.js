@@ -1,6 +1,7 @@
 const FolderObject = require("../winapi/FolderObject");
 const FileObject   = require("../winapi/FileObject");
 const win32path    = require("path").win32;
+const wildcard     = require("./wildcard");
 const memfs        = require("memfs").fs;
 const linkfs       = require("linkfs").link;
 const Volume       = require("memfs").Volume;
@@ -439,6 +440,21 @@ function make_mem_ntfs_proxy (memfs) {
             });
     }
 
+    // ntfs_findFiles
+    // ==============
+    //
+    // Construct's implementation of the Windows wildcard matching.
+    // Based around the behaviours of the WINAPI FindFirstFile
+    // function.
+    //
+    function ntfs_findFiles (path, pattern) {
+
+        let folder_contents = memfs_sans_proxy.readdirSync(path),
+            matched         = matcher.match(folder_contents, pattern);
+
+
+    }
+
     const ntfs_fn_dispatch_table = {
         mkdirpSync:    ntfs_mkdirpSync,
         mkdirSync:     ntfs_mkdirSync,
@@ -584,7 +600,7 @@ class VirtualFileSystem {
     //
 
     // BuildPath
-    // ~~~~~~~~~
+    // =========
     //
     // Given an `existing_path', appends the `new_path_part' to it.
     // Behaviour is copied from the FileSystemObject's BuildPath
@@ -693,20 +709,6 @@ class VirtualFileSystem {
         return str;
     }
 
-    // ExpandPath
-    // ==========
-    //
-    // This method accepts an incoming `pathspec' and attempts to
-    // expand the pathspec.  Pathspec expansion includes:
-    //
-    //   - Environment variable expansion and replacement.
-    //   - Wildcard matching.
-    //   - Path normalisation.
-    //
-    ExpandPath (pathspec, opts) {
-
-    }
-
     // Normalise
     // =========
     //
@@ -719,7 +721,6 @@ class VirtualFileSystem {
     Normalise (path) {
         return win32path.normalize(path);
     }
-
 
     // Parse
     // =====
@@ -748,7 +749,6 @@ class VirtualFileSystem {
     Parse (path) {
         return win32path.parse(path);
     }
-
 
     // Resolve
     // =======
@@ -801,8 +801,6 @@ class VirtualFileSystem {
         return this.Normalise(path);
     }
 
-
-
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // !! All methods from this point on operate only on absolute paths !!
@@ -811,6 +809,26 @@ class VirtualFileSystem {
     // !! NOTE: MS-DOS style shortnames are considered absolute paths.  !!
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
+
+    // FindFiles
+    // =========
+    //
+    // Given an absolute path, ending with either a literal
+    // file/folder name, or a wildcard expression, returns an array of
+    // absolute paths for which the given expression pattern matches.
+    //
+    FindFiles (search_dir_path, pattern) {
+
+        const isearch_path = this._ConvertExternalToInternalPath(search_dir_path);
+
+        if (!this.FolderExists(isearch_path)) {
+            // We know this is going to throw, so just run it.
+            this.vfs.readdirSync(isearch_path);
+        }
+
+
+
+    }
 
     // CopyFile
     // ========
