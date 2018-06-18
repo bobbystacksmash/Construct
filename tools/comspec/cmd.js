@@ -58,6 +58,45 @@ vorpal
     .description("Displays a list of files and subdirectories within a directory.")
     .action(command_dir);
 
+//
+// DIR command
+// ===========
+//
+function command_cd (args, callback) {
+
+    if (!args.hasOwnProperty("path")) {
+        console.log(cwd_path);
+        console.log("");
+        return callback();
+    }
+
+    const path = vfs.Resolve(`${cwd_path}\\${args.path}`);
+
+    if (vfs.IsFolder(path) === false) {
+        console.log("The system cannot find the path specified.");
+        console.log("");
+        return callback();
+    }
+
+    if (vfs.IsFile(path)) {
+        console.log("The directory name is invalid.");
+        console.log("");
+        return callback();
+    }
+
+    // Still here? Means we can CD to this location!
+    cwd_path = path;
+
+    vorpal.delimiter(`${cwd_path}> `);
+    callback();
+}
+
+vorpal
+    .command("cd [path]")
+    .autocomplete(vorpal_autocomp())
+    .description("Displays the name of or changes the current directory.")
+    .action(command_cd);
+
 
 function make_vfs (opts) {
 
