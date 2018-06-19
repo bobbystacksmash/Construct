@@ -32,7 +32,7 @@ function is_lexed_pattern_literal (lexed_pattern) {
     return lexed_pattern.every(tok => tok.type === "LITERAL");
 }
 
-function lex (pattern) {
+function lex_pattern (pattern) {
 
     let token_list = pattern.split("").map((ch, i, arr) => {
 
@@ -55,7 +55,7 @@ function lex (pattern) {
             token.value = "DOS_DOT";
             break;
         default:
-            token.type  = "LITERAL";
+            token.type  = "literal";
             token.value = ch;
         }
 
@@ -65,24 +65,34 @@ function lex (pattern) {
     return token_list;
 }
 
+
+function lex_filename (filename) {
+
+    const last_dot_pos = filename.lastIndexOf(".");
+
+    return filename.split("").map((tok, arr, i) => {
+        return { pos: i, type: "literal", value: tok, raw: tok };
+    });
+}
+
 // matcher_helper
 // ==============
 //
 // Helps set-up a match be ensuring that patterns and files are
 // correctly normalised and optimised ready for matching.
 //
-function matcher_helper (files, pattern) {
+function matcher_helper (files, pattern, options) {
 
     pattern = translate_pattern(pattern);
 
-    const lex_pattern = lex(pattern),
-          pattern_is_literal = is_lexed_pattern_literal(lex_pattern);
+    const lpattern = lex_pattern(pattern),
+          pattern_is_literal = is_lexed_pattern_literal(lpattern);
 
     if (pattern_is_literal) {
         return files.filter(f => f.toLowerCase() === pattern.toLowerCase());
     }
 
-    let matches = files.filter(f => matcher(normalise(f).split(""), lex_pattern));
+    let matches = files.filter(f => matcher(lex_filename(normalise(f)), lpattern));
 
     return matches;
 }
@@ -92,19 +102,15 @@ function matcher_helper (files, pattern) {
 //
 function matcher (filename, pattern) {
 
-    if (pattern.length === 0) {
-        console.log("PATTERN IS EMPTY");
-    }
-    else if (filename.length === 0) {
-        console.log("FILENAME IS EMPTY");
-    }
+    if (filename.length === 0 && pattern.length === 0) return true;
+    if (filename.length >   0 && pattern.length === 0) return false;
 
     const tok_filename = filename[0],
           tok_pattern  = pattern[0];
 
-    if (tok_pattern.type === "LITERAL") {
+    if (tok_pattern.type === "literal") {
 
-        if (tok_pattern.value.toLowerCase() === tok_filename.toLowerCase()) {
+        if (tok_pattern.value.toLowerCase() === tok_filename.value.toLowerCase()) {
             return matcher(filename.slice(1), pattern.slice(1));
         }
 
@@ -115,10 +121,10 @@ function matcher (filename, pattern) {
         // TODO
     }
     else if (tok_pattern.value === "QMARK") {
-        // TODO
+        return matcher(filename.slice(1), pattern.slice(1));
     }
     else if (tok_pattern.value === "DOS_STAR") {
-        // TODO
+        return matcher(filename.slice(1), pattern);
     }
     else if (tok_pattern.value === "DOS_QM") {
         // TODO
