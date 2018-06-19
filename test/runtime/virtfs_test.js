@@ -215,6 +215,17 @@ describe("Virtual File System", () => {
         // .TODO2
         describe("Path Resolver", () => {
 
+            it("should resolve SFNs to LFNs", () => {
+
+                let vfs = make_vfs();
+
+                vfs.AddFolder("C:\\Users\\Construct\\HelloWorld");
+
+                // TODO
+                assert.equal(vfs.Resolve("C:\\Users\\Construct\\HELLOW~1"),
+                             "C:\\Users\\Construct\\HelloWorld");
+            });
+
             it("should correctly resolve relative paths", () => {
 
                 let vfs = make_vfs({
