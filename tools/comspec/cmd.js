@@ -59,6 +59,40 @@ vorpal
     .action(command_dir);
 
 //
+// MKDIR command
+// =============
+//
+function command_mkdir (args, callback) {
+
+    if (!args.hasOwnProperty("dir")) {
+        console.log("NO ARG GIVEN TO MKDIR\n");
+        return callback();
+    }
+
+    const new_folder_path = vfs.Resolve(`${cwd_path}\\${args.dir}`);
+
+    if (vfs.FolderExists(new_folder_path)) {
+        console.log("DIR ALREADY EXISTS\n");
+        return callback();
+    }
+
+    if (vfs.IsFile(new_folder_path)) {
+        console.log("FILE EXISTS WITH THIS NAME\n");
+        return callback();
+    }
+
+    vfs.AddFolder(new_folder_path);
+    callback();
+}
+
+vorpal
+    .command("mkdir [dir]")
+    .autocomplete(vorpal_autocomp())
+    .description("Displays the name of or changes the current directory.")
+    .action(command_mkdir);
+
+
+//
 // DIR command
 // ===========
 //

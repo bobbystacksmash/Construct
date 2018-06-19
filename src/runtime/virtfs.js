@@ -1100,8 +1100,34 @@ class VirtualFileSystem {
     IsFolder (filepath) {
 
         let ipath = this._ConvertExternalToInternalPath(filepath);
-        return this.vfs.lstatSync(ipath).isDirectory();
+
+        try {
+            return this.vfs.lstatSync(ipath).isDirectory();
+        }
+        catch (e) {
+            return false;
+        }
     }
+
+
+    // IsFile
+    // ======
+    //
+    // If the path resolves to a file, returns TRUE, else returns
+    // FALSE.
+    //
+    IsFile (filepath) {
+
+        let ipath = this._ConvertExternalToInternalPath(filepath);
+
+        try {
+            return this.vfs.lstatSync(ipath).isFile();
+        }
+        catch (e) {
+            return false;
+        }
+    }
+
 
     // GetShortName
     // ============
