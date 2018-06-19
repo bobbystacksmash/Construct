@@ -104,34 +104,7 @@ function make_mem_ntfs_proxy (memfs) {
     // exists.
     //
     function is_shortname (filename) {
-
-        if (filename.length <= 8) {
-            return true;
-        }
-
-        if ((filename.match(/\./g) || []).length > 1) {
-            // Shortnames may only have a single dot in their name --
-            // any more than that and this isn't a shortname.
-            return false;
-        }
-
-        if (filename.includes(".")) {
-
-            let name_and_ext_parts = filename.split("."),
-                namepart = name_and_ext_parts[0],
-                extpart  = name_and_ext_parts[1];
-
-            if (namepart.length > 0 && namepart.length <= 8) {
-                if (extpart.length <= 3) { // Extensions are optional.
-                    // .TODO1
-                    // Need to finish the shortname checks...
-                    // .TODO2
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        wildcard.is_shortname(filename);
     }
 
     // generate_shortname
@@ -241,7 +214,6 @@ function make_mem_ntfs_proxy (memfs) {
                 return;
             }
             catch (e) {
-                console.log("ERR", e);
             }
         }
 

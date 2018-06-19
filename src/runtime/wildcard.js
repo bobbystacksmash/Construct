@@ -1,7 +1,9 @@
 const path = require("path").win32;
 
+function translate_pattern (pattern, options) {
 
-function translate_pattern (pattern) {
+    options = options || {};
+    options = Object.assign({ skip_qmark: false }, options);
 
     let normpat  = normalise(pattern),
         transpat = normpat
@@ -30,6 +32,37 @@ function normalise (str) {
 //
 function is_lexed_pattern_literal (lexed_pattern) {
     return lexed_pattern.every(tok => tok.type === "LITERAL");
+}
+
+function is_filename_shortname (filename) {
+
+    if (filename.length <= 8) {
+        return true;
+    }
+
+    if ((filename.match(/\./g) || []).length > 1) {
+        // Shortnames may only have a single dot in their name --
+        // any more than that and this isn't a shortname.
+        return false;
+    }
+
+    if (filename.includes(".")) {
+
+        let name_and_ext_parts = filename.split("."),
+            namepart           = name_and_ext_parts[0],
+            extpart            = name_and_ext_parts[1];
+
+        if (namepart.length > 0 && namepart.length <= 8) {
+            if (extpart.length <= 3) { // Extensions are optional.
+                // .TODO1
+                // Need to finish the shortname checks...
+                // .TODO2
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 function lex_pattern (pattern) {
@@ -69,9 +102,10 @@ function lex_pattern (pattern) {
 function lex_filename (filename) {
 
     const last_dot_pos = filename.lastIndexOf(".");
+    const is_shortname = is_filename_shortname(filename);
 
     return filename.split("").map((tok, arr, i) => {
-        return { pos: i, type: "literal", value: tok, raw: tok };
+        return { pos: i, type: "literal", value: tok, raw: tok, sfn: is_shortname };
     });
 }
 
@@ -82,6 +116,8 @@ function lex_filename (filename) {
 // correctly normalised and optimised ready for matching.
 //
 function matcher_helper (files, pattern, options) {
+
+    options = options || { skip_qmark: false };
 
     pattern = translate_pattern(pattern);
 
@@ -96,6 +132,7 @@ function matcher_helper (files, pattern, options) {
 
     return matches;
 }
+
 
 // matcher
 // =======
@@ -117,6 +154,13 @@ function matcher (filename, pattern) {
         return false;
     }
 
+
+    // ASTERISK: *
+    // QMARK:    ?
+    // DOS_STAR: <
+    // DOS_QM:   >
+    // DOS_DOR:  "
+
     if (tok_pattern.value === "ASTERISK") {
         // TODO
     }
@@ -130,12 +174,21 @@ function matcher (filename, pattern) {
         // TODO
     }
     else if (tok_pattern.value === "DOS_DOT") {
-        // TODO
+        //
+        // Matches a period or zero characters at the end of the
+        // string.
+        //
+        if (filename.length === 0) return true;
+
+        if (tok_filename.value === ".") {
+            return matcher(filename.slice(1), pattern.slice(1));
+        }
     }
-    else {
-        // UNKNOWN
-        // TODO
-    }
+
+    return false;
 }
 
-module.exports = { match: matcher_helper };
+module.exports = {
+    match       : matcher_helper,
+    is_shortname: is_filename_shortname
+};
