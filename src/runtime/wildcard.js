@@ -104,7 +104,8 @@ function lex_filename (filename) {
     const last_dot_pos = filename.lastIndexOf(".");
     const is_shortname = is_filename_shortname(filename);
 
-    return filename.split("").map((tok, arr, i) => {
+    return filename.split("").map((tok, i) => {
+
         return { pos: i, type: "literal", value: tok, raw: tok, sfn: is_shortname };
     });
 }
@@ -133,6 +134,18 @@ function matcher_helper (files, pattern, options) {
     return matches;
 }
 
+// lookahead
+// =========
+//
+// Looks ahead one element in the `tokens' array.  If the array
+// contains fewer than two element, returns FALSE, else it returns the
+// element in pos[1].
+//
+function lookahead (tokens) {
+
+    if (tokens.length < 2) return false;
+    return tokens[1];
+}
 
 // matcher
 // =======
@@ -147,7 +160,7 @@ function matcher (filename, pattern) {
 
     if (tok_pattern.type === "literal") {
 
-        if (tok_pattern.value.toLowerCase() === tok_filename.value.toLowerCase()) {
+        if (tok_filename && tok_pattern.value.toLowerCase() === tok_filename.value.toLowerCase()) {
             return matcher(filename.slice(1), pattern.slice(1));
         }
 
@@ -171,7 +184,22 @@ function matcher (filename, pattern) {
         return matcher(filename.slice(1), pattern);
     }
     else if (tok_pattern.value === "DOS_QM") {
-        // TODO
+
+        // Matches zero if:
+        //
+        //  - appears to the left of a period
+        //  - appears at the end of the string
+        //  - appears contiguous to other DOS_QM that are in either of the above positions.
+        //
+        if (tok_filename === undefined) {
+            return matcher(filename, pattern.slice(1));
+        }
+        else if (tok_filename.value === ".") {
+            return matcher(filename, pattern.slice(1));
+        }
+
+        // Match any single character.
+        return matcher(filename.slice(1), pattern.slice(1));
     }
     else if (tok_pattern.value === "DOS_DOT") {
         //
