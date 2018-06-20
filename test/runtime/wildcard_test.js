@@ -3,9 +3,48 @@ const assert   = require("chai").assert,
 
 describe("Wildcard Matcher", () => {
 
+    describe("DOS_STAR - matches zero or more chars until matching the final period", () => {
+
+        it("should match all files which do not contin a period", () => {
+
+            let files = ["foo", "ab", "hello.txt", "sailing", "abc.txt", "1.2.3"],
+                tests = [
+                    { pattern: "<", expected: ["foo", "ab", "sailing"] }
+                ];
+
+            tests.forEach(t => assert.deepEqual(wildcard.match(files, t.pattern), t.expected));
+        });
+
+        it("should match all files when the pattern is '<<'", () => {
+
+            let files = ["foo", "hello.txt", "world.c", "bz", "a.1.2"],
+                tests = [
+                    { pattern: "<<", expected: files }
+                ];
+
+            tests.forEach(t => assert.deepEqual(wildcard.match(files, t.pattern), t.expected));
+        });
+
+        it("should greedily match the dot", () => {
+
+            assert.deepEqual(
+                wildcard.match(["foo.txt", "hello.txt", "b0rk.txt"], "<txt"),
+                ["foo.txt", "hello.txt", "b0rk.txt"]
+            );
+        });
+
+        it("should match if used after the last dot", () => {
+
+            assert.deepEqual(
+                wildcard.match(["foo.txt", "foo.txt.1", "hello.c", "test.tx", "bar.txt.gz"], "foo.<"),
+                ["foo.txt"]
+            );
+        });
+    });
+
     describe("DOS_QM", () => {
 
-        xit("should match any single character", () => {
+        it("should match any single character", () => {
 
             let files = ["faz.txt", "fez.txt", "abc", "aaa", "xyz"],
                 tests = [
@@ -19,7 +58,7 @@ describe("Wildcard Matcher", () => {
             });
         });
 
-        xit("should match zero if to the left of a period", () => {
+        it("should match zero if to the left of a period", () => {
 
             let files = ["foo.txt", "barr.txt"],
                 tests = [
@@ -32,7 +71,7 @@ describe("Wildcard Matcher", () => {
             });
         });
 
-        xit("should match zero if at the end of a string", () => {
+        it("should match zero if at the end of a string", () => {
 
             let files = ["foo.txt", "barr.txt"],
                 tests = [
@@ -45,7 +84,7 @@ describe("Wildcard Matcher", () => {
             });
         });
 
-        xit("should match when used contiguously", () => {
+        it("should match when used contiguously", () => {
 
             let files = ["a", "ab", "abc", "hello", "testing"],
                 tests = [
@@ -59,9 +98,9 @@ describe("Wildcard Matcher", () => {
 
         it("should match files with a leading '.'", () => {
 
-            let files = [".manifest"],
+            let files = ["manife~1"],
                 tests = [
-                    { pattern: ">>>>>>>>", expected: [".manifest"] }
+                    { pattern: ">>>>>>>>", expected: ["manife~1"] }
                 ];
 
             tests.forEach(t => {
@@ -70,31 +109,7 @@ describe("Wildcard Matcher", () => {
         });
     });
 
-    xit("should match literals", () => {
-
-        let files = ["foo", "HELLOW~1", "HelloWorld"],
-            tests = [
-                { pattern: "foo", expected: ["foo"] }
-            ];
-
-        tests.forEach(
-            t => assert.deepEqual(wildcard.match(files, t.pattern), t.expected)
-        );
-    });
-
-    xit("should match wildcards", () => {
-
-        let files = ["foo", "HELLOW~1", "HelloWorld"],
-            tests = [
-                { pattern: "f??", expected: ["foo"] }
-            ];
-
-        tests.forEach(
-            t => assert.deepEqual(wildcard.match(files, t.pattern), t.expected)
-        );
-    });
-
-    xdescribe("DOS_DOT - matches a period of zero chars at EOS", () => {
+    describe("DOS_DOT - matches a period of zero chars at EOS", () => {
 
         it("should match a literal dot", () => {
 
@@ -128,5 +143,21 @@ describe("Wildcard Matcher", () => {
                 );
             });
         });
+    });
+
+    describe("LITERALS - any character that isn't a metachar", () => {
+
+        it("should match literals", () => {
+
+            let files = ["foo", "HELLOW~1", "HelloWorld"],
+                tests = [
+                    { pattern: "foo", expected: ["foo"] }
+                ];
+
+            tests.forEach(
+                t => assert.deepEqual(wildcard.match(files, t.pattern), t.expected)
+            );
+        });
+
     });
 });
