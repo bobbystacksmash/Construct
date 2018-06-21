@@ -109,6 +109,8 @@ function lex_filename (filename) {
             type: "literal",
             value: tok,
             is_last_dot: (last_dot_pos === i),
+            is_after_last_dot: (last_dot_pos < i),
+            is_before_last_dot: (last_dot_pos > i),
             sfn: is_shortname
         };
     });
@@ -192,31 +194,46 @@ function matcher (filename, pattern) {
     if (tok_pattern.type === "literal") {
 
         if (tok_filename && tok_pattern.value.toLowerCase() === tok_filename.value.toLowerCase()) {
-            return matcher(filename.slice(1), pattern.slice(1));
+            var match = matcher(filename.slice(1), pattern.slice(1));
+            return match;
         }
 
         return false;
     }
 
     if (tok_pattern.value === "ASTERISK" /* * */) {
-        return matcher(filename.slice(1), pattern);
+        var match = matcher(filename.slice(1), pattern);
+        return match;
     }
     else if (tok_pattern.value === "QMARK" /* ? */) {
-        return matcher(filename.slice(1), pattern.slice(1));
+        var match = matcher(filename.slice(1), pattern.slice(1));
+        return match;
     }
     else if (tok_pattern.value === "DOS_STAR" /* < */) {
 
         if (tok_filename === undefined) {
-            return matcher(filename, pattern.slice(1));
+            return true;
         }
 
-        // Matching continues until we enounter either the end of
-        // filename, or the last dot.
-        if (tok_filename.value === "." && tok_filename.is_last_dot) {
+        if (tok_filename.value === ".") {
+
+            if (tok_filename.is_last_dot) {
+                if (matcher(filename.slice(1), pattern.slice(1)) === false) {
+                    return matcher(filename, pattern.slice(1));
+                }
+            }
+
+            if (matcher(filename.slice(1), pattern) === true) {
+                return true;
+            }
+
             return matcher(filename.slice(1), pattern.slice(1));
         }
 
-        return matcher(filename.slice(1), pattern);
+        // Explore the greedy branch which tries to match filename
+        // chars without giving up any pattern chars.
+        var match = matcher(filename.slice(1), pattern);
+        return match;
     }
     else if (tok_pattern.value === "DOS_QM" /* > */) {
 
@@ -235,7 +252,7 @@ function matcher (filename, pattern) {
 
         // Match any single character.
         return matcher(filename.slice(1), pattern.slice(1));
-p    }
+    }
     else if (tok_pattern.value === "DOS_DOT" /* " */) {
         //
         // Matches a dot or zero characters at the end of the

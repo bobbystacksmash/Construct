@@ -3,6 +3,21 @@ const assert   = require("chai").assert,
 
 describe("Wildcard Matcher", () => {
 
+    describe("Match tests - associated tests from sampling different patterns", () => {
+
+        it("should match the following patterns", () => {
+
+            let tests = [
+                { pattern: "<a<", files: ["a", "ab", "abc", "leadin~1"], expected: ["a", "ab", "abc", "leadin~1"] }
+            ];
+
+            tests.forEach(t => {
+                assert.deepEqual(wildcard.match(t.files, t.pattern), t.expected);
+            });
+        });
+
+    });
+
     describe("DOS_STAR - matches zero or more chars until matching the final period", () => {
 
         it("should match all files which do not contin a period", () => {
@@ -39,6 +54,33 @@ describe("Wildcard Matcher", () => {
                 wildcard.match(["foo.txt", "foo.txt.1", "hello.c", "test.tx", "bar.txt.gz"], "foo.<"),
                 ["foo.txt"]
             );
+        });
+
+        it("should match zero at the beginning", () => {
+            assert.deepEqual(
+                wildcard.match(["foo", "food", "fox", "hello", "foo.txt"], "<foo.txt"),
+                ["foo", "food", "fox", "hello"]
+            );
+        });
+
+        it("should match any pattern which contains the literal 'a' without a dot", () => {
+
+            const pattern  = "<a<",
+                  files    = ["a", "ab", "aaa", "abc", "leadin~1", "foo", "a.txt", "ab.txt"],
+                  expected = ["a", "ab", "aaa", "abc", "leadin~1", "foo"];
+
+            assert.deepEqual(wildcard.match(files, pattern), expected);
+        });
+
+        it("should match up to (but not after) the last DOT", () => {
+            assert.deepEqual(wildcard.match(["a", "abc", "hello", "a.t", "foo.txt"], "<"),
+                             ["a", "abc", "hello"]);
+        });
+
+        it("should match correctly for multiple dots in a filename", () => {
+
+            assert.deepEqual(wildcard.match(["a.b.c"], "<.<.<"),
+                             ["a.b.c"]);
         });
     });
 
