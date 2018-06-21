@@ -976,48 +976,6 @@ class VirtualFileSystem {
 
     }
 
-        /*let vfs = this.vfs;
-
-        if (this.FolderExists(isource) && isource.endsWith("/") === false) {
-            try {
-                this.vfs.mkdirpSync(`${idestination}/${isource}`);
-            }
-            catch (_) {}
-
-            isource = `${isource}/`;
-            idestination = `${idestination}/${isource}`;
-        }
-
-        function recursive_copy (isrc, idest) {
-
-            let list_of_files  = vfs.readdirSync(isrc);
-
-            list_of_files.forEach(f => {
-
-                let isrc_this_file  = `${isrc}/${f}`,
-                    idest_this_file = `${idest}/${f}`;
-
-                if (vfs.statSync(isrc_this_file).isDirectory()) {
-
-                    try {
-                        vfs.mkdirpSync(idest_this_file);
-                    }
-                    catch (_) {
-                        // Folder already exists, do nothing.
-                    }
-
-                    recursive_copy(isrc_this_file, idest_this_file);
-                }
-                else {
-                    // This is a file...
-                    vfs.copyFileSync(isrc_this_file, idest_this_file);
-                }
-            });
-        }
-
-        recursive_copy(isource, idestination);
-    }*/
-
     // FolderListContents
     // ==================
     //
@@ -1058,9 +1016,12 @@ class VirtualFileSystem {
 
         let ipath = this._ConvertExternalToInternalPath(filepath);
 
-        let filebuf = this.vfs.readSync(ipath);
-
-        console.log(filebuf);
+        try {
+            return this.vfs.readSync(ipath);
+        }
+        catch (e) {
+            return false;
+        }
     }
 
     // IsFolder

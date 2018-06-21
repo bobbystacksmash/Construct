@@ -48,6 +48,9 @@ class JS_FileSystemObject extends Component {
 
         this.ee.emit("FileSystemObject::CopyFile", source, destination, overwrite_files);
 
+        const source_name = win32path.basename(source),
+              dest_name   = win32path.basename(destination);
+
         //
         // The FSO supports many different path types.  The only one
         // it doesn't seem to support are paths which contain
@@ -59,14 +62,10 @@ class JS_FileSystemObject extends Component {
         // fully-qualified path, or fetch an error informing us that
         // the path we're trying to expand is b0rked.
         //
+
         let source_path = this.vfs.Resolve(source);
 
-        console.log("SOURCE PATH", source_path);
-
-
-
         try {
-            console.log(`copy(${source}, ${destination})`);
             this.vfs.CopyFile(source, destination);
         }
         catch (e) {
@@ -81,24 +80,28 @@ class JS_FileSystemObject extends Component {
                         "also named 'foo', this error is thrown."
                 );
             }
-            else if (e.message.includes("Source file not found")) {
-                this.context.exceptions.throw_file_not_found(
-                    "Scripting.FileSystemObject",
-                    "Unable to find src file.",
-                    "The CopyFile operation was not completely successful because the " +
-                        `file: ${source} could not be found.`
-                );
-            }
-            else if (e.message.includes("Destination folder not found")) {
-                this.context.exceptions.throw_path_not_found(
-                    "Scripting.FileSystemObject",
-                    "Unable to find destination folder.",
-                    "The CopyFile operation was not completely successful because the " +
-                        `destination folder: ${destination} could not be found.`
-                );
-            }
+            else if (e.message.includes("ENOENT")) {
 
-            throw e;
+                if (e.message.includes(`${source_name}`)) {
+                    this.context.exceptions.throw_file_not_found(
+                        "Scripting.FileSystemObject",
+                        "Unable to find src file.",
+                        "The CopyFile operation was not completely successful because the " +
+                            `file: ${source} could not be found.`
+                    );
+                }
+                else {
+                    this.context.exceptions.throw_path_not_found(
+                        "Scripting.FileSystemObject",
+                        "Unable to find destination folder.",
+                        "The CopyFile operation was not completely successful because the " +
+                            `destination folder: ${destination} could not be found.`
+                    );
+                }
+            }
+            else {
+                throw e;
+            }
         }
     }
 
