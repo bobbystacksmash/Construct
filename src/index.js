@@ -13,7 +13,6 @@ const path            = require("path");
 const table           = require("text-table");
 const evts            = require("./events");
 const fs              = require("fs");
-const colors          = require("colors");
 const events          = require("./events");
 const hexy            = require("hexy");
 const _               = require("lodash");
