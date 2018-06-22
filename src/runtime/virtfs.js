@@ -344,15 +344,23 @@ function make_mem_ntfs_proxy (memfs) {
     // ntfs_readdirSync
     // ================
     //
+    // Reads the contents of PATH and filters all symlinks
+    // (shortnames) from the results.  To get all files in the dir
+    // (including links) set options.include_links to TRUE.
+    //
     function ntfs_readdirSync (path, options) {
+
+        options = options || { include_links: false };
 
         path = ntfs_realpathSync(path);
 
         let dir_contents = memfs_sans_proxy.readdirSync(path);
 
-        if (dir_contents.length === 0) return dir_contents;
+        if (dir_contents.length === 0) return [];
 
-        // Filter out all symbolic links:
+        if (options.include_links) return dir_contents;
+
+        // Filter out all sym links
         return dir_contents.filter(f => {
             return ! memfs_sans_proxy
                 .lstatSync(`${path}/${f}`)
@@ -522,21 +530,6 @@ class VirtualFileSystem {
                 .toLowerCase()
                 .replace(/^[a-z]:/ig, "")
                 .replace(/\\/g, "/");
-
-        // It's perfectly valid for JScript code to hand us shortname
-        // versions of any file or folder.  For instance, the path we
-        // get handed, after internal path normalisation may look
-        // something like:
-        //
-        //   /PROGRA~1/Notepad++/NOTEPA~1.EXE
-        //
-        // The fix for this is to call `memfs.realpathSync', which
-        // will resolve the symlinks in to the LFN version of the
-        // path.  We don't do it here, as this method should just
-        // focus on converting a path from WIN to our UNIX-style:
-        //
-        //   C:\\HelloWorld -> /helloworld
-        //
 
         try {
             let ipath_expanded = this.vfs.realpathSync(internal_path);
@@ -785,21 +778,37 @@ class VirtualFileSystem {
     // FindFiles
     // =========
     //
-    // Given an absolute path, ending with either a literal
-    // file/folder name, or a wildcard expression, returns an array of
-    // absolute paths for which the given expression pattern matches.
+    // Given an absolute path to a directy in which to search, and the
+    // search pattern (wildcard expression), returns an array of
+    // absolute paths for each file that matches the pattern.  If the
+    // match succeeds for a short filename, the link is translated and
+    // the long filename only is returned.
     //
-    FindFiles (search_dir_path, pattern) {
+    // OPTIONS
+    // ~~~~~~~
+    //
+    //   * full_paths : BOOL (default #f), when set to true, returns
+    //                  an absolute path to the file, not just the
+    //                  filename.
+    //
+    FindFiles (search_dir_path, pattern, options) {
 
         const isearch_path = this._ConvertExternalToInternalPath(search_dir_path);
 
         if (!this.FolderExists(isearch_path)) {
-            // We know this is going to throw, so just run it.
-            this.vfs.readdirSync(isearch_path);
+            return [];
         }
 
+        const dir_contents  = this.vfs.readdirSync(isearch_path, { include_links: true }),
+              matched_files = wildcard.match(dir_contents, pattern);
 
+        if (matched_files.length === 0) return [];
 
+        // We now need to resolve any shortlink matches with their
+        // fullname values.
+        return matched_files.map(f => {
+            return win32path.basename(this.vfs.readlinkSync(`${isearch_path}/${f}`));
+        });
     }
 
     // CopyFile
@@ -823,6 +832,13 @@ class VirtualFileSystem {
             flags = memfs.constants.COPYFILE_EXCL;
         }
 
+        // TODO
+        // Should the following copy operation succeed:
+        //
+        //   fso.CopyFile("foo.txt", "bar");
+        //
+        // See what FSO does currently.  Emulate that.
+        //
         this.vfs.copyFileSync(isource, idestination, flags);
     }
 

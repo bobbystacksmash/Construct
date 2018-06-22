@@ -13,6 +13,7 @@ need to be completed before the RC is published.
 | Use of ~hostcontext~ environment vars is messy (see: "path"). Tidy up.            | TODO   |
 | VFS auto-vivification is hit/miss.  EVERYTHING auto-viv, disable with cfg.        | TODO   |
 | Start-dir of a script may be important.  Add 'cd' cmd to set start dir. Auto-viv. | TODO   |
+| Look in to making all FS checks case-insensitive, yet return correct cased names. | TO     |
 | Programmers reference: update ~hostcontext~ vars for programmers info.            | TODO   |
 | Replace custom VFS with node modules memfs, spyfs, and fs-monkey.                 | TODO   |
 | Add basic support (syntax rewriter?) for alerting if JS is browser.               | TODO   |

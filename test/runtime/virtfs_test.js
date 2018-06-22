@@ -506,18 +506,34 @@ describe("Virtual File System", () => {
         });
     });
 
-    describe("#FindFiles", () => {
+    describe("Finding Files (wildcards)", () => {
 
-        it("should match successfully literal file or folder names in long and short formats", () => {
+        xit("should match files using literal expressions", () => {
 
             const vfs = make_vfs();
 
-            vfs.AddFolder("C:\\foo");
-            vfs.AddFolder("C:\\fox");
-            vfs.AddFolder("C:\\bar");
-            vfs.AddFile("C:\\box.txt");
+            ["foo.txt", "bar.txt", "fox.txt", "fun.txt"].forEach(f => {
+                vfs.AddFile(`C:\\Users\\Construct\\${f}`);
+            });
 
-            assert.deepEqual(vfs.FindFiles("C:\\", "foo"), [ "c:\\foo" ]);
+            assert.deepEqual(
+                vfs.FindFiles("C:\\Users\\Construct", "foo.txt"),
+                ["foo.txt"]
+            );
+        });
+
+        it("should resolve SFN matches with the correct LFN", () => {
+
+            const vfs = make_vfs();
+
+            vfs.AddFile("C:\\Users\\Construct\\HelloWorld.txt", "Hello, World!");
+            vfs.AddFile("C:\\Users\\Construct\\DoNotMatch.txt", "No match 4 u");
+
+            assert.deepEqual(
+                vfs.FindFiles("C:\\Users\\Construct", "HELLOW~1.TXT"),
+                ["helloworld.txt"]
+            );
         });
     });
+
 });

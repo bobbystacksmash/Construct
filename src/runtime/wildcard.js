@@ -126,7 +126,7 @@ function matcher_helper (files, pattern, options) {
 
     options = options || { skip_qmark: false };
 
-    pattern = translate_pattern(pattern);
+    pattern = translate_pattern(pattern.toLowerCase());
 
     const lpattern = lex_pattern(pattern),
           pattern_is_literal = is_lexed_pattern_literal(lpattern);
