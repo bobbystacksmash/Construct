@@ -7,29 +7,33 @@ Construct is nearing an alpha release candidate, codename: "St. Sunday
 Crag".  This table tracks the existing high level TODO items which
 need to be completed before the RC is published.
 
-| Task                                                                   | Status |
-|------------------------------------------------------------------------+--------|
-| Rename, move, and update code surrounding ~AbsFileSystemObject.js~.    | TODO   |
-| Replace custom VFS with node modules memfs, spyfs, and fs-monkey.      | TODO   |
-| Add basic support (syntax rewriter?) for alerting if JS is browser.    | TODO   |
-| Add better exception handling to the REPL environment.                 | TODO   |
-| For ExceptionHandler throws -- trap and display these in a nice way.   | TODO   |
-| ~WshShell~ needs lots of attention (ENV VARS live here).               | TODO   |
-| Add a built-in ~man~ or ~help~ command for usage within Construct.     | TODO   |
-| Do basic groundwork to later support syntax rewriting.                 | TODO   |
-| Add reading list / references to README.                               | TODO   |
-| Trap exceptions up to REPL and present a pre-written issue desc + link | TODO   |
-| Unify the event format for all {GET,SET} properties and methods.       | TODO   |
-| The README.org needs to be written.                                    | TODO   |
-| Need to write some usage wiki articles.                                | TODO   |
-| Need to add support for saving output results to the local filesystem. | TODO   |
-| ~Scripting.FilesystemObject~ needs to be implemented / plugin support. | TODO   |
-| Much like the VFS, we need a VREG (Virtual REGistry).                  | TODO   |
-| Should ship with some default plugins which handle net requests.       | TODO   |
-| Files in the ~winapi~ and ~runtime~ folders are scattered. Organise.   | TODO   |
-| Separate ~load~ from ~run~ front-end commands.                         | TODO   |
-| Add a command to GET/SET/SAVE/LOAD the Construct config (simple JSON). | TODO   |
-| Separate CLI opts from Construct CORE so they're not tightly coupled.  | TODO   |
+| Task                                                                              | Status |
+|-----------------------------------------------------------------------------------+--------|
+| Rename, move, and update code surrounding ~AbsFileSystemObject.js~.               | TODO   |
+| Use of ~hostcontext~ environment vars is messy (see: "path"). Tidy up.            | TODO   |
+| VFS auto-vivification is hit/miss.  EVERYTHING auto-viv, disable with cfg.        | TODO   |
+| Start-dir of a script may be important.  Add 'cd' cmd to set start dir. Auto-viv. | TODO   |
+| Programmers reference: update ~hostcontext~ vars for programmers info.            | TODO   |
+| Replace custom VFS with node modules memfs, spyfs, and fs-monkey.                 | TODO   |
+| Add basic support (syntax rewriter?) for alerting if JS is browser.               | TODO   |
+| Add better exception handling to the REPL environment.                            | TODO   |
+| For ExceptionHandler throws -- trap and display these in a nice way.              | TODO   |
+| ~WshShell~ needs lots of attention (ENV VARS live here).                          | TODO   |
+| Add a built-in ~man~ or ~help~ command for usage within Construct.                | TODO   |
+| Do basic groundwork to later support syntax rewriting.                            | TODO   |
+| Add reading list / references to README.                                          | TODO   |
+| Trap exceptions up to REPL and present a pre-written issue desc + link            | TODO   |
+| Unify the event format for all {GET,SET} properties and methods.                  | TODO   |
+| The README.org needs to be written.                                               | TODO   |
+| Need to write some usage wiki articles.                                           | TODO   |
+| Need to add support for saving output results to the local filesystem.            | TODO   |
+| ~Scripting.FilesystemObject~ needs to be implemented / plugin support.            | TODO   |
+| Much like the VFS, we need a VREG (Virtual REGistry).                             | TODO   |
+| Should ship with some default plugins which handle net requests.                  | TODO   |
+| Files in the ~winapi~ and ~runtime~ folders are scattered. Organise.              | TODO   |
+| Separate ~load~ from ~run~ front-end commands.                                    | TODO   |
+| Add a command to GET/SET/SAVE/LOAD the Construct config (simple JSON).            | TODO   |
+| Separate CLI opts from Construct CORE so they're not tightly coupled.             | TODO   |
 #+CAPTION: List of TODO items for alpha RC.
 
 * References
