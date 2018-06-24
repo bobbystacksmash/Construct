@@ -202,8 +202,14 @@ function matcher (filename, pattern) {
     }
 
     if (tok_pattern.value === "ASTERISK" /* * */) {
-        var match = matcher(filename.slice(1), pattern);
-        return match;
+
+        if (filename.length === 0) return true;
+
+        if (matcher(filename.slice(1), pattern) === false) {
+            return matcher(filename, pattern.slice(1));
+        }
+
+        return matcher(filename.slice(1), pattern);
     }
     else if (tok_pattern.value === "QMARK" /* ? */) {
         var match = matcher(filename.slice(1), pattern.slice(1));

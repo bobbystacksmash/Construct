@@ -51,7 +51,7 @@ describe("Scripting.FileSystemObject", () => {
 
     describe("#BuildPath", () => {
 
-        it("should build a path from two parts", (done) => {
+        xit("should build a path from two parts", (done) => {
 
             let fso = MakeFSO();
 
@@ -61,7 +61,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        it("should just combine the two parts, not check if they're valid", (done) => {
+        xit("should just combine the two parts, not check if they're valid", (done) => {
 
             let fso = MakeFSO();
 
@@ -73,7 +73,7 @@ describe("Scripting.FileSystemObject", () => {
 
     describe("#CopyFile", () => {
 
-        it("should throw file not found if src file does not exist", (done) => {
+        xit("should throw file not found if src file does not exist", (done) => {
 
             fso = MakeFSO({
                 exceptions: {
@@ -91,7 +91,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        it("should throw path not found if the dest dir does not exist", (done) => {
+        xit("should throw path not found if the dest dir does not exist", (done) => {
 
             fso = MakeFSO({
                 exceptions: {
@@ -106,7 +106,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        it("should throw if a file copy-to operation matches destination folder (ambiguous)", (done) => {
+        xit("should throw if a file copy-to operation matches destination folder (ambiguous)", (done) => {
 
             let fso = MakeFSO({
                 exceptions: {
@@ -126,7 +126,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        it("should copy in to a directory when a path ends with a trailing slash", (done) => {
+        xit("should copy in to a directory when a path ends with a trailing slash", (done) => {
 
             let fso = MakeFSO();
 
@@ -145,9 +145,27 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        // TODO
-        xit("should support copying wildcards", (done) => {
+        xit("should support copying wildcards", () => {
 
+            const fso = MakeFSO();
+
+            ctx.vfs.AddFolder("C:\\Users\\Construct\\source");
+            ctx.vfs.AddFile("C:\\Users\\Construct\\source\\foo.txt");
+            ctx.vfs.AddFile("C:\\Users\\Construct\\source\\bar.txt");
+            ctx.vfs.AddFile("C:\\Users\\Construct\\source\\baz.txt");
+            ctx.vfs.AddFile("C:\\Users\\Construct\\source\\fox.txt");
+            ctx.vfs.AddFile("C:\\Users\\Construct\\source\\fff.txt");
+
+            ctx.vfs.AddFolder("C:\\Users\\Construct\\dest");
+
+            assert.deepEqual(ctx.vfs.FindFiles("C:\\Users\\Construct\\dest", "*"), []);
+
+            fso.CopyFile("C:\\Users\\Construct\\source\\f??.txt", "C:\\Users\\Construct\\dest");
+
+            console.log(ctx.vfs.GetVFS());
+
+            assert.deepEqual(ctx.vfs.FindFiles("C:\\Users\\Construct\\dest", "*.txt").sort(),
+                             ["foo.txt", "fox.txt", "fff.txt"].sort());
         });
     });
 
@@ -168,7 +186,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        it("should throw if the folder already exists", (done) => {
+        xit("should throw if the folder already exists", (done) => {
 
             let fso = MakeFSO({
                 exceptions: {
@@ -221,7 +239,7 @@ describe("Scripting.FileSystemObject", () => {
 
     xdescribe("#CreateTextFile", () => {
 
-        it("should throw 'bad filename or number' if a wildcard appears in the filename", (done) => {
+        xit("should throw 'bad filename or number' if a wildcard appears in the filename", (done) => {
 
             let fso = MakeFSO({
                 exceptions: {
@@ -237,7 +255,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        it("should throw if overwriting is is disabled", (done) => {
+        xit("should throw if overwriting is is disabled", (done) => {
 
             let fso = MakeFSO({
                 exceptions: {
@@ -255,7 +273,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        it("should create the text file in the CWD if no path is given", (done) => {
+        xit("should create the text file in the CWD if no path is given", (done) => {
 
             let fso = MakeFSO();
 
@@ -266,7 +284,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        it("should create a file even if the path is partial", (done) => {
+        xit("should create a file even if the path is partial", (done) => {
 
             let fso = new FSO(ctx);
 
@@ -277,7 +295,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        it("should throw if the filepath does not exist", (done) => {
+        xit("should throw if the filepath does not exist", (done) => {
 
             let fso = MakeFSO({
                 exceptions: {
@@ -290,7 +308,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        it("should return a TextStream instance", (done) => {
+        xit("should return a TextStream instance", (done) => {
 
             let fso = MakeFSO(),
                 ts  = fso.CreateTextFile("file.txt");
@@ -305,7 +323,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        it("should open a text file and then fail to write to it by default", (done) => {
+        xit("should open a text file and then fail to write to it by default", (done) => {
 
             ctx.vfs.AddFile("C:\\file.txt", "Hello, World!");
 
@@ -320,7 +338,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        it("should write unicode if signalled to do so", (done) => {
+        xit("should write unicode if signalled to do so", (done) => {
 
             let fso = MakeFSO(),
                 ts  = fso.CreateTextFile("C:\\unicode.txt", true, true);

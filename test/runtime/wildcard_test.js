@@ -202,4 +202,17 @@ describe("Wildcard Matcher", () => {
         });
 
     });
+
+    describe("ASTERISK - matches zero or more characters", () => {
+
+        it("should match all files", () => {
+
+            let files = ["foo.txt", "fox.txt", "fff.txt"];
+
+            assert.deepEqual(
+                wildcard.match(files, "*"),
+                files
+            );
+        });
+    });
 });

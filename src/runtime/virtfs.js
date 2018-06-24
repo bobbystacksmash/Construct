@@ -718,6 +718,34 @@ class VirtualFileSystem {
         return win32path.parse(path);
     }
 
+    // PathIsIllegal
+    // =============
+    //
+    // Checks the entire `path' for the presence of any of the
+    // following chars:
+    //
+    //   < (less than)
+    //   > (greater than)
+    //   : (colon)
+    //   " (double quote)
+    //   / (forward slash)
+    //   \ (backslash)
+    //   | (vertical bar or pipe)
+    //   ? (question mark)
+    //   * (asterisk)
+    //
+    IsPathIllegal (path) {
+
+        let path_parts = path
+                .replace(/^[a-z]:/i, "")
+                .replace(/\\/g, "/")
+                .split("/")
+                .filter(f => !!f);
+
+        return path_parts.some(p => /[<>:"\/\\\|?*]/g);
+    }
+
+
     // Resolve
     // =======
     //
@@ -785,7 +813,7 @@ class VirtualFileSystem {
     // search pattern (wildcard expression), returns an array of
     // absolute paths for each file that matches the pattern.  If the
     // match succeeds for a short filename, the link is translated and
-    // the long filename only is returned.
+    // the long filename only is returned.  Directories are not returned.
     //
     // OPTIONS
     // ~~~~~~~
@@ -807,15 +835,24 @@ class VirtualFileSystem {
 
         if (matched_files.length === 0) return [];
 
-        return matched_files.map(f => {
+        let file_list = [];
+
+        for (let i = 0;i < matched_files.length; i++) {
+
+            let f = matched_files[i];
 
             const item_path = `${isearch_path}/${f}`,
                   stats     = this.vfs.lstatSync(item_path);
 
-            return (stats.isSymbolicLink(item_path))
-                ? win32path.basename(this.vfs.readlinkSync(`${isearch_path}/${f}`))
-                : f;
-        });
+            if (stats.isSymbolicLink(item_path)) {
+                file_list.push(win32path.basename(this.vfs.readlinkSync(`${isearch_path}/${f}`)));
+            }
+            else if (stats.isFile(item_path)) {
+                file_list.push(f);
+            }
+        }
+
+        return file_list;
     }
 
     // CopyFile
@@ -1021,6 +1058,8 @@ class VirtualFileSystem {
     // entire folder path.
     //
     AddFolder (win_path, options) {
+
+
 
         if (!this.FolderExists(win_path)) {
             let ipath = this._ConvertExternalToInternalPath(win_path);

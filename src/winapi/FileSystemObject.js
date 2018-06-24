@@ -48,31 +48,54 @@ class JS_FileSystemObject extends Component {
 
         this.ee.emit("FileSystemObject::CopyFile", source, destination, overwrite_files);
 
+        source      = this.vfs.Resolve(source);
+        destination = this.vfs.Resolve(destination);
+
         const copy_into_dest_dir = (/[/\\]$/.test(destination)),
-              source_name        = win32path.basename(source),
-              dest_name          = win32path.basename(destination);
+              source_dirname     = win32path.dirname(source),
+              source_basename    = win32path.basename(source),
+              dest_dirname       = win32path.dirname(destination),
+              dest_basename      = win32path.basename(destination),
+              is_source_wildcard = (/["*?<>]/g.test(source_basename));
 
         //
         // The FSO supports many different path types.  The only one
         // it doesn't seem to support are paths which contain
         // environment variables.
         //
-        // The VFS will only let us perform actions upon the FS if we
-        // use fully qualified paths, however methods are exported
-        // from the VFS class which will allow us to either obtain a
-        // fully-qualified path, or fetch an error informing us that
-        // the path we're trying to expand is b0rked.
-        //
+        let copy_from_to = [
+            {
+                source: source,
+                dest:  (copy_into_dest_dir) ? `${destination}\\${source_basename}` : destination
+            }
+        ];
 
-        let source_path = this.vfs.Resolve(source);
+        if (is_source_wildcard) {
+
+            let matched_file_list = this.vfs.FindFiles(source_dirname, source_basename);
+
+            if (matched_file_list.length === 0) {
+                this.context.exceptions.throw_file_not_found(
+                    "Scripting.FileSystemObject",
+                    "Unable to complete 'CopyFile', as the wildcard does not match any files.",
+                    "No files were matched by the wildcard expression, meaning nothing can be " +
+                        "copied.  Update/fix the wildcard and retry."
+                );
+            }
+
+            copy_from_to = matched_file_list.map(file => {
+
+                return {
+                    source: `${source_dirname}\\${file}`,
+                    dest:   `${destination}\\${file}`
+                };
+            });
+        }
 
         try {
 
-            if (copy_into_dest_dir) {
-                this.vfs.CopyFile(source, `${destination}\\${source_name}`);
-            }
-            else {
-                this.vfs.CopyFile(source, destination);
+            for (let i = 0; i < copy_from_to.length; i++) {
+                this.vfs.CopyFile(copy_from_to[i].source, copy_from_to[i].dest);
             }
         }
         catch (e) {
@@ -89,7 +112,7 @@ class JS_FileSystemObject extends Component {
             }
             else if (e.message.includes("ENOENT")) {
 
-                if (e.message.includes(`${source_name}`)) {
+                if (e.message.includes(`${source_basename}`)) {
                     this.context.exceptions.throw_file_not_found(
                         "Scripting.FileSystemObject",
                         "Unable to find src file.",
@@ -121,6 +144,14 @@ class JS_FileSystemObject extends Component {
     // its Folder object.
     createfolder (path) {
 
+        if (this.vfs.IsPathIllegal(path)) {
+            this.context.exceptions.throw_bad_filename_or_number(
+                "Scripting.FileSystemObject",
+                "Path contains illegal characters.",
+                "At least one part of the path contains an illegal character."
+            );
+        }
+
         // Does this path already exist?
         try {
             if (this.vfs.FolderExists(path)) {
@@ -131,8 +162,11 @@ class JS_FileSystemObject extends Component {
                 );
             }
 
+            this.vfs.AddFolder(path);
         }
         catch (e) {
+
+            console.log(">>>", e.message, path);
 
             if (e.message.includes("Unknown volume")) {
                 this.context.exceptions.throw_path_not_found(
