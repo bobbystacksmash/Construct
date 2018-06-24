@@ -49,7 +49,7 @@ function MakeFSO (opts) {
 
 describe("Scripting.FileSystemObject", () => {
 
-    xdescribe("#BuildPath", () => {
+    describe("#BuildPath", () => {
 
         it("should build a path from two parts", (done) => {
 
@@ -73,7 +73,7 @@ describe("Scripting.FileSystemObject", () => {
 
     describe("#CopyFile", () => {
 
-        it("xxxx should throw file not found if src file does not exist", (done) => {
+        it("should throw file not found if src file does not exist", (done) => {
 
             fso = MakeFSO({
                 exceptions: {
@@ -91,7 +91,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        xit("should throw path not found if the dest dir does not exist", (done) => {
+        it("should throw path not found if the dest dir does not exist", (done) => {
 
             fso = MakeFSO({
                 exceptions: {
@@ -102,13 +102,11 @@ describe("Scripting.FileSystemObject", () => {
             });
 
             ctx.vfs.AddFile("C:\\file.txt");
-
-            assert.throws(() => fso.CopyFile("C:\\file.txt", "C:\\FOOBAR"), "cannot find dest dir");
-
+            assert.throws(() => fso.CopyFile("C:\\file.txt", "C:\\No\\Dir\\here.txt"), "cannot find dest dir");
             done();
         });
 
-        xit("should throw if a file copy-to operation matches destination folder (ambiguous)", (done) => {
+        it("should throw if a file copy-to operation matches destination folder (ambiguous)", (done) => {
 
             let fso = MakeFSO({
                 exceptions: {
@@ -121,12 +119,14 @@ describe("Scripting.FileSystemObject", () => {
             ctx.vfs.AddFile("C:\\Users\\Construct\\file_a.txt");
             ctx.vfs.AddFolder("C:\\Users\\Construct\\bar");
 
-            assert.throws(() => fso.CopyFile("file_a.txt", "bar"), "file copy is ambiguous");
+            assert.throws(() =>
+                          fso.CopyFile("C:\\Users\\Construct\\file_a.txt", "C:\\Users\\Construct\\bar"),
+                          "file copy is ambiguous");
 
             done();
         });
 
-        xit("should copy in to a directory when a path ends with a trailing slash", (done) => {
+        it("should copy in to a directory when a path ends with a trailing slash", (done) => {
 
             let fso = MakeFSO();
 
@@ -136,7 +136,9 @@ describe("Scripting.FileSystemObject", () => {
             assert.isFalse(ctx.vfs.FileExists("C:\\Users\\Construct\\bar\\file_a.txt"));
             assert.isTrue(ctx.vfs.FileExists("C:\\Users\\Construct\\file_a.txt"));
 
-            assert.doesNotThrow(() => fso.CopyFile("file_a.txt", "bar/"));
+            assert.doesNotThrow(() =>
+                                fso.CopyFile("C:\\Users\\Construct\\file_a.txt",
+                                             "C:\\Users\\Construct\\bar\\"));
 
             assert.isTrue(ctx.vfs.FileExists("C:\\Users\\Construct\\bar\\file_a.txt"));
 
@@ -153,9 +155,9 @@ describe("Scripting.FileSystemObject", () => {
         // TODO - blocked on wildcards
     });
 
-    xdescribe("#CreateFolder", () => {
+    describe("#CreateFolder", () => {
 
-        it("should successfully create/return a folder", (done) => {
+        xit("should successfully create/return a folder", (done) => {
 
             let fso = MakeFSO();
             assert.isFalse(fso.FolderExists("C:\\foo\\bar"));
@@ -182,7 +184,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        it("should throw 'path not found' if volume does not exist", (done) => {
+        xit("should throw 'path not found' if volume does not exist", (done) => {
 
             let fso = MakeFSO({
                 exceptions: {
@@ -199,6 +201,7 @@ describe("Scripting.FileSystemObject", () => {
         // TODO:
         //
         //  - what if the path is invalid?
+        //
         it("should throw if the path is invalid", (done) => {
 
             let fso = MakeFSO({

@@ -48,8 +48,9 @@ class JS_FileSystemObject extends Component {
 
         this.ee.emit("FileSystemObject::CopyFile", source, destination, overwrite_files);
 
-        const source_name = win32path.basename(source),
-              dest_name   = win32path.basename(destination);
+        const copy_into_dest_dir = (/[/\\]$/.test(destination)),
+              source_name        = win32path.basename(source),
+              dest_name          = win32path.basename(destination);
 
         //
         // The FSO supports many different path types.  The only one
@@ -66,11 +67,17 @@ class JS_FileSystemObject extends Component {
         let source_path = this.vfs.Resolve(source);
 
         try {
-            this.vfs.CopyFile(source, destination);
+
+            if (copy_into_dest_dir) {
+                this.vfs.CopyFile(source, `${destination}\\${source_name}`);
+            }
+            else {
+                this.vfs.CopyFile(source, destination);
+            }
         }
         catch (e) {
 
-            if (e.message.includes("destination name is ambiguous")) {
+            if (e.message.includes("EISDIR")) {
                 this.context.exceptions.throw_permission_denied(
                     "Scripting.FileSystemObject",
                     "Cannot copy to destination because the destination filename is ambiguous.",
@@ -116,11 +123,11 @@ class JS_FileSystemObject extends Component {
 
         // Does this path already exist?
         try {
-            if (this.vfs.GetFolder(path)) {
+            if (this.vfs.FolderExists(path)) {
                 this.context.exceptions.throw_file_already_exists(
                     "Scripting.FileSystemObject",
-                    "snake",
-                    "plane"
+                    `Cannot create path ${path} - destination already exists.`,
+                    `Cannot create a file or a folder which already exists.`
                 );
             }
 
