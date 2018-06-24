@@ -42,7 +42,7 @@ describe("Virtual File System", () => {
 
         it("should return the shortname of a longname", () => {
 
-            let vfs = make_vfs();
+            const vfs = make_vfs();
 
             vfs.AddFolder("C:\\HelloWorld");
             assert.isTrue(vfs.FolderExists("C:\\HelloWorld"));
@@ -54,7 +54,7 @@ describe("Virtual File System", () => {
 
         it("should return a folder when using a shortname path", () => {
 
-            let vfs = make_vfs();
+            const vfs = make_vfs();
 
             assert.isFalse(vfs.FolderExists("C:\\HELLOW~1"));
 
@@ -65,7 +65,7 @@ describe("Virtual File System", () => {
 
         it("should return a folder when mixing long and shortnames", () => {
 
-            let vfs = make_vfs();
+            const vfs = make_vfs();
             const lfn = "C:\\HelloWorld\\testing123";
 
             assert.isFalse(vfs.FolderExists(lfn));
@@ -81,7 +81,7 @@ describe("Virtual File System", () => {
 
         it("should correctly expand environment variables", () => {
 
-            let vfs = make_vfs({
+            const vfs = make_vfs({
                 environment: {
                     foo: "FOO!",
                     bar: "BAR!",
@@ -114,7 +114,7 @@ describe("Virtual File System", () => {
 
             it("should correctly construct paths", () => {
 
-                let vfs = make_vfs();
+                const vfs = make_vfs();
 
                 let tests = [
                     {
@@ -154,7 +154,7 @@ describe("Virtual File System", () => {
 
         it("should identify absolute paths", () => {
 
-            let vfs = make_vfs();
+            const vfs = make_vfs();
 
             const list_of_abs_paths = [
                 "\\\\?\\C:\\foo\\bar.txt",
@@ -170,7 +170,7 @@ describe("Virtual File System", () => {
 
         it("should identify relative paths", () => {
 
-            let vfs = make_vfs();
+            const vfs = make_vfs();
 
             const list_of_rel_paths = [
                 "C:foo.txt",
@@ -190,7 +190,7 @@ describe("Virtual File System", () => {
 
             it("should parse paths correctly", () => {
 
-                let vfs = make_vfs();
+                const vfs = make_vfs();
 
                 assert.deepEqual(
                     vfs.Parse("C:\\Users\\Construct\\file.txt"),
@@ -208,27 +208,11 @@ describe("Virtual File System", () => {
 
         // Path Expansion
 
-        // .TODO1
-        // Path expansion tests need to be written.  Getting this
-        // fully working is currently blocked on getting the
-        // wildcarding code working.
-        // .TODO2
         describe("Path Resolver", () => {
-
-            it("should resolve SFNs to LFNs", () => {
-
-                let vfs = make_vfs();
-
-                vfs.AddFolder("C:\\Users\\Construct\\HelloWorld");
-
-                // TODO
-                assert.equal(vfs.Resolve("C:\\Users\\Construct\\HELLOW~1"),
-                             "C:\\Users\\Construct\\HelloWorld");
-            });
 
             it("should correctly resolve relative paths", () => {
 
-                let vfs = make_vfs({
+                const vfs = make_vfs({
                     environment: {
                         "appdata": "C:\\Users\\Construct\\AppData\\Roaming"
                     }
@@ -290,7 +274,7 @@ describe("Virtual File System", () => {
 
             it("should correctly handle absolute paths", () => {
 
-                let vfs = make_vfs({
+                const vfs = make_vfs({
                     environment: {
                         appdata: "C:\\Users\\Construct\\AppData\\Roaming"
                     }
@@ -317,13 +301,13 @@ describe("Virtual File System", () => {
         describe("#FileExists", () => {
 
             it("should return true if the file exists", () => {
-                let vfs = make_vfs();
+                const vfs = make_vfs();
                 vfs.AddFile("C:\\Users\\Construct\\test.txt", "Hello, World!");
                 assert.isTrue(vfs.FileExists("C:\\Users\\Construct\\test.txt"));
             });
 
             it("should return false if the file does not exist", () => {
-                let vfs = make_vfs();
+                const vfs = make_vfs();
                 assert.isFalse(vfs.FileExists("C:\\Users\\Blah\\foo.txt"));
             });
         });
@@ -332,7 +316,7 @@ describe("Virtual File System", () => {
 
             it("should return true if the folder exists", () => {
 
-                let vfs = make_vfs();
+                const vfs = make_vfs();
 
                 assert.isFalse(vfs.FolderExists("C:\\Users\\Construct\\HELLO"));
                 vfs.AddFolder("C:\\Users\\Construct\\HELLO");
@@ -347,11 +331,25 @@ describe("Virtual File System", () => {
 
             it("should support creating a new file", () => {
 
-                let vfs = make_vfs();
+                const vfs = make_vfs();
 
                 assert.isFalse(vfs.FileExists("C:\\Users\\Construct\\test.txt"));
                 vfs.AddFile("C:\\Users\\Construct\\test.txt", "Hello, World!");
                 assert.isTrue(vfs.FileExists("C:\\Users\\Construct\\test.txt"));
+            });
+
+            it("should add a file and create a symlink shortname", () => {
+
+                const vfs = make_vfs();
+
+                assert.isFalse(vfs.FileExists("C:\\Users\\Construct\\HelloWorld.txt"));
+                assert.isFalse(vfs.FileExists("C:\\Users\\Construct\\HELLOW~1.txt"));
+
+                vfs.AddFile("C:\\Users\\Construct\\HelloWorld.txt", "ABCD");
+
+                assert.isTrue(vfs.FileExists("C:\\Users\\Construct\\HelloWorld.txt"));
+                assert.isTrue(vfs.FileExists("C:\\Users\\Construct\\HELLOW~1.txt"));
+
             });
         });
 
@@ -359,7 +357,7 @@ describe("Virtual File System", () => {
 
             it("should copy a file from one location to another", () => {
 
-                let vfs = make_vfs();
+                const vfs = make_vfs();
 
                 vfs.AddFile("C:\\Users\\Construct\\Desktop\\foo.txt", "Hello, World!");
                 assert.isFalse(vfs.FileExists("C:\\Users\\Construct\\Desktop\\bar.txt"));
@@ -372,7 +370,7 @@ describe("Virtual File System", () => {
 
             it("should ignore case when copying files", () => {
 
-                let vfs = make_vfs();
+                const vfs = make_vfs();
 
                 vfs.AddFile("C:\\USERS\\CONSTRUCT\\DESKTOP\\FOO.TXT", "HELLO WORLD!");
                 vfs.CopyFile("c:\\users\\construct\\desktop\\foo.txt",
@@ -384,7 +382,7 @@ describe("Virtual File System", () => {
 
             it("should overwrite an existing file by default", () => {
 
-                let vfs = make_vfs();
+                const vfs = make_vfs();
 
                 vfs.AddFile("C:\\Users\\Construct\\Desktop\\foo.txt", "Hello, World!");
                 vfs.AddFile("C:\\Users\\Construct\\Desktop\\bar.txt", "1234567890");
@@ -402,7 +400,7 @@ describe("Virtual File System", () => {
 
             it("should throw if trying to copy a file while the destination filename exists", () => {
 
-                let vfs = make_vfs();
+                const vfs = make_vfs();
 
                 vfs.AddFile("C:\\foo.txt", "Foobar!");
                 vfs.AddFile("C:\\bar.txt", "Barbaz!");
@@ -418,7 +416,7 @@ describe("Virtual File System", () => {
 
             it("should support deleting a file", () => {
 
-                let vfs = make_vfs();
+                const vfs = make_vfs();
 
                 vfs.AddFile("C:\\foo.txt", "Hello");
                 assert.isTrue(vfs.FileExists("C:\\foo.txt"));
@@ -429,7 +427,7 @@ describe("Virtual File System", () => {
 
             it("should support deleting folders as well as files", () => {
 
-                let vfs = make_vfs();
+                const vfs = make_vfs();
 
                 vfs.AddFolder("C:\\Foo\\Bar");
                 assert.isTrue(vfs.FolderExists("C:\\Foo\\Bar"));
@@ -439,7 +437,7 @@ describe("Virtual File System", () => {
 
             it("should ignore case when deleting a file", () => {
 
-                let vfs = make_vfs();
+                const vfs = make_vfs();
 
                 vfs.AddFile("C:\\FOO.TXT", "FOOBAR");
                 assert.isTrue(vfs.FileExists("C:\\FOO.TXT"));
@@ -453,7 +451,7 @@ describe("Virtual File System", () => {
 
             it("should allow the moving of a file when the dest file does not exist", () => {
 
-                let vfs = make_vfs();
+                const vfs = make_vfs();
 
                 vfs.AddFile("C:\\foo.txt");
                 assert.isFalse(vfs.FileExists("C:\\bar.txt"));
@@ -463,7 +461,7 @@ describe("Virtual File System", () => {
             });
 
             it("should throw if the source file cannot be found", () => {
-                let vfs = make_vfs();
+                const vfs = make_vfs();
                 assert.throws(() => vfs.Rename("C:\\foo.txt", "C:\\bar.txt"), "ENOENT: no such file or directory");
             });
         });
@@ -472,7 +470,7 @@ describe("Virtual File System", () => {
 
             it("should copy a folder and all the contents to a new location", () => {
 
-                let vfs = make_vfs();
+                const vfs = make_vfs();
 
                 vfs.AddFolder("C:\\foo\\bar\\baz");
                 vfs.AddFile("C:\\foo\\bar\\baz\\blah.txt", "Hello, World!");
@@ -488,7 +486,7 @@ describe("Virtual File System", () => {
 
             it("should copy the folder contents if specified by a trailing path separator", () => {
 
-                let vfs = make_vfs();
+                const vfs = make_vfs();
 
                 vfs.AddFolder("C:\\foo\\bar\\baz");
                 vfs.AddFile("C:\\foo\\bar\\baz\\blah.txt", "Hello, World!");
@@ -508,7 +506,7 @@ describe("Virtual File System", () => {
 
     describe("Finding Files (wildcards)", () => {
 
-        xit("should match files using literal expressions", () => {
+        it("should match files using literal expressions", () => {
 
             const vfs = make_vfs();
 
@@ -535,5 +533,4 @@ describe("Virtual File System", () => {
             );
         });
     });
-
 });

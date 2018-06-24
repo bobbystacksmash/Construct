@@ -91,6 +91,10 @@ const md5          = require("md5");
 
 function make_mem_ntfs_proxy (memfs) {
 
+    // Maps the 'ino' (inode) value from a `memfs' file/folder to
+    // their associated name, cased  correctly.
+    let orig_filename_case = {};
+
     let memfs_sans_proxy = memfs;
     let shortname_num = 0;
 
@@ -210,7 +214,6 @@ function make_mem_ntfs_proxy (memfs) {
 
             try {
                 memfs_sans_proxy.symlinkSync(path, lnk_path, "junction");
-
                 return;
             }
             catch (e) {
@@ -804,10 +807,14 @@ class VirtualFileSystem {
 
         if (matched_files.length === 0) return [];
 
-        // We now need to resolve any shortlink matches with their
-        // fullname values.
         return matched_files.map(f => {
-            return win32path.basename(this.vfs.readlinkSync(`${isearch_path}/${f}`));
+
+            const item_path = `${isearch_path}/${f}`,
+                  stats     = this.vfs.lstatSync(item_path);
+
+            return (stats.isSymbolicLink(item_path))
+                ? win32path.basename(this.vfs.readlinkSync(`${isearch_path}/${f}`))
+                : f;
         });
     }
 
