@@ -52,6 +52,19 @@ describe("Virtual File System", () => {
 
         });
 
+        it("should not create links for files which are already valid 8.3 names", () => {
+
+            const vfs  = make_vfs(),
+                  path = "C:\\foo\\bar\\baz.txt";
+
+            vfs.AddFile(path);
+
+            assert.equal(vfs.GetShortName(path), "BAZ.TXT");
+            assert.equal(vfs.GetShortName("C:\\foo\\bar"), "BAR");
+            assert.equal(vfs.GetShortName("C:\\foo"), "FOO");
+            assert.equal(vfs.GetShortName("C:\\"), "");
+        });
+
         it("should return a folder when using a shortname path", () => {
 
             const vfs = make_vfs();
@@ -74,6 +87,27 @@ describe("Virtual File System", () => {
 
             assert.isTrue(vfs.FolderExists("C:\\HELLOW~1"));
             assert.isTrue(vfs.FolderExists("C:\\HELLOW~1\\testing123"));
+        });
+    });
+
+    describe("#ShortPath", () => {
+
+        it("should support returning a complete path to a file or folder in DOS 8.3 format", () => {
+
+            const vfs  = make_vfs(),
+                  path = "C:\\HelloWorld\\Longfilename\\foobarbaz\\longtextfile.txt";
+
+            vfs.AddFile(path);
+            assert.equal(vfs.ShortPath(path), "C:\\HELLOW~1\\LONGFI~1\\FOOBAR~1\\LONGTE~1.TXT");
+        });
+
+        it("should return a normal path if all parts are already short", () => {
+
+            const vfs = make_vfs(),
+                  path = "C:\\foo\\bar\\baz.txt";
+
+            vfs.AddFile(path);
+            assert.equal(vfs.ShortPath(path), "C:\\FOO\\BAR\\BAZ.TXT");
         });
     });
 
@@ -495,7 +529,8 @@ describe("Virtual File System", () => {
 
             it("should throw if the source file cannot be found", () => {
                 const vfs = make_vfs();
-                assert.throws(() => vfs.Rename("C:\\foo.txt", "C:\\bar.txt"), "ENOENT: no such file or directory");
+                assert.throws(() => vfs.Rename("C:\\foo.txt", "C:\\bar.txt"),
+                                               "ENOENT: no such file or directory");
             });
         });
 

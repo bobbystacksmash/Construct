@@ -108,7 +108,7 @@ function make_mem_ntfs_proxy (memfs) {
     // exists.
     //
     function is_shortname (filename) {
-        wildcard.is_shortname(filename);
+        return wildcard.is_shortname(filename);
     }
 
     // generate_shortname
@@ -174,6 +174,13 @@ function make_mem_ntfs_proxy (memfs) {
             .filter(f => memfs_sans_proxy.lstatSync(`${path}/${f}`).isSymbolicLink());
     }
 
+    // make_shortname_and_link
+    // =======================
+    //
+    // Given an internal path to a file and folder, attempts to create
+    // a SFN for each path part, observing the Windows rules
+    // surrounding DOS 8.3 names, including name-collision handling.
+    //
     function make_shortname_and_link (path) {
 
         let basename = win32path.basename(path),
@@ -181,11 +188,7 @@ function make_mem_ntfs_proxy (memfs) {
 
         // Early-out if there is no need to create a shortlink because
         // the name is too short.
-        //
-        // TODO check that the shortname is actually a shortname. Is
-        // length alone a good enough test?
         if (is_shortname(basename)) {
-            //console.log("EXITING LINKER: no need to create shortname for", path);
             return;
         }
 
@@ -567,6 +570,16 @@ class VirtualFileSystem {
     //   https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
     //
 
+
+    // IsWildcard
+    // ==========
+    //
+    // Returns TRUE if NAME appears to be a wildcard, else returns FALSE.
+    //
+    IsWildcard (name) {
+        return /[*<>".?]/g.test(name);
+    }
+
     // BuildPath
     // =========
     //
@@ -805,6 +818,28 @@ class VirtualFileSystem {
     // !! NOTE: MS-DOS style shortnames are considered absolute paths.  !!
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
+
+    // ShortPath
+    // =========
+    //
+    // Given an absolute path to a file or folder, returns the complete
+    // path in DOS 8.3 format.  Includes the drive designator.
+    //
+    ShortPath (path) {
+
+        const ipath = this._ConvertExternalToInternalPath(path),
+              parts = ipath.split("/").filter(p => !!p);
+
+        var pathstr   = "",
+            shortpath = ["C:"];
+
+        do {
+            pathstr += `/${parts.shift()}`;
+            shortpath.push(this.GetShortName(pathstr));
+        } while (parts.length);
+
+        return shortpath.join("\\");
+    }
 
     // Find
     // ====
@@ -1198,16 +1233,6 @@ class VirtualFileSystem {
         catch (e) {
             return false;
         }
-    }
-
-
-    // IsWildcard
-    // ==========
-    //
-    // Returns TRUE if NAME appears to be a wildcard, else returns FALSE.
-    //
-    IsWildcard (name) {
-        return /[*<>".?]/g.test(name);
     }
 
     // GetShortName
