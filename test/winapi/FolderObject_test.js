@@ -53,6 +53,20 @@ describe("FolderObject", () => {
         });
     });
 
+    describe(".Name", () => {
+
+        it("should return the basename of the backing path as the name", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFolder("C:\\RootOne\\HelloWorld");
+
+            ["hellow~1", "HELLOW~1", "HelloWorld"].forEach(n => {
+                const folder = new Folder(ctx, `C:\\RootOne\\${n}`);
+                assert.equal(folder.name, n);
+            });
+        });
+    });
+
     it("should support throwing Path not found when folder.Delete() is called", () => {
 
         const ctx = make_ctx({
