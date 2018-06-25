@@ -514,5 +514,16 @@ describe("Scripting.FileSystemObject", () => {
             assert.throws(()=> fso.CopyFolder("C:\\*\\SubFolder1", "C:\\RootTwo"),
                           "no wildcards in src dirname");
         });
+
+        it("should successfully copy to the root of the volume.", () => {
+
+            const fso = MakeFSO();
+
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1");
+
+            assert.isFalse(ctx.vfs.FolderExists("C:\\SubFolder1"));
+            fso.CopyFolder("C:\\RootOne\\SubFolder1", "C:\\");
+            assert.isTrue(ctx.vfs.FolderExists("C:\\SubFolder1"));
+        });
     });
 });
