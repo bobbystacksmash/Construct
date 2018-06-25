@@ -864,15 +864,32 @@ class VirtualFileSystem {
         return item_list.filter((elem, pos, arr) => arr.indexOf(elem) == pos);
     }
 
-
+    // FindFolders
+    // ===========
+    //
+    // Given an absolute path to a directory in which to search, and a
+    // search pattern (wildcard expression), returns all folders matching
+    // the given wildcard expression.
+    //
+    // If no folders match, returns the empty array.
+    //
     FindFolders (search_dir_path, pattern) {
         return this.Find(search_dir_path, pattern, { files: false, folders: true });
+    }
+
+    // FindAllFolders
+    // ==============
+    //
+    // Returns all folders in the given directory path.
+    //
+    FindAllFolders (search_dir_path) {
+        return this.Find(search_dir_path, "*", { files: false, folders: true, links: false });
     }
 
     // FindFiles
     // =========
     //
-    // Given an absolute path to a directy in which to search, and the
+    // Given an absolute path to a directory in which to search, and the
     // search pattern (wildcard expression), returns an array of
     // names for each file that matches the pattern.  If the
     // match succeeds for a short filename, the link is translated and
