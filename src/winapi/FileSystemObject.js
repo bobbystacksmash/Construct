@@ -151,11 +151,20 @@ class JS_FileSystemObject extends Component {
               dst_basename = win32path.basename(destination),
               dst_dirname  = win32path.dirname(destination);
 
-        if (this.vfs.IsWildcard(dst_basename)) {
+        if (this.vfs.IsWildcard(src_dirname)){
+            this.context.exceptions.throw_invalid_fn_arg(
+                "Scripting.FileSystemObject",
+                "Source path (excluding last name part) cannot contain wildcards.",
+                "Wildcards may only appear as the very lat item in a path string, " +
+                    "and cannot appear anywhere else."
+            );
+        }
+
+        if (this.vfs.IsWildcard(dst_basename) || this.vfs.IsWildcard(dst_dirname)) {
             this.context.exceptions.throw_invalid_fn_arg(
                 "Scripting.FileSystemObject",
                 "Destination paths cannot contain wildcard characters",
-                "The copy-to destination cannot contain any wildcard characters and must."
+                "The copy-to destination cannot contain any wildcard characters."
             );
         }
 

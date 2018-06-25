@@ -478,7 +478,7 @@ describe("Scripting.FileSystemObject", () => {
             assert.isTrue(ctx.vfs.FolderExists("C:\\RootTwo\\RootOne\\SubFolder2"));
         });
 
-        it("should throw if a wildcard character is used in the destination", () => {
+        it("should throw if a wildcard character is used anywhere in the destination", () => {
 
             const fso = MakeFSO({
                 exceptions: {
@@ -493,7 +493,26 @@ describe("Scripting.FileSystemObject", () => {
 
             assert.throws(() => fso.CopyFolder("C:\\RootOne", "C:\\RootTwo*"),
                           "no wildcards in dest path");
+
+            assert.throws(() => fso.CopyFolder("C:\\RootOne", "C:\\*\\RootTwo"),
+                          "no wildcards in dest path");
+        });
+
+        it("should throw if source contains a wildcard which isn't the last part", () =>{
+
+            const fso = MakeFSO({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("no wildcards in src dirname");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1");
+            ctx.vfs.AddFolder("C:\\RootTwo");
+
+            assert.throws(()=> fso.CopyFolder("C:\\*\\SubFolder1", "C:\\RootTwo"),
+                          "no wildcards in src dirname");
         });
     });
-
 });
