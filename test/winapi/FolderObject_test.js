@@ -53,6 +53,66 @@ describe("FolderObject", () => {
         });
     });
 
+    describe(".DateCreated", () => {
+
+        it("should return a date object from when this folder was created", () => {
+
+            const path =  "C:\\RootOne\\HelloWorld",
+                  ctx  = make_ctx();
+
+            ctx.vfs.AddFolder(path);
+
+            const folder = new Folder(ctx, path);
+            assert.instanceOf(folder.DateCreated, Date);
+        });
+    });
+
+    describe(".DateLastAccessed", () => {
+
+        it("should return a date object from when this folder was accessed", () => {
+
+            const path =  "C:\\RootOne\\HelloWorld",
+                  ctx  = make_ctx();
+
+            ctx.vfs.AddFolder(path);
+
+            const folder = new Folder(ctx, path);
+            assert.instanceOf(folder.DateLastAccessed, Date);
+        });
+    });
+
+    describe(".DateLastModified", () => {
+
+        it("should return a date object from when this folder was last modified", () => {
+
+            const path =  "C:\\RootOne\\HelloWorld",
+                  ctx  = make_ctx();
+
+            ctx.vfs.AddFolder(path);
+
+            const folder = new Folder(ctx, path);
+            assert.instanceOf(folder.DateLastModified, Date);
+        });
+    });
+
+    describe(".Drive", () => {
+
+        it("should return a Drive object when .Drive is looked-up", () => {
+
+            const path = "C:\\RootOne\\HelloWorld",
+                  ctx  = make_ctx();
+
+            ctx.vfs.AddFolder(path);
+
+            const folder = new Folder(ctx, path),
+                  drive  = folder.Drive;
+
+            assert.equal(drive.driveletter, "C");
+            assert.equal(drive.isREADY, true);
+            assert.isNumber(drive.totalsize);
+        });
+    });
+
     describe(".Name", () => {
 
         it("should return the basename of the backing path as the name", () => {

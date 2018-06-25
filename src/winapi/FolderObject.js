@@ -4,9 +4,10 @@
  *
  */
 
-const Component     = require("../Component");
-const proxify       = require("../proxify2");
-const win32path     = require("path").win32;
+const Component = require("../Component");
+const proxify   = require("../proxify2");
+const win32path = require("path").win32;
+const Drive     = require("./DriveObject");
 
 class JS_FolderObject extends Component {
 
@@ -33,10 +34,61 @@ class JS_FolderObject extends Component {
     }
 
     get attributes () {}
-    get datecreated () {}
-    get datelastaccessed () {}
-    get datelastmodified () {}
-    get drive () {}
+
+    // DateCreated
+    // ===========
+    //
+    // Returns a the date and time the folder was created.
+    //
+    get datecreated () {
+        this.ee.emit("Folder.DateCreated");
+
+        const stats = this.vfs.Stats(this._path),
+                 dt = new Date(stats.ctime);
+
+        return dt;
+    }
+
+    // DateLastAccessed
+    // ================
+    //
+    // Returns the date and time that the folder was last accessed.
+    //
+    get datelastaccessed () {
+        this.ee.emit("Folder.DateLastAccessed");
+
+        const stats = this.vfs.Stats(this._path),
+                 dt = new Date(stats.atime);
+
+        return dt;
+    }
+
+    // DateLastModified
+    // ================
+    //
+    // Returns the date and time the folder was last modified.
+    //
+    get datelastmodified () {
+        this.ee.emit("Folder.DateLastModified");
+
+        const stats = this.vfs.Stats(this._path),
+                 dt = new Date(stats.mtime);
+
+        return dt;
+    }
+
+    // Drive
+    // =====
+    //
+    // Returns a read-only Drive object, which contains about the
+    // drive upon which this folder exists.  As we don't support
+    // multiple drives, the Drive is always C:\.
+    //
+    get drive () {
+        this.ee.emit("Folder.Drive");
+        return new Drive(this.context);
+    }
+
     get files () {}
     get isrootfolder () {}
 
@@ -46,6 +98,7 @@ class JS_FolderObject extends Component {
     // Returns the folder name.
     //
     get name () {
+
         this._assert_exists();
 
         if (this._path.toLowerCase() === "c:\\") return this._path;
