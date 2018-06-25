@@ -12,10 +12,20 @@ class JS_FolderObject extends Component {
     constructor(context, path) {
 
 	super(context, "Folder");
-	this.context = context;
 
-        this.ee  = this.context.emitter;
-        this.vfs = this.context.vfs;
+	this.context = context;
+        this.ee      = this.context.emitter;
+        this.vfs     = this.context.vfs;
+        this._path   = path;
+
+        this._assert_exists = () => {
+            if (this.vfs.FolderExists(this._path)) return;
+
+            this.context.exceptions.throw_path_not_found(
+                "foo", "bar", "baz" // fixme
+            );
+        }
+
     }
 
     get attributes () {}
@@ -25,19 +35,48 @@ class JS_FolderObject extends Component {
     get drive () {}
     get files () {}
     get isrootfolder () {}
-    get name () {}
+
+    // Name
+    // ====
+    //
+    // Returns the folder name.
+    //
+    get name () {
+        this._assert_exists();
+    }
+
     get parentfolder () {}
     get path () {}
     get shortname () {}
     get shortpath () {}
     get size () {}
-    get subfolders () {}
+
+    // SubFolders
+    // ==========
+    //
+    // Returns a FoldersCollection instance which contains a realtime
+    // view of the VFS.  Files which are deleted are no longer
+    // accessible from the SubFolders instance.
+    //
+    get subfolders () {
+
+    }
+
+
     get type () {}
 
     // Methods
     copy () {}
     createtextfile () {}
-    delete () {}
+
+    // Delete
+    // ======
+    //
+    // Deletes this folder from disk.
+    //
+    delete () {
+        this.vfs.Delete(this._path);
+    }
     move () {}
 }
 

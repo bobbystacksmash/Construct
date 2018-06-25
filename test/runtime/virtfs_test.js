@@ -445,7 +445,7 @@ describe("Virtual File System", () => {
             });
         });
 
-        describe("#DeleteFile", () => {
+        describe("#Delete", () => {
 
             it("should support deleting a file", () => {
 
@@ -454,7 +454,7 @@ describe("Virtual File System", () => {
                 vfs.AddFile("C:\\foo.txt", "Hello");
                 assert.isTrue(vfs.FileExists("C:\\foo.txt"));
 
-                vfs.DeleteFile("C:\\foo.txt");
+                vfs.Delete("C:\\foo.txt");
                 assert.isFalse(vfs.FileExists("C:\\foo.txt"));
             });
 
@@ -464,7 +464,7 @@ describe("Virtual File System", () => {
 
                 vfs.AddFolder("C:\\Foo\\Bar");
                 assert.isTrue(vfs.FolderExists("C:\\Foo\\Bar"));
-                vfs.DeleteFile("C:\\Foo\\Bar");
+                vfs.Delete("C:\\Foo\\Bar");
                 assert.isFalse(vfs.FolderExists("C:\\Foo\\Bar"));
             });
 
@@ -475,7 +475,7 @@ describe("Virtual File System", () => {
                 vfs.AddFile("C:\\FOO.TXT", "FOOBAR");
                 assert.isTrue(vfs.FileExists("C:\\FOO.TXT"));
 
-                vfs.DeleteFile("c:\\foo.txt");
+                vfs.Delete("c:\\foo.txt");
                 assert.isFalse(vfs.FileExists("C:\\FOO.TxT"));
             });
         });

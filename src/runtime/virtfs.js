@@ -1039,13 +1039,12 @@ class VirtualFileSystem {
         this.vfs.writeFileSync(ipath, data, options);
     }
 
-    // DeleteFile
-    // ==========
+    // Delete
+    // ======
     //
-    // Removes the file.
+    // Removes the file or folder identified by "path".
     //
-    DeleteFile (filepath) {
-
+    Delete (filepath) {
         const ipath = this._ConvertExternalToInternalPath(filepath);
         this.vfs.unlinkSync(ipath);
     }

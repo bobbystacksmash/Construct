@@ -79,9 +79,6 @@ describe("FoldersCollection", () => {
             // Add a new folder
             ctx.vfs.AddFolder("C:\\RootOne\\d");
             assert.equal(fc.count, 4);
-
-            // TODO: CHECK THIS WORKS THE SAME IN WINDOWS!
-
         });
     });
 
