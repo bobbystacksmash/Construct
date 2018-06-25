@@ -351,6 +351,39 @@ describe("Virtual File System", () => {
                 assert.isTrue(vfs.FileExists("C:\\Users\\Construct\\HELLOW~1.txt"));
 
             });
+
+            it("should allow overwriting contents using #AddFile with existing file", () => {
+
+                const vfs = make_vfs();
+
+                vfs.AddFile("C:\\HelloWorld\\LongFilename.txt", "source");
+
+                assert.equal(
+                    vfs.ReadFileContents("C:\\HelloWorld\\LongFilename.txt", "ascii"),
+                    "source"
+                );
+
+                // Should workwith SFNs also
+                assert.equal(
+                    vfs.ReadFileContents("C:\\HELLOW~1\\LONGFI~1.TXT", "ascii"),
+                    "source"
+                );
+
+                // !!!!!
+                // OVERWRITE CONTENTS
+                // !!!!!
+                vfs.AddFile("C:\\HelloWorld\\LongFilename.txt", "testing2");
+
+                assert.equal(
+                    vfs.ReadFileContents("C:\\HelloWorld\\LongFilename.txt", "ascii"),
+                    "testing2"
+                );
+
+                assert.equal(
+                    vfs.ReadFileContents("C:\\HELLOW~1\\LONGFI~1.TXT", "ascii"),
+                    "testing2"
+                );
+            });
         });
 
         describe("#CopyFile", () => {
