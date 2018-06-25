@@ -23,7 +23,11 @@ class JS_FolderObject extends Component {
             if (this.vfs.FolderExists(this._path)) return;
 
             this.context.exceptions.throw_path_not_found(
-                "foo", "bar", "baz" // fixme
+                "FolderObject",
+                "The backing folder is not available.",
+                "The folder which backed this object instance is " +
+                    "no longer present on the filesystem (it may " +
+                    "have been deleted)."
             );
         };
     }
