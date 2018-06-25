@@ -48,6 +48,8 @@ class JS_FolderObject extends Component {
     get name () {
         this._assert_exists();
 
+        if (this._path.toLowerCase() === "c:\\") return this._path;
+
         // From analysing this on a Win7 machine, it seems that it
         // just returns the basename of this folder's backing path.
         return win32path.basename(this._path);
