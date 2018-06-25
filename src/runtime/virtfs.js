@@ -921,6 +921,15 @@ class VirtualFileSystem {
         return this.Find(search_dir_path, "*", { files: false, folders: true, links: false });
     }
 
+    // FindAllFiles
+    // ============
+    //
+    // Returns all files in the given directory path.
+    //
+    FindAllFiles (search_dir_path) {
+        return this.Find(search_dir_path, "*", { files: true, folders: false, links: false });
+    }
+
     // FindFiles
     // =========
     //
@@ -1081,7 +1090,40 @@ class VirtualFileSystem {
     //
     Delete (filepath) {
         const ipath = this._ConvertExternalToInternalPath(filepath);
-        this.vfs.unlinkSync(ipath);
+
+        if (this.IsFile(ipath)) {
+            return this.vfs.unlinkSync(ipath);
+        }
+
+        try {
+            return this.vfs.unlinkSync(ipath);
+        }
+        catch (e) {
+
+            if (! e.message.includes("Dir not empty")) {
+                throw e;
+            }
+        }
+
+        // We know that the folder we want to unlink contains nested
+        // files/folders.  Let's delete all of them and finally remove
+        // this top-level folder.
+        let walk = (path) => {
+
+            let folders = this.FindAllFolders(path),
+                files   = this.FindAllFiles(path);
+
+            if (folders.length) {
+                for (let i = 0; i < folders.length; i++) {
+                    walk(`${path}/${folders[i]}`);
+                }
+            }
+
+            files.forEach(f => this.vfs.unlinkSync(`${path}/${f}`));
+            return this.vfs.unlinkSync(path);
+        };
+
+        return walk(ipath);
     }
 
     // Rename

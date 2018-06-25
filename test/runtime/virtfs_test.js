@@ -512,6 +512,26 @@ describe("Virtual File System", () => {
                 vfs.Delete("c:\\foo.txt");
                 assert.isFalse(vfs.FileExists("C:\\FOO.TxT"));
             });
+
+            it("should recursively delete all files and folders if path is a folder", () => {
+
+                const vfs = make_vfs();
+
+                vfs.AddFile("C:\\RootOne\\SubFolder1\\a.txt");
+                vfs.AddFile("C:\\RootOne\\SubFolder2\\b.txt");
+
+                assert.isTrue(vfs.FolderExists("C:\\RootOne\\SubFolder1"));
+                assert.isTrue(vfs.FolderExists("C:\\RootOne\\SubFolder2"));
+                assert.isTrue(vfs.FileExists("C:\\RootOne\\SubFolder1\\a.txt"));
+                assert.isTrue(vfs.FileExists("C:\\RootOne\\SubFolder1\\a.txt"));
+
+                assert.doesNotThrow(() => vfs.Delete("C:\\RootOne"));
+
+                assert.isFalse(vfs.FolderExists("C:\\RootOne\\SubFolder1"));
+                assert.isFalse(vfs.FolderExists("C:\\RootOne\\SubFolder2"));
+                assert.isFalse(vfs.FileExists("C:\\RootOne\\SubFolder1\\a.txt"));
+                assert.isFalse(vfs.FileExists("C:\\RootOne\\SubFolder1\\a.txt"));
+            });
         });
 
         describe("#RenameFile", () => {
@@ -600,5 +620,7 @@ describe("Virtual File System", () => {
                 ["helloworld.txt"]
             );
         });
+
+
     });
 });
