@@ -467,12 +467,32 @@ describe("Scripting.FileSystemObject", () => {
             assert.isFalse(ctx.vfs.FolderExists("C:\\RootTwo\\RootOne\\SubFolder1"));
             assert.isFalse(ctx.vfs.FolderExists("C:\\RootTwo\\RootOne\\SubFolder2"));
 
+            assert.isFalse(ctx.vfs.FolderExists("C:\\RootTwo\\RootOne"));
+            assert.isFalse(ctx.vfs.FolderExists("C:\\RootTwo\\RootOne\\SubFolder1"));
+            assert.isFalse(ctx.vfs.FolderExists("C:\\RootTwo\\RootOne\\SubFolder2"));
+
             fso.CopyFolder("C:\\RootOne", "C:\\RootTwo\\");
 
             assert.isTrue(ctx.vfs.FolderExists("C:\\RootTwo\\RootOne"));
             assert.isTrue(ctx.vfs.FolderExists("C:\\RootTwo\\RootOne\\SubFolder1"));
             assert.isTrue(ctx.vfs.FolderExists("C:\\RootTwo\\RootOne\\SubFolder2"));
+        });
 
+        it("should throw if a wildcard character is used in the destination", () => {
+
+            const fso = MakeFSO({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("no wildcards in dest path");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1");
+            ctx.vfs.AddFolder("C:\\RootTwo");
+
+            assert.throws(() => fso.CopyFolder("C:\\RootOne", "C:\\RootTwo*"),
+                          "no wildcards in dest path");
         });
     });
 

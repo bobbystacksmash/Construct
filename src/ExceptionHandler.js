@@ -78,7 +78,7 @@ class ExceptionHandler extends Component {
         this._throw(
             "TypeError",
             "Invalid procedure call or argument",
-            -0, // TODO
+            -2146828283,
             "Invalid procedure call or argument",
             source,
             summary,
@@ -110,7 +110,6 @@ class ExceptionHandler extends Component {
             details
         );
     }
-
 
     throw_not_allowed (source, summary, details) {
         this._throw(
