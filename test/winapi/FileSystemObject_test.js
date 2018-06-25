@@ -437,6 +437,26 @@ describe("Scripting.FileSystemObject", () => {
             assert.isTrue(ctx.vfs.FileExists("C:\\dest\\dir3\\baz.txt"));
 
         });
+
+        it("should correctly copy with a trailing separator in to the destination", () => {
+
+            const fso = MakeFSO();
+
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1");
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder2");
+            ctx.vfs.AddFolder("C:\\RootTwo");
+
+            assert.isFalse(ctx.vfs.FolderExists("C:\\RootTwo\\RootOne"));
+            assert.isFalse(ctx.vfs.FolderExists("C:\\RootTwo\\RootOne\\SubFolder1"));
+            assert.isFalse(ctx.vfs.FolderExists("C:\\RootTwo\\RootOne\\SubFolder2"));
+
+            fso.CopyFolder("C:\\RootOne", "C:\\RootTwo\\");
+
+            assert.isTrue(ctx.vfs.FolderExists("C:\\RootTwo\\RootOne"));
+            assert.isTrue(ctx.vfs.FolderExists("C:\\RootTwo\\RootOne\\SubFolder1"));
+            assert.isTrue(ctx.vfs.FolderExists("C:\\RootTwo\\RootOne\\SubFolder2"));
+
+        });
     });
 
 });
