@@ -1060,7 +1060,9 @@ class VirtualFileSystem {
     // with a trailing path separator, it indicates that the folder's
     // contents should be copied, rather than the top-level folder.
     //
-    CopyFolder (source, destination) {
+    CopyFolder (source, destination, overwrite) {
+
+        if (overwrite === undefined || overwrite === null) overwrite = true;
 
         let isource      = this._ConvertExternalToInternalPath(source),
             idestination = this._ConvertExternalToInternalPath(destination);
@@ -1085,9 +1087,13 @@ class VirtualFileSystem {
                 let srcpath = `${src}/${item}`,
                     dstpath = `${dst}/${item}`;
 
+                // Does the file exist in the destination already?
                 if (vfs.statSync(srcpath).isDirectory()) {
                     vfs.mkdirpSync(dstpath);
                     recursive_copy(srcpath, dstpath);
+                }
+                else if (vfs.existsSync(dstpath) && overwrite === false) {
+                    throw new Error("Cannot copy - destination file already exists");
                 }
                 else {
                     vfs.copyFileSync(srcpath, dstpath);

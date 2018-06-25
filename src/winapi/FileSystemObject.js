@@ -180,7 +180,7 @@ class JS_FileSystemObject extends Component {
                 src_path = `${src_dirname}\\${dir_name}`;
 
             try {
-                this.vfs.CopyFolder(src_path, destination);
+                this.vfs.CopyFolder(src_path, destination, overwrite);
             }
             catch (e) {
 
@@ -193,6 +193,16 @@ class JS_FileSystemObject extends Component {
                             "will remain, but no more files will be copied."
                     );
                 }
+                else if (e.message.includes("destination file already exists")) {
+                    this.context.exceptions.throw_file_already_exists(
+                        "Scripting.FileSystemObject",
+                        "Cannot overwrite existing file with same name when overwrite=false.",
+                        "When copying, if 'overwrite=false', destination files which exist " +
+                            "in the source shall not be overwritten."
+                    );
+                }
+
+                throw e;
             }
         }
     }

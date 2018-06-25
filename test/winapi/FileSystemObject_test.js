@@ -571,5 +571,37 @@ describe("Scripting.FileSystemObject", () => {
             assert.isFalse(ctx.vfs.FileExists("C:\\RootOne\\z\\a.txt"));
             assert.isFalse(ctx.vfs.FileExists("C:\\RootOne\\z\\b.txt"));
         });
+
+        it("should throw if overwrite is false and a file already exists", () => {
+
+            const fso = MakeFSO({
+                exceptions: {
+                    throw_file_already_exists: () => {
+                        throw new Error("file exists");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\a.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\SubFolder2\\b.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\SubFolder3\\c.txt");
+
+            ctx.vfs.AddFile("C:\\RootTwo\\SubFolder2\\b.txt");
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\RootTwo\\SubFolder1\\a.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\RootTwo\\SubFolder1\\c.txt"));
+
+            assert.isTrue(ctx.vfs.FileExists("C:\\RootTwo\\SubFolder2\\b.txt"));
+
+            assert.throws(() => fso.CopyFolder("C:\\RootOne\\*", "C:\\RootTwo", false),
+                          "file exists");
+
+            // It should have copied some files before the throw
+            assert.isTrue(ctx.vfs.FileExists("C:\\RootTwo\\SubFolder1\\a.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\RootTwo\\SubFolder2\\b.txt"));
+
+            // But no files after...
+            assert.isFalse(ctx.vfs.FileExists("C:\\RootTwo\\SubFolder3\\c.txt"));
+        });
     });
 });
