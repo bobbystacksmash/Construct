@@ -438,7 +438,24 @@ describe("Scripting.FileSystemObject", () => {
 
         });
 
+        it("should correctly copy with no trailing separator on the destination path", () => {
+
+            // From Chapter 10, P.280 "VBScript in a Nutshell" book.
+            const fso = MakeFSO();
+
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1");
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder2");
+            ctx.vfs.AddFolder("C:\\RootTwo");
+
+            fso.CopyFolder("C:\\RootOne\\*", "C:\\RootTwo");
+
+            assert.isTrue(ctx.vfs.FolderExists("C:\\RootTwo\\SubFolder1"));
+            assert.isTrue(ctx.vfs.FolderExists("C:\\RootTwo\\SubFolder2"));
+        });
+
         it("should correctly copy with a trailing separator in to the destination", () => {
+
+            // From Chapter 10, P.280 "VBScript in a Nutshell" book.
 
             const fso = MakeFSO();
 

@@ -839,8 +839,8 @@ class VirtualFileSystem {
 
             let f = matched_files[i];
 
-            const item_path = `${isearch_path}/${f}`,
-                  stats     = this.vfs.lstatSync(item_path);
+            let item_path = `${isearch_path}/${f}`,
+                stats     = this.vfs.lstatSync(item_path);
 
             if (stats.isSymbolicLink(item_path)) {
 
