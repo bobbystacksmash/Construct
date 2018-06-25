@@ -43,11 +43,35 @@ describe("DriveObject", () => {
             const dr = new Drive(make_ctx());
             assert.isNumber(dr.AvailableSpace);
         });
+
+        it("should throw if property is assigned to", () => {
+            const d = new Drive(make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("property is ready only");
+                    }
+                }
+            }));
+
+            assert.throws(() => d.VolumeName = "a");
+        });
     });
 
     describe(".DriveLetter", () => {
         it("should return 'C'", () => {
             assert.equal(new Drive(make_ctx()).driveletter, "C");
+        });
+
+        it("should throw if property is assigned to", () => {
+            const d = new Drive(make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("property is ready only");
+                    }
+                }
+            }));
+
+            assert.throws(() => d.driveletter = "a");
         });
     });
 
@@ -55,11 +79,35 @@ describe("DriveObject", () => {
         it("should return 2 (Fixed)", () => {
             assert.equal(new Drive(make_ctx()).drivetype, 2);
         });
+
+        it("should throw if property is assigned to", () => {
+            const d = new Drive(make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("property is ready only");
+                    }
+                }
+            }));
+
+            assert.throws(() => d.drivetype = "dt");
+        });
     });
 
     describe(".FileSystem", () => {
         it("should return 'NTFS'", () => {
             assert.equal(new Drive(make_ctx()).filesystem, "NTFS");
+        });
+
+        it("should throw if property is assigned to", () => {
+            const d = new Drive(make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("property is ready only");
+                    }
+                }
+            }));
+
+            assert.throws(() => d.filesystem = "ntfs");
         });
     });
 
@@ -67,11 +115,35 @@ describe("DriveObject", () => {
         it("should return a number", () => {
             assert.isNumber(new Drive(make_ctx()).freespace);
         });
+
+        it("should throw if property is assigned to", () => {
+            const d = new Drive(make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("property is ready only");
+                    }
+                }
+            }));
+
+            assert.throws(() => d.FreeSPACE = 5);
+        });
     });
 
     describe(".IsReady", () => {
         it("should return TRUE", () => {
             assert.isTrue(new Drive(make_ctx()).IsREADY);
+        });
+
+        it("should throw if property is assigned to", () => {
+            const d = new Drive(make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("property is ready only");
+                    }
+                }
+            }));
+
+            assert.throws(() => d.isready = false);
         });
     });
 
@@ -79,15 +151,53 @@ describe("DriveObject", () => {
         it("should return 'C:'", () => {
             assert.equal(new Drive(make_ctx()).paTH, "C:");
         });
+
+        it("should throw if property is assigned to", () => {
+            const d = new Drive(make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("property is ready only");
+                    }
+                }
+            }));
+
+            assert.throws(() => d.Path = "D:\\");
+        });
     });
 
     describe(".RootFolder", () => {
         // TODO!
+
+
+        it("should throw if property is assigned to", () => {
+            const d = new Drive(make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("property is ready only");
+                    }
+                }
+            }));
+
+            assert.throws(() => d.RootFolder = {});
+        });
     });
 
     describe(".SerialNumber", () => {
         it("should return a number", () => {
             assert.isNumber(new Drive(make_ctx()).SerialNumber);
+        });
+
+
+        it("should throw if property is assigned to", () => {
+            const d = new Drive(make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("property is ready only");
+                    }
+                }
+            }));
+
+            assert.throws(() => d.SerialNumber = 12345);
         });
     });
 
@@ -95,17 +205,54 @@ describe("DriveObject", () => {
         it("should return a string", () => {
             assert.isString(new Drive(make_ctx()).ShareName);
         });
+
+
+        it("should throw if property is assigned to", () => {
+            const d = new Drive(make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("property is ready only");
+                    }
+                }
+            }));
+
+            assert.throws(() => d.sharename = "foo");
+        });
     });
 
     describe(".TotalSize", () => {
         it("should return a number", () => {
             assert.isNumber(new Drive(make_ctx()).Totalsize);
         });
+
+        it("should throw if property is assigned to", () => {
+            const d = new Drive(make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("property is ready only");
+                    }
+                }
+            }));
+
+            assert.throws(() => d.totalSIZE = 6);
+        });
     });
 
     describe(".VolumeName", () => {
         it("should return a string", () => {
             assert.isString(new Drive(make_ctx()).VolumeName);
+        });
+
+        it("should throw if property is assigned to", () => {
+            const d = new Drive(make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("property is ready only");
+                    }
+                }
+            }));
+
+            assert.throws(() => d.VolumeName = "a");
         });
     });
 });
