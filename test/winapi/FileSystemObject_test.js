@@ -49,9 +49,9 @@ function MakeFSO (opts) {
 
 describe("Scripting.FileSystemObject", () => {
 
-    describe("#BuildPath", () => {
+    xdescribe("#BuildPath", () => {
 
-        xit("should build a path from two parts", (done) => {
+        it("should build a path from two parts", (done) => {
 
             let fso = MakeFSO();
 
@@ -61,7 +61,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        xit("should just combine the two parts, not check if they're valid", (done) => {
+        it("should just combine the two parts, not check if they're valid", (done) => {
 
             let fso = MakeFSO();
 
@@ -71,9 +71,9 @@ describe("Scripting.FileSystemObject", () => {
         });
     });
 
-    describe("#CopyFile", () => {
+    xdescribe("#CopyFile", () => {
 
-        xit("should throw file not found if src file does not exist", (done) => {
+        it("should throw file not found if src file does not exist", (done) => {
 
             fso = MakeFSO({
                 exceptions: {
@@ -91,7 +91,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        xit("should throw path not found if the dest dir does not exist", (done) => {
+        it("should throw path not found if the dest dir does not exist", () => {
 
             fso = MakeFSO({
                 exceptions: {
@@ -102,11 +102,12 @@ describe("Scripting.FileSystemObject", () => {
             });
 
             ctx.vfs.AddFile("C:\\file.txt");
-            assert.throws(() => fso.CopyFile("C:\\file.txt", "C:\\No\\Dir\\here.txt"), "cannot find dest dir");
-            done();
+            assert.throws(() =>
+                          fso.CopyFile("C:\\file.txt", "C:\\No\\Dir\\here.txt"),
+                          "cannot find dest dir");
         });
 
-        xit("should throw if a file copy-to operation matches destination folder (ambiguous)", (done) => {
+        it("should throw if a file copy-to operation matches destination folder (ambiguous)", (done) => {
 
             let fso = MakeFSO({
                 exceptions: {
@@ -126,7 +127,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        xit("should copy in to a directory when a path ends with a trailing slash", (done) => {
+        it("should copy in to a directory when a path ends with a trailing slash", (done) => {
 
             let fso = MakeFSO();
 
@@ -145,7 +146,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        xit("should support copying wildcards", () => {
+        it("should support copying wildcards", () => {
 
             const fso = MakeFSO();
 
@@ -162,17 +163,33 @@ describe("Scripting.FileSystemObject", () => {
 
             fso.CopyFile("C:\\Users\\Construct\\source\\f??.txt", "C:\\Users\\Construct\\dest");
 
-            console.log(ctx.vfs.GetVFS());
-
             assert.deepEqual(ctx.vfs.FindFiles("C:\\Users\\Construct\\dest", "*.txt").sort(),
                              ["foo.txt", "fox.txt", "fff.txt"].sort());
+        });
+
+        it("should copy a file and all SFN/LFN paths to it should be correct", () => {
+
+            const fso = MakeFSO();
+
+            ctx.vfs.AddFile("C:\\HelloWorld\\SubFolderA\\LongFilename.txt", "source file");
+            ctx.vfs.AddFolder("C:\\dest");
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\dest\\LongFilename.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\dest\\LONGFI~1.TXT"));
+
+            fso.CopyFile("C:\\HELLOW~1\\SubFolderA\\LONGFI~1.TXT", "C:\\dest\\LongFilename.txt");
+
+            assert.isTrue(ctx.vfs.FileExists("C:\\dest\\LONGFI~1.TXT"));
+
+            // WHY DOES This FAIL?
+            assert.isTrue(ctx.vfs.FileExists("C:\\dest\\LongFilename.txt"));
         });
     });
 
 
-    describe("#CreateFolder", () => {
+    xdescribe("#CreateFolder", () => {
 
-        xit("should successfully create/return a folder", (done) => {
+        it("should successfully create/return a folder", (done) => {
 
             let fso = MakeFSO();
             assert.isFalse(fso.FolderExists("C:\\foo\\bar"));
@@ -183,7 +200,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        xit("should throw if the folder already exists", (done) => {
+        it("should throw if the folder already exists", () => {
 
             let fso = MakeFSO({
                 exceptions: {
@@ -196,10 +213,9 @@ describe("Scripting.FileSystemObject", () => {
             fso.CreateFolder("C:\\foo\\bar");
 
             assert.throws(() => fso.CreateFolder("C:\\foo\\bar"), "dir exists");
-            done();
         });
 
-        xit("should throw 'path not found' if volume does not exist", (done) => {
+        it("should throw 'path not found' if volume does not exist", (done) => {
 
             let fso = MakeFSO({
                 exceptions: {
@@ -236,7 +252,7 @@ describe("Scripting.FileSystemObject", () => {
 
     xdescribe("#CreateTextFile", () => {
 
-        xit("should throw 'bad filename or number' if a wildcard appears in the filename", (done) => {
+        it("should throw 'bad filename or number' if a wildcard appears in the filename", (done) => {
 
             let fso = MakeFSO({
                 exceptions: {
@@ -252,7 +268,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        xit("should throw if overwriting is is disabled", (done) => {
+        it("should throw if overwriting is is disabled", (done) => {
 
             let fso = MakeFSO({
                 exceptions: {
@@ -270,7 +286,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        xit("should create the text file in the CWD if no path is given", (done) => {
+        it("should create the text file in the CWD if no path is given", (done) => {
 
             let fso = MakeFSO();
 
@@ -281,7 +297,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        xit("should create a file even if the path is partial", (done) => {
+        it("should create a file even if the path is partial", (done) => {
 
             let fso = new FSO(ctx);
 
@@ -292,7 +308,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        xit("should throw if the filepath does not exist", (done) => {
+        it("should throw if the filepath does not exist", (done) => {
 
             let fso = MakeFSO({
                 exceptions: {
@@ -305,7 +321,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        xit("should return a TextStream instance", (done) => {
+        it("should return a TextStream instance", (done) => {
 
             let fso = MakeFSO(),
                 ts  = fso.CreateTextFile("file.txt");
@@ -320,7 +336,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        xit("should open a text file and then fail to write to it by default", (done) => {
+        it("should open a text file and then fail to write to it by default", (done) => {
 
             ctx.vfs.AddFile("C:\\file.txt", "Hello, World!");
 
@@ -335,7 +351,7 @@ describe("Scripting.FileSystemObject", () => {
             done();
         });
 
-        xit("should write unicode if signalled to do so", (done) => {
+        it("should write unicode if signalled to do so", (done) => {
 
             let fso = MakeFSO(),
                 ts  = fso.CreateTextFile("C:\\unicode.txt", true, true);
@@ -602,6 +618,29 @@ describe("Scripting.FileSystemObject", () => {
 
             // But no files after...
             assert.isFalse(ctx.vfs.FileExists("C:\\RootTwo\\SubFolder3\\c.txt"));
+        });
+
+        it("should copy and all SFNs should resolve correctly", () => {
+
+            // TODO: FIX THIS!
+
+            const fso = MakeFSO();
+
+            ctx.vfs.AddFile("C:\\HelloWorld\\SubFolderA\\LongFilename.txt", "source file");
+            ctx.vfs.AddFolder("C:\\dest");
+
+            fso.CopyFolder("C:\\HelloWorld", "C:\\dest");
+
+            assert.isTrue(ctx.vfs.FileExists("C:\\dest\\HELLOW~1\\SUBFOL~1\\LongFilename.txt"));
+
+            assert.isTrue(ctx.vfs.FolderExists("C:\\dest\\HELLOW~1\\SUBFOL~1"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dest\\HELLOW~1\\SUBFOL~1\\LongFilename.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dest\\HELLOW~1\\SUBFOL~1\\LONGFI~1.TXT"));
+
+            // Let's change the contents of the file and make sure the
+            // link points to the copy not the original.
+            //ctx.vfs.AddFile("C:\\dest\\HELLOW~1\\SUBFOL~1\\LONGFI~1.TXT", "testing...");
+
         });
     });
 });

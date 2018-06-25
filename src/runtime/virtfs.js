@@ -398,7 +398,6 @@ function make_mem_ntfs_proxy (memfs) {
     // =================
     //
     function ntfs_copyFileSync (src_path, dest_path, flags) {
-        // Hmm, is this right?! Feels a little too easy...
         memfs_sans_proxy.copyFileSync(src_path, dest_path, flags);
         make_shortname_and_link(dest_path);
     }
@@ -446,6 +445,7 @@ function make_mem_ntfs_proxy (memfs) {
         renameSync:    ntfs_renameSync,
         unlinkSync:    ntfs_unlinkSync,
         realpathSync:  ntfs_realpathSync,
+        copyFileSync:  ntfs_copyFileSync,
         // ==============================
         // Non-standard `fs' functions
         // ==============================
@@ -816,11 +816,10 @@ class VirtualFileSystem {
     // If find matches a symlink (shortname), the name is expanded to the
     // long-filename version.
     //
-    // Symlinks are not returned.
     //
     Find (search_dir_path, pattern, options) {
 
-        options = options || { files: true, folders: true };
+        options = options || { files: true, folders: true, links: true };
 
         const isearch_path = this._ConvertExternalToInternalPath(search_dir_path);
 
@@ -844,10 +843,14 @@ class VirtualFileSystem {
 
             if (stats.isSymbolicLink(item_path)) {
 
+                if (options.links) item_list.push(f);
+
                 const linkptr = this.vfs.readlinkSync(`${isearch_path}/${f}`);
 
                 item_path = linkptr;
                 f         = win32path.basename(linkptr);
+
+                stats = this.vfs.lstatSync(item_path);
             }
 
             if (stats.isFile(item_path) && options.files) {
@@ -858,7 +861,7 @@ class VirtualFileSystem {
             }
         }
 
-        return item_list;
+        return item_list.filter((elem, pos, arr) => arr.indexOf(elem) == pos);
     }
 
 
@@ -890,29 +893,11 @@ class VirtualFileSystem {
             return [];
         }
 
-        const dir_contents  = this.vfs.readdirSync(isearch_path, { include_links: true }),
-              matched_files = wildcard.match(dir_contents, pattern);
-
-        if (matched_files.length === 0) return [];
-
-        let file_list = [];
-
-        for (let i = 0;i < matched_files.length; i++) {
-
-            let f = matched_files[i];
-
-            const item_path = `${isearch_path}/${f}`,
-                  stats     = this.vfs.lstatSync(item_path);
-
-            if (stats.isSymbolicLink(item_path)) {
-                file_list.push(win32path.basename(this.vfs.readlinkSync(`${isearch_path}/${f}`)));
-            }
-            else if (stats.isFile(item_path)) {
-                file_list.push(f);
-            }
-        }
-
-        return file_list;
+        return this.Find(search_dir_path, pattern, {
+            files   : true,
+            links   : false,
+            folders : false
+        });
     }
 
     // CopyFile
@@ -936,13 +921,6 @@ class VirtualFileSystem {
             flags = memfs.constants.COPYFILE_EXCL;
         }
 
-        // TODO
-        // Should the following copy operation succeed:
-        //
-        //   fso.CopyFile("foo.txt", "bar");
-        //
-        // See what FSO does currently.  Emulate that.
-        //
         this.vfs.copyFileSync(isource, idestination, flags);
     }
 
