@@ -135,9 +135,37 @@ class JS_FileSystemObject extends Component {
         }
     }
 
-    // Recursively copies a folder from one location to another.
-    copyfolder () {
-        // TODO: Blocked on wildcard implementation.
+    // CopyFolder
+    // ==========
+    //
+    // Recursively copies all folders matching the wildcard pattern
+    // from SOURCE in to DESTINATION.
+    //
+    copyfolder (source, destination, overwrite) {
+
+        source      = this.vfs.Resolve(source);
+        destination = this.vfs.Resolve(destination);
+
+        const src_basename = win32path.basename(source),
+              src_dirname  = win32path.dirname(source),
+              dst_basename = win32path.basename(destination),
+              dst_dirname  = win32path.dirname(destination);
+
+        if (this.vfs.IsWildcard(src_basename) === false) {
+            this.vfs.CopyFolder(source, destination);
+            return;
+        }
+
+        // Get a list of all folders matching this wildcard
+        const wildcard_dir_list = this.vfs.FindFolders(src_dirname, src_basename);
+
+        for (let i = 0; i < wildcard_dir_list.length; i++) {
+
+            let dir_name = wildcard_dir_list[i],
+                src_path = `${src_dirname}\\${dir_name}`;
+
+            this.vfs.CopyFolder(src_path, destination);
+        }
     }
 
     // Creates a single new folder in the `path' specified and returns

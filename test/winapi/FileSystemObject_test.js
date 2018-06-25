@@ -169,9 +169,6 @@ describe("Scripting.FileSystemObject", () => {
         });
     });
 
-    xdescribe("#CopyFolder", () => {
-        // TODO - blocked on wildcards
-    });
 
     describe("#CreateFolder", () => {
 
@@ -385,5 +382,61 @@ describe("Scripting.FileSystemObject", () => {
     xdescribe("#GetTempName", NOOP);
     xdescribe("#MoveFile", NOOP);
     xdescribe("#MoveFolder", NOOP);
-        xdescribe("#OpenTextfile", NOOP);
+    xdescribe("#OpenTextfile", NOOP);
+
+
+    describe("#CopyFolder", () => {
+
+        it("should copy a folder from one place to another with all files", () => {
+
+            const fso = MakeFSO({});
+
+            ctx.vfs.AddFolder("C:\\source\\dir1");
+            ctx.vfs.AddFile("C:\\source\\dir1\\foo.txt");
+
+            ctx.vfs.AddFolder("C:\\dest");
+
+            assert.isFalse(ctx.vfs.FolderExists("C:\\dest\\dir1"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\dest\\dir1\\foo.txt"));
+
+            fso.CopyFolder("C:\\source\\dir1", "C:\\dest");
+
+            assert.isTrue(ctx.vfs.FolderExists("C:\\dest\\dir1"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dest\\dir1\\foo.txt"));
+        });
+
+        it("should copy all folders matching a wildcard expression", () => {
+
+            const fso = MakeFSO();
+
+            ctx.vfs.AddFolder("C:\\source\\dir1");
+            ctx.vfs.AddFolder("C:\\source\\dir2");
+            ctx.vfs.AddFolder("C:\\source\\dir3");
+            ctx.vfs.AddFolder("C:\\source\\foo");
+
+            ctx.vfs.AddFolder("C:\\source\\bar");
+
+            ctx.vfs.AddFolder("C:\\dest");
+
+            ctx.vfs.AddFile("C:\\source\\dir1\\foo.txt");
+            ctx.vfs.AddFile("C:\\source\\dir2\\bar.txt");
+            ctx.vfs.AddFile("C:\\source\\dir3\\baz.txt");
+
+            assert.isFalse(ctx.vfs.FolderExists("C:\\dest\\dir1"));
+            assert.isFalse(ctx.vfs.FolderExists("C:\\dest\\dir1"));
+            assert.isFalse(ctx.vfs.FolderExists("C:\\dest\\dir1"));
+
+            fso.CopyFolder("C:\\source\\dir?", "C:\\dest");
+
+            assert.isTrue(ctx.vfs.FolderExists("C:\\dest\\dir1"));
+            assert.isTrue(ctx.vfs.FolderExists("C:\\dest\\dir2"));
+            assert.isTrue(ctx.vfs.FolderExists("C:\\dest\\dir3"));
+
+            assert.isTrue(ctx.vfs.FileExists("C:\\dest\\dir1\\foo.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dest\\dir2\\bar.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dest\\dir3\\baz.txt"));
+
+        });
+    });
+
 });

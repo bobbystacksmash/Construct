@@ -806,12 +806,72 @@ class VirtualFileSystem {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
 
+    // Find
+    // ====
+    //
+    // Given an absolute path to a directory in which to hunt for files
+    // and folders, and the search pattern (a wildcard expression),
+    // returns an array of names for each matching file or folder.
+    //
+    // If find matches a symlink (shortname), the name is expanded to the
+    // long-filename version.
+    //
+    // Symlinks are not returned.
+    //
+    Find (search_dir_path, pattern, options) {
+
+        options = options || { files: true, folders: true };
+
+        const isearch_path = this._ConvertExternalToInternalPath(search_dir_path);
+
+        if (!this.FolderExists(isearch_path)) {
+            return [];
+        }
+
+        const dir_contents  = this.vfs.readdirSync(isearch_path, { include_links: true }),
+              matched_files = wildcard.match(dir_contents, pattern);
+
+        if (matched_files.length === 0) return [];
+
+        let item_list = [];
+
+        for (let i = 0;i < matched_files.length; i++) {
+
+            let f = matched_files[i];
+
+            const item_path = `${isearch_path}/${f}`,
+                  stats     = this.vfs.lstatSync(item_path);
+
+            if (stats.isSymbolicLink(item_path)) {
+
+                const linkptr = this.vfs.readlinkSync(`${isearch_path}/${f}`);
+
+                item_path = linkptr;
+                f         = win32path.basename(linkptr);
+            }
+
+            if (stats.isFile(item_path) && options.files) {
+                item_list.push(f);
+            }
+            else if (stats.isDirectory(item_path) && options.folders){
+                item_list.push(f);
+            }
+        }
+
+        return item_list;
+    }
+
+
+    FindFolders (search_dir_path, pattern) {
+        return this.Find(search_dir_path, pattern, { files: false, folders: true });
+    }
+
     // FindFiles
     // =========
     //
     // Given an absolute path to a directy in which to search, and the
     // search pattern (wildcard expression), returns an array of
-    // absolute paths for each file that matches the pattern.  If the
+    // names for each file that matches the pattern.  If the
     // match succeeds for a short filename, the link is translated and
     // the long filename only is returned.  Directories are not returned.
     //
@@ -1123,6 +1183,15 @@ class VirtualFileSystem {
         }
     }
 
+
+    // IsWildcard
+    // ==========
+    //
+    // Returns TRUE if NAME appears to be a wildcard, else returns FALSE.
+    //
+    IsWildcard (name) {
+        return /[*<>".?]/g.test(name);
+    }
 
     // GetShortName
     // ============
