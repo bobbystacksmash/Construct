@@ -132,16 +132,22 @@ describe("FilesCollection", () => {
         });
     });
 
-    xdescribe("Item", () => {
+    describe("Item", () => {
 
         it("should fetch the item by name", () => {
-
             const ctx = make_ctx();
             ctx.vfs.AddFile("C:\\RootOne\\a.txt");
             const fc = new FilesCollection(ctx, "C:\\RootOne");
-
             assert.equal(fc.Item("a.txt").name, "a.txt");
         });
+
+        it("should fetch the item by SFN", () => {
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\HelloWorld\\LongFilename.txt");
+            const fc = new FilesCollection(ctx, "C:\\HELLOW~1");
+            assert.equal(fc.Item("LONGFI~1.TXT").name, "LONGFI~1.TXT");
+        });
+
         it("should throw a 'path not found' exception if the backing folder is deleted", () => {
 
             const ctx = make_ctx({

@@ -1,5 +1,6 @@
 const Component     = require("../Component");
 const proxify       = require("../proxify2");
+const FileObject    = require("./FileObject");
 
 class JS_FilesCollection extends Component {
 
@@ -37,8 +38,17 @@ class JS_FilesCollection extends Component {
     item (name) {
         this.ee.emit("FilesCollection.Item");
         this._assert_exists();
-        const files = this.vfs.FindAllFiles(this._path);
 
+        const files = this.vfs.Find(this._path, "*", { files: true, folders: false, links: true }),
+              filename_index = files.indexOf(name.toLowerCase());
+
+        if (filename_index === -1) {
+            console.log("TODO!");
+            return;
+        }
+
+        const found_item_name = files[filename_index];
+        return new FileObject(this.context, `${this._path}//${name}`);
     }
 }
 
