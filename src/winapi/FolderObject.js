@@ -4,11 +4,12 @@
  *
  */
 
-const Component = require("../Component");
-const proxify   = require("../proxify2");
-const win32path = require("path").win32;
-const Drive     = require("./DriveObject");
-const FilesCollection = require("./FilesCollection");
+const Component         = require("../Component");
+const proxify           = require("../proxify2");
+const win32path         = require("path").win32;
+const Drive             = require("./DriveObject");
+const FilesCollection   = require("./FilesCollection");
+const FoldersCollection = require("./FoldersCollection");
 
 class JS_FolderObject extends Component {
 
@@ -216,7 +217,10 @@ class JS_FolderObject extends Component {
     // accessible from the SubFolders instance.
     //
     get subfolders () {
+        this.ee.emit("Folder.SubFolders");
+        this._assert_exists();
 
+        return new FoldersCollection(this.context, this._path);
     }
 
 

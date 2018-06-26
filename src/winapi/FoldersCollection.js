@@ -1,6 +1,5 @@
 const Component    = require("../Component");
 const proxify      = require("../proxify2");
-const FolderObject = require("./FolderObject");
 
 class JS_FoldersCollection extends Component {
 
@@ -60,6 +59,7 @@ class JS_FoldersCollection extends Component {
             );
         }
 
+        const FolderObject = require("./FolderObject");
         return new FolderObject(this.context, `${this._path}//${name}`);
     }
 }

@@ -300,4 +300,22 @@ describe("FolderObject", () => {
             assert.equal(new Folder(ctx, "C:\\Foo").size, 4);
         });
     });
+
+    describe(".SubFolders", () => {
+
+        it("should return the subfolders for the given folder object", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1");
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder2");
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder3");
+
+            const folder     = new Folder(ctx, "C:\\RootOne"),
+                  subfolders = folder.SubFolders;
+
+            assert.equal(subfolders.count, 3);
+            assert.equal(subfolders.Item("SubFolder1").ShortName, "SUBFOL~1");
+        });
+
+    });
 });
