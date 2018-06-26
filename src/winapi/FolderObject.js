@@ -8,6 +8,7 @@ const Component = require("../Component");
 const proxify   = require("../proxify2");
 const win32path = require("path").win32;
 const Drive     = require("./DriveObject");
+const FilesCollection = require("./FilesCollection");
 
 class JS_FolderObject extends Component {
 
@@ -20,7 +21,12 @@ class JS_FolderObject extends Component {
         this.vfs     = this.context.vfs;
         this._path   = path;
 
+        if (path.toLowerCase() === "c:") {
+            this._path = this.context.get_env("path");
+        }
+
         this._assert_exists = () => {
+
             if (this.vfs.FolderExists(this._path)) return;
 
             this.context.exceptions.throw_path_not_found(
@@ -89,8 +95,27 @@ class JS_FolderObject extends Component {
         return new Drive(this.context);
     }
 
-    get files () {}
-    get isrootfolder () {}
+    // Files
+    // =====
+    //
+    // Returns a read-only FilesCollection object which contains all
+    // of the files contained within the backing folder.
+    //
+    get files () {
+        this.ee.emit("Folder.Files");
+        return new FilesCollection(this.context, this._path);
+    }
+
+    // IsRootFolder
+    // ============
+    //
+    // Returns TRUE if this folder is the root of the filesystem, or
+    // FALSE otherwise.
+    //
+    get isrootfolder () {
+        this.ee.emit("Folder.IsRootFolder");
+        return this._path.toLowerCase() === "c:\\";
+    }
 
     // Name
     // ====
@@ -108,7 +133,25 @@ class JS_FolderObject extends Component {
         return win32path.basename(this._path);
     }
 
-    get parentfolder () {}
+    // ParentFolder
+    // ============
+    //
+    // Returns a Folder object representing the folder that the parent
+    // of the current folder.  Returns undefined if this folder is
+    // already the root.
+    //
+    get parentfolder () {
+
+        this._assert_exists();
+
+        if (this._path.toLowerCase() === "c:\\") {
+            return undefined;
+        }
+
+        const dirname = win32path.dirname(this._path);
+        return new JS_FolderObject(this.context, dirname);
+    }
+
     get path () {}
     get shortname () {}
     get shortpath () {}
