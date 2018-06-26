@@ -241,4 +241,28 @@ describe("FolderObject", () => {
             assert.equal(new Folder(ctx, "C:").path, ctx.get_env("path"));
         });
     });
+
+    describe(".ShortName", () => {
+
+        it("should return the shortname for the backing folder", () => {
+
+            const path = "C:\\RootOneFoo\\SubFolder1",
+                  ctx  = make_ctx();
+
+            ctx.vfs.AddFolder(path);
+
+            assert.equal(new Folder(ctx, path).ShortName, "SUBFOL~1");
+            assert.equal(new Folder(ctx, "C:\\RootOneFoo").ShortName, "ROOTON~1");
+            assert.equal(new Folder(ctx, "C:\\").shortname, "");
+        });
+
+        it("should return the folder name if the folder name is already a valid SFN", () => {
+
+            const path = "C:\\RootOne\\foo",
+                  ctx  = make_ctx();
+
+            ctx.vfs.AddFolder(path);
+            assert.equal(new Folder(ctx, path).ShortName, "foo");
+        });
+    });
 });
