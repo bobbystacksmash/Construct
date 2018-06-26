@@ -15,6 +15,44 @@ const CAN_READ     = true,
       CAN_APPEND   = 2,
       CANNOT_WRITE = 0;
 
+function make_ctx (opts) {
+
+    opts = opts || {};
+
+    opts.exceptions  = opts.exceptions  || {};
+    opts.environment = opts.environment || {};
+    opts.config      = opts.config      || {};
+
+    var default_env = {
+        path: "C:\\Users\\Construct"
+    };
+
+    var default_cfg = {
+        "autovivify": true
+    };
+
+    let env   = Object.assign({}, default_env, opts.environment),
+        cfg   = Object.assign({}, default_cfg, opts.config),
+        epoch = opts.epoch || 1234567890;
+
+    let context = {
+        epoch: epoch,
+        ENVIRONMENT: env,
+        CONFIG: cfg,
+        emitter: { emit: () => {} },
+        get_env: (e) => env[e],
+        get_cfg: (c) => cfg[c]
+    };
+
+    let vfs = new VirtualFileSystem(context);
+    context.vfs = vfs;
+
+    vfs.AddFolder(default_env.path);
+
+    return Object.assign({}, context, opts);
+}
+
+
 describe("TextStream", () => {
 
     // A TextStream can represent either a:
@@ -24,17 +62,8 @@ describe("TextStream", () => {
     //
 
     beforeEach(() => {
-        context = {
-            epoch: 1234567890,
-            emitter: { emit: () => {} },
-            exceptions: {
-            },
-            vfs: {}
-        };
-
-        context.vfs = new_vfs();
+        context = make_ctx();
     });
-
 
     describe("Properties", () => {
 
@@ -79,7 +108,6 @@ describe("TextStream", () => {
                 done();
             });
         });
-
 
         describe(".AtEndOfStream", () => {
 
@@ -376,7 +404,6 @@ describe("TextStream", () => {
 
                 done();
             });
-
         });
 
         describe("#ReadLine", () => {
@@ -641,10 +668,10 @@ describe("TextStream", () => {
 
                 let ts = new TextStream(context, "C:\\overwrite.txt", CANNOT_READ, CAN_WRITE);
 
-                assert.equal(context.vfs.GetFile("C:\\overwrite.txt").contents, "overwriteme");
+                assert.equal(context.vfs.ReadFileContents("C:\\overwrite.txt"), "overwriteme");
 
                 ts.Write("hello, world!");
-                assert.equal(context.vfs.GetFile("C:\\overwrite.txt").contents, "hello, world!");
+                assert.equal(context.vfs.ReadFileContents("C:\\overwrite.txt"), "hello, world!");
 
                 done();
             });
@@ -656,13 +683,13 @@ describe("TextStream", () => {
                 let ts = new TextStream(context, "C:\\file.txt", CANNOT_READ, CAN_WRITE);
 
                 ts.Write("aaaa");
-                assert.equal(context.vfs.GetFile("C:\\file.txt").contents, "aaaa");
+                assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "aaaa");
 
                 ts.Write("bbbb");
-                assert.equal(context.vfs.GetFile("C:\\file.txt").contents, "aaaabbbb");
+                assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "aaaabbbb");
 
                 ts.Write("cccc");
-                assert.equal(context.vfs.GetFile("C:\\file.txt").contents, "aaaabbbbcccc");
+                assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "aaaabbbbcccc");
 
                 done();
             });
@@ -675,8 +702,7 @@ describe("TextStream", () => {
 
                 ts.Write("bbbb");
 
-                assert.equal(context.vfs.GetFile("C:\\file.txt").contents, "aaaabbbb");
-
+                assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "aaaabbbb");
                 done();
             });
 
@@ -687,7 +713,7 @@ describe("TextStream", () => {
                 ts.Write("aaaa");
                 ts.Write(10);
 
-                assert.equal(context.vfs.GetFile("C:\\file.txt").contents, "aaaa10");
+                assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "aaaa10");
 
                 done();
             });
@@ -702,7 +728,7 @@ describe("TextStream", () => {
                     42
                 ]);
 
-                assert.equal(context.vfs.GetFile("C:\\file.txt").contents, "helloworld42");
+                assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "helloworld42");
 
                 done();
             });
@@ -712,8 +738,7 @@ describe("TextStream", () => {
                 let ts = new TextStream(context, "C:\\file.txt", CANNOT_READ, CAN_WRITE);
 
                 ts.Write({});
-
-                assert.equal(context.vfs.GetFile("C:\\file.txt").contents, "[object Object]");
+                assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "[object Object]");
 
                 done();
             });
@@ -734,8 +759,10 @@ describe("TextStream", () => {
 
                 let ts = new TextStream(ctx, "C:\\foo.txt", CAN_READ, CANNOT_WRITE);
 
-                assert.throws(() => ts.WriteBlankLines(2), "cannot call #WriteBlankLines in read-only mode");
-
+                assert.throws(() =>
+                              ts.WriteBlankLines(2),
+                              "cannot call #WriteBlankLines in read-only mode"
+                             );
                 done();
             });
 
@@ -747,13 +774,13 @@ describe("TextStream", () => {
 
                 ts.WriteBlankLines(2);
                 assert.deepEqual(
-                    context.vfs.GetFile("C:\\linetest.txt").contents,
+                    context.vfs.ReadFileContents("C:\\linetest.txt"),
                     Buffer.from("\r\n\r\n")
                 );
 
                 ts.WriteBlankLines(3);
                 assert.deepEqual(
-                    context.vfs.GetFile("C:\\linetest.txt").contents,
+                    context.vfs.ReadFileContents("C:\\linetest.txt"),
                     Buffer.from("\r\n\r\n\r\n\r\n\r\n")
                 );
 
@@ -776,7 +803,9 @@ describe("TextStream", () => {
 
                 let ts = new TextStream(ctx, "C:\\foo.txt", CAN_READ, CANNOT_WRITE);
 
-                assert.throws(() => ts.WriteLine("hello"), "cannot call #WriteLine in read-only mode");
+                assert.throws(
+                    () => ts.WriteLine("hello"), "cannot call #WriteLine in read-only mode"
+                );
 
                 done();
             });
@@ -790,11 +819,9 @@ describe("TextStream", () => {
                 ts.WriteLine("abcd");
                 ts.WriteLine("1234");
 
-                assert.equal(context.vfs.GetFile("C:\\file.txt").contents, "abcd\r\n1234\r\n");
+                assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "abcd\r\n1234\r\n");
                 done();
             });
-
-
         });
     });
 });

@@ -289,6 +289,8 @@ function make_mem_ntfs_proxy (memfs) {
         const dirname = win32path.dirname(path);
         ntfs_mkdirpSync(dirname);
 
+        if (data === null || data === undefined) data = "";
+
         let ret = memfs_sans_proxy.writeFileSync(path, data, options);
         make_shortname_and_link(path);
     }

@@ -63,7 +63,7 @@ class AbstractIOStream {
         // TODO: Look at 'filespec' and add in Std{In,Out,Err} stuff here...
         //
 
-        if (context.vfs.GetFile(filespec) === false) {
+        if (context.vfs.FileExists(filespec) === false) {
             context.vfs.AddFile(filespec);
         }
 
@@ -162,7 +162,7 @@ class AbstractIOStream {
 
         let file_contents = this.stream.fetch_all();
 
-        if (file_contents === 0) {
+        if (file_contents === 0 || file_contents === undefined) {
             throw new Error("Cannot call ReadAll on an empty file");
         }
 

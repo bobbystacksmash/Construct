@@ -351,14 +351,14 @@ class Stream {
         }
 
         // Does the file even exist?
-        let file = this.vfs.GetFile(path);
-
-        if (! file) {
+        if (! this.vfs.FileExists(path)) {
             throw new Error(`Unable to load file ${path} - this does not exist.`);
         }
 
         this.position = 0;
-        return file.__contents;
+
+        const file_contents = this.vfs.ReadFileContents(path);
+        return file_contents;
     }
 
     is_pos_EOS () {
