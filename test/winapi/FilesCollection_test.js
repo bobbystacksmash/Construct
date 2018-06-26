@@ -148,6 +148,25 @@ describe("FilesCollection", () => {
             assert.equal(fc.Item("LONGFI~1.TXT").name, "LONGFI~1.TXT");
         });
 
+        it("should throw a 'file not found' exception if the file doesn't exist", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_file_not_found: () => {
+                        throw new Error("file not found");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\a.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\b.txt");
+
+            const fc = new FilesCollection(ctx, "C:\\RootOne\\SubFolder1");
+
+            assert.doesNotThrow(() => fc.Item("b.txt"));
+            assert.throws(() => fc.Item("c.txt"), "file not found");
+        });
+
         it("should throw a 'path not found' exception if the backing folder is deleted", () => {
 
             const ctx = make_ctx({

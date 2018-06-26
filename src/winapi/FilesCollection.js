@@ -43,8 +43,12 @@ class JS_FilesCollection extends Component {
               filename_index = files.indexOf(name.toLowerCase());
 
         if (filename_index === -1) {
-            console.log("TODO!");
-            return;
+            this.context.exceptions.throw_file_not_found(
+                "FilesCollection",
+                "File not found.",
+                `Unable to find the file ${name} in this folder.  ` +
+                    "Please try another filename."
+            );
         }
 
         const found_item_name = files[filename_index];
