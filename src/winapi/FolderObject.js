@@ -152,7 +152,18 @@ class JS_FolderObject extends Component {
         return new JS_FolderObject(this.context, dirname);
     }
 
-    get path () {}
+    // Path
+    // ====
+    //
+    // Returns the full path which backs this Folder object, including
+    // the drive designator.
+    //
+    get path () {
+        this.ee.emit("Folder.Path");
+        this._assert_exists();
+        return this._path;
+    }
+
     get shortname () {}
     get shortpath () {}
     get size () {}

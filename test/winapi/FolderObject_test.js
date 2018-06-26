@@ -221,4 +221,24 @@ describe("FolderObject", () => {
             assert.equal(new Folder(ctx, "C:").Name, "Construct");
         });
     });
+
+    describe(".Path", () => {
+
+        it("should return the complete path to the current folder, including drive", () => {
+
+            const path = "C:\\RootOne\\SubFolder1",
+                  ctx  = make_ctx();
+
+            ctx.vfs.AddFolder(path);
+
+            const folder = new Folder(ctx, path);
+            assert.equal(folder.path, path);
+            assert.equal(new Folder(ctx, "C:\\").path, "C:\\");
+        });
+
+        it("should use the CWD when 'C:' is given", () => {
+            const ctx = make_ctx();
+            assert.equal(new Folder(ctx, "C:").path, ctx.get_env("path"));
+        });
+    });
 });
