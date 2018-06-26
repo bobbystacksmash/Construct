@@ -733,7 +733,7 @@ class VirtualFileSystem {
         return win32path.parse(path);
     }
 
-    // PathIsIllegal
+    // IsPathIllegal
     // =============
     //
     // Checks the entire `path' for the presence of any of the
@@ -752,12 +752,12 @@ class VirtualFileSystem {
     IsPathIllegal (path) {
 
         let path_parts = path
-                .replace(/^[a-z]:/i, "")
-                .replace(/\\/g, "/")
-                .split("/")
-                .filter(f => !!f);
+            .replace(/^[a-z]:/i, "")
+            .replace(/\\/g, "/")
+            .split("/")
+            .filter(f => !!f);
 
-        return path_parts.some(p => /[<>:"\/\\\|?*]/g);
+        return path_parts.some(p => /[<>:"\/\\\|?*]/g.test(p));
     }
 
 
@@ -1124,6 +1124,11 @@ class VirtualFileSystem {
     AddFile (win_filepath, data, options) {
 
         let ipath = this._ConvertExternalToInternalPath(win_filepath);
+
+        if (this.IsPathIllegal(win_filepath)) {
+            throw new Error(`Invalid filepath: '${win_filepath}'`);
+        }
+
         this.vfs.writeFileSync(ipath, data, options);
     }
 

@@ -426,6 +426,11 @@ describe("Virtual File System", () => {
                     "testing2"
                 );
             });
+
+            it("should throw if the filename is invalid", () => {
+                const vfs = make_vfs();
+                assert.throws(() => vfs.AddFile("foo*.txt"), "Invalid filepath");
+            });
         });
 
         describe("#CopyFile", () => {
