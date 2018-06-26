@@ -843,6 +843,46 @@ class VirtualFileSystem {
         return shortpath.join("\\");
     }
 
+    // FolderContentsSize
+    // ==================
+    //
+    // Walks from the given path through each file and folder and
+    // computes the total size (in bytes) of all folders and files
+    // below the given path.
+    //
+    FolderContentsSize (start_dir_path) {
+
+        const ipath = this._ConvertExternalToInternalPath(start_dir_path);
+
+        if (! this.FolderExists(ipath)) {
+            throw new Error("Path not found");
+        }
+
+        let total_file_size = 0;
+
+        let walk = (path) => {
+
+            let folders = this.FindAllFolders(path),
+                files   = this.FindAllFiles(path);
+
+            if (folders.length) {
+
+                for (let i = 0; i < folders.length; i++) {
+                    walk(`${path}/${folders[i]}`);
+                }
+            }
+
+            files.forEach(f => {
+                let stats = this.Stats(`${path}\\${f}`);
+                total_file_size += stats.size;
+            });
+        };
+
+        walk(start_dir_path);
+
+        return total_file_size;
+    }
+
     // Find
     // ====
     //

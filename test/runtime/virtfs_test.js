@@ -629,4 +629,23 @@ describe("Virtual File System", () => {
             );
         });
     });
+
+    describe("FolderContentsSize", () => {
+
+        it("should calculate the size of the folder", () => {
+
+            const vfs = make_vfs();
+
+            vfs.AddFile("C:\\RootOne\\SubFolder1\\foo.txt", "abcd");
+            vfs.AddFile("C:\\RootOne\\SubFolder2\\bar.txt", "efgh");
+
+            assert.equal(vfs.FolderContentsSize("C:\\RootOne"), 8);
+        });
+
+        it("should throw if the path cannot be found", () => {
+
+            const vfs = make_vfs();
+            assert.throws(() => vfs.FolderContentsSize("C:\\RootOne"), "Path not found");
+        });
+    });
 });
