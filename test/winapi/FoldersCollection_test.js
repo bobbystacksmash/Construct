@@ -82,4 +82,87 @@ describe("FoldersCollection", () => {
         });
     });
 
+
+    describe("Item", () => {
+
+        it("should fetch the item by name", () => {
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\a.txt");
+
+            const fc = new FoldersCollection(ctx, "C:\\RootOne");
+            assert.equal(fc.Item("SubFolder1").name, "SubFolder1");
+        });
+
+        it("should fetch the item by SFN", () => {
+            const ctx = make_ctx();
+            ctx.vfs.AddFolder("C:\\RootOne\\LongFoldername");
+
+            const fc = new FoldersCollection(ctx, "C:\\RootOne");
+            assert.equal(fc.Item("LONGFO~1").name, "LONGFO~1");
+        });
+
+        it("should throw a 'path not found' exception if the folder doesn't exist", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_path_not_found: () => {
+                        throw new Error("folder not found");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\a.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\SubFolder2\\b.txt");
+
+            const fc = new FoldersCollection(ctx, "C:\\RootOne");
+            assert.doesNotThrow(() => fc.Item("SubFolder1"));
+            assert.throws(() => fc.Item("SubFolder3"), "folder not found");
+        });
+
+        it("should throw an 'invalid procedure call' exception if .Item arg is not string", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("not a string");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\a.txt");
+
+            const fc = new FoldersCollection(ctx, "C:\\RootOne\\");
+
+            assert.equal(fc.count, 1);
+
+            assert.throws(() => fc.Item(2),          "not a string");
+            assert.throws(() => fc.Item(null),       "not a string");
+            assert.throws(() => fc.Item(undefined),  "not a string");
+            assert.throws(() => fc.Item([]),         "not a string");
+            assert.throws(() => fc.Item({}),         "not a string");
+            assert.throws(() => fc.Item(() => true), "not a string");
+        });
+
+        it("should throw a 'path not found' exception if the backing folder is deleted", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_path_not_found: () => {
+                        throw new Error("backing folder is gone");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\a.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\SubFolder2\\b.txt");
+
+            const fc = new FoldersCollection(ctx, "C:\\RootOne");
+            assert.equal(fc.count, 2);
+
+            assert.doesNotThrow(() => fc.Item("SubFolder1"));
+
+            ctx.vfs.Delete("C:\\RootOne\\SubFolder1");
+            assert.throws(() => fc.Item("SubFolder1"), "backing folder is gone");
+        });
+    });
 });
