@@ -544,4 +544,50 @@ describe("FolderObject", () => {
             assert.throws(() => ctx.vfs.AddFile("a*.txt"), "Invalid filepath");
         });
     });
+
+    describe("#Delete", () => {
+
+        it("should delete all files and folders", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir2\\bar.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\baz.txt");
+
+            const folder = new Folder(ctx, "C:\\RootOne");
+
+            assert.isTrue(ctx.vfs.FileExists("C:\\RootOne\\SubDir1\\foo.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\RootOne\\SubDir2\\bar.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\RootOne\\baz.txt"));
+
+            assert.doesNotThrow(() => folder.Delete());
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\RootOne\\SubDir1\\foo.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\RootOne\\SubDir2\\bar.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\RootOne\\baz.txt"));
+        });
+    });
+
+    describe("#Move", () => {
+
+        it("should move the folder object to destination, creating destination", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
+
+            const folder = new Folder(ctx, "C:\\RootOne");
+
+            assert.isFalse(ctx.vfs.FolderExists("C:\\Users\\Construct\\dest"));
+
+            folder.Move("dest");
+            assert.isTrue(ctx.vfs.FolderExists("C:\\Users\\Construct\\dest"));
+            assert.isTrue(ctx.vfs.FolderExists("C:\\Users\\Construct\\Dest\\SubDir1"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\Users\\Construct\\Dest\\SubDir1\\foo.txt"));
+
+            assert.isTrue(ctx.vfs.FileExists("C:\\Users\\Construct\\dest\\SubDir1\\foo.txt"));
+            assert.isFalse(ctx.vfs.FolderExists("C:\\RootOne"));
+
+            assert.equal(folder.path, "C:\\Users\\Construct\\dest");
+        });
+    });
 });

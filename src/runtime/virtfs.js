@@ -1188,6 +1188,38 @@ class VirtualFileSystem {
         this.vfs.renameSync(isource, idestination);
     }
 
+    // Move
+    // ====
+    //
+    // Recursively moves files and folders from `source' to
+    // `destination'.
+    //
+    Move (source, destination) {
+
+        const isource      = this._ConvertExternalToInternalPath(source),
+              idestination = this._ConvertExternalToInternalPath(destination);
+
+        let walk = (source, dest) => {
+
+            let folders = this.FindAllFolders(source),
+                files   = this.FindAllFiles(source);
+
+            if (folders.length) {
+                for (let i = 0; i < folders.length; i++) {
+                    this.AddFolder(`${dest}/${folders[i]}`);
+                    walk(`${source}/${folders[i]}`, `${dest}/${folders[i]}`);
+                }
+            }
+
+            for (let i = 0; i < files.length; i++) {
+                this.vfs.copyFileSync(`${source}/${files[i]}`, `${dest}/${files[i]}`);
+                this.vfs.unlinkSync(`${source}/${files[i]}`);
+            }
+        };
+
+        walk(isource, idestination);
+    }
+
     // CopyFolder
     // ==========
     //
@@ -1236,7 +1268,6 @@ class VirtualFileSystem {
                 }
             });
         }
-
     }
 
     // FolderListContents
@@ -1261,8 +1292,6 @@ class VirtualFileSystem {
     // entire folder path.
     //
     AddFolder (win_path, options) {
-
-
 
         if (!this.FolderExists(win_path)) {
             let ipath = this._ConvertExternalToInternalPath(win_path);
@@ -1307,7 +1336,6 @@ class VirtualFileSystem {
         }
     }
 
-
     // IsFile
     // ======
     //
@@ -1346,20 +1374,10 @@ class VirtualFileSystem {
             if (link_ptr.toLowerCase() === ipath.toLowerCase()) {
                 return symlinks[i].toUpperCase();
             }
-
-
         }
 
         return basename;
     }
-
-
-    /*WriteFile (path, data, options) {
-
-        // TODO: Make use of fs.utimesSync(path, atime, mtime)
-        // for altering file {m,a,c,e} times.
-        this.volume_c.writeFileSync(path, data, options);
-    }*/
 }
 
 module.exports = VirtualFileSystem;

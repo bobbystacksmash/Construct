@@ -379,12 +379,62 @@ class JS_FolderObject extends Component {
     // Delete
     // ======
     //
-    // Deletes this folder from disk.
+    // Deletes this folder and all contents (recursively).
     //
     delete () {
+        this.ee.emit("Folder.Delete");
+        this._assert_exists();
         this.vfs.Delete(this._path);
     }
-    move () {}
+
+    // Move
+    // ====
+    //
+    // Moves this folder to `destination', relative to the CWD.
+    //
+    move (destination) {
+        this.ee.emit("Folder.Move");
+        this._assert_exists();
+
+        if (this.vfs.IsWildcard(destination)) {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FolderObject",
+                "Destination cannot contain wildcard characters.",
+                "The destination folder cannot contain wildcard characters."
+            );
+        }
+
+        // Unlike FSO.Copy, there is no difference with this Copy
+        // method if destination ends with or without a trailing
+        // separator, so strip it.
+        destination = destination.replace(/[\\/]*$/, "");
+
+        if (this.vfs.PathIsRelative(destination)) {
+            destination = win32path.join(this.context.get_env("path"), destination);
+        }
+
+        if (! this.vfs.FolderExists(destination)) {
+            this.vfs.AddFolder(destination);
+        }
+
+        try {
+            this.vfs.Move(this._path, destination);
+            this.vfs.Delete(this._path);
+            this._path = destination;
+        }
+        catch (e) {
+
+            if (e.message.includes("destination file already exists")) {
+                this.context.exceptions.throw_file_already_exists(
+                    "FolderObject",
+                    "Destination file exists.",
+                    "A file in the destination already exists."
+                );
+            }
+
+            throw e;
+        }
+    }
 }
 
 module.exports = function create(context, path) {
