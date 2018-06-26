@@ -176,7 +176,25 @@ class JS_FolderObject extends Component {
         return this.vfs.GetShortName(this._path);
     }
 
-    get shortpath () {}
+    // ShortPath
+    // =========
+    //
+    // Returns the complete path to a folder in DOS 8.3 format
+    // (shortnames).
+    //
+    get shortpath () {
+        this.ee.emit("Folder.ShortPath");
+        this._assert_exists();
+
+        const shortpath = this.vfs.ShortPath(this._path);
+
+        if (shortpath.toLowerCase() === this._path.toLowerCase()) {
+            return this._path;
+        }
+
+        return shortpath;
+    }
+
     get size () {}
 
     // SubFolders

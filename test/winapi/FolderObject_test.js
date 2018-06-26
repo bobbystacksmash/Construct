@@ -265,4 +265,23 @@ describe("FolderObject", () => {
             assert.equal(new Folder(ctx, path).ShortName, "foo");
         });
     });
+
+    describe(".ShortPath", () => {
+
+        it("should return a short path version of the path", () => {
+
+            const ctx = make_ctx();
+
+            ctx.vfs.AddFolder("C:\\HelloWorld\\LongFolderName");
+            ctx.vfs.AddFolder("C:\\Foo\\Bar\\Baz");
+
+            assert.equal(new Folder(ctx, "C:\\HelloWorld\\LongFolderName").ShortPath,
+                         "C:\\HELLOW~1\\LONGFO~1");
+
+            assert.equal(new Folder(ctx, "C:\\Foo\\Bar\\Baz").ShortPath,
+                         "C:\\Foo\\Bar\\Baz");
+
+            assert.equal(new Folder(ctx, "C:\\").ShortPath, "C:\\");
+        });
+    });
 });

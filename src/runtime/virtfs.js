@@ -830,6 +830,8 @@ class VirtualFileSystem {
         const ipath = this._ConvertExternalToInternalPath(path),
               parts = ipath.split("/").filter(p => !!p);
 
+        if (path.toLowerCase() === "c:\\") return path;
+
         var pathstr   = "",
             shortpath = ["C:"];
 
