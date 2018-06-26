@@ -162,9 +162,32 @@ describe("FilesCollection", () => {
             ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\b.txt");
 
             const fc = new FilesCollection(ctx, "C:\\RootOne\\SubFolder1");
-
             assert.doesNotThrow(() => fc.Item("b.txt"));
             assert.throws(() => fc.Item("c.txt"), "file not found");
+        });
+
+        it("should throw an 'invalid procedure call' exception if .Item arg is not string", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("not a string");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\a.txt");
+
+            const fc = new FilesCollection(ctx, "C:\\RootOne\\SubFolder1");
+
+            assert.equal(fc.count, 1);
+
+            assert.throws(() => fc.Item(2),          "not a string");
+            assert.throws(() => fc.Item(null),       "not a string");
+            assert.throws(() => fc.Item(undefined),  "not a string");
+            assert.throws(() => fc.Item([]),         "not a string");
+            assert.throws(() => fc.Item({}),         "not a string");
+            assert.throws(() => fc.Item(() => true), "not a string");
         });
 
         it("should throw a 'path not found' exception if the backing folder is deleted", () => {

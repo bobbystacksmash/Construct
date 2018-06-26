@@ -36,7 +36,19 @@ class JS_FilesCollection extends Component {
     }
 
     item (name) {
+
         this.ee.emit("FilesCollection.Item");
+
+        if (typeof name !== "string") {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FilesCollection",
+                "Argument passed to FilesCollection.Item that is not a string.",
+                "The FilesCollection.Item method will only return files by their " +
+                    "string name (not the ordinal position).  Ensure that only " +
+                    "strings are passed to .Item."
+            );
+        }
+
         this._assert_exists();
 
         const files = this.vfs.Find(this._path, "*", { files: true, folders: false, links: true }),
