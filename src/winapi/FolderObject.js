@@ -10,6 +10,7 @@ const win32path         = require("path").win32;
 const Drive             = require("./DriveObject");
 const FilesCollection   = require("./FilesCollection");
 const FoldersCollection = require("./FoldersCollection");
+const TextStream        = require("./TextStream");
 
 class JS_FolderObject extends Component {
 
@@ -303,11 +304,56 @@ class JS_FolderObject extends Component {
 
             throw e;
         }
-
     }
 
+    // CreateTextFile
+    // ==============
+    //
+    // Given a filename (with optional path), creates a text file and
+    // returns an opened TextStream object.
+    //
+    //
+    createtextfile (filepath, overwrite, unicode) {
 
-    createtextfile () {}
+        this.ee.emit("Folder.CreateTextFile");
+        this._assert_exists();
+
+        if (overwrite === undefined || overwrite === null) overwrite = true;
+
+        if (this.vfs.IsWildcard(filepath)) {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FolderObject",
+                "Destination cannot contain wildcard characters.",
+                "The destination folder cannot contain wildcard characters."
+            );
+        }
+
+        if (this.vfs.PathIsRelative(filepath)) {
+            filepath = win32path.join(this._path, filepath);
+        }
+
+        if (overwrite) {
+            this.vfs.AddFile(filepath);
+        }
+
+        const CANNOT_READ = false,
+              WRITE_MODE  = 1,
+              CAN_WRITE   = true,
+              UNICODE     = false,
+              PERSIST     = true;
+
+        const textstream  = new TextStream(
+            this.context,
+            filepath,
+            CANNOT_READ,
+            WRITE_MODE,
+            UNICODE,
+            PERSIST
+        );
+
+        // TODO: what if the file already exists?
+        return textstream;
+    }
 
     // Delete
     // ======

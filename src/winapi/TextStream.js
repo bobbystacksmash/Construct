@@ -6,7 +6,7 @@ const AbstractIOStream = require("./support/AbstractIOStream");
 
 class JS_TextStream extends Component {
 
-    constructor (context, backing_stream_spec, can_read, can_write, use_unicode) {
+    constructor (context, backing_stream_spec, can_read, can_write, use_unicode, persist) {
 
         let charset = "ASCII";
 
@@ -19,6 +19,7 @@ class JS_TextStream extends Component {
         this.ee  = this.context.emitter;
         this.vfs = this.context.vfs;
         this.backing_stream = backing_stream_spec;
+        this.persist = (persist === undefined || persist === null) ? false : true;
 
         this.stream = new AbstractIOStream(
             context,
@@ -116,7 +117,7 @@ class JS_TextStream extends Component {
         try {
             this.stream.close();
 
-            // '2' below means "overwrite of create":
+            // '2' below means "overwrite on create":
             this.stream.save_to_file(this.backing_stream, 2);
         }
         catch (_) {
@@ -306,6 +307,10 @@ class JS_TextStream extends Component {
 
         try {
             this.stream.Write(msg);
+
+            if (this.persist) {
+                this.stream.save_to_file(this.backing_stream, 2);
+            }
         }
         catch (e) {
 
@@ -328,6 +333,10 @@ class JS_TextStream extends Component {
 
         try {
             this.stream.WriteBlankLines(num_blank_lines_to_write);
+
+            if (this.persist) {
+                this.stream.save_to_file(this.backing_stream, 2);
+            }
         }
         catch (e) {
 
@@ -348,6 +357,10 @@ class JS_TextStream extends Component {
 
         try {
             this.stream.WriteLine(msg);
+
+            if (this.persist) {
+                this.stream.save_to_file(this.backing_stream, 2);
+            }
         }
         catch (e) {
 
@@ -363,7 +376,7 @@ class JS_TextStream extends Component {
     }
 }
 
-module.exports = function create(context, backing_stream_spec, can_read, can_write, use_unicode) {
-    let ts = new JS_TextStream(context, backing_stream_spec, can_read, can_write, use_unicode);
+module.exports = function create(context, backing_path, can_read, can_write, use_unicode, persist) {
+    let ts = new JS_TextStream(context, backing_path, can_read, can_write, use_unicode, persist);
     return proxify(context, ts);
 };

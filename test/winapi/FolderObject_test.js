@@ -43,7 +43,7 @@ describe("FolderObject", () => {
 
     describe("Object creation", () => {
 
-        xit("should support being created from an existing VFS path", () => {
+        it("should support being created from an existing VFS path", () => {
 
             const ctx = make_ctx();
 
@@ -472,6 +472,44 @@ describe("FolderObject", () => {
 
             const folder = new Folder(ctx, "C:\\RootOne");
             assert.throws(() => folder.Copy("C:\\des*"), "no wildcards");
+        });
+    });
+
+    describe("#CreateTextFile", () => {
+
+        it("should create a text file if the file does not exist inside the backing dir", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFolder("C:\\RootOne");
+
+            const folder     = new Folder(ctx, "C:\\RootOne"),
+                  textstream = folder.CreateTextFile("foo.txt");
+
+            assert.doesNotThrow(() => textstream.WriteLine("hello world"));
+
+            assert.deepEqual(
+                ctx.vfs.ReadFileContents("C:\\RootOne\\foo.txt"),
+                Buffer.from("hello world\r\n")
+            );
+        });
+
+        it("should overwrite the contents of an existing text file by default", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFolder("C:\\RootOne");
+
+            ctx.vfs.AddFile("C:\\RootOne\\foo.txt", "hello");
+            assert.deepEqual(ctx.vfs.ReadFileContents("C:\\RootOne\\foo.txt"), Buffer.from("hello"));
+
+            const folder     = new Folder(ctx, "C:\\RootOne"),
+                  textstream = folder.CreateTextFile("foo.txt");
+
+            textstream.WriteLine("goodbye");
+
+            assert.deepEqual(
+                ctx.vfs.ReadFileContents("C:\\RootOne\\foo.txt"),
+                Buffer.from("goodbye\r\n")
+            );
         });
     });
 });
