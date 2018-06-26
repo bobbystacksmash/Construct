@@ -511,5 +511,37 @@ describe("FolderObject", () => {
                 Buffer.from("goodbye\r\n")
             );
         });
+
+        it("should throw if overwrite flag is set to false and the file exists", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_file_already_exists: () => {
+                        throw new Error("file exists");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\RootOne\\foo.txt", "hello");
+
+            const folder            = new Folder(ctx, "C:\\RootOne"),
+                  do_not_overwrite  = false;
+
+            assert.throws(() => folder.CreateTextFile("foo.txt", do_not_overwrite), "file exists");
+        });
+
+        it("should throw if filename is invalid", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_bad_filename_or_number: () => {
+                        throw new Error("invalid filename");
+                    }
+                }
+            });
+
+            assert.throws(() => ctx.vfs.AddFile("*|"), "Invalid filepath");
+            assert.throws(() => ctx.vfs.AddFile("a*.txt"), "Invalid filepath");
+        });
     });
 });

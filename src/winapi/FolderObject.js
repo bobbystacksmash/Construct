@@ -319,6 +319,7 @@ class JS_FolderObject extends Component {
         this._assert_exists();
 
         if (overwrite === undefined || overwrite === null) overwrite = true;
+        if (unicode   === undefined || unicode   === null) unicode   = false;
 
         if (this.vfs.IsWildcard(filepath)) {
             this.context.exceptions.throw_invalid_fn_arg(
@@ -332,24 +333,44 @@ class JS_FolderObject extends Component {
             filepath = win32path.join(this._path, filepath);
         }
 
-        if (overwrite) {
-            this.vfs.AddFile(filepath);
+        if (overwrite === false && this.vfs.FileExists(filepath)) {
+            this.context.exceptions.throw_file_already_exists(
+                "FolderObject",
+                "The File you are trying to write already exists.",
+                "Cannot create text file because the file already exists and " +
+                    "the overwrite flag is false (meaning do not overwrite)."
+            );
         }
 
         const CANNOT_READ = false,
               WRITE_MODE  = 1,
               CAN_WRITE   = true,
-              UNICODE     = false,
               PERSIST     = true;
 
-        const textstream  = new TextStream(
-            this.context,
-            filepath,
-            CANNOT_READ,
-            WRITE_MODE,
-            UNICODE,
-            PERSIST
-        );
+        try {
+
+            if (overwrite) {
+                this.vfs.AddFile(filepath);
+            }
+
+            var textstream  = new TextStream(
+                this.context,
+                filepath,
+                CANNOT_READ,
+                WRITE_MODE,
+                unicode,
+                PERSIST
+            );
+        }
+        catch (e) {
+
+            this.context.exceptions.throw_bad_filename_or_number(
+                "FolderObject",
+                "Filepath contains illegal characters.",
+                "The filename contains at least one illegal character " +
+                    "which is preventing the file from being created."
+            );
+        }
 
         // TODO: what if the file already exists?
         return textstream;
