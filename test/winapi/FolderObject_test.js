@@ -332,6 +332,13 @@ describe("FolderObject", () => {
             assert.equal(subfolders.count, 3);
             assert.equal(subfolders.Item("SubFolder1").ShortName, "SUBFOL~1");
         });
+    });
 
+    describe(".Type", () => {
+
+        it("should return 'File folder' for all Folder instances", () => {
+            const ctx = make_ctx();
+            assert.equal(new Folder(ctx, "C:\\").type, "File folder");
+        });
     });
 });

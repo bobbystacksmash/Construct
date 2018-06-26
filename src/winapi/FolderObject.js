@@ -236,8 +236,16 @@ class JS_FolderObject extends Component {
         return new FoldersCollection(this.context, this._path);
     }
 
-
-    get type () {}
+    // Type
+    // ====
+    //
+    // For FolderObject instances, always returns 'File folder'.
+    //
+    get type () {
+        this.ee.emit("Folder.Type");
+        this._assert_exists();
+        return "File folder";
+    }
 
     // Methods
     copy () {}
