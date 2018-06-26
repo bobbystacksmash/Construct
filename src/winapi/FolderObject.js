@@ -392,9 +392,13 @@ class JS_FolderObject extends Component {
     //
     // Moves this folder to `destination', relative to the CWD.
     //
-    move (destination) {
+    move (destination, overwrite) {
         this.ee.emit("Folder.Move");
         this._assert_exists();
+
+        if (overwrite === undefined || overwrite === null) {
+            overwrite = false;
+        }
 
         if (this.vfs.IsWildcard(destination)) {
             this.context.exceptions.throw_invalid_fn_arg(
@@ -418,7 +422,7 @@ class JS_FolderObject extends Component {
         }
 
         try {
-            this.vfs.Move(this._path, destination);
+            this.vfs.Move(this._path, destination, overwrite);
             this.vfs.Delete(this._path);
             this._path = destination;
         }

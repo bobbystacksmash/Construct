@@ -1194,7 +1194,9 @@ class VirtualFileSystem {
     // Recursively moves files and folders from `source' to
     // `destination'.
     //
-    Move (source, destination) {
+    Move (source, destination, overwrite) {
+
+        if (overwrite === undefined || overwrite === null) overwrite = false;
 
         const isource      = this._ConvertExternalToInternalPath(source),
               idestination = this._ConvertExternalToInternalPath(destination);
@@ -1212,8 +1214,16 @@ class VirtualFileSystem {
             }
 
             for (let i = 0; i < files.length; i++) {
-                this.vfs.copyFileSync(`${source}/${files[i]}`, `${dest}/${files[i]}`);
-                this.vfs.unlinkSync(`${source}/${files[i]}`);
+
+                const destfile = `${dest}/${files[i]}`,
+                      srcfile  = `${source}/${files[i]}`;
+
+                if (overwrite === false && this.FileExists(destfile)) {
+                    throw new Error("Cannot move: destination file already exists");
+                }
+
+                this.vfs.copyFileSync(srcfile, destfile);
+                this.vfs.unlinkSync(srcfile);
             }
         };
 

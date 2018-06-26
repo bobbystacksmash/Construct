@@ -589,5 +589,95 @@ describe("FolderObject", () => {
 
             assert.equal(folder.path, "C:\\Users\\Construct\\dest");
         });
+
+        it("should move to an existing location without issue", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
+            ctx.vfs.AddFolder("C:\\dest\\subdir1");
+
+            const folder = new Folder(ctx, "C:\\RootOne");
+            assert.doesNotThrow(() => folder.move("C:\\dest"));
+        });
+
+        it("should move the folder to 'C:\' if relative path tries to expand above C:", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
+
+            const folder = new Folder(ctx, "C:\\RootOne");
+
+            assert.isFalse(ctx.vfs.FolderExists("C:\\dest"));
+
+            folder.move("..\\..\\..\\..\\..\\..\\..\\dest");
+            assert.isTrue(ctx.vfs.FolderExists("C:\\dest"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dest\\SubDir1\\foo.txt"));
+        });
+
+        it("should throw a 'file already exists' if a file exists in the destination", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_file_already_exists: () => {
+                        throw new Error("file exists");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile(ctx.get_env("path") + "\\dest\\SubDir1\\foo.txt", "dest");
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt", "source");
+
+            const folder = new Folder(ctx, "C:\\RootOne");
+            assert.throws(() => folder.move("dest"), "file exists");
+        });
+
+        it("should overwrite destination files when overwrite=true", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\dest\\SubDir1\\foo.txt", "Destination file!");
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt", "Source file!");
+
+            const folder = new Folder(ctx, "C:\\RootOne");
+
+            assert.deepEqual(
+                ctx.vfs.ReadFileContents("C:\\dest\\subdir1\\foo.txt"),
+                Buffer.from("Destination file!")
+            );
+
+            folder.Move("C:\\dest", true);
+            assert.deepEqual(
+                ctx.vfs.ReadFileContents("C:\\dest\\subdir1\\foo.txt"),
+                Buffer.from("Source file!")
+            );
+        });
+
+        it("should move all files and folders", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir2\\bar.txt");
+            ctx.vfs.AddFolder("C:\\RootOne\\SubDir1\\empty_folder");
+            ctx.vfs.AddFile("C:\\RootOne\\baz.txt");
+
+            const folder = new Folder(ctx,"C:\\RootOne");
+
+            folder.Move("C:\\dest");
+
+            let moved_files = [
+                "C:\\RootOne\\SubDir1\\foo.txt",
+                "C:\\RootOne\\SubDir2\\bar.txt",
+                "C:\\RootOne\\baz.txt"
+            ];
+            moved_files.forEach(f => assert.isFalse(ctx.vfs.FileExists(f)));
+
+            let existing_files = [
+                "C:\\dest\\SubDir1\\foo.txt",
+                "C:\\dest\\SubDir2\\bar.txt",
+                "C:\\dest\\baz.txt"
+            ];
+            existing_files.forEach(f => assert.isTrue(ctx.vfs.FileExists(f), `Exists: ${f}`));
+
+            assert.isTrue(ctx.vfs.FolderExists("C:\\dest\\subdir1\\empty_folder"));
+        });
     });
 });
