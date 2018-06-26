@@ -195,7 +195,18 @@ class JS_FolderObject extends Component {
         return shortpath;
     }
 
-    get size () {}
+    // Size
+    // ====
+    //
+    // Returns the total size of all files, subfolders, and their
+    // contents in the folder structure, starting with the backing
+    // folder.
+    //
+    get size () {
+        this.ee.emit("Folder.Size");
+        this._assert_exists();
+        return this.vfs.FolderContentsSize(this._path);
+    }
 
     // SubFolders
     // ==========

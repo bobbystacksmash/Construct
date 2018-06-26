@@ -284,4 +284,20 @@ describe("FolderObject", () => {
             assert.equal(new Folder(ctx, "C:\\").ShortPath, "C:\\");
         });
     });
+
+    describe(".Size", () => {
+
+        it("should return size as a number", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1");
+
+            const folder = new Folder(ctx, "C:\\RootOne");
+            assert.isNumber(folder.size);
+            assert.equal(folder.size, 0);
+
+            ctx.vfs.AddFile("C:\\Foo\\bar.txt", "abcd");
+            assert.equal(new Folder(ctx, "C:\\Foo").size, 4);
+        });
+    });
 });
