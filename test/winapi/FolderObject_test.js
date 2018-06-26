@@ -299,6 +299,22 @@ describe("FolderObject", () => {
             ctx.vfs.AddFile("C:\\Foo\\bar.txt", "abcd");
             assert.equal(new Folder(ctx, "C:\\Foo").size, 4);
         });
+
+        it("should throw when trying to retrieve the size of the root folder", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_permission_denied: () => {
+                        throw new Error("root volume - cannot get size");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1");
+
+            const folder = new Folder(ctx, "C:\\");
+            assert.throws(() => folder.size, "root volume - cannot get size");
+        });
     });
 
     describe(".SubFolders", () => {

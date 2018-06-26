@@ -203,9 +203,22 @@ class JS_FolderObject extends Component {
     // contents in the folder structure, starting with the backing
     // folder.
     //
+    // Throws a 'permission denied' error if the folder is the root
+    // folder.
+    //
     get size () {
         this.ee.emit("Folder.Size");
         this._assert_exists();
+
+        if (this._path.toLowerCase() === "c:\\") {
+            this.context.exceptions.throw_permission_denied(
+                "FolderObject",
+                "Cannot get .Size of root folder.",
+                "The current folder is the file system's root, and it is " +
+                    "not possible to request the .Size of this folder."
+            );
+        }
+
         return this.vfs.FolderContentsSize(this._path);
     }
 
