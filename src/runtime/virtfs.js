@@ -1291,14 +1291,17 @@ class VirtualFileSystem {
               symlinks = this.vfs.readdirSymlinks(dirname);
 
         for (let i = 0; i < symlinks.length; i++) {
+
             let link_ptr = this.vfs.readlinkSync(`${dirname}/${symlinks[i]}`);
 
             if (link_ptr.toLowerCase() === ipath.toLowerCase()) {
                 return symlinks[i].toUpperCase();
             }
+
+
         }
 
-        return basename.toUpperCase();
+        return basename;
     }
 
 

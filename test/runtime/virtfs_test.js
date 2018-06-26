@@ -52,6 +52,14 @@ describe("Virtual File System", () => {
 
         });
 
+        it("should return the correct filename case when the file is already a SFN", () => {
+
+            const vfs = make_vfs();
+
+            vfs.AddFolder("C:\\RootOne\\foo");
+            assert.equal(vfs.GetShortName("C:\\RootOne\\foo"), "foo");
+        });
+
         it("should not create links for files which are already valid 8.3 names", () => {
 
             const vfs  = make_vfs(),
@@ -59,9 +67,9 @@ describe("Virtual File System", () => {
 
             vfs.AddFile(path);
 
-            assert.equal(vfs.GetShortName(path), "BAZ.TXT");
-            assert.equal(vfs.GetShortName("C:\\foo\\bar"), "BAR");
-            assert.equal(vfs.GetShortName("C:\\foo"), "FOO");
+            assert.equal(vfs.GetShortName(path), "baz.txt");
+            assert.equal(vfs.GetShortName("C:\\foo\\bar"), "bar");
+            assert.equal(vfs.GetShortName("C:\\foo"), "foo");
             assert.equal(vfs.GetShortName("C:\\"), "");
         });
 
@@ -107,7 +115,7 @@ describe("Virtual File System", () => {
                   path = "C:\\foo\\bar\\baz.txt";
 
             vfs.AddFile(path);
-            assert.equal(vfs.ShortPath(path), "C:\\FOO\\BAR\\BAZ.TXT");
+            assert.equal(vfs.ShortPath(path), path);
         });
     });
 
@@ -620,7 +628,5 @@ describe("Virtual File System", () => {
                 ["helloworld.txt"]
             );
         });
-
-
     });
 });
