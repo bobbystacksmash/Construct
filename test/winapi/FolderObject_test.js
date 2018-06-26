@@ -341,4 +341,137 @@ describe("FolderObject", () => {
             assert.equal(new Folder(ctx, "C:\\").type, "File folder");
         });
     });
+
+    describe("#Copy", () => {
+
+        it("should recursively copy relative path using env('path') into destination", () => {
+
+            const ctx = make_ctx();
+
+            ctx.vfs.AddFile("C:\\Users\\Construct\\RootOne\\SubDir1\\foo.txt");
+            ctx.vfs.AddFile("C:\\Users\\Construct\\RootOne\\SubDir1\\SubDir2\\bar.txt");
+            ctx.vfs.AddFile("C:\\Users\\Construct\\RootOne\\baz.txt");
+
+            ctx.vfs.AddFolder("C:\\Users\\Construct\\Dest");
+
+            const folder = new Folder(ctx, "C:\\Users\\Construct\\RootOne");
+            folder.Copy("Dest");
+
+            assert.isTrue(ctx.vfs.FolderExists("C:\\Users\\Construct\\Dest\\SubDir1"));
+            assert.isTrue(
+                ctx.vfs.FolderExists("C:\\Users\\Construct\\Dest\\SubDir1\\SubDir2")
+            );
+            assert.isTrue(
+                ctx.vfs.FileExists("C:\\Users\\Construct\\Dest\\SubDir1\\foo.txt")
+            );
+            assert.isTrue(
+                ctx.vfs.FileExists("C:\\Users\\Construct\\Dest\\Subdir1\\SubDir2\\bar.txt")
+            );
+            assert.isTrue(
+                ctx.vfs.FileExists("C:\\Users\\Construct\\Dest\\baz.txt")
+            );
+        });
+
+        it("should create the destination if it does not exist", () => {
+
+            const ctx = make_ctx();
+
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\SubDir2\\bar.txt");
+
+            assert.isFalse(ctx.vfs.FolderExists("C:\\dest"));
+
+            const folder = new Folder(ctx, "C:\\RootOne");
+            folder.Copy("C:\\dest");
+
+            assert.isTrue(ctx.vfs.FolderExists("C:\\dest"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dest\\SubDir1\\foo.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dest\\SubDir1\\SubDir2\\bar.txt"));
+        });
+
+        it("should copy a relative folder path with '../'", () => {
+
+            const ctx = make_ctx();
+
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\SubDir2\\bar.txt");
+
+            const folder = new Folder(ctx, "C:\\RootOne\\SubDir1");
+
+            folder.Copy("C:\\RootOne\\..\\Destination");
+
+            assert.isTrue(ctx.vfs.FolderExists("C:\\Destination"));
+            assert.isTrue(ctx.vfs.FolderExists("C:\\Destination\\SubDir2"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\Destination\\SubDir2\\bar.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\Destination\\foo.txt"));
+        });
+
+        it("should throw if overwrite files is false and file exists in destination", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_file_already_exists: () => {
+                        throw new Error("file exists");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\RootOne\\foo.txt");
+            ctx.vfs.AddFile("C:\\dest\\foo.txt");
+
+            const folder    = new Folder(ctx, "C:\\RootOne"),
+                  overwrite = false;
+
+            assert.throws(() => folder.Copy("C:\\dest", overwrite), "file exists");
+        });
+
+        it("should partially copy files and folders before encountering an error", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_file_already_exists: () => {
+                        throw new Error("file exists");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\RootOne\\a.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\b.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\c.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\d.txt");
+
+            ctx.vfs.AddFile("C:\\dest\\c.txt");
+
+            const folder    = new Folder(ctx, "C:\\RootOne"),
+                  overwrite = false;
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\dest\\a.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\dest\\b.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\dest\\d.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dest\\c.txt"));
+
+            assert.throws(() => folder.Copy("C:\\dest", overwrite), "file exists");
+
+            assert.isTrue(ctx.vfs.FileExists("C:\\dest\\a.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dest\\b.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\dest\\d.txt"));
+        });
+
+        it("should throw 'invalid procedure or argument' if destination is a wildcard", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("no wildcards");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
+            ctx.vfs.AddFolder("C:\\dest");
+
+            const folder = new Folder(ctx, "C:\\RootOne");
+            assert.throws(() => folder.Copy("C:\\des*"), "no wildcards");
+        });
+    });
 });

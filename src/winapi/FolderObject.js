@@ -247,8 +247,66 @@ class JS_FolderObject extends Component {
         return "File folder";
     }
 
-    // Methods
-    copy () {}
+    // ###########
+    // # Methods #
+    // ###########
+
+    // Copy
+    // ====
+    //
+    // Recursively copies the backing folder, and all of its sub files
+    // and folders to `destination'.  If `overwrite_files' is set to TRUE,
+    // files which already exist in `destination' will be overwritten.
+    //
+    // The destination path is not relative to `this._path' but rather
+    // the CWD of the [cw]script process which launched it.
+    //
+    copy (destination, overwrite_files) {
+        this.ee.emit("Folder.Copy");
+        this._assert_exists();
+
+        if (this.vfs.IsWildcard(destination)) {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FolderObject",
+                "Destination cannot contain wildcard characters.",
+                "The destination folder cannot contain wildcard characters."
+            );
+        }
+
+        // Unlike FSO.Copy, there is no difference with this Copy
+        // method if destination ends with or without a trailing
+        // separator, so strip it.
+        destination = destination.replace(/[\\/]*$/, "");
+
+        if (this.vfs.PathIsRelative(destination)) {
+            destination = win32path.join(this.context.get_env("path"), destination);
+        }
+
+        if (! this.vfs.FolderExists(destination)) {
+            this.vfs.AddFolder(destination);
+        }
+
+        try {
+            this.vfs.CopyFolder(`${this._path}\\`, destination, overwrite_files);
+        }
+        catch (e) {
+
+            if (e.message.includes("destination file already exists")) {
+                this.context.exceptions.throw_file_already_exists(
+                    "FolderObject",
+                    "Copy cannot overwrite existing file when overwrite = false.",
+                    "Unable to overwrite existing file because the overwrite_files " +
+                        "flag is set to FALSE.  Either change the flag to TRUE or " +
+                        "remove the existing file."
+                );
+            }
+
+            throw e;
+        }
+
+    }
+
+
     createtextfile () {}
 
     // Delete

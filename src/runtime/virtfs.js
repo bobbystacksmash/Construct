@@ -577,7 +577,7 @@ class VirtualFileSystem {
     // Returns TRUE if NAME appears to be a wildcard, else returns FALSE.
     //
     IsWildcard (name) {
-        return /[*<>".?]/g.test(name);
+        return /[*<>"?]/g.test(name);
     }
 
     // BuildPath
