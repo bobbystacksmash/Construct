@@ -63,7 +63,6 @@ class JS_FilesCollection extends Component {
             );
         }
 
-        const found_item_name = files[filename_index];
         return new FileObject(this.context, `${this._path}//${name}`);
     }
 }
