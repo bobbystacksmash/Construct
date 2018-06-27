@@ -525,5 +525,51 @@ describe("Scripting.FileSystemObject", () => {
             fso.CopyFolder("C:\\RootOne\\SubFolder1", "C:\\");
             assert.isTrue(ctx.vfs.FolderExists("C:\\SubFolder1"));
         });
+
+        it("should not throw when source and destination are the same", () => {
+
+            const vfs = MakeFSO();
+
+            ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\foo.txt");
+
+            assert.doesNotThrow(() => vfs.CopyFolder("C:\\RootOne\\SubFolder1",
+                                                     "C:\\RootOne\\SubFolder1"));
+        });
+
+        it("should recursively copy until source and dest paths are equal, then throw", () => {
+
+            const vfs = MakeFSO({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("copy in to self not allowed");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFolder("C:\\RootOne\\a");
+            ctx.vfs.AddFolder("C:\\RootOne\\b");
+            ctx.vfs.AddFolder("C:\\RootOne\\c");
+            ctx.vfs.AddFolder("C:\\RootOne\\d");
+            ctx.vfs.AddFolder("C:\\RootOne\\z");
+            ctx.vfs.AddFile("C:\\RootOne\\a.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\b.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\a\\hi.txt");
+
+            assert.throws(() =>
+                          vfs.CopyFolder("C:\\RootOne\\*", "C:\\RootOne\\z"),
+                          "copy in to self not allowed");
+
+            assert.isTrue(ctx.vfs.FolderExists("C:\\RootOne\\z\\a"));
+            assert.isTrue(ctx.vfs.FolderExists("C:\\RootOne\\z\\b"));
+            assert.isTrue(ctx.vfs.FolderExists("C:\\RootOne\\z\\c"));
+            assert.isTrue(ctx.vfs.FolderExists("C:\\RootOne\\z\\d"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\RootOne\\z\\a\\hi.txt"));
+
+            // Doesn't copy these files, as the copy from rootone\z to
+            // rootone\z throws.  This also ensures search order is
+            // lexically ordered.
+            assert.isFalse(ctx.vfs.FileExists("C:\\RootOne\\z\\a.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\RootOne\\z\\b.txt"));
+        });
     });
 });

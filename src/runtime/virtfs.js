@@ -1065,6 +1065,7 @@ class VirtualFileSystem {
         let isource      = this._ConvertExternalToInternalPath(source),
             idestination = this._ConvertExternalToInternalPath(destination);
 
+        if (isource === idestination) throw new Error("source and destination are equal");
 
         if (source.endsWith("\\") === false) {
             const isource_basename = win32path.basename(isource);

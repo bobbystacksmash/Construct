@@ -146,6 +146,8 @@ class JS_FileSystemObject extends Component {
         source      = this.vfs.Resolve(source);
         destination = this.vfs.Resolve(destination);
 
+        if (source.toLowerCase() === destination.toLowerCase()) return;
+
         const src_basename = win32path.basename(source),
               src_dirname  = win32path.dirname(source),
               dst_basename = win32path.basename(destination),
@@ -168,20 +170,30 @@ class JS_FileSystemObject extends Component {
             );
         }
 
-        if (this.vfs.IsWildcard(src_basename) === false) {
-            this.vfs.CopyFolder(source, destination);
-            return;
-        }
+        const dir_items_list = (this.vfs.IsWildcard(src_basename))
+                  ? this.vfs.FindFolders(src_dirname, src_basename)
+                  : [src_basename];
 
-        // Get a list of all folders matching this wildcard
-        const wildcard_dir_list = this.vfs.FindFolders(src_dirname, src_basename);
+        for (let i = 0; i < dir_items_list.length; i++) {
 
-        for (let i = 0; i < wildcard_dir_list.length; i++) {
-
-            let dir_name = wildcard_dir_list[i],
+            let dir_name = dir_items_list[i],
                 src_path = `${src_dirname}\\${dir_name}`;
 
-            this.vfs.CopyFolder(src_path, destination);
+            try {
+                this.vfs.CopyFolder(src_path, destination);
+            }
+            catch (e) {
+
+                if (e.message.includes("source and destination are eq")) {
+                    this.context.exceptions.throw_invalid_fn_arg(
+                        "Scripting.FileSystemObject",
+                        "A CopyFolder operation has tried to copy in to itself.",
+                        "This error is thrown when a copy operation is attempting to " +
+                            "copy a path in to itself.  All files copied up to this point " +
+                            "will remain, but no more files will be copied."
+                    );
+                }
+            }
         }
     }
 
