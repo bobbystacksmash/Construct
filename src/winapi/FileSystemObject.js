@@ -4,6 +4,7 @@ const Component     = require("../Component");
 const proxify       = require("../proxify2");
 const FSOHelper     = require("../absFileSystemObject");
 const JS_TextStream = require("./TextStream");
+const JS_Folder     = require("./FolderObject");
 const win32path     = require("path").win32;
 
 
@@ -211,52 +212,10 @@ class JS_FileSystemObject extends Component {
     // its Folder object.
     createfolder (path) {
 
-        if (this.vfs.IsPathIllegal(path)) {
-            this.context.exceptions.throw_bad_filename_or_number(
-                "Scripting.FileSystemObject",
-                "Path contains illegal characters.",
-                "At least one part of the path contains an illegal character."
-            );
-        }
+        this.vfs.AddFolder(path);
+        console.log(this.vfs.Stats(path));
 
-        // Does this path already exist?
-        try {
-            if (this.vfs.FolderExists(path)) {
-                this.context.exceptions.throw_file_already_exists(
-                    "Scripting.FileSystemObject",
-                    `Cannot create path ${path} - destination already exists.`,
-                    `Cannot create a file or a folder which already exists.`
-                );
-            }
-
-            this.vfs.AddFolder(path);
-        }
-        catch (e) {
-
-            console.log(">>>", e.message, path);
-
-            if (e.message.includes("Unknown volume")) {
-                this.context.exceptions.throw_path_not_found(
-                    "Scripting.FileSystemObject",
-                    "Volume could not be found.",
-                    "CreateFolder was called with a volume in a path which does " +
-                        "not exist."
-                );
-            }
-
-            if (e.message.includes("Path contains invalid characters.")) {
-                this.context.exceptions.throw_bad_filename_or_number(
-                    "Scripting.FileSystemObject",
-                    "Cannot create folder -- path is invalid.",
-                    "Unable to create the folder requested because some part of the " +
-                        "path string is invalid."
-                );
-            }
-
-            throw e;
-        }
-
-        return this.vfs.AddFolder(path);
+        return
     }
 
     // Creates a specified file name and returns a TextStream object

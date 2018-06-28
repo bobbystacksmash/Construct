@@ -924,10 +924,6 @@ class VirtualFileSystem {
         this.vfs.copyFileSync(isource, idestination, flags);
     }
 
-    CopyDirectoryStructure (source, destination) {
-
-    }
-
     // ReadFileContents
     // ================
     //
@@ -992,6 +988,26 @@ class VirtualFileSystem {
             return false;
         }
     }
+
+    // Stats
+    // =====
+    //
+    // Given a path and returns the Stats object for the given
+    // `path'.  If `path' is a symbolic link, the link is
+    // followed and stats about the link's target are returned.
+    //
+    Stats (path) {
+
+        let ipath = this._ConvertExternalToInternalPath(path);
+
+        try {
+            return this.vfs.statSync(ipath);
+        }
+        catch (e) {
+            throw e;
+        }
+    }
+
 
     // AddFile
     // =======

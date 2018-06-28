@@ -186,68 +186,6 @@ describe("Scripting.FileSystemObject", () => {
         });
     });
 
-
-    xdescribe("#CreateFolder", () => {
-
-        it("should successfully create/return a folder", (done) => {
-
-            let fso = MakeFSO();
-            assert.isFalse(fso.FolderExists("C:\\foo\\bar"));
-
-            let dir = fso.CreateFolder("C:\\foo\\bar");
-            assert.equal(dir.constructor.name, "FolderObject");
-
-            done();
-        });
-
-        it("should throw if the folder already exists", () => {
-
-            let fso = MakeFSO({
-                exceptions: {
-                    throw_file_already_exists: () => {
-                        throw new Error("dir exists");
-                    }
-                }
-            });
-
-            fso.CreateFolder("C:\\foo\\bar");
-
-            assert.throws(() => fso.CreateFolder("C:\\foo\\bar"), "dir exists");
-        });
-
-        it("should throw 'path not found' if volume does not exist", (done) => {
-
-            let fso = MakeFSO({
-                exceptions: {
-                    throw_path_not_found: () => {
-                        throw new Error("drive not found");
-                    }
-                }
-            });
-
-            assert.throws(() => fso.CreateFolder("F:\\foo\\bar"), "drive not found");
-            done();
-        });
-
-        // TODO:
-        //
-        //  - what if the path is invalid?
-        //
-        it("should throw if the path is invalid", (done) => {
-
-            let fso = MakeFSO({
-                exceptions: {
-                    throw_bad_filename_or_number: () => {
-                        throw new Error("bad pathname");
-                    }
-                }
-            });
-
-            assert.throws(() => fso.CreateFolder("C:\\<*.."), "bad pathname");
-            done();
-        });
-    });
-
     const NOOP = () => {};
 
     xdescribe("#CreateTextFile", () => {
@@ -401,7 +339,7 @@ describe("Scripting.FileSystemObject", () => {
     xdescribe("#OpenTextfile", NOOP);
 
 
-    describe("#CopyFolder", () => {
+    xdescribe("#CopyFolder", () => {
 
         it("should copy a folder from one place to another with all files", () => {
 
@@ -653,4 +591,18 @@ describe("Scripting.FileSystemObject", () => {
             assert.isTrue(ctx.vfs.FileExists("C:\\dest\\HelloWorld\\SubFolderA\\longfilename.txt"));
         });
     });
+
+
+    describe("#CreateFolder", () => {
+
+        it("should successfully create and return a Folder instance", () => {
+
+            let fso = MakeFSO();
+            assert.isFalse(ctx.vfs.FolderExists("C:\\foo\\bar"));
+
+            let dir = fso.CreateFolder("C:\\foo\\bar");
+            assert.equal(dir.constructor.name, "FolderObject");
+        });
+    });
+
 });
