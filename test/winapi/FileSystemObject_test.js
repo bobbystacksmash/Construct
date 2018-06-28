@@ -622,8 +622,6 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should copy and all SFNs should resolve correctly", () => {
 
-            // TODO: FIX THIS!
-
             const fso = MakeFSO();
 
             ctx.vfs.AddFile("C:\\HelloWorld\\SubFolderA\\LongFilename.txt", "source file");
@@ -639,8 +637,20 @@ describe("Scripting.FileSystemObject", () => {
 
             // Let's change the contents of the file and make sure the
             // link points to the copy not the original.
-            //ctx.vfs.AddFile("C:\\dest\\HELLOW~1\\SUBFOL~1\\LONGFI~1.TXT", "testing...");
+            ctx.vfs.AddFile("C:\\dest\\HELLOW~1\\SUBFOL~1\\LONGFI~1.TXT", "testing...");
+        });
 
+        it("should copy to paths which contain '/../'", () => {
+
+            const fso = MakeFSO();
+
+            ctx.vfs.AddFile("C:\\HelloWorld\\SubFolderA\\LongFilename.txt", "source file");
+            ctx.vfs.AddFolder("C:\\dest");
+
+            fso.CopyFolder("C:\\HelloWorld\\SubFolderA\\..", "C:\\dest");
+
+            assert.isTrue(ctx.vfs.FolderExists("C:\\dest\\HelloWorld\\SubFolderA"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dest\\HelloWorld\\SubFolderA\\longfilename.txt"));
         });
     });
 });
