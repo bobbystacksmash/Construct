@@ -547,6 +547,55 @@ describe("Virtual File System", () => {
             });
         });
 
+        describe("#DeleteMatching", () => {
+
+            it("should delete matching top-level folders only", () => {
+
+                const vfs = make_vfs();
+
+                vfs.AddFolder("C:\\RootOne\\SubDir1");
+                vfs.AddFolder("C:\\RootOne\\SubDir2");
+                vfs.AddFolder("C:\\RootOne\\SubDir3");
+                vfs.AddFolder("C:\\RootOne\\foo\\SubDir1");
+                vfs.AddFolder("C:\\RootOne\\bar\\SubDir1");
+                vfs.AddFile("C:\\RootOne\\subdir1.txt");
+
+                assert.doesNotThrow(
+                    () => vfs.DeleteInFolderMatching("C:\\RootOne", "SubDir*", { files: false })
+                );
+
+                assert.isFalse(vfs.FolderExists("C:\\RootOne\\SubDir1"));
+                assert.isFalse(vfs.FolderExists("C:\\RootOne\\SubDir2"));
+                assert.isFalse(vfs.FolderExists("C:\\RootOne\\SubDir3"));
+
+                assert.isTrue(vfs.FolderExists("C:\\RootOne\\foo"));
+                assert.isTrue(vfs.FolderExists("C:\\RootOne\\foo\\SubDir1"));
+
+                assert.isTrue(vfs.FolderExists("C:\\RootOne\\bar"));
+                assert.isTrue(vfs.FolderExists("C:\\RootOne\\bar\\SubDir1"));
+
+                assert.isTrue(vfs.FileExists("C:\\RootOne\\subdir1.txt"));
+            });
+
+            it("should delete matching top-level files only", () => {
+
+                const vfs = make_vfs();
+
+                vfs.AddFile("C:\\RootOne\\foo_a.txt");
+                vfs.AddFile("C:\\RootOne\\foo_b.txt");
+                vfs.AddFile("C:\\RootOne\\foo_c.txt");
+                vfs.AddFile("C:\\RootOne\\bar.txt");
+                vfs.AddFile("C:\\RootOne\\baz.txt");
+
+                vfs.AddFolder("C:\\RootOne\\foo\\bar");
+
+                vfs.DeleteInFolderMatching("C:\\RootOne", "foo*", { files: true, folders: false });
+
+                assert.deepEqual(vfs.FindAllFiles("C:\\RootOne"), ["bar.txt", "baz.txt"]);
+                assert.deepEqual(vfs.FindAllFolders("C:\\RootOne"), ["foo"]);
+            });
+        });
+
         describe("#RenameFile", () => {
 
             it("should allow the moving of a file when the dest file does not exist", () => {
