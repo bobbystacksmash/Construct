@@ -208,14 +208,67 @@ class JS_FileSystemObject extends Component {
         }
     }
 
-    // Creates a single new folder in the `path' specified and returns
-    // its Folder object.
+    // CreateFolder
+    // ============
+    //
+    // Creates a folder at `path'.  If `path' is a relative path, it
+    // is considered relative to the CWD of the process.
+    //
+    // Throws a 'file not found' exception if the folder already exists.
+    //
     createfolder (path) {
+        this.ee.emit("FileSystemObject.CreateFolder");
+
+        if (path === null) {
+            this.context.exceptions.throw_type_mismatch(
+                "FileSystemObject",
+                "Cannot pass 'null' to #CreateFolder.",
+                "The path specified has been evaluated to 'null', which cannot " +
+                    "be translated in to a valid foldername."
+            );
+        }
+
+        if (typeof path !== "string") {
+            try {
+                path = path.toString();
+            }
+            catch (e) {
+                path = "";
+            }
+        }
+
+        const invalid_arg = [
+            path === undefined,
+            path === "",
+            path instanceof Array,
+            this.vfs.IsWildcard(path),
+            this.vfs.IsPathIllegal(path)
+        ].some(x => x === true);
+
+        if (invalid_arg) {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FileSystemObject",
+                "Cannot create folder using given parameter.",
+                "The provided parameter cannot be used as a valid foldername."
+            );
+        }
+
+        if (this.vfs.PathIsRelative(path)) {
+            path = win32path.join(this.context.get_env("path"), path);
+        }
+
+        if (this.vfs.FolderExists(path)) {
+            this.context.exceptions.throw_file_already_exists(
+                "Scripting.FileSystemObject",
+                "Cannot create folder because it already exists.",
+                "The folder cannot be created because it already exists."
+            );
+        }
+
+        path = "" + path;
 
         this.vfs.AddFolder(path);
-        console.log(this.vfs.Stats(path));
-
-        return
+        return new JS_Folder(this.context, path);
     }
 
     // Creates a specified file name and returns a TextStream object
@@ -297,8 +350,29 @@ class JS_FileSystemObject extends Component {
     }
 
     // Deletes a specified file.
-    deletefile () {
+    deletefile (filespec, force) {
+        this.ee.emit("FileSystemObject.DeleteFile");
 
+        const path    = win32path.dirname(filespec),
+              pattern = win32path.basename(filespec);
+
+        if (this.vfs.IsWildcard(path)) {
+            this.context.exceptions.throw_bad_filename_or_number(
+                "FileSystemObject",
+                "No files match the delete expression.",
+                "There are no files which match the delete expression."
+            );
+        }
+
+        let num_deleted = this.vfs.DeleteInFolderMatching(path, pattern);
+
+        if (num_deleted === 0) {
+            this.context.exceptions.throw_file_not_found(
+                "FileSystemObject",
+                "Unable to delete: no files found.",
+                "No files were found which match the pattern expression."
+            );
+        }
     }
 
     // Deletes a specified folder and its contents.

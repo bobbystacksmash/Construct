@@ -1197,17 +1197,23 @@ class VirtualFileSystem {
         const files   = this.FindFiles(path, pattern),
               folders = this.FindFolders(path, pattern);
 
+        let num_deleted = 0;
+
         if (options.files && files) {
             for (let i = 0; i < files.length; i++) {
                 this.vfs.unlinkSync(`${ipath}/${files[i]}`);
+                num_deleted++;
             }
         }
 
         if (options.folders && folders) {
             for (let i = 0; i < folders.length; i++) {
                 this.vfs.unlinkSync(`${ipath}/${folders[i]}`);
+                num_deleted++;
             }
         }
+
+        return num_deleted;
     }
 
     // Rename
