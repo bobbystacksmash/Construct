@@ -51,29 +51,29 @@ describe("Scripting.FileSystemObject", () => {
 
     describe("#BuildPath", () => {
 
-        it("should build a path from two parts", (done) => {
+        it("should build a path from two parts", () => {
 
             let fso = MakeFSO();
 
             assert.equal(fso.BuildPath("foo", "bar"), "foo\\bar");
             assert.equal(fso.BuildPath("\\\\foo\\bar", "testing\\test.txt"),
                          "\\\\foo\\bar\\testing\\test.txt");
-            done();
+
         });
 
-        it("should just combine the two parts, not check if they're valid", (done) => {
+        it("should just combine the two parts, not check if they're valid", () => {
 
             let fso = MakeFSO();
 
             assert.equal(fso.BuildPath("C:\\foo\\bar", "../../../baz"),
                          "C:\\foo\\bar\\../../../baz");
-            done();
+
         });
     });
 
     describe("#CopyFile", () => {
 
-        it("should throw file not found if src file does not exist", (done) => {
+        it("should throw file not found if src file does not exist", () => {
 
             fso = MakeFSO({
                 exceptions: {
@@ -88,7 +88,7 @@ describe("Scripting.FileSystemObject", () => {
                           "cannot find src file"
                          );
 
-            done();
+
         });
 
         it("should throw path not found if the dest dir does not exist", () => {
@@ -436,6 +436,7 @@ describe("Scripting.FileSystemObject", () => {
             assert.isTrue(ctx.vfs.FileExists("C:\\dest\\HelloWorld\\SubFolderA\\longfilename.txt"));
         });
     });
+
     describe("#CreateFolder", () => {
 
         it("should successfully create and return a Folder instance", () => {
@@ -560,7 +561,7 @@ describe("Scripting.FileSystemObject", () => {
 
     xdescribe("#CreateTextFile", () => {
 
-        it("should throw 'bad filename or number' if a wildcard appears in the filename", (done) => {
+        it("should throw 'bad filename or number' if a wildcard appears in the filename", () => {
 
             let fso = MakeFSO({
                 exceptions: {
@@ -573,10 +574,10 @@ describe("Scripting.FileSystemObject", () => {
             assert.throws(() => fso.CreateTextFile("C:\\foo>.txt"),   "wildcards not permitted");
             assert.throws(() => fso.CreateTextFile("C:\\*\\foo.txt"), "wildcards not permitted");
 
-            done();
+
         });
 
-        it("should throw if overwriting is is disabled", (done) => {
+        it("should throw if overwriting is is disabled", () => {
 
             let fso = MakeFSO({
                 exceptions: {
@@ -591,21 +592,21 @@ describe("Scripting.FileSystemObject", () => {
             assert.throws(() => fso.CreateTextFile("C:\\file.txt", OVERWRITE), "file exists...");
             assert.equal(ctx.vfs.GetFile("C:\\file.txt").contents, "abcd");
 
-            done();
+
         });
 
-        it("should create the text file in the CWD if no path is given", (done) => {
+        it("should create the text file in the CWD if no path is given", () => {
 
             let fso = MakeFSO();
 
             assert.isFalse(ctx.vfs.GetFile("C:\\Users\\Construct\\file.txt"));
             fso.CreateTextFile("file.txt");
-            assert.equal(ctx.vfs.GetFile("C:\\Users\\Construct\\file.txt").constructor.name, "FileObject");
-
-            done();
+            assert.equal(
+                ctx.vfs.GetFile("C:\\Users\\Construct\\file.txt").constructor.name, "FileObject"
+            );
         });
 
-        it("should create a file even if the path is partial", (done) => {
+        it("should create a file even if the path is partial", () => {
 
             let fso = new FSO(ctx);
 
@@ -613,10 +614,10 @@ describe("Scripting.FileSystemObject", () => {
             fso.CreateTextFile("../../relative.txt");
             assert.equal(ctx.vfs.GetFile("C:\\relative.txt").constructor.name, "FileObject");
 
-            done();
+
         });
 
-        it("should throw if the filepath does not exist", (done) => {
+        it("should throw if the filepath does not exist", () => {
 
             let fso = MakeFSO({
                 exceptions: {
@@ -630,10 +631,10 @@ describe("Scripting.FileSystemObject", () => {
                 () => fso.CreateTextFile("C:\\bogus\\path.txt"), "path not found (av:false)"
             );
 
-            done();
+
         });
 
-        it("should return a TextStream instance", (done) => {
+        it("should return a TextStream instance", () => {
 
             let fso = MakeFSO(),
                 ts  = fso.CreateTextFile("file.txt");
@@ -645,10 +646,10 @@ describe("Scripting.FileSystemObject", () => {
 
             ts_api.forEach((method) => assert.isFunction(ts[method]));
 
-            done();
+
         });
 
-        it("should open a text file and then fail to write to it by default", (done) => {
+        it("should open a text file and then fail to write to it by default", () => {
 
             ctx.vfs.AddFile("C:\\file.txt", "Hello, World!");
 
@@ -660,10 +661,10 @@ describe("Scripting.FileSystemObject", () => {
 
             assert.equal(ctx.vfs.GetFile("C:\\file.txt").contents, "overwrite successful");
 
-            done();
+
         });
 
-        it("should write unicode if signalled to do so", (done) => {
+        it("should write unicode if signalled to do so", () => {
 
             let fso = MakeFSO(),
                 ts  = fso.CreateTextFile("C:\\unicode.txt", true, true);
@@ -685,15 +686,10 @@ describe("Scripting.FileSystemObject", () => {
                     0x00, //
                 ])
             );
-
-            done();
         });
     });
 
     describe("#DeleteFile", () => {
-
-        // does nothing (not even throw) for Folders which are passed
-        // to DeleteFile.
 
         it("should delete the file given in the supplied filespec", () => {
 
@@ -752,29 +748,62 @@ describe("Scripting.FileSystemObject", () => {
                           "no wildcards");
         });
 
-        // todo : what if nothing matches?
-        // todo : what is pattern is literal
-        // todo : what if path is root
-        // todo : what if path is invalid?
-
-        /*it("should recursively delete all files and folders from filespec", () => {
+        it("should delete the file if the filename is literal", () => {
 
             const fso = MakeFSO();
 
-            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\SubDir2\\foo.txt");
-            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\bar.txt");
-            ctx.vfs.AddFile("C:\\RootOne\\baz.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\foo.txt");
+            assert.doesNotThrow(() => fso.DeleteFile("C:\\RootOne\\foo.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\RootOne\\foo.txt"));
+        });
 
-            assert.isTrue(ctx.vfs.FileExists("C:\\RootOne\\SubDir1\\SubDir2\\foo.txt"));
-            assert.isTrue(ctx.vfs.FileExists("C:\\RootOne\\SubDir1\\bar.txt"));
-            assert.isTrue(ctx.vfs.FileExists("C:\\RootOne\\baz.txt"));
+        it("should delete files in the CWD if the path is relative", () => {
 
-            fso.DeleteFile("C:\\RootOne");
+            const fso  = MakeFSO(),
+                  file = ctx.get_env("path") + "\\foo.txt";
 
-            assert.isFalse(ctx.vfs.FileExists("C:\\RootOne\\SubDir1\\SubDir2\\foo.txt"));
-            assert.isFalse(ctx.vfs.FileExists("C:\\RootOne\\SubDir1\\bar.txt"));
-            assert.isFalse(ctx.vfs.FileExists("C:\\RootOne\\baz.txt"));
-        });*/
+            ctx.vfs.AddFile(file);
+            assert.isTrue(ctx.vfs.FileExists(file));
+
+            fso.DeleteFile(file);
+            assert.isFalse(ctx.vfs.FileExists(file));
+        });
+
+        it("should do the right thing when deleting from the root", () => {
+
+            const fso = MakeFSO({
+                ENVIRONMENT: { path: "C:\\" }
+            });
+
+            ctx.vfs.AddFile("C:\\foo.txt");
+            assert.isTrue(ctx.vfs.FileExists("C:\\foo.txt"));
+
+            fso.DeleteFile("C:\\foo.txt");
+            assert.isFalse(ctx.vfs.FileExists("C:\\foo.txt"));
+        });
+
+        it("should throw 'bad filename or number' if the path is invalid", () => {
+
+            const fso = MakeFSO({
+                exceptions: {
+                    throw_bad_filename_or_number: () => {
+                        throw new Error("invalid filename");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.DeleteFile(":.*"), "invalid filename");
+        });
+
+        it("should do nothing when the file to delete is a folder", () => {
+
+            const fso  = MakeFSO(),
+                  path = "C:\\RootOne\\SubDir1";
+
+            ctx.vfs.AddFolder(path);
+            assert.doesNotThrow(() => fso.DeleteFile(path));
+            assert.isTrue(ctx.vfs.FolderExists(path));
+        });
     });
 
     xdescribe("#DeleteFolder", NOOP);

@@ -353,16 +353,22 @@ class JS_FileSystemObject extends Component {
     deletefile (filespec, force) {
         this.ee.emit("FileSystemObject.DeleteFile");
 
-        const path    = win32path.dirname(filespec),
-              pattern = win32path.basename(filespec);
+        let path    = win32path.dirname(filespec),
+            pattern = win32path.basename(filespec);
 
-        if (this.vfs.IsWildcard(path)) {
+        if (this.vfs.IsWildcard(path) || this.vfs.IsFilespecIllegal(pattern)) {
             this.context.exceptions.throw_bad_filename_or_number(
                 "FileSystemObject",
                 "No files match the delete expression.",
                 "There are no files which match the delete expression."
             );
         }
+
+        if (this.vfs.PathIsRelative(path)) {
+            path = win32path.join(this.context.get_env("path"), path);
+        }
+
+        if (this.vfs.FolderExists(filespec)) return 0;
 
         let num_deleted = this.vfs.DeleteInFolderMatching(path, pattern);
 
