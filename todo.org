@@ -1,0 +1,43 @@
+* ExceptionHandler
+** TODO Update the exception handler to also include the name
+
+* Virtual File System
+** TODO What happens with files/folders which have spaces in the name?
+** TODO Add tests for 'Move' method.
+
+* FileSystemObject
+** TODO DeleteFolder accepts wildcards in the path.
+
+** TODO CreateFolder looks unfinished? Figure out why.
+
+* FoldersCollection
+** DONE Add the '.Item' method + tests.
+** DONE throw if item value is not a string. "invalid proc call"
+
+* FilesCollection
+** DONE Add the files collection .Item tests for SFN/LFNs
+** DONE Throw if item value is not a string. "invalid proc call"
+
+
+* FileObject
+** TODO Finish the File object method / properties + tests
+** TODO add the test source file
+** TODO add a .tostring
+
+* FolderObject
+** TODO Add code to throw if the folder is a file
+** TODO Finish the FolderObject method / properties + tests
+** TODO Add the methods for the FolderObject
+** TODO add a .tostring which prints path to backing obj
+
+* Add to issue tracker
+** TODO Code such as `WScript.Echo(filescollection)` throws a type mismatch exception
+Need to figure out which objects are "tainted" in such a way that they
+cannot be printed directly.  Perhaps this could be added to their
+.toString options?
+
+* Events
+** TODO Test out moving alert information in to proxify, rather than each method individually.
+
+* Proxify
+** TODO Fix nasty but that won't let us console.log any proxified objects.

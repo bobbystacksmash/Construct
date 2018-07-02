@@ -99,6 +99,25 @@ class JS_FileObject extends Component {
         return win32path.basename(this._path);
     }
 
+    // [set] Name
+    // ==========
+    //
+    // Renames the current backing file to be the new name.
+    //
+    set name (new_name) {
+
+        this._assert_exists();
+
+        // todo - how do we handle the root volume?
+
+        const dirname  = win32path.dirname(this._path),
+              new_path = `${dirname}\\${new_name}`;
+
+        // try/catch this!
+        this.vfs.Rename(this._path, new_path);
+        this._path = new_path;
+    }
+
     get parentfolder () {}
     get path () {}
     get shortname () {}
