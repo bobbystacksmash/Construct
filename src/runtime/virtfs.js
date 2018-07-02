@@ -760,6 +760,17 @@ class VirtualFileSystem {
         return path_parts.some(p => /[<>:"\/\\\|?*]/g.test(p));
     }
 
+    // IsFilespecIllegal
+    // =================
+    //
+    // Checks if the given filename is valid.  All wildcard characters
+    // are considered "legal" characters.
+    //
+    IsFilespecIllegal (filespec) {
+        // TODO: figure out what other chars make this path illegal.
+        return /[:\|]/g.test(filespec);
+    }
+
 
     // Resolve
     // =======
@@ -1087,7 +1098,7 @@ class VirtualFileSystem {
 
         try {
             this.vfs.accessSync(ipath);
-            return true;
+            return this.vfs.lstatSync(ipath).isDirectory();
         }
         catch (_) {
             return false;
