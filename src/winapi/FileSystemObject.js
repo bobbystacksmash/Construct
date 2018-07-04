@@ -1,11 +1,12 @@
 // https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/windows-scripting/z9ty6h50(v=vs.84)
 
-const Component     = require("../Component");
-const proxify       = require("../proxify2");
-const FSOHelper     = require("../absFileSystemObject");
-const JS_TextStream = require("./TextStream");
-const JS_Folder     = require("./FolderObject");
-const win32path     = require("path").win32;
+const Component           = require("../Component");
+const proxify             = require("../proxify2");
+const FSOHelper           = require("../absFileSystemObject");
+const JS_TextStream       = require("./TextStream");
+const JS_Folder           = require("./FolderObject");
+const JS_DrivesCollection = require("./DrivesCollection");
+const win32path           = require("path").win32;
 
 
 class JS_FileSystemObject extends Component {
@@ -27,8 +28,19 @@ class JS_FileSystemObject extends Component {
 
     // Returns a Drives collection consisting of all Drive objects
     // available on the local machine.
-    get drives () {}
-    set drives (_) {}
+    get drives () {
+        this.ee.emit("FileSystemObject.Drives");
+        return new JS_DrivesCollection(this.context);
+    }
+
+    set drives (_) {
+
+        this.context.exceptions.throw_unsupported_prop_or_method(
+            "FileSystemObject",
+            "Cannot assign to the '.drives' property.",
+            "The '.drives' property does not support assignment and is read-only."
+        );
+    }
 
     //
     // METHODS
@@ -427,13 +439,35 @@ class JS_FileSystemObject extends Component {
 
     // Returns true if the specified drive exists; false if it does
     // not.
-    driveexists () {
+    driveexists (drivespec) {
+        this.ee.emit("FileSystemObject.DriveExists");
 
+        drivespec = drivespec.toLowerCase();
+
+        switch (drivespec) {
+        case "c":
+        case "c:":
+        case "c:\\":
+        case "c:/":
+            return true;
+
+        default:
+            return false;
+        }
     }
 
     // Returns true if a specified file exists; false if it does not.
-    fileexists () {
+    fileexists (filepath) {
 
+        if (this.vfs.IsWildcard(filepath) || /[\\/]$/.test(filepath)) {
+            return false;
+        }
+
+        if (this.vfs.PathIsRelative(filepath)) {
+            filepath = win32path.join(this.context.get_env("path"), filepath);
+        }
+
+        return this.vfs.FileExists(filepath);
     }
 
     // Returns true if a specified folder exists; false if it does

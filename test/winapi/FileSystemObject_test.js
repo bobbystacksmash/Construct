@@ -49,7 +49,7 @@ function MakeFSO (opts) {
 
 describe("Scripting.FileSystemObject", () => {
 
-    /*describe("#BuildPath", () => {
+    describe("#BuildPath", () => {
 
         it("should build a path from two parts", () => {
 
@@ -531,9 +531,9 @@ describe("Scripting.FileSystemObject", () => {
         it("should create a folder named '[Object object]' for folder name param '{}'", () => {
 
             const fso = MakeFSO();
-            assert.isFalse(ctx.vfs.FileExists("C:\\Users\\Construct\\[Object object]"));
+            assert.isFalse(ctx.vfs.FolderExists("C:\\Users\\Construct\\[Object object]"));
             fso.CreateFolder({});
-            assert.isTrue(ctx.vfs.FileExists("C:\\Users\\Construct\\[object Object]"));
+            assert.isTrue(ctx.vfs.FolderExists("C:\\Users\\Construct\\[object Object]"));
         });
 
         it("should throw 'bad filename or number' if the path param is invalid", () => {
@@ -802,9 +802,7 @@ describe("Scripting.FileSystemObject", () => {
             assert.doesNotThrow(() => fso.DeleteFile(path));
             assert.isTrue(ctx.vfs.FolderExists(path));
         });
-    });*/
-
-    const NOOP = () => {};
+    });
 
     describe("#DeleteFolder", () => {
 
@@ -910,12 +908,92 @@ describe("Scripting.FileSystemObject", () => {
             ctx.vfs.AddFolder("C:\\RootOne\\SubDir1");
             assert.throws(() => fso.DeleteFolder("C:\\RootOne\\"), "path ends with trailing sep");
         });
+        });
+
+        describe("#DriveExists", () => {
+
+        it("should return true for 'C', 'C:' or 'C:\\'", () => {
+
+        const fso = MakeFSO();
+
+        let true_drives  = ["C", "C:", "C:\\", "c:/"],
+        false_drives = ["D", "A:\\", ""];
+
+        true_drives.forEach(d => assert.isTrue(fso.DriveExists(d)));
+        false_drives.forEach(d => assert.isFalse(fso.DriveExists(d)));
+        });
+        });
+
+    describe(".Drives", () => {
+
+        it("should return a DrivesCollection object", () => {
+
+            const fso = MakeFSO(),
+                  dco = fso.Drives;
+
+            assert.equal(dco.count, 1);
+            assert.equal(dco.item("c").path, "C:");
+        });
+
+        it("should throw if the DrivesCollection property is assigned to", () => {
+
+            const fso = MakeFSO({
+                exceptions: {
+                    throw_unsupported_prop_or_method: () => {
+                        throw new Error(".drives is read only");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.Drives = 5, "drives is read only");
+        });
+    });
+
+    describe("#FileExists", () => {
+
+        it("should return true|false upon file existance", () => {
+
+            const fso = MakeFSO();
+
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir2\\bar.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir3\\baz.txt");
+            ctx.vfs.AddFile(`${ctx.get_env("path")}\\foo.txt`);
+
+            const true_paths = [
+                "C:\\RootOne\\SubDir1\\foo.txt",
+                "../../RootOne\\SubDir2\\bar.txt",
+                "foo.txt"
+            ];
+
+            true_paths.forEach(p => assert.isTrue(fso.FileExists(p)));
+
+            const false_paths = [
+                "C:\\Foo.txt",
+                "C:\\Users\\Construct",
+                "C:\\RootOne\\SubDir1\\foo.txt\\",
+                "D:\\foo.txt",
+                ""
+            ];
+
+            false_paths.forEach(p => assert.isFalse(fso.FileExists(p)));
+        });
+
+        it("should return false if filespec contains wildcard characters", () => {
+
+            const fso = MakeFSO();
+
+            ctx.vfs.AddFile("C:\\RootOne\\foo.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\bar.txt");
+
+            assert.isFalse(fso.FileExists("C:\\RootOne\\*.txt"));
+        });
     });
 
 
-    xdescribe("#DriveExists", NOOP);
+    const NOOP = () => {};
 
-    xdescribe("#FileExists", NOOP);
+
     xdescribe("#FolderExists", NOOP);
     xdescribe("#GetAbsolutePathName", NOOP);
     xdescribe("#GetBaseName", NOOP);
@@ -932,7 +1010,4 @@ describe("Scripting.FileSystemObject", () => {
     xdescribe("#MoveFile", NOOP);
     xdescribe("#MoveFolder", NOOP);
     xdescribe("#OpenTextfile", NOOP);
-
-
-
 });

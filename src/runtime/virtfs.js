@@ -1070,9 +1070,11 @@ class VirtualFileSystem {
     //
     FileExists (filepath) {
 
+        let ipath = this._ConvertExternalToInternalPath(filepath);
+
         try {
-            this.vfs.accessSync(this._ConvertExternalToInternalPath(filepath));
-            return true;
+            this.vfs.accessSync(this._ConvertExternalToInternalPath(ipath));
+            return this.vfs.lstatSync(ipath).isFile();
         }
         catch (_) {
             return false;
