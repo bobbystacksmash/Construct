@@ -62,6 +62,12 @@ class JS_FoldersCollection extends Component {
         const FolderObject = require("./FolderObject");
         return new FolderObject(this.context, `${this._path}//${name}`);
     }
+
+    add (new_folder) {
+
+        // TODO!
+
+    }
 }
 
 module.exports = function create(context, path) {

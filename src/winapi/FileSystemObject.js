@@ -5,6 +5,7 @@ const proxify             = require("../proxify2");
 const FSOHelper           = require("../absFileSystemObject");
 const JS_TextStream       = require("./TextStream");
 const JS_Folder           = require("./FolderObject");
+const JS_File             = require("./FileObject");
 const JS_DrivesCollection = require("./DrivesCollection");
 const win32path           = require("path").win32;
 
@@ -326,11 +327,9 @@ class JS_FileSystemObject extends Component {
                 );
             }
 
-            let file = this.context.vfs.AddFile(file_parts.orig_path);
-
             return new JS_TextStream(
                 this.context,
-                file.Path,
+                file_parts.orig_path,
                 false, // CAN READ?   No.
                 1,
                 unicode
@@ -472,20 +471,40 @@ class JS_FileSystemObject extends Component {
 
     // Returns true if a specified folder exists; false if it does
     // not.
-    folderexists (pathspec) {
-        return (this.vfs.GetFolder(pathspec)) ? true : false;
+    folderexists (dirpath) {
+
+        if (this.vfs.IsWildcard(dirpath)) {
+            return false;
+        }
+
+        if (this.vfs.PathIsRelative(dirpath)) {
+            dirpath = win32path.join(this.context.get_env("path"), dirpath);
+        }
+
+        return this.vfs.FolderExists(dirpath);
     }
 
     // Returns a complete and unambiguous path from a provided path
     // specification.
-    getabsolutepathname () {
+    getabsolutepathname (path) {
 
+        if (this.vfs.PathIsRelative(path)) {
+            path = win32path.join(this.context.get_env("path"), path);
+        }
+
+        return path;
     }
 
     // Returns a string containing the base name of the last
     // component, less any file extension, in a path.
-    getbasename () {
+    getbasename (path) {
 
+        if (path === ".") return "";
+        if (path === "..") return ".";
+
+        let basename = win32path.basename(path);
+        basename = basename.replace(/\.[^.]*$/g, "");
+        return basename;
     }
 
     // Returns a Drive object corresponding to the drive in a

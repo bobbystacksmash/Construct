@@ -44,6 +44,8 @@ function MakeFSO (opts) {
     // the created context object should it need to.
     ctx = new_ctx;
 
+    vfs.AddFolder(ctx.get_env("path"));
+
     return new FSO(new_ctx);
 }
 
@@ -991,12 +993,109 @@ describe("Scripting.FileSystemObject", () => {
     });
 
 
+    describe("#FolderExists", () => {
+
+        it("should return true|false upon file existance", () => {
+
+            const fso = MakeFSO();
+
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir2\\bar.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir3\\baz.txt");
+            ctx.vfs.AddFile(`${ctx.get_env("path")}\\foo.txt`);
+            ctx.vfs.AddFolder(`${ctx.get_env("path")}\\hello`);
+
+            const true_paths = [
+                "C:\\RootOne\\SubDir1",
+                "C:\\RootOne\\SubDir2\\",
+                "../../RootOne\\SubDir2",
+                "hello",
+                "C:\\",
+                "../../../../../"
+            ];
+
+            true_paths.forEach(p => assert.isTrue(fso.FolderExists(p)));
+
+            const false_paths = [
+                "C:\\RootOne\\SubDir1\\foo.txt",
+                "C:\\does\\not\\exist",
+            ];
+
+            false_paths.forEach(p => assert.isFalse(fso.FolderExists(p)));
+        });
+
+        it("should return false if filespec contains wildcard characters", () => {
+
+            const fso = MakeFSO();
+
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\Subdir2\\bar.txt");
+
+            assert.isFalse(fso.FolderExists("C:\\RootOne\\SubDir*"));
+        });
+    });
+
+    describe("#GetAbsolutePathName", () => {
+
+        it("should return the drive letter and complete path of CWD if arg is '.'", () => {
+            const fso = MakeFSO();
+            assert.equal(fso.GetAbsolutePathName("."), ctx.get_env("path"));
+        });
+
+        it("should return the full path to the parent folder if arg is '..'", () => {
+            const fso = MakeFSO();
+            assert.equal(fso.GetAbsolutePathName(".."), "C:\\Users");
+        });
+
+        it("should concat CWD and filename if filename is relative", () => {
+            const fso  = MakeFSO(),
+                  path = `${ctx.get_env("path")}\\foo.txt`;
+
+            ctx.vfs.AddFile(path);
+            assert.equal(fso.GetAbsolutePathName("foo.txt"), path);
+        });
+
+        it("should allow wildcards anywhere in the path", () => {
+
+            const fso   = MakeFSO(),
+                  paths = [
+                      { in: "C:\\Users\\*\\Desktop\\*", out: "C:\\Users\\*\\Desktop\\*" },
+                      { in: "foo.*", out: "C:\\Users\\Construct\\foo.*" },
+                      { in: "", out: "C:\\Users\\Construct" }
+                  ];
+
+            paths.forEach(p => assert.equal(fso.GetAbsolutePathName(p.in), p.out));
+        });
+
+    });
+
+    describe("#GetBaseName", () => {
+
+        it("should return an empty string if the input path is '.'", () => {
+            assert.equal((MakeFSO()).GetBaseName("."), "");
+        });
+
+        it("should return '.' if input string is '..'", () => {
+            assert.equal((MakeFSO()).GetBaseName(".."), ".");
+        });
+
+        it("should strip off the last '.EXT' part of a filename", () => {
+            const paths = [
+                { in: "C:\\foo.txt", out: "foo" },
+                { in: "C:\\*.txt", out: "*" },
+                { in: "foo.txt.gz", out: "foo.txt" },
+                { in: "foo.", out: "foo" }
+            ];
+
+            paths.forEach(p => assert.equal(
+                (MakeFSO()).GetBaseName(p.in),
+                p.out
+            ));
+        });
+    });
+
     const NOOP = () => {};
 
-
-    xdescribe("#FolderExists", NOOP);
-    xdescribe("#GetAbsolutePathName", NOOP);
-    xdescribe("#GetBaseName", NOOP);
     xdescribe("#GetDrive", NOOP);
     xdescribe("#GetDriveName", NOOP);
     xdescribe("#GetExtensionName", NOOP);

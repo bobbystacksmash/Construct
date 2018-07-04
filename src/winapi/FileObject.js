@@ -119,9 +119,16 @@ class JS_FileObject extends Component {
     }
 
     get parentfolder () {}
-    get path () {}
+
+    get path () {
+        // TODO
+        return this._path;
+    }
+
     get shortname () {}
+
     get shortpath () {}
+
     get size () {}
 
     get type () {}
