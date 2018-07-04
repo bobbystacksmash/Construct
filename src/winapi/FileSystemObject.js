@@ -379,11 +379,50 @@ class JS_FileSystemObject extends Component {
                 "No files were found which match the pattern expression."
             );
         }
+
+        return num_deleted;
     }
 
     // Deletes a specified folder and its contents.
-    deletefolder () {
+    deletefolder (pathspec) {
+        this.ee.emit("FileSystemObject.DeleteFolder");
 
+        let path    = win32path.dirname(pathspec),
+            pattern = win32path.basename(pathspec);
+
+        if (/[\\/]+$/.test(path)) {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FileSystemObject",
+                "DeleteFolder paths cannot end in trailing slashes.",
+                "The DeleteFolder path ended with either '\\' or '/', neither " +
+                    "of which are allowed."
+            );
+        }
+
+        if (this.vfs.IsWildcard(path)) {
+            this.context.exceptions.throw_bad_filename_or_number(
+                "FileSystemObject",
+                "Cannot use wildcards in the route-to the folder.",
+                "Wildcard usage is not permitted in the path leading to the " +
+                    "folder to be deleted."
+            );
+        }
+
+        if (this.vfs.PathIsRelative(path)) {
+            path = win32path.join(this.context.get_env("path"), path);
+        }
+
+        let num_deleted = this.vfs.DeleteInFolderMatching(
+            path, pattern, { files: false, folders: true}
+        );
+
+        if (num_deleted === 0) {
+            this.context.exceptions.throw_path_not_found(
+                "FileSystemObject",
+                "Unable to delete: no folders found.",
+                "No files were found which match the pattern expression."
+            );
+        }
     }
 
     // Returns true if the specified drive exists; false if it does

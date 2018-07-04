@@ -49,7 +49,7 @@ function MakeFSO (opts) {
 
 describe("Scripting.FileSystemObject", () => {
 
-    describe("#BuildPath", () => {
+    /*describe("#BuildPath", () => {
 
         it("should build a path from two parts", () => {
 
@@ -181,8 +181,6 @@ describe("Scripting.FileSystemObject", () => {
             assert.isTrue(ctx.vfs.FileExists("C:\\dest\\LongFilename.txt"));
         });
     });
-
-    const NOOP = () => {};
 
     describe("#CopyFolder", () => {
 
@@ -804,9 +802,117 @@ describe("Scripting.FileSystemObject", () => {
             assert.doesNotThrow(() => fso.DeleteFile(path));
             assert.isTrue(ctx.vfs.FolderExists(path));
         });
+    });*/
+
+    const NOOP = () => {};
+
+    describe("#DeleteFolder", () => {
+
+        it("should successfully delete a folder", () => {
+
+            const fso = MakeFSO();
+
+            ctx.vfs.AddFolder("C:\\RootOne\\SubDir1");
+            assert.isTrue(ctx.vfs.FolderExists("C:\\RootOne\\SubDir1"));
+
+            fso.DeleteFolder("C:\\RootOne\\SubDir1");
+            assert.isFalse(ctx.vfs.FolderExists("C:\\RootOne\\SubDir1"));
+        });
+
+        it("should delete all folders (empty/not empty) which match PATTERN", () => {
+
+            const fso = MakeFSO();
+
+            ctx.vfs.AddFile("C:\\RootOne\\Subdir1\\foo\\bar.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\SubDir2\\baz.txt");
+            ctx.vfs.AddFolder("C:\\RootOne\\foo");
+
+            assert.isTrue(ctx.vfs.FolderExists("C:\\RootOne\\Subdir1"));
+            assert.isTrue(ctx.vfs.FolderExists("C:\\RootOne\\Subdir2"));
+
+            fso.DeleteFolder("C:\\RootOne\\SubDir*");
+
+            assert.isFalse(ctx.vfs.FolderExists("C:\\RootOne\\Subdir1"));
+            assert.isFalse(ctx.vfs.FolderExists("C:\\RootOne\\Subdir2"));
+        });
+
+        it("should throw 'Path not found' if the folder does not exist", () => {
+
+            const fso = MakeFSO({
+                exceptions: {
+                    throw_path_not_found: () => {
+                        throw new Error("no path found");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.DeleteFolder("C:\\Does\\Not\\Exist"), "no path found");
+        });
+
+        it("should throw 'Path not found' if the wildcard expr matches zero folders", () => {
+
+            const fso = MakeFSO({
+                exceptions: {
+                    throw_path_not_found: () => {
+                        throw new Error("Wildcard matched nothing");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFolder("C:\\RootOne\\SubDir1\\foo");
+            ctx.vfs.AddFolder("C:\\RootOne\\SubDir2\\bar");
+            ctx.vfs.AddFolder("C:\\RootOne\\SubDir3\\baz");
+
+            assert.throws(() => fso.DeleteFolder("C:\\RootOne\\foo*"), "Wildcard matched nothing");
+        });
+
+        it("should handle relative deletes from the CWD of the process", () => {
+
+            const fso = MakeFSO();
+
+            ctx.vfs.AddFolder(`${ctx.get_env("path")}\\foo`);
+            ctx.vfs.AddFolder(`${ctx.get_env("path")}\\fox`);
+            ctx.vfs.AddFolder(`${ctx.get_env("path")}\\bar`);
+
+            fso.DeleteFolder("fo*");
+
+            assert.isFalse(ctx.vfs.FolderExists(`${ctx.get_env("path")}\\foo`));
+            assert.isFalse(ctx.vfs.FolderExists(`${ctx.get_env("path")}\\fox`));
+            assert.isTrue(ctx.vfs.FolderExists(`${ctx.get_env("path")}\\bar`));
+
+        });
+
+        it("should correctly handle and delete paths which are relative", () => {
+
+            const fso = MakeFSO();
+
+            ctx.vfs.AddFolder(`${ctx.get_env("path")}\\foo`);
+            ctx.vfs.AddFolder(`${ctx.get_env("path")}\\fox`);
+            ctx.vfs.AddFolder(`${ctx.get_env("path")}\\bar`);
+
+            fso.DeleteFolder("../Construct/fo*");
+
+            assert.isFalse(ctx.vfs.FolderExists(`${ctx.get_env("path")}\\foo`));
+            assert.isFalse(ctx.vfs.FolderExists(`${ctx.get_env("path")}\\fox`));
+            assert.isTrue(ctx.vfs.FolderExists(`${ctx.get_env("path")}\\bar`));
+        });
+
+        it("should throw 'invalid procedure call or argument' if path ends in trailing \\", () => {
+
+            const fso = MakeFSO({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("path ends with trailing sep");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFolder("C:\\RootOne\\SubDir1");
+            assert.throws(() => fso.DeleteFolder("C:\\RootOne\\"), "path ends with trailing sep");
+        });
     });
 
-    xdescribe("#DeleteFolder", NOOP);
+
     xdescribe("#DriveExists", NOOP);
 
     xdescribe("#FileExists", NOOP);
@@ -826,6 +932,7 @@ describe("Scripting.FileSystemObject", () => {
     xdescribe("#MoveFile", NOOP);
     xdescribe("#MoveFolder", NOOP);
     xdescribe("#OpenTextfile", NOOP);
+
 
 
 });

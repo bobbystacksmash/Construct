@@ -1191,19 +1191,25 @@ class VirtualFileSystem {
     //
     // Allows finer-grained control over how files and folders are
     // deleted.  Given a path and a pattern, attempts to delete all
-    // files/folders mtching the pattern in path.  By default, files
+    // files/folders matching the pattern in path.  By default, files
     // and folders matching pattern are deleted, however, the
-    // `options' object can be used to configure whether files and
+    // `options' object can be used to configure whether files or
     // folders are deleted.  Add truthy/falsy keys 'files' or
     // 'folders' to enable/disable file/folder deletion.
     //
-    // Does not recurse.
+    // If 'folders' is set to true, will recursively delete the entire
+    // contents of any matching folders found in `path'.
     //
     DeleteInFolderMatching (path, pattern, options) {
         const ipath = this._ConvertExternalToInternalPath(path);
 
+        const defaults = {
+            files:   true,
+            folders: true
+        };
+
         options = options || {};
-        options = Object.assign({}, { files: true, folders: true }, options);
+        options = Object.assign({}, defaults, options);
 
         const files   = this.FindFiles(path, pattern),
               folders = this.FindFolders(path, pattern);
@@ -1219,7 +1225,7 @@ class VirtualFileSystem {
 
         if (options.folders && folders) {
             for (let i = 0; i < folders.length; i++) {
-                this.vfs.unlinkSync(`${ipath}/${folders[i]}`);
+                this.Delete(`${ipath}/${folders[i]}`);
                 num_deleted++;
             }
         }
