@@ -111,6 +111,18 @@ class ExceptionHandler extends Component {
         );
     }
 
+    throw_device_unavailable (source, summary, details) {
+        this._throw(
+            "Error",
+            "Device unavailable",
+            -2146828220,
+            "Device unavailable",
+            source,
+            summary,
+            details
+        );
+    }
+
     throw_not_allowed (source, summary, details) {
         this._throw(
             "Error",

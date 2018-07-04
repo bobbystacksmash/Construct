@@ -5,14 +5,13 @@ const win32path     = require("path").win32;
 
 class JS_DriveObject extends Component {
 
-    constructor(context, path) {
+    constructor(context) {
 
 	super(context, "Drive");
 
 	this.context = context;
         this.ee      = this.context.emitter;
         this.vfs     = this.context.vfs;
-        this._path   = path;
 
         // Here are some defaults -- these should be overriden someday.
         this._drive = {
