@@ -51,7 +51,7 @@ function MakeFSO (opts) {
 
 describe("Scripting.FileSystemObject", () => {
 
-    describe("#BuildPath", () => {
+    /*describe("#BuildPath", () => {
 
         it("should build a path from two parts", () => {
 
@@ -1092,11 +1092,47 @@ describe("Scripting.FileSystemObject", () => {
                 p.out
             ));
         });
-    });
+    });*/
 
     const NOOP = () => {};
 
-    xdescribe("#GetDrive", NOOP);
+    describe("#GetDrive", () => {
+
+        it("should return a Drive object for all valid drivespecs for C:", () => {
+
+            const fso = MakeFSO();
+
+            assert.equal((fso.GetDrive("C")).driveletter,    "C");
+            assert.equal((fso.GetDrive("C:")).driveletter,   "C");
+            assert.equal((fso.GetDrive("C:\\")).driveletter, "C");
+
+            assert.equal((fso.GetDrive("c")).driveletter,    "C");
+            assert.equal((fso.GetDrive("c:")).driveletter,   "C");
+            assert.equal((fso.GetDrive("c:\\")).driveletter, "C");
+        });
+
+        it("should throw 'device unavailable' for inputs which aren't 'C:'", () => {
+
+            const fso = MakeFSO({
+                exceptions: {
+                    throw_device_unavailable: () => {
+                        throw new Error("drive not found");
+                    }
+                }
+            });
+
+            const invalid_drives = [
+                "a", "a:", "a:\\",
+                "b", "b:", "b:\\",
+                "x", "x:", "x:\\"
+            ];
+
+            invalid_drives.forEach(
+                d => assert.throws(() => fso.GetDrive(d), "drive not found")
+            );
+        });
+    });
+
     xdescribe("#GetDriveName", NOOP);
     xdescribe("#GetExtensionName", NOOP);
     xdescribe("#GetFile", NOOP);

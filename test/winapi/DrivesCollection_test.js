@@ -90,12 +90,6 @@ describe("DrivesCollection", () => {
 
         it("should throw a 'device unavailable' if an unknown drive is requested", () => {
 
-            // .TODO1
-            // This may not be implemented in .Item, but rather in the
-            // constructor for the 'DriveObject'.  We can add it here,
-            // but in the future we may move this test in to the
-            // DriveObject test suite.
-            // .TODO2
             const ctx = make_ctx({
                 exceptions: {
                     throw_device_unavailable: () => {

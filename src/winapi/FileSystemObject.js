@@ -6,6 +6,7 @@ const FSOHelper           = require("../absFileSystemObject");
 const JS_TextStream       = require("./TextStream");
 const JS_Folder           = require("./FolderObject");
 const JS_File             = require("./FileObject");
+const JS_Drive            = require("./DriveObject");
 const JS_DrivesCollection = require("./DrivesCollection");
 const win32path           = require("path").win32;
 
@@ -39,7 +40,8 @@ class JS_FileSystemObject extends Component {
         this.context.exceptions.throw_unsupported_prop_or_method(
             "FileSystemObject",
             "Cannot assign to the '.drives' property.",
-            "The '.drives' property does not support assignment and is read-only."
+            "The '.drives' property does not support assignment and is " +
+                "read-only."
         );
     }
 
@@ -53,14 +55,14 @@ class JS_FileSystemObject extends Component {
     // not check that either path exists, or if the path is valid.
     //
     buildpath (existing_path, new_path_part) {
-        this.ee.emit("FileSystemObject::BuildPath", existing_path, new_path_part);
+        this.ee.emit("FileSystemObject.BuildPath", existing_path, new_path_part);
         return this.vfs.BuildPath(existing_path, new_path_part);
     }
 
     // Copies one or more files from one location to another.
     copyfile (source, destination, overwrite_files) {
 
-        this.ee.emit("FileSystemObject::CopyFile", source, destination, overwrite_files);
+        this.ee.emit("FileSystemObject.CopyFile", source, destination, overwrite_files);
 
         source      = this.vfs.Resolve(source);
         destination = this.vfs.Resolve(destination);
@@ -80,7 +82,8 @@ class JS_FileSystemObject extends Component {
         let copy_from_to = [
             {
                 source: source,
-                dest:  (copy_into_dest_dir) ? `${destination}\\${source_basename}` : destination
+                dest:  (copy_into_dest_dir) ?
+                    `${destination}\\${source_basename}` : destination
             }
         ];
 
@@ -91,9 +94,11 @@ class JS_FileSystemObject extends Component {
             if (matched_file_list.length === 0) {
                 this.context.exceptions.throw_file_not_found(
                     "Scripting.FileSystemObject",
-                    "Unable to complete 'CopyFile', as the wildcard does not match any files.",
-                    "No files were matched by the wildcard expression, meaning nothing can be " +
-                        "copied.  Update/fix the wildcard and retry."
+                    "Unable to complete 'CopyFile', as the wildcard does not " +
+                        "match any files.",
+                    "No files were matched by the wildcard expression, " +
+                        "meaning nothing can be copied.  Update/fix the " +
+                        "wildcard and retry."
                 );
             }
 
@@ -117,11 +122,14 @@ class JS_FileSystemObject extends Component {
             if (e.message.includes("EISDIR")) {
                 this.context.exceptions.throw_permission_denied(
                     "Scripting.FileSystemObject",
-                    "Cannot copy to destination because the destination filename is ambiguous.",
-                    "This error indicates that a file-copy operation has not succeeded due to " +
-                        "a name-collision in the destination.  For example, if the destination " +
-                        "of a copy is the filename 'foo', yet a folder exists in the same location " +
-                        "also named 'foo', this error is thrown."
+                    "Cannot copy to destination because the destination " +
+                        "filename is ambiguous.",
+                    "This error indicates that a file-copy operation has not " +
+                        "succeeded due to a name-collision in the " +
+                        "destination.  For example, if the destination of a " +
+                        "copy is the filename 'foo', yet a folder exists in " +
+                        "the same location also named 'foo', this error is " +
+                        "thrown."
                 );
             }
             else if (e.message.includes("ENOENT")) {
@@ -130,16 +138,17 @@ class JS_FileSystemObject extends Component {
                     this.context.exceptions.throw_file_not_found(
                         "Scripting.FileSystemObject",
                         "Unable to find src file.",
-                        "The CopyFile operation was not completely successful because the " +
-                            `file: ${source} could not be found.`
+                        "The CopyFile operation was not completely successful " +
+                            `because the file: ${source} could not be found.`
                     );
                 }
                 else {
                     this.context.exceptions.throw_path_not_found(
                         "Scripting.FileSystemObject",
                         "Unable to find destination folder.",
-                        "The CopyFile operation was not completely successful because the " +
-                            `destination folder: ${destination} could not be found.`
+                        "The CopyFile operation was not completely successful " +
+                            `because the destination folder: ${destination} ` +
+                            "could not be found."
                     );
                 }
             }
@@ -509,8 +518,19 @@ class JS_FileSystemObject extends Component {
 
     // Returns a Drive object corresponding to the drive in a
     // specified path.
-    getdrive () {
+    getdrive (drivespec) {
 
+        if (typeof drivespec !== "string") {
+            this.exceptions.throw_invalid_fn_arg(
+                "FileSystemObject",
+                "GetDrive method accepts only string parameters.",
+                "Only string parameters should be passed to " +
+                    "GetDrive()."
+            );
+        }
+
+        drivespec = drivespec.toLowerCase();
+        return new JS_Drive(this.context, drivespec);
     }
 
     // Returns a string containing the name of the drive for a

@@ -10,10 +10,12 @@
 
 ** TODO CreateFolder looks unfinished? Figure out why.
 
+** TODO Finish commented-out tests for the TextStream handling (code looks legacy?)
 * FoldersCollection
 ** DONE Add the '.Item' method + tests.
 ** DONE throw if item value is not a string. "invalid proc call"
 
+** TODO Add 'Add' to folders collection
 * FilesCollection
 ** DONE Add the files collection .Item tests for SFN/LFNs
 ** DONE Throw if item value is not a string. "invalid proc call"

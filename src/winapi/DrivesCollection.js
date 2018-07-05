@@ -42,24 +42,7 @@ class JS_DrivesCollection extends Component {
         }
 
         name = name.toLowerCase();
-
-        if (name === "c"  || name === "c:" || name === "c:\\" || name === "c:/") {
-            return new DriveObject(this.context);
-        }
-
-        if (/^[abd-z]:?/i.test(name) || /^[abd-z]:[\\/]$/i.test(name)) {
-            this.context.exceptions.throw_device_unavailable(
-                "DrivesCollection",
-                "The drive cannot be found.",
-                `The requested drive (${name}) cannot be found.`
-            );
-        }
-
-        this.context.exceptions.throw_invalid_fn_arg(
-            "DrivesCollection",
-            "Drivespec not found.",
-            "Unable to find the drivespec requested: " + name
-        );
+        return new DriveObject(this.context, name);
     }
 }
 

@@ -5,13 +5,24 @@ const win32path     = require("path").win32;
 
 class JS_DriveObject extends Component {
 
-    constructor(context) {
+    constructor(context, drive) {
 
 	super(context, "Drive");
 
 	this.context = context;
         this.ee      = this.context.emitter;
         this.vfs     = this.context.vfs;
+
+        if (drive === undefined) drive = "c";
+        drive = drive.toLowerCase();
+
+        if (/^[abd-z]:?$/.test(drive) || /^[abd-z]:[\\/]$/.test(drive)) {
+            this.context.exceptions.throw_device_unavailable(
+                "DriveObject",
+                `The drive } cannot be found.`,
+                `The requested drive letter (${drive}) cannot be found.`
+            );
+        }
 
         // Here are some defaults -- these should be overriden someday.
         this._drive = {
@@ -115,7 +126,7 @@ class JS_DriveObject extends Component {
     }
 }
 
-module.exports = function create(context) {
-    let drive = new JS_DriveObject(context);
+module.exports = function create(context, drive_letter) {
+    let drive = new JS_DriveObject(context, drive_letter);
     return proxify(context, drive);
 };
