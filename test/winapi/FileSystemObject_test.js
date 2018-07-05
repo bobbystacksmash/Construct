@@ -1092,10 +1092,7 @@ describe("Scripting.FileSystemObject", () => {
                 p.out
             ));
         });
-    });*/
-
-    const NOOP = () => {};
-
+    });
     describe("#GetDrive", () => {
 
         it("should return a Drive object for all valid drivespecs for C:", () => {
@@ -1132,8 +1129,47 @@ describe("Scripting.FileSystemObject", () => {
             );
         });
     });
+*/
 
-    xdescribe("#GetDriveName", NOOP);
+    const NOOP = () => {};
+
+
+    describe("#GetDriveName", () => {
+
+        it("should return the correct drive letter for paths", () => {
+
+            const fso   = MakeFSO(),
+                  paths = [
+                      { in: "C:\\foo\\bar", out: "C:" },
+                      { in: "foo", out: "" },
+                      { in: "", out: "" },
+                      { in: "x:", out: "x:" },
+                      { in: "X:", out: "X:" },
+                      { in: "C:\\", out: "C:" },
+                      { in: "C:\\jkkjasuwja", out: "C:" },
+                      { in: "1:\\", out: "" }
+                  ];
+
+            paths.forEach(p => {
+                assert.equal(fso.GetDriveName(p.in), p.out);
+            });
+        });
+
+        it("should throw if the input is invalid", () => {
+
+            const fso = MakeFSO({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("bad input");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.GetDriveName([]), "bad input");
+            assert.throws(() => fso.GetDriveName({}), "bad input");
+        });
+    });
+
     xdescribe("#GetExtensionName", NOOP);
     xdescribe("#GetFile", NOOP);
 

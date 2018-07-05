@@ -521,7 +521,7 @@ class JS_FileSystemObject extends Component {
     getdrive (drivespec) {
 
         if (typeof drivespec !== "string") {
-            this.exceptions.throw_invalid_fn_arg(
+            this.context.exceptions.throw_invalid_fn_arg(
                 "FileSystemObject",
                 "GetDrive method accepts only string parameters.",
                 "Only string parameters should be passed to " +
@@ -535,8 +535,22 @@ class JS_FileSystemObject extends Component {
 
     // Returns a string containing the name of the drive for a
     // specified path.
-    getdrivename () {
+    getdrivename (path) {
 
+        if (typeof path !== "string") {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FileSystemObject",
+                "GetDriveName expects a string parameter.",
+                "Only strings which resemble a path should be " +
+                    "passed to GetDriveName()."
+            );
+        }
+
+        if (/^[a-z]:/i.test(path)) {
+            return path.substr(0, 2);
+        }
+
+        return "";
     }
 
     // Returns a string containing the extension for the last
