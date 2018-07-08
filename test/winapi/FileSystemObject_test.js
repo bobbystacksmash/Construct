@@ -1129,10 +1129,6 @@ describe("Scripting.FileSystemObject", () => {
             );
         });
     });
-*/
-
-    const NOOP = () => {};
-
 
     describe("#GetDriveName", () => {
 
@@ -1170,8 +1166,54 @@ describe("Scripting.FileSystemObject", () => {
         });
     });
 
-    xdescribe("#GetExtensionName", NOOP);
-    xdescribe("#GetFile", NOOP);
+
+
+    describe("#GetExtensionName", () => {
+
+        it("should return the correct extensions from a given set of inputs", () => {
+
+            const fso   = MakeFSO(),
+                  tests = [
+                      { in: "C:\\Users\\foo.txt", out: "txt" },
+                      { in: "foo", out: "" },
+                      { in: "C:\\blah*", out: "" },
+                      { in: "test.tar.gz", out: "gz" },
+                      { in: "test.TXT", out: "TXT" },
+                      { in: "foo.tar.", out: "" },
+                      { in: {}, out: "" },
+                      { in: [], out: "" },
+                      { in: 1, out: "" }
+                  ];
+
+            tests.forEach(t => assert.equal(fso.GetExtensionName(t.in), t.out));
+        });
+
+        it("should throw if the input is invalid", () => {
+
+            const fso = MakeFSO({
+                exceptions: {
+                    throw_wrong_argc_or_invalid_prop_assign: () => {
+                        throw new Error("no input");
+                    },
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("bad input");
+                    }
+                }
+            });
+
+            //assert.throws(() => fso.GetExtensionName(), "no input");
+
+        });
+    });
+
+*/
+
+
+    const NOOP = () => {};
+
+    describe("#GetFile", () => {
+
+    });
 
     xdescribe("#GetFileName", NOOP);
     xdescribe("#GetFolder", NOOP);

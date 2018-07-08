@@ -554,9 +554,40 @@ class JS_FileSystemObject extends Component {
     }
 
     // Returns a string containing the extension for the last
-    // component in a path.
-    getextensionname () {
+    // component in a path.  Some examples:
+    //
+    // C:\Users\foo.txt => txt
+    // C:*              => ""
+    //
+    getextensionname (filepath) {
 
+        if (filepath === undefined || filepath === null) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "FileSystemObject",
+                "GetExtensionName requires input parameter.",
+                "GetExtensionName requires an input parameter."
+            );
+        }
+
+        if (Object.keys(filepath).length === 0 && filepath.constructor.name === "Object") {
+            return "";
+        }
+
+        try {
+            filepath = filepath + "";
+        }
+        catch (_) {
+            console.log(_);
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FileSystemObject",
+                "GetExtensionName expects a string parameter.",
+                "The string should resemble a path so the ext can " +
+                    "be returned."
+            );
+        }
+
+        const basename = win32path.extname(filepath).replace(".", "");
+        return basename;
     }
 
     // Returns a File object corresponding to the file in a specified
