@@ -1,6 +1,7 @@
 const Component = require("../Component");
 const proxify   = require("../proxify2");
 const win32path = require("path").win32;
+const Drive     = require("./DriveObject");
 
 class JS_FileObject extends Component {
 
@@ -79,7 +80,6 @@ class JS_FileObject extends Component {
     //
     get drive () {
         this.ee.emit("File.Drive");
-
         return new Drive(this.context);
     }
 
@@ -108,10 +108,17 @@ class JS_FileObject extends Component {
 
         this._assert_exists();
 
-        // todo - how do we handle the root volume?
-
         const dirname  = win32path.dirname(this._path),
               new_path = `${dirname}\\${new_name}`;
+
+        if (this.vfs.FileExists(new_path)) {
+            this.context.exceptions.throw_file_already_exists(
+                "FileObject",
+                "Cannot rename this file - the destination file already exists.",
+                "This file object cannot be renamed because there already exists " +
+                    "a file with this name."
+            );
+        }
 
         // try/catch this!
         this.vfs.Rename(this._path, new_path);

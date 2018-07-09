@@ -38,74 +38,59 @@ function make_ctx (opts) {
 
 describe("FileObject", () => {
 
-    describe("Object creation", () => {
+    describe(".DateCreated", () => {
 
-        xit("should support being created from an existing VFS path", () => {
+        it("should return a date object from when this file was created", () => {
 
-            const ctx = make_ctx();
-
-            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1");
-
-            const folder = new Folder(ctx, "C:\\RootOne\\SubFolder1");
-
-            // TODO...
-
-        });
-    });
-
-    xdescribe(".DateCreated", () => {
-
-        it("should return a date object from when this folder was created", () => {
-
-            const path =  "C:\\RootOne\\HelloWorld",
+            const path =  "C:\\RootOne\\HelloWorld.txt",
                   ctx  = make_ctx();
 
-            ctx.vfs.AddFolder(path);
+            ctx.vfs.AddFile(path);
 
-            const folder = new Folder(ctx, path);
-            assert.instanceOf(folder.DateCreated, Date);
+            const file = new File(ctx, path);
+            assert.instanceOf(file.DateCreated, Date);
         });
     });
 
-    xdescribe(".DateLastAccessed", () => {
+    describe(".DateLastAccessed", () => {
 
-        it("should return a date object from when this folder was accessed", () => {
+        it("should return a date object from when this file was accessed", () => {
 
-            const path =  "C:\\RootOne\\HelloWorld",
+            const path =  "C:\\RootOne\\HelloWorld.txt",
                   ctx  = make_ctx();
 
-            ctx.vfs.AddFolder(path);
+            ctx.vfs.AddFile(path);
 
-            const folder = new Folder(ctx, path);
-            assert.instanceOf(folder.DateLastAccessed, Date);
+            const file = new File(ctx, path);
+            assert.instanceOf(file.DateLastAccessed, Date);
         });
     });
 
-    xdescribe(".DateLastModified", () => {
+    describe(".DateLastModified", () => {
 
-        it("should return a date object from when this folder was last modified", () => {
+        it("should return a date object from when this file was last modified", () => {
 
-            const path =  "C:\\RootOne\\HelloWorld",
+            const path =  "C:\\RootOne\\HelloWorld.txt",
                   ctx  = make_ctx();
 
-            ctx.vfs.AddFolder(path);
+            ctx.vfs.AddFile(path);
 
-            const folder = new Folder(ctx, path);
-            assert.instanceOf(folder.DateLastModified, Date);
+            const file = new File(ctx, path);
+            assert.instanceOf(file.DateLastModified, Date);
         });
     });
 
-    xdescribe(".Drive", () => {
+    describe(".Drive", () => {
 
         it("should return a Drive object when .Drive is looked-up", () => {
 
-            const path = "C:\\RootOne\\HelloWorld",
+            const path = "C:\\RootOne\\HelloWorld.txt",
                   ctx  = make_ctx();
 
-            ctx.vfs.AddFolder(path);
+            ctx.vfs.AddFile(path);
 
-            const folder = new Folder(ctx, path),
-                  drive  = folder.Drive;
+            const file = new File(ctx, path),
+                  drive  = file.Drive;
 
             assert.equal(drive.driveletter, "C");
             assert.equal(drive.isREADY, true);
@@ -113,69 +98,92 @@ describe("FileObject", () => {
         });
     });
 
-    xdescribe(".Files", () => {
-
-        it("should return a read-only FilesCollection instance", () => {
-
-            const path = "C:\\RootOne\\SubFolder1",
-                  ctx  = make_ctx();
-
-            ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\foo.txt");
-            ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\bar.txt");
-            ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\baz.txt");
-
-            const folder = new Folder(ctx, path),
-                  files  = folder.Files;
-
-            assert.equal(files.count, 3);
-            assert.equal(files.Item("foo.txt").name, "foo.txt");
-        });
-
-        it("should allow a file to be renamed by assigning to it", () => {
-
-            const path = "C:\\RootOne\\SubFolder1",
-                  ctx  = make_ctx();
-
-            ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\foo.txt");
-            ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\bar.txt");
-
-            const folder = new Folder(ctx, path),
-                  files  = folder.Files;
-
-            assert.equal(files.count, 2);
-
-            // TODO: finish adding rename file test code here
-        });
-    });
-
-    xdescribe(".Name", () => {
+    describe(".Name", () => {
 
         it("should return the basename of the backing path as the name", () => {
 
             const ctx = make_ctx();
-            ctx.vfs.AddFolder("C:\\RootOne\\HelloWorld");
+            ctx.vfs.AddFile("C:\\RootOne\\HelloWorld.txt");
 
-            ["hellow~1", "HELLOW~1", "HelloWorld"].forEach(n => {
-                const folder = new Folder(ctx, `C:\\RootOne\\${n}`);
-                assert.equal(folder.name, n);
+            ["hellow~1.txt", "HELLOW~1.TXT", "HelloWorld.txt"].forEach(n => {
+                const file = new File(ctx, `C:\\RootOne\\${n}`);
+                assert.equal(file.name, n);
             });
         });
+
+        it("should rename the file when .Name is assigned to", () => {
+
+            const path = "C:\\RootOne\\foo.txt",
+                  ctx  = make_ctx();
+
+            ctx.vfs.AddFile(path);
+
+            const file = new File(ctx, path);
+
+            assert.equal(file.name, "foo.txt");
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\RootOne\\bar.txt"));
+            file.name = "bar.txt";
+            assert.isTrue(ctx.vfs.FileExists("C:\\RootOne\\bar.txt"));
+        });
+
+        it("should throw 'file already exists' if the file already exists", () => {
+
+            const path = "C:\\RootOne\\foo.txt",
+                  ctx  = make_ctx({
+                      exceptions: {
+                          throw_file_already_exists: () => {
+                              throw new Error("file exists");
+                          }
+                      }
+                  });
+
+            const file = new File(ctx, path);
+
+            ctx.vfs.AddFile(path);
+
+            assert.throws(() => file.Name = "foo.txt", "file exists");
+        });
+
     });
 
-    xit("should support throwing 'path not found' when folder.Delete() is called", () => {
+    describe(".Parentfolder", () => {
 
-        const ctx = make_ctx({
-            exceptions: {
-                throw_path_not_found: () => {
-                    throw new Error("folder was deleted");
-                }
-            }
-        });
-        ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1");
+    });
 
-        const folder = new Folder(ctx, "C:\\RootOne\\SubFolder1");
+    describe(".Path", () => {
 
-        assert.doesNotThrow(() => folder.Delete());
-        assert.throws(() => folder.name, "folder was deleted");
+    });
+
+    describe(".ShortName", () => {
+
+    });
+
+    describe(".ShortPath", () => {
+
+    });
+
+    describe(".Size", () => {
+
+    });
+
+    describe(".Type", () => {
+
+    });
+
+    describe("#Copy", () => {
+
+    });
+
+    describe("#Move", () => {
+
+    });
+
+    describe("#Delete", () => {
+
+    });
+
+    describe("#OpenAsTextStream", () => {
+
     });
 });
