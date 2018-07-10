@@ -1,11 +1,10 @@
 const VirtualFileSystem = require("./virtfs");
 const EventEmitter2     = require("eventemitter2").EventEmitter2;
-
 const ExceptionHandler = require("../ExceptionHandler");
-
 const JScript_Date          = require("../winapi/Date");
 const JScript_WScript       = require("../winapi/WScript");
 const JScript_ActiveXObject = require("../winapi/ActiveXObject");
+const win32path = require("path").win32;
 
 class HostContext {
 
@@ -88,7 +87,11 @@ class HostContext {
 	    StdErr: null,
 	    StdIn: null,
 	    StdOut: null,
-	    Version: 2
+	    Version: 2,
+            FileAssociations: {
+                "txt": "Text Document",
+                "jpg": "JPEG image"
+            }
 
 	    // TODO:
 	    // - processes
@@ -182,6 +185,20 @@ class HostContext {
     get_cfg (cfg_item) {
         if (! this.CONFIG.hasOwnProperty(cfg_item)) return null;
         return this.CONFIG[cfg_item];
+    }
+
+    get_file_association (filename) {
+
+        const extname = win32path
+                  .extname(win32path.basename(filename))
+                  .toLowerCase()
+                  .replace(".", "");
+
+        if (this.ENVIRONMENT.FileAssociations.hasOwnProperty(extname)) {
+            return this.ENVIRONMENT.FileAssociations[extname];
+        }
+
+        return `${extname} File`;
     }
 
     get_env (var_name) {

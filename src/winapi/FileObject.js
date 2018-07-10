@@ -15,10 +15,20 @@ class JS_FileObject extends Component {
         this.vfs     = this.context.vfs;
         this._path   = path;
 
+        if (this.vfs.PathIsRelative(path)) {
+
+            const base = win32path.basename(path),
+                  dir  = win32path.dirname(path);
+
+            if (dir === "." || dir.toLowerCase() === "c:") {
+                this._path = win32path.join(this.context.get_env("path"), base);
+            }
+        }
+
         this._assert_exists = () => {
             if (this.vfs.FileExists(this._path)) return;
 
-            this.context.exceptions.throw_path_not_found(
+            this.context.exceptions.throw_file_not_found(
                 "FileObject",
                 "The backing file is not available.",
                 "The file which backed this object instance is " +
@@ -26,6 +36,8 @@ class JS_FileObject extends Component {
                     "have been deleted)."
             );
         };
+
+        this._assert_exists();
     }
 
     get attributes () {}
@@ -113,6 +125,7 @@ class JS_FileObject extends Component {
               new_path = `${dirname}\\${new_name}`;
 
         if (this.vfs.FileExists(new_path)) {
+
             this.context.exceptions.throw_file_already_exists(
                 "FileObject",
                 "Cannot rename this file - the destination file already exists.",
@@ -138,7 +151,7 @@ class JS_FileObject extends Component {
 
         this._assert_exists();
 
-        if (this._path.toLowerCase() === "c:\\") {
+        if (win32path.dirname(this._path.toLowerCase()) === "c:\\") {
             return undefined;
         }
 
@@ -197,11 +210,15 @@ class JS_FileObject extends Component {
     get size () {
         this.ee.emit("File.Size");
         this._assert_exists();
-
         return this.vfs.GetFileSize(this._path);
     }
 
-    get type () {}
+    get type () {
+        this.ee.emit("File.Type");
+        this._assert_exists();
+
+        return this.context.get_file_association(this._path);
+    }
 
     // Methods
 

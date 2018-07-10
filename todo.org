@@ -24,7 +24,8 @@
 
 * FileObject
 ** TODO Finish the File object method / properties + tests
-** TODO add the test source file
+** DONE add the test source file
+** TODO Add various file associations for the File.Type property (i.e.: foo.txt => Text Document)
 ** TODO add a .tostring
 
 * FolderObject
