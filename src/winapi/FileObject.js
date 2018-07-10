@@ -2,6 +2,7 @@ const Component = require("../Component");
 const proxify   = require("../proxify2");
 const win32path = require("path").win32;
 const Drive     = require("./DriveObject");
+const Folder    = require("./FolderObject");
 
 class JS_FileObject extends Component {
 
@@ -125,18 +126,80 @@ class JS_FileObject extends Component {
         this._path = new_path;
     }
 
-    get parentfolder () {}
 
+    // ParentFolder
+    // ============
+    //
+    // Returns a Folder object representing the folder that the parent
+    // of the current folder.  Returns undefined if this folder is
+    // already the root.
+    //
+    get parentfolder () {
+
+        this._assert_exists();
+
+        if (this._path.toLowerCase() === "c:\\") {
+            return undefined;
+        }
+
+        const dirname = win32path.dirname(this._path);
+        return new Folder(this.context, dirname);
+    }
+
+    // Path
+    // ====
+    //
+    // Returns the full path which backs this Folder object, including
+    // the drive designator.
+    //
     get path () {
-        // TODO
+        this.ee.emit("File.Path");
+        this._assert_exists();
         return this._path;
     }
 
-    get shortname () {}
+    // ShortName
+    // =========
+    //
+    // Returns this file's name in DOS 8.3 format.
+    //
+    get shortname () {
+        this.ee.emit("File.ShortName");
+        this._assert_exists();
 
-    get shortpath () {}
+        return this.vfs.GetShortName(this._path);
+    }
 
-    get size () {}
+    // ShortPath
+    // =========
+    //
+    // Returns the complete path to a folder in DOS 8.3 format
+    // (shortnames).
+    //
+    get shortpath () {
+        this.ee.emit("File.ShortPath");
+        this._assert_exists();
+
+        const shortpath = this.vfs.ShortPath(this._path);
+
+        if (shortpath.toLowerCase() === this._path.toLowerCase()) {
+            return this._path;
+        }
+
+        return shortpath;
+    }
+
+    // Size
+    // ====
+    //
+    // Returns the size of the file in bytes.
+    //
+    get size () {
+        this.ee.emit("File.Size");
+        this._assert_exists();
+
+        return this.vfs.GetFileSize(this._path);
+    }
 
     get type () {}
 

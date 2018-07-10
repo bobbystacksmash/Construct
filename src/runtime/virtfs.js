@@ -896,6 +896,25 @@ class VirtualFileSystem {
         return total_file_size;
     }
 
+    // GetFileSize
+    // ===========
+    //
+    // Given a path to a file, returns that file's size in bytes.
+    //
+    GetFileSize (path_to_file) {
+
+        const ipath = this._ConvertExternalToInternalPath(path_to_file);
+
+        try {
+            let stats = this.Stats(ipath);
+            return stats.size;
+        }
+        catch (e) {
+            console.log(e.message);
+            return -1;
+        }
+    }
+
     // Find
     // ====
     //

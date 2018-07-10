@@ -5,6 +5,7 @@
 ** TODO What happens with files/folders which have spaces in the name?
 ** TODO Add tests for 'Move' method.
 
+** TODO Add tests for GetFileSize (file not exists, file is folder, etc)
 * FileSystemObject
 ** TODO DeleteFolder accepts wildcards in the path.
 
