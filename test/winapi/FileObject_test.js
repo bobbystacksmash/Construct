@@ -350,6 +350,30 @@ describe("FileObject", () => {
 
     describe("#Copy", () => {
 
+        it("should throw if trying to overwrite itself", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_permission_denied: () => {
+                        throw new Error("permission denied");
+                    }
+                }
+            });
+            ctx.vfs.AddFile("C:\\foo.txt");
+            assert.isTrue(ctx.vfs.FileExists("C:\\foo.txt"));
+
+            const file = new File(ctx, "C:\\foo.txt");
+            assert.throws(() => file.Copy("C:\\foo.txt"), "permission denied");
+        });
+
+
+        // Throws if the destination contais a wildcard
+        // throws 'invalid params' if the input is "" (probably other inputs too)
+        // copies file from get_env('path') if no path is specifid
+        // can copy files relative
+        // if copy input is just "../" throws permission denied (resolves to same file)
+
+
     });
 
     describe("#Move", () => {

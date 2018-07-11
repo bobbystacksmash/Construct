@@ -250,9 +250,39 @@ class JS_FileObject extends Component {
         return this.context.get_file_association(this._path);
     }
 
-    // Methods
+    // Copy
+    // ====
+    //
+    // Copies this file to another location.
+    //
+    copy (destination, overwrite_files) {
+        this.ee.emit("File.Copy");
+        this._assert_exists();
 
-    copy () {}
+        if (this.vfs.IsWildcard(destination)) {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FileObject",
+                "Destination cannot contain wildcard characters.",
+                "The destination file cannot contain wildcard characters."
+            );
+        }
+
+        if (this.vfs.PathIsRelative(destination)) {
+            destination = win32path.join(
+                this.context.get_env("path"),
+                destination
+            );
+        }
+
+        if (destination.toLowerCase() === this._path.toLowerCase()) {
+            this.context.exceptions.throw_permission_denied(
+                "FileObject",
+                "Cannot copy to destination",
+                "Unable to copy this file to its destination because " +
+                    "the source and destination are the same file."
+            );
+        }
+    }
 
     // Delete
     // ======

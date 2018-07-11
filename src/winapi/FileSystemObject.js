@@ -103,7 +103,6 @@ class JS_FileSystemObject extends Component {
             }
 
             copy_from_to = matched_file_list.map(file => {
-
                 return {
                     source: `${source_dirname}\\${file}`,
                     dest:   `${destination}\\${file}`
