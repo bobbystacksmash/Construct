@@ -259,6 +259,14 @@ class JS_FileObject extends Component {
         this.ee.emit("File.Copy");
         this._assert_exists();
 
+        if (typeof destination !== "string" || destination === "") {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FileObject",
+                "Destination parameter is invalid.",
+                "The destination should be a valid win32 filename."
+            );
+        }
+
         if (this.vfs.IsWildcard(destination)) {
             this.context.exceptions.throw_invalid_fn_arg(
                 "FileObject",
@@ -268,6 +276,8 @@ class JS_FileObject extends Component {
         }
 
         if (this.vfs.PathIsRelative(destination)) {
+
+            destination = destination.replace(/^C:/i, "");
             destination = win32path.join(
                 this.context.get_env("path"),
                 destination
@@ -282,6 +292,8 @@ class JS_FileObject extends Component {
                     "the source and destination are the same file."
             );
         }
+
+        this.vfs.CopyFile(this._path, destination);
     }
 
     // Delete

@@ -366,13 +366,89 @@ describe("FileObject", () => {
             assert.throws(() => file.Copy("C:\\foo.txt"), "permission denied");
         });
 
+        it("should throw if the destination filename contains a wildcard char", () => {
 
-        // Throws if the destination contais a wildcard
-        // throws 'invalid params' if the input is "" (probably other inputs too)
-        // copies file from get_env('path') if no path is specifid
-        // can copy files relative
-        // if copy input is just "../" throws permission denied (resolves to same file)
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("no wildcards");
+                    }
+                }
+            });
 
+            ctx.vfs.AddFile("C:\\foo.txt");
+            const file = new File(ctx, "C:\\foo.txt");
+            assert.throws(() => file.copy("*.txt"), "no wildcards");
+        });
+
+        it("should throw if the inputs are invalid", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("invalid arg");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\foo.txt");
+
+            const file   = new File(ctx, "C:\\foo.txt"),
+                  params = [
+                      ""
+                  ];
+
+            params.forEach(p => assert.throws(() => file.Copy(p), "invalid arg"));
+        });
+
+        it("should copy to the CWD if no path is given", () => {
+
+            const ctx  = make_ctx(),
+                  srcpath = `${ctx.get_env("path")}\\foo.txt`,
+                  dstpath = `${ctx.get_env("path")}\\bar.txt`;
+
+            ctx.vfs.AddFile(srcpath, "hello");
+
+            const file = new File(ctx, srcpath);;
+
+            assert.isTrue(ctx.vfs.FileExists(srcpath));
+            assert.isFalse(ctx.vfs.FileExists(dstpath));
+
+            assert.doesNotThrow(() => file.Copy("bar.txt"));
+
+            assert.isTrue(ctx.vfs.FileExists(dstpath));
+        });
+
+        it("should copy to the CWD if only 'C:<filename>' is given", () => {
+
+            const ctx  = make_ctx(),
+                  srcpath = `${ctx.get_env("path")}\\foo.txt`,
+                  dstpath = `${ctx.get_env("path")}\\bar.txt`;
+
+            ctx.vfs.AddFile(srcpath, "hello");
+
+            const file = new File(ctx, srcpath);;
+
+            assert.isTrue(ctx.vfs.FileExists(srcpath));
+            assert.isFalse(ctx.vfs.FileExists(dstpath));
+
+            assert.doesNotThrow(() => file.Copy("C:bar.txt"));
+
+            assert.isTrue(ctx.vfs.FileExists(dstpath));
+        });
+
+
+        it("should not overwrite the file is overwrite=false and file exists", () => {
+
+        });
+
+        it("should copy to one folder up if '../filename' is used", () => {
+
+        });
+
+        it("should throw if the input is just '../' with permission denied", () => {
+
+        });
 
     });
 
