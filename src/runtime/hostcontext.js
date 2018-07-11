@@ -90,7 +90,8 @@ class HostContext {
 	    Version: 2,
             FileAssociations: {
                 "txt": "Text Document",
-                "jpg": "JPEG image"
+                "jpg": "JPEG image",
+                "js":  "JScript Script File"
             }
 
 	    // TODO:

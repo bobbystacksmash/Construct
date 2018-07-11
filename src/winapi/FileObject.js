@@ -40,7 +40,33 @@ class JS_FileObject extends Component {
         this._assert_exists();
     }
 
-    get attributes () {}
+    // Attributes
+    // ==========
+    //
+    // Returns a 6-bit bitmask which represents the file's attributes.
+    // These values are:
+    //
+    // | Value | Description |
+    // |-------|-------------|
+    // |     1 | Read-only   |
+    // |     2 | Hidden      |
+    // |     4 | System      |
+    // |    32 | Archive     |
+    // |  1024 | Alias       |
+    // |  2048 | Compressed  |
+    // |_______|_____________|
+    //
+    //
+    get attributes () {
+        this.ee.emit("File.Attributes");
+        this._assert_exists();
+
+        // TODO We just return '32' because that's what the small
+        // number of files I've tested on Windows seem to return.
+        // Ideally, this should be revisisted and implemented
+        // correctly, probably using the VFS' stats struct.
+        return 32;
+    }
 
     // DateCreated
     // ===========
@@ -49,6 +75,7 @@ class JS_FileObject extends Component {
     //
     get datecreated () {
         this.ee.emit("File.DateCreated");
+        this._assert_exists();
 
         const stats = this.vfs.Stats(this._path),
                  dt = new Date(stats.ctime);
@@ -63,6 +90,7 @@ class JS_FileObject extends Component {
     //
     get datelastaccessed () {
         this.ee.emit("File.DateLastAccessed");
+        this._assert_exists();
 
         const stats = this.vfs.Stats(this._path),
                  dt = new Date(stats.atime);
@@ -77,6 +105,7 @@ class JS_FileObject extends Component {
     //
     get datelastmodified () {
         this.ee.emit("File.DateLastModified");
+        this._assert_exists();
 
         const stats = this.vfs.Stats(this._path),
                  dt = new Date(stats.mtime);
@@ -93,6 +122,7 @@ class JS_FileObject extends Component {
     //
     get drive () {
         this.ee.emit("File.Drive");
+        this._assert_exists();
         return new Drive(this.context);
     }
 

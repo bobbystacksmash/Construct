@@ -105,6 +105,19 @@ describe("FileObject", () => {
         });
     });
 
+    describe(".Attributes", () => {
+
+        it("should return a number when .Attributes is requested", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\foo.txt");
+
+            const file = new File(ctx, "C:\\foo.txt");
+            assert.isNumber(file.attributes);
+            assert.equal(file.attributes, 32);
+        });
+    });
+
     describe(".DateCreated", () => {
 
         it("should return a date object from when this file was created", () => {
