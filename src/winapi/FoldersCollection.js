@@ -1,5 +1,6 @@
 const Component    = require("../Component");
 const proxify      = require("../proxify2");
+const win32path    = require("path").win32;
 
 class JS_FoldersCollection extends Component {
 
@@ -48,8 +49,13 @@ class JS_FoldersCollection extends Component {
 
         this._assert_exists();
 
-        const folders = this.vfs.Find(this._path, "*", { files: false, folders: true, links: true }),
-              folder_index = folders.indexOf(name.toLowerCase());
+        const folders = this.vfs.Find(this._path, "*", {
+            files: false,
+            folders: true,
+            links: true
+        });
+
+        const folder_index = folders.indexOf(name.toLowerCase());
 
         if (folder_index === -1) {
             this.context.exceptions.throw_path_not_found(
@@ -63,10 +69,47 @@ class JS_FoldersCollection extends Component {
         return new FolderObject(this.context, `${this._path}//${name}`);
     }
 
-    add (new_folder) {
+    add (new_folder_name) {
 
-        // TODO!
+        this._assert_exists();
 
+        if (typeof new_folder_name !== "string") {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FoldersCollection",
+                "Argument to FoldersCollection.Add that is not a string.",
+                "FoldersCollection.Add must be a string."
+            );
+        }
+
+        if (/^\.?[\\/]/.test(new_folder_name)) {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FoldersCollection",
+                "Folder to add must be only the folder name.",
+                "Cannot add a new folder which contains any invalid " +
+                    "or extra path parts (such as '..' or '\'.)"
+            );
+        }
+
+        const dirname  = win32path.dirname(new_folder_name).toLowerCase(),
+              basename = win32path.basename(new_folder_name).toLowerCase();
+
+        if (dirname === "." && basename === new_folder_name.toLowerCase()) {
+
+            const abspath_to_new_folder = win32path.join(
+                this._path, new_folder_name
+            );
+
+            if (this.vfs.FolderExists(abspath_to_new_folder)) {
+                this.context.exceptions.throw_file_already_exists(
+                    "FoldersCollection",
+                    "Failed while trying to add existing folder.",
+                    "A file or folder exists in the destination which " +
+                        "matches the new foldername."
+                );
+            }
+
+            this.vfs.AddFolder(abspath_to_new_folder);
+        }
     }
 }
 

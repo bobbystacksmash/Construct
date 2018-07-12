@@ -165,4 +165,49 @@ describe("FoldersCollection", () => {
             assert.throws(() => fc.Item("SubFolder1"), "backing folder is gone");
         });
     });
+
+    describe("#Add", () => {
+
+        it("should add the folder to the current collection", () => {
+
+            const ctx = make_ctx();
+
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1\\foo");
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1\\bar");
+
+            const fc = new FoldersCollection(ctx, "C:\\RootOne\\SubFolder1");
+
+            assert.equal(fc.count, 2);
+            assert.isFalse(ctx.vfs.FolderExists("C:\\RootOne\\SubFolder1\\baz"));
+
+            fc.Add("baz");
+            assert.isTrue(ctx.vfs.FolderExists("C:\\RootOne\\SubFolder1\\baz"));
+            assert.equal(fc.count, 3);
+        });
+
+        it("should throw if trying to add a folder which already exists", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_file_already_exists: () => {
+                        throw new Error("collision");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1\\foo");
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1\\bar");
+
+            const fc = new FoldersCollection(ctx, "C:\\RootOne\\SubFolder1");
+
+            assert.equal(fc.count, 2);
+            assert.throws(() => fc.Add("bar"), "collision");
+        });
+
+        it("should throw if a file exists with the same name", () => {
+
+            // todo
+
+        });
+    });
 });
