@@ -437,28 +437,333 @@ describe("FileObject", () => {
             assert.isTrue(ctx.vfs.FileExists(dstpath));
         });
 
+        it("should correctly overwrite the dest file by default", () => {
+
+            const ctx = make_ctx(),
+                  src = "C:\\RootOne\\foo.txt",
+                  dst = "C:\\RootOne\\bar.txt";
+
+            ctx.vfs.AddFile(src, "hello");
+            ctx.vfs.AddFile(dst, "world");
+
+            const file = new File(ctx, src);
+
+            assert.deepEqual(ctx.vfs.ReadFileContents(src).toString(), "hello");
+            assert.deepEqual(ctx.vfs.ReadFileContents(dst).toString(), "world");
+
+            file.copy("C:\\RootOne\\bar.txt");
+
+            assert.deepEqual(ctx.vfs.ReadFileContents(src).toString(), "hello");
+            assert.deepEqual(ctx.vfs.ReadFileContents(dst).toString(), "hello");
+        });
+
 
         it("should not overwrite the file is overwrite=false and file exists", () => {
 
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_file_already_exists: () => {
+                        throw new Error("file exists");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\RootOne\\foo.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\bar.txt");
+
+            const file = new File(ctx, "C:\\RootOne\\foo.txt");
+
+            assert.isTrue(ctx.vfs.FileExists("C:\\RootOne\\bar.txt"));
+            assert.throws(() => file.Copy("C:\\RootOne\\bar.txt", false), "file exists");
         });
 
         it("should copy to one folder up if '../filename' is used", () => {
 
+            const ctx = make_ctx(),
+                  src = `C:\\Users\\Construct\\foo.txt`,
+                  dst = `C:\\Users\\bar.txt`;
+
+            ctx.vfs.AddFile(src);
+
+            const file = new File(ctx, src);
+
+            assert.isFalse(ctx.vfs.FileExists(dst));
+            assert.doesNotThrow(() => file.Copy("..\\bar.txt"));
+
+            assert.isTrue(ctx.vfs.FileExists(dst));
         });
 
-        it("should throw if the input is just '../' with permission denied", () => {
+        it("should copy the filename if the path is '../'", () => {
 
+            const ctx = make_ctx(),
+                  src = "C:\\Users\\Construct\\foo.txt",
+                  dst = "C:\\Users\\foo.txt";
+
+            ctx.vfs.AddFile(src);
+
+            const file = new File(ctx, src);
+
+            assert.isFalse(ctx.vfs.FileExists(dst));
+            assert.doesNotThrow(() => file.Copy("../"));
+            assert.isTrue(ctx.vfs.FileExists(dst));
         });
 
-    });
+        it("should throw if destination contains a folder name matching dest filename", () => {
 
-    describe("#Move", () => {
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_permission_denied: () => {
+                        throw new Error("filename not uniq");
+                    }
+                }
+            });
 
+            ctx.vfs.AddFolder("C:\\RootOne\\bar");
+            ctx.vfs.AddFile("C:\\RootOne\\foo.txt");
+
+            const file = new File(ctx, "C:\\RootOne\\foo.txt");
+
+            assert.throws(() => file.Copy("C:\\RootOne\\bar"), "filename not uniq");
+        });
+
+        it("should copy shortpaths", () => {
+
+            const ctx = make_ctx();
+
+            ctx.vfs.AddFile("C:\\FooBarBaz\\helloworld.txt");
+
+            const file = new File(ctx, "C:\\FooBarBaz\\helloworld.txt");
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\FooBarBaz\\bar.txt"));
+            file.Copy("C:\\FOOBAR~1\\bar.txt");
+            assert.isTrue(ctx.vfs.FileExists("C:\\FooBarBaz\\bar.txt"));
+        });
     });
 
     describe("#Delete", () => {
 
+        it("should delete the file", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\foo.txt");
+            assert.isTrue(ctx.vfs.FileExists("C:\\foo.txt"));
+
+            const file = new File(ctx, "C:\\foo.txt");
+
+            assert.doesNotThrow(() => file.Delete());
+            assert.isFalse(ctx.vfs.FileExists("C:\\foo.txt"));
+
+            assert.throws(() => file.name, "throw_file_not_found");
+            assert.throws(() => file.path, "throw_file_not_found");
+            assert.throws(() => file.type, "throw_file_not_found");
+        });
     });
+
+    describe("#Move", () => {
+
+        it("should successfully move a file", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\foo.txt");
+
+            const file = new File(ctx, "C:\\foo.txt");
+            assert.isFalse(ctx.vfs.FileExists("C:\\bar.txt"));
+
+            assert.doesNotThrow(() => file.Move("C:\\bar.txt"));
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\foo.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\bar.txt"));
+
+            assert.equal(file.Name, "bar.txt");
+        });
+
+        it("should not throw when moving a file", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\foo.txt");
+
+            const file = new File(ctx, "C:\\foo.txt");
+
+            assert.doesNotThrow(() => file.Move("C:\\foo.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\foo.txt"));
+        });
+
+        it("should bit throw if being moved to itself", () => {
+
+            const ctx = make_ctx();
+
+            ctx.vfs.AddFile("C:\\foo.txt");
+            assert.isTrue(ctx.vfs.FileExists("C:\\foo.txt"));
+
+            const file = new File(ctx, "C:\\foo.txt");
+            assert.doesNotThrow(() => file.Move("C:\\foo.txt"));
+        });
+
+        it("should throw if the destination filename contains a wildcard char", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("no wildcards");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\foo.txt");
+            const file = new File(ctx, "C:\\foo.txt");
+            assert.throws(() => file.move("*.txt"), "no wildcards");
+        });
+
+        it("should throw if the inputs are invalid", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("invalid arg");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\foo.txt");
+
+            const file   = new File(ctx, "C:\\foo.txt"),
+                  params = [
+                      ""
+                  ];
+
+            params.forEach(p => assert.throws(() => file.Move(p), "invalid arg"));
+        });
+
+        it("should move to the CWD if no path is given", () => {
+
+            const ctx  = make_ctx(),
+                  srcpath = `${ctx.get_env("path")}\\foo.txt`,
+                  dstpath = `${ctx.get_env("path")}\\bar.txt`;
+
+            ctx.vfs.AddFile(srcpath, "hello");
+
+            const file = new File(ctx, srcpath);;
+
+            assert.isTrue(ctx.vfs.FileExists(srcpath));
+            assert.isFalse(ctx.vfs.FileExists(dstpath));
+
+            assert.doesNotThrow(() => file.Move("bar.txt"));
+
+            assert.isTrue(ctx.vfs.FileExists(dstpath));
+            assert.isFalse(ctx.vfs.FileExists(srcpath));
+        });
+
+        it("should move to the CWD if only 'C:<filename>' is given", () => {
+
+            const ctx  = make_ctx(),
+                  srcpath = `${ctx.get_env("path")}\\foo.txt`,
+                  dstpath = `${ctx.get_env("path")}\\bar.txt`;
+
+            ctx.vfs.AddFile(srcpath, "hello");
+
+            const file = new File(ctx, srcpath);;
+
+            assert.isTrue(ctx.vfs.FileExists(srcpath));
+            assert.isFalse(ctx.vfs.FileExists(dstpath));
+
+            assert.doesNotThrow(() => file.Move("C:bar.txt"));
+
+            assert.isTrue(ctx.vfs.FileExists(dstpath));
+            assert.isFalse(ctx.vfs.FileExists(srcpath));
+        });
+
+        it("should throw when overwriting an existing file by default", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_file_already_exists: () => {
+                        throw new Error("exists");
+                    }
+                }
+            });
+
+            let src = "C:\\RootOne\\foo.txt",
+                dst = "C:\\RootOne\\bar.txt";
+
+            ctx.vfs.AddFile(src, "hello");
+            ctx.vfs.AddFile(dst, "world");
+
+            const file = new File(ctx, src);
+
+            assert.deepEqual(ctx.vfs.ReadFileContents(src).toString(), "hello");
+            assert.deepEqual(ctx.vfs.ReadFileContents(dst).toString(), "world");
+
+            assert.throws(() => file.move("C:\\RootOne\\bar.txt"), "exists");
+
+            assert.deepEqual(ctx.vfs.ReadFileContents(src).toString(), "hello");
+            assert.deepEqual(ctx.vfs.ReadFileContents(dst).toString(), "world");
+        });
+
+        it("should move to one folder up if '../filename' is used", () => {
+
+            const ctx = make_ctx(),
+                  src = `C:\\Users\\Construct\\foo.txt`,
+                  dst = `C:\\Users\\bar.txt`;
+
+            ctx.vfs.AddFile(src);
+
+            const file = new File(ctx, src);
+
+            assert.isFalse(ctx.vfs.FileExists(dst));
+            assert.doesNotThrow(() => file.Move("..\\bar.txt"));
+
+            assert.isTrue(ctx.vfs.FileExists(dst));
+            assert.isFalse(ctx.vfs.FileExists(src));
+        });
+
+        it("should move the filename if the path is '../'", () => {
+
+            const ctx = make_ctx(),
+                  src = "C:\\Users\\Construct\\foo.txt",
+                  dst = "C:\\Users\\foo.txt";
+
+            ctx.vfs.AddFile(src);
+
+            const file = new File(ctx, src);
+
+            assert.isFalse(ctx.vfs.FileExists(dst));
+            assert.doesNotThrow(() => file.Move("../"));
+            assert.isTrue(ctx.vfs.FileExists(dst));
+            assert.isFalse(ctx.vfs.FileExists(src));
+        });
+
+        it("should throw if destination contains a folder name matching dest filename", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_permission_denied: () => {
+                        throw new Error("filename not uniq");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFolder("C:\\RootOne\\bar");
+            ctx.vfs.AddFile("C:\\RootOne\\foo.txt");
+
+            const file = new File(ctx, "C:\\RootOne\\foo.txt");
+
+            assert.throws(() => file.Move("C:\\RootOne\\bar"), "filename not uniq");
+        });
+
+        it("should move shortpaths", () => {
+
+            const ctx = make_ctx();
+
+            ctx.vfs.AddFile("C:\\FooBarBaz\\helloworld.txt");
+
+            const file = new File(ctx, "C:\\FooBarBaz\\helloworld.txt");
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\FooBarBaz\\bar.txt"));
+            file.Move("C:\\FOOBAR~1\\bar.txt");
+            assert.isTrue(ctx.vfs.FileExists("C:\\FooBarBaz\\bar.txt"));
+        });
+    });
+
 
     describe("#OpenAsTextStream", () => {
 

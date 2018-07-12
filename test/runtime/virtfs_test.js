@@ -702,4 +702,38 @@ describe("Virtual File System", () => {
             assert.throws(() => vfs.FolderContentsSize("C:\\RootOne"), "Path not found");
         });
     });
+
+    describe("#Move", () => {
+
+        it("should support moving from fileA to fileB", () => {
+
+            const vfs = make_vfs();
+
+            vfs.AddFile("C:\\fileA.txt");
+            assert.isFalse(vfs.FileExists("C:\\fileB.txt"));
+
+            vfs.Move("C:\\fileA.txt", "C:\\fileB.txt");
+            assert.isTrue(vfs.FileExists("C:\\fileB.txt"));
+        });
+
+        it("should move a folder (and files) correctly", () => {
+
+            const vfs = make_vfs();
+
+            vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
+            vfs.AddFile("C:\\RootOne\\SubDir2\\bar.txt");
+
+            assert.isFalse(vfs.FolderExists("C:\\dest"));
+
+            vfs.Move("C:\\RootOne", "C:\\dest");
+
+            assert.isTrue(vfs.FolderExists("C:\\dest"));
+            assert.isTrue(vfs.FileExists("C:\\dest\\SubDir1\\foo.txt"));
+            assert.isTrue(vfs.FileExists("C:\\dest\\SubDir2\\bar.txt"));
+        });
+
+        it("should throw when trying to move to a destination which does not exist", () => {
+            assert.equal("not implemented", "implemented");
+        });
+    });
 });

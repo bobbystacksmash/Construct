@@ -1280,6 +1280,14 @@ class VirtualFileSystem {
         const isource      = this._ConvertExternalToInternalPath(source),
               idestination = this._ConvertExternalToInternalPath(destination);
 
+        if (this.FileExists(isource)) {
+
+            this.vfs.copyFileSync(isource, idestination);
+            this.vfs.unlinkSync(isource);
+
+            return;
+        }
+
         let walk = (source, dest) => {
 
             let folders = this.FindAllFolders(source),
