@@ -143,7 +143,7 @@ describe("FoldersCollection", () => {
             assert.throws(() => fc.Item(() => true), "not a string");
         });
 
-        it("should throw a 'path not found' exception if the backing folder is deleted", () => {
+        it("should throw if the backing folder is deleted", () => {
 
             const ctx = make_ctx({
                 exceptions: {
@@ -185,6 +185,23 @@ describe("FoldersCollection", () => {
             assert.equal(fc.count, 3);
         });
 
+        it("should throw 'path not found' if the path is relative 'c:foo'", () => {
+
+            const ctx  = make_ctx({
+                exceptions: {
+                    throw_path_not_found: () => {
+                        throw new Error("c: not allowed");
+                    }
+                }
+            });
+
+            const path = `${ctx.get_env("path")}\\foo`;
+            ctx.vfs.AddFolder(path);
+
+            const fc = new FoldersCollection(ctx, path);
+            assert.throws(() => fc.Add("C:bar"), "c: not allowed");
+        });
+
         it("should throw if trying to add a folder which already exists", () => {
 
             const ctx = make_ctx({
@@ -204,10 +221,27 @@ describe("FoldersCollection", () => {
             assert.throws(() => fc.Add("bar"), "collision");
         });
 
-        it("should throw if a file exists with the same name", () => {
+        it("should throw if the input to Add is invalid", () => {
 
-            // todo
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("bad input");
+                    }
+                }
+            });
 
+            ctx.vfs.AddFolder("C:\\RootOne");
+
+            const fc = new FoldersCollection(ctx, "C:\\RootOne"),
+                  bad_inputs = [
+                      "",
+                      "../"
+                  ];
+
+            bad_inputs.forEach(input => {
+                assert.throws(() => fc.Add(input), "bad input");
+            });
         });
     });
 });

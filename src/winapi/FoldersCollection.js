@@ -26,6 +26,8 @@ class JS_FoldersCollection extends Component {
                     "have been deleted)."
             );
         };
+
+        this._assert_exists();
     }
 
     get count () {
@@ -73,10 +75,10 @@ class JS_FoldersCollection extends Component {
 
         this._assert_exists();
 
-        if (typeof new_folder_name !== "string") {
+        if (typeof new_folder_name !== "string" || new_folder_name === "") {
             this.context.exceptions.throw_invalid_fn_arg(
                 "FoldersCollection",
-                "Argument to FoldersCollection.Add that is not a string.",
+                "Argument to FoldersCollection.Add that is not a valid string.",
                 "FoldersCollection.Add must be a string."
             );
         }
@@ -90,25 +92,48 @@ class JS_FoldersCollection extends Component {
             );
         }
 
+        if (this.vfs.PathIsRelative(new_folder_name)) {
+            if (/^c:/i.test(new_folder_name)) {
+                this.context.exceptions.throw_path_not_found(
+                    "FoldersCollection",
+                    "Path not found.",
+                    "Cannot use relative paths which begin 'C:'."
+                );
+            }
+        }
+
         const dirname  = win32path.dirname(new_folder_name).toLowerCase(),
               basename = win32path.basename(new_folder_name).toLowerCase();
 
-        if (dirname === "." && basename === new_folder_name.toLowerCase()) {
+        if (dirname === ".") {
 
-            const abspath_to_new_folder = win32path.join(
-                this._path, new_folder_name
-            );
-
-            if (this.vfs.FolderExists(abspath_to_new_folder)) {
-                this.context.exceptions.throw_file_already_exists(
+            if (basename === "" || basename === ".." || basename === ".") {
+                this.context.exceptions.throw_invalid_fn_arg(
                     "FoldersCollection",
-                    "Failed while trying to add existing folder.",
-                    "A file or folder exists in the destination which " +
-                        "matches the new foldername."
+                    "Folder to add must be a valid folder name (not '.' or '..')",
+                    "The folder name must be a valid folder name.  Note that " +
+                        "folder names such as '.' or '../../' do not resolve " +
+                        "to valid folder names, and therefore cannot be used."
                 );
             }
 
-            this.vfs.AddFolder(abspath_to_new_folder);
+            if (basename === new_folder_name.toLowerCase()) {
+
+                const abspath_to_new_folder = win32path.join(
+                    this._path, new_folder_name
+                );
+
+                if (this.vfs.FolderExists(abspath_to_new_folder)) {
+                    this.context.exceptions.throw_file_already_exists(
+                        "FoldersCollection",
+                        "Failed while trying to add existing folder.",
+                        "A file or folder exists in the destination which " +
+                            "matches the new foldername."
+                    );
+                }
+
+                this.vfs.AddFolder(abspath_to_new_folder);
+            }
         }
     }
 }
