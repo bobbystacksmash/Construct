@@ -321,21 +321,85 @@ class JS_FileObject extends Component {
             );
         }
 
-
-
         this.vfs.CopyFile(this._path, destination);
     }
 
     // Delete
     // ======
     //
-    // Deletes this folder from disk.
+    // Deletes this file from disk.
     //
     delete () {
+        this.ee.emit("File.Delete");
+        this._assert_exists();
         this.vfs.Delete(this._path);
     }
 
-    move () {}
+    // Move
+    // ====
+    //
+    // Moves this file to another location.
+    //
+    move (destination) {
+        this.ee.emit("File.Copy");
+        this._assert_exists();
+
+        if (typeof destination !== "string" || destination === "") {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FileObject",
+                "Destination parameter is invalid.",
+                "The destination should be a valid win32 filename."
+            );
+        }
+
+        if (this.vfs.IsWildcard(destination)) {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FileObject",
+                "Destination cannot contain wildcard characters.",
+                "The destination file cannot contain wildcard characters."
+            );
+        }
+
+        if (this.vfs.PathIsRelative(destination)) {
+
+            destination = destination.replace(/^C:/i, "");
+            destination = win32path.join(
+                this.context.get_env("path"),
+                destination
+            );
+
+            if (destination.endsWith("/") || destination.endsWith("\\")) {
+                // The copy expression is something like: "../", which
+                // is legal.
+                destination = win32path.join(destination, this.name);
+            }
+        }
+
+        if (destination.toLowerCase() === this._path.toLowerCase()) {
+            return;
+        }
+
+        if (this.vfs.FolderExists(destination)) {
+            this.context.exceptions.throw_permission_denied(
+                "FileObject",
+                "Destination copy name matches existing folder name.",
+                "A folder exists in the destination with the same name " +
+                    "as the filename."
+            );
+        }
+
+        if (this.vfs.FileExists(destination)) {
+            this.context.exceptions.throw_file_already_exists(
+                "FileObject",
+                "Destination file already exists.",
+                "Overwrtiting has been disabled, and the destination file " +
+                    "already exists."
+            );
+        }
+
+        this.vfs.Move(this._path, destination);
+        this._path = destination;
+    }
 
     openastextstream () {
 

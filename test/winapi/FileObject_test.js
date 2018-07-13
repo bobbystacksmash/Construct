@@ -540,13 +540,70 @@ describe("FileObject", () => {
         });
     });
 
-    describe("#Move", () => {
-
-    });
-
     describe("#Delete", () => {
 
+        it("should allow the file to be deleted", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\foo.txt");
+            assert.isTrue(ctx.vfs.FileExists("C:\\foo.txt"));
+
+            const file = new File(ctx, "C:\\foo.txt");
+
+            assert.doesNotThrow(() => file.Delete());
+            assert.isFalse(ctx.vfs.FileExists("C:\\foo.txt"));
+
+            assert.throws(() => file.name, "throw_file_not_found");
+            assert.throws(() => file.path, "throw_file_not_found");
+            assert.throws(() => file.type, "throw_file_not_found");
+        });
     });
+
+    describe("#Move", () => {
+
+        it("should successfully move a file", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\foo.txt");
+
+            const file = new File(ctx, "C:\\foo.txt");
+            assert.isFalse(ctx.vfs.FileExists("C:\\bar.txt"));
+
+            assert.doesNotThrow(() => file.Move("C:\\bar.txt"));
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\foo.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\bar.txt"));
+
+            assert.equal(file.Name, "bar.txt");
+        });
+
+        it("should not throw when moving a file", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\foo.txt");
+
+            const file = new File(ctx, "C:\\foo.txt");
+
+            assert.doesNotThrow(() => file.Move("C:\\foo.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\foo.txt"));
+        });
+
+        it("should move a file if the move destination is '../'", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\Users\\Construct\\foo.txt");
+
+            const file = new File(ctx, "C:\\Users\\Construct\\foo.txt");
+            assert.isFalse(ctx.vfs.FileExists("C:\\Users\\foo.txt"));
+
+            assert.doesNotThrow(() => file.Move("../"));
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\Users\\Construct\\foo.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\Users\\foo.txt"));
+
+        });
+    });
+
 
     describe("#OpenAsTextStream", () => {
 

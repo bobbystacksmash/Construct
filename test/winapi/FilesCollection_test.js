@@ -211,3 +211,6 @@ describe("FilesCollection", () => {
         });
     });
 });
+
+// TODO: Add a test to ensure the files.count drops when '.delete' is called on a file
+// TODO: Add a test to ensure the files.item method fails when trying to find a moved file
