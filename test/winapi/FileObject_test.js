@@ -437,19 +437,107 @@ describe("FileObject", () => {
             assert.isTrue(ctx.vfs.FileExists(dstpath));
         });
 
+        it("should correctly overwrite the dest file by default", () => {
+
+            const ctx = make_ctx(),
+                  src = "C:\\RootOne\\foo.txt",
+                  dst = "C:\\RootOne\\bar.txt";
+
+            ctx.vfs.AddFile(src, "hello");
+            ctx.vfs.AddFile(dst, "world");
+
+            const file = new File(ctx, src);
+
+            assert.deepEqual(ctx.vfs.ReadFileContents(src).toString(), "hello");
+            assert.deepEqual(ctx.vfs.ReadFileContents(dst).toString(), "world");
+
+            file.copy("C:\\RootOne\\bar.txt");
+
+            assert.deepEqual(ctx.vfs.ReadFileContents(src).toString(), "hello");
+            assert.deepEqual(ctx.vfs.ReadFileContents(dst).toString(), "hello");
+        });
+
 
         it("should not overwrite the file is overwrite=false and file exists", () => {
 
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_file_already_exists: () => {
+                        throw new Error("file exists");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\RootOne\\foo.txt");
+            ctx.vfs.AddFile("C:\\RootOne\\bar.txt");
+
+            const file = new File(ctx, "C:\\RootOne\\foo.txt");
+
+            assert.isTrue(ctx.vfs.FileExists("C:\\RootOne\\bar.txt"));
+            assert.throws(() => file.Copy("C:\\RootOne\\bar.txt", false), "file exists");
         });
 
         it("should copy to one folder up if '../filename' is used", () => {
 
+            const ctx = make_ctx(),
+                  src = `C:\\Users\\Construct\\foo.txt`,
+                  dst = `C:\\Users\\bar.txt`;
+
+            ctx.vfs.AddFile(src);
+
+            const file = new File(ctx, src);
+
+            assert.isFalse(ctx.vfs.FileExists(dst));
+            assert.doesNotThrow(() => file.Copy("..\\bar.txt"));
+
+            assert.isTrue(ctx.vfs.FileExists(dst));
         });
 
-        it("should throw if the input is just '../' with permission denied", () => {
+        it("should copy the filename if the path is '../'", () => {
 
+            const ctx = make_ctx(),
+                  src = "C:\\Users\\Construct\\foo.txt",
+                  dst = "C:\\Users\\foo.txt";
+
+            ctx.vfs.AddFile(src);
+
+            const file = new File(ctx, src);
+
+            assert.isFalse(ctx.vfs.FileExists(dst));
+            assert.doesNotThrow(() => file.Copy("../"));
+            assert.isTrue(ctx.vfs.FileExists(dst));
         });
 
+        it("should throw if destination contains a folder name matching dest filename", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_permission_denied: () => {
+                        throw new Error("filename not uniq");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFolder("C:\\RootOne\\bar");
+            ctx.vfs.AddFile("C:\\RootOne\\foo.txt");
+
+            const file = new File(ctx, "C:\\RootOne\\foo.txt");
+
+            assert.throws(() => file.Copy("C:\\RootOne\\bar"), "filename not uniq");
+        });
+
+        it("should copy shortpaths", () => {
+
+            const ctx = make_ctx();
+
+            ctx.vfs.AddFile("C:\\FooBarBaz\\helloworld.txt");
+
+            const file = new File(ctx, "C:\\FooBarBaz\\helloworld.txt");
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\FooBarBaz\\bar.txt"));
+            file.Copy("C:\\FOOBAR~1\\bar.txt");
+            assert.isTrue(ctx.vfs.FileExists("C:\\FooBarBaz\\bar.txt"));
+        });
     });
 
     describe("#Move", () => {

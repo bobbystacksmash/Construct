@@ -129,7 +129,7 @@ class JS_FileObject extends Component {
     // Name
     // ====
     //
-    // Returns the folder name.
+    // Returns the file name.
     //
     get name () {
 
@@ -255,9 +255,13 @@ class JS_FileObject extends Component {
     //
     // Copies this file to another location.
     //
-    copy (destination, overwrite_files) {
+    copy (destination, overwrite) {
         this.ee.emit("File.Copy");
         this._assert_exists();
+
+        if (overwrite === undefined || overwrite === null) {
+            overwrite = true;
+        }
 
         if (typeof destination !== "string" || destination === "") {
             this.context.exceptions.throw_invalid_fn_arg(
@@ -282,6 +286,12 @@ class JS_FileObject extends Component {
                 this.context.get_env("path"),
                 destination
             );
+
+            if (destination.endsWith("/") || destination.endsWith("\\")) {
+                // The copy expression is something like: "../", which
+                // is legal.
+                destination = win32path.join(destination, this.name);
+            }
         }
 
         if (destination.toLowerCase() === this._path.toLowerCase()) {
@@ -292,6 +302,26 @@ class JS_FileObject extends Component {
                     "the source and destination are the same file."
             );
         }
+
+        if (this.vfs.FolderExists(destination)) {
+            this.context.exceptions.throw_permission_denied(
+                "FileObject",
+                "Destination copy name matches existing folder name.",
+                "A folder exists in the destination with the same name " +
+                    "as the filename."
+            );
+        }
+
+        if (this.vfs.FileExists(destination) && overwrite === false) {
+            this.context.exceptions.throw_file_already_exists(
+                "FileObject",
+                "Destination file already exists.",
+                "Overwrtiting has been disabled, and the destination file " +
+                    "already exists."
+            );
+        }
+
+
 
         this.vfs.CopyFile(this._path, destination);
     }
