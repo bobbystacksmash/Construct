@@ -60,9 +60,9 @@ function make_ctx (opts) {
 
 describe("FileObject", () => {
 
-    describe("Construction", () => {
+    /*describe("Construction", () => {
 
-        it("should throw if the given file is a folder", () => {
+        xit("should throw if the given file is a folder", () => {
 
             const path = "C:\\RootOne",
                   ctx  = make_ctx({
@@ -77,7 +77,7 @@ describe("FileObject", () => {
             assert.throws(() => new File(ctx, path), "no file");
         });
 
-        it("should throw if the supplied file does not exist", () => {
+        xit("should throw if the supplied file does not exist", () => {
 
             const path = "C:\\RootOne",
                   ctx  = make_ctx({
@@ -92,7 +92,7 @@ describe("FileObject", () => {
             assert.throws(() => new File(ctx, `${path}\\does_not_exist.txt`), "no file");
         });
 
-        it("should throw if the folderpath does not exist", () => {
+        xit("should throw if the folderpath does not exist", () => {
             const ctx  = make_ctx({
                 exceptions: {
                     throw_file_not_found: () => {
@@ -107,7 +107,7 @@ describe("FileObject", () => {
 
     describe(".Attributes", () => {
 
-        it("should return a number when .Attributes is requested", () => {
+        xit("should return a number when .Attributes is requested", () => {
 
             const ctx = make_ctx();
             ctx.vfs.AddFile("C:\\foo.txt");
@@ -120,7 +120,7 @@ describe("FileObject", () => {
 
     describe(".DateCreated", () => {
 
-        it("should return a date object from when this file was created", () => {
+        xit("should return a date object from when this file was created", () => {
 
             const path =  "C:\\RootOne\\HelloWorld.txt",
                   ctx  = make_ctx();
@@ -134,7 +134,7 @@ describe("FileObject", () => {
 
     describe(".DateLastAccessed", () => {
 
-        it("should return a date object from when this file was accessed", () => {
+        xit("should return a date object from when this file was accessed", () => {
 
             const path =  "C:\\RootOne\\HelloWorld.txt",
                   ctx  = make_ctx();
@@ -148,7 +148,7 @@ describe("FileObject", () => {
 
     describe(".DateLastModified", () => {
 
-        it("should return a date object from when this file was last modified", () => {
+        xit("should return a date object from when this file was last modified", () => {
 
             const path =  "C:\\RootOne\\HelloWorld.txt",
                   ctx  = make_ctx();
@@ -162,7 +162,7 @@ describe("FileObject", () => {
 
     describe(".Drive", () => {
 
-        it("should return a Drive object when .Drive is looked-up", () => {
+        xit("should return a Drive object when .Drive is looked-up", () => {
 
             const path = "C:\\RootOne\\HelloWorld.txt",
                   ctx  = make_ctx();
@@ -184,7 +184,7 @@ describe("FileObject", () => {
         // trying to write to a file whose name contains illegal
         // chars.
 
-        it("should return the basename of the backing path as the name", () => {
+        xit("should return the basename of the backing path as the name", () => {
 
             const ctx = make_ctx();
             ctx.vfs.AddFile("C:\\RootOne\\HelloWorld.txt");
@@ -195,7 +195,7 @@ describe("FileObject", () => {
             });
         });
 
-        it("should rename the file when .Name is assigned to", () => {
+        xit("should rename the file when .Name is assigned to", () => {
 
             const path = "C:\\RootOne\\foo.txt",
                   ctx  = make_ctx();
@@ -211,7 +211,7 @@ describe("FileObject", () => {
             assert.isTrue(ctx.vfs.FileExists("C:\\RootOne\\bar.txt"));
         });
 
-        it("should throw 'file already exists' if the file already exists", () => {
+        xit("should throw 'file already exists' if the file already exists", () => {
 
             const path = "C:\\RootOne\\foo.txt",
                   ctx  = make_ctx({
@@ -231,7 +231,7 @@ describe("FileObject", () => {
 
     describe(".Parentfolder", () => {
 
-        it("should return a Folder object which represents the parent folder", () => {
+        xit("should return a Folder object which represents the parent folder", () => {
 
             const ctx  = make_ctx(),
                   path = "C:\\RootOne\\SubFolder1\\foo.txt";
@@ -244,14 +244,14 @@ describe("FileObject", () => {
             assert.equal(parent.name, "SubFolder1");
         });
 
-        it("should return undefined if the Folder is already root", () => {
+        xit("should return undefined if the Folder is already root", () => {
             const ctx  = make_ctx();
             ctx.vfs.AddFile("C:\\foo.txt");
             const file = new File(ctx, "C:\\foo.txt");
             assert.equal(file.ParentFolder, undefined);
         });
 
-        it("should use env path if path is 'C:'", () => {
+        xit("should use env path if path is 'C:'", () => {
             const ctx = make_ctx();
             ctx.vfs.AddFile("C:\\Users\\Construct\\foo.txt");
 
@@ -262,7 +262,7 @@ describe("FileObject", () => {
 
     describe(".Path", () => {
 
-        it("should return the complete path to the current folder, including drive", () => {
+        xit("should return the complete path to the current folder, including drive", () => {
 
             const path = "C:\\RootOne\\SubFolder1\\foo.txt",
                   ctx  = make_ctx();
@@ -276,7 +276,7 @@ describe("FileObject", () => {
 
     describe(".ShortName", () => {
 
-        it("should return the shortname for the backing file", () => {
+        xit("should return the shortname for the backing file", () => {
 
             const path = "C:\\RootOneFoo\\SubFolder1\\helloworld.txt",
                   ctx  = make_ctx();
@@ -286,7 +286,7 @@ describe("FileObject", () => {
             assert.equal(new File(ctx, path).ShortName, "HELLOW~1.TXT");
         });
 
-        it("should return the file name if the file name is already a valid SFN", () => {
+        xit("should return the file name if the file name is already a valid SFN", () => {
 
             const path = "C:\\RootOne\\foo.txt",
                   ctx  = make_ctx();
@@ -298,7 +298,7 @@ describe("FileObject", () => {
 
     describe(".ShortPath", () => {
 
-        it("should return a short path version of the path", () => {
+        xit("should return a short path version of the path", () => {
 
             const ctx = make_ctx();
 
@@ -318,7 +318,7 @@ describe("FileObject", () => {
 
     describe(".Size", () => {
 
-        it("should return size as a number", () => {
+        xit("should return size as a number", () => {
 
             const ctx = make_ctx();
             ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\foo.txt");
@@ -335,7 +335,7 @@ describe("FileObject", () => {
 
     describe(".Type", () => {
 
-        it("should return the correct type for all known type instances", () => {
+        xit("should return the correct type for all known type instances", () => {
 
             const ctx = make_ctx();
             ctx.vfs.AddFile("C:\\foo.txt");
@@ -350,7 +350,7 @@ describe("FileObject", () => {
 
     describe("#Copy", () => {
 
-        it("should throw if trying to overwrite itself", () => {
+        xit("should throw if trying to overwrite itself", () => {
 
             const ctx = make_ctx({
                 exceptions: {
@@ -366,7 +366,7 @@ describe("FileObject", () => {
             assert.throws(() => file.Copy("C:\\foo.txt"), "permission denied");
         });
 
-        it("should throw if the destination filename contains a wildcard char", () => {
+        xit("should throw if the destination filename contains a wildcard char", () => {
 
             const ctx = make_ctx({
                 exceptions: {
@@ -381,7 +381,7 @@ describe("FileObject", () => {
             assert.throws(() => file.copy("*.txt"), "no wildcards");
         });
 
-        it("should throw if the inputs are invalid", () => {
+        xit("should throw if the inputs are invalid", () => {
 
             const ctx = make_ctx({
                 exceptions: {
@@ -401,7 +401,7 @@ describe("FileObject", () => {
             params.forEach(p => assert.throws(() => file.Copy(p), "invalid arg"));
         });
 
-        it("should copy to the CWD if no path is given", () => {
+        xit("should copy to the CWD if no path is given", () => {
 
             const ctx  = make_ctx(),
                   srcpath = `${ctx.get_env("path")}\\foo.txt`,
@@ -419,7 +419,7 @@ describe("FileObject", () => {
             assert.isTrue(ctx.vfs.FileExists(dstpath));
         });
 
-        it("should copy to the CWD if only 'C:<filename>' is given", () => {
+        xit("should copy to the CWD if only 'C:<filename>' is given", () => {
 
             const ctx  = make_ctx(),
                   srcpath = `${ctx.get_env("path")}\\foo.txt`,
@@ -437,7 +437,7 @@ describe("FileObject", () => {
             assert.isTrue(ctx.vfs.FileExists(dstpath));
         });
 
-        it("should correctly overwrite the dest file by default", () => {
+        xit("should correctly overwrite the dest file by default", () => {
 
             const ctx = make_ctx(),
                   src = "C:\\RootOne\\foo.txt",
@@ -458,7 +458,7 @@ describe("FileObject", () => {
         });
 
 
-        it("should not overwrite the file is overwrite=false and file exists", () => {
+        xit("should not overwrite the file is overwrite=false and file exists", () => {
 
             const ctx = make_ctx({
                 exceptions: {
@@ -477,7 +477,7 @@ describe("FileObject", () => {
             assert.throws(() => file.Copy("C:\\RootOne\\bar.txt", false), "file exists");
         });
 
-        it("should copy to one folder up if '../filename' is used", () => {
+        xit("should copy to one folder up if '../filename' is used", () => {
 
             const ctx = make_ctx(),
                   src = `C:\\Users\\Construct\\foo.txt`,
@@ -493,7 +493,7 @@ describe("FileObject", () => {
             assert.isTrue(ctx.vfs.FileExists(dst));
         });
 
-        it("should copy the filename if the path is '../'", () => {
+        xit("should copy the filename if the path is '../'", () => {
 
             const ctx = make_ctx(),
                   src = "C:\\Users\\Construct\\foo.txt",
@@ -508,7 +508,7 @@ describe("FileObject", () => {
             assert.isTrue(ctx.vfs.FileExists(dst));
         });
 
-        it("should throw if destination contains a folder name matching dest filename", () => {
+        xit("should throw if destination contains a folder name matching dest filename", () => {
 
             const ctx = make_ctx({
                 exceptions: {
@@ -526,7 +526,7 @@ describe("FileObject", () => {
             assert.throws(() => file.Copy("C:\\RootOne\\bar"), "filename not uniq");
         });
 
-        it("should copy shortpaths", () => {
+        xit("should copy shortpaths", () => {
 
             const ctx = make_ctx();
 
@@ -542,7 +542,7 @@ describe("FileObject", () => {
 
     describe("#Delete", () => {
 
-        it("should delete the file", () => {
+        xit("should delete the file", () => {
 
             const ctx = make_ctx();
             ctx.vfs.AddFile("C:\\foo.txt");
@@ -561,7 +561,7 @@ describe("FileObject", () => {
 
     describe("#Move", () => {
 
-        it("should successfully move a file", () => {
+        xit("should successfully move a file", () => {
 
             const ctx = make_ctx();
             ctx.vfs.AddFile("C:\\foo.txt");
@@ -577,7 +577,7 @@ describe("FileObject", () => {
             assert.equal(file.Name, "bar.txt");
         });
 
-        it("should not throw when moving a file", () => {
+        xit("should not throw when moving a file", () => {
 
             const ctx = make_ctx();
             ctx.vfs.AddFile("C:\\foo.txt");
@@ -588,7 +588,7 @@ describe("FileObject", () => {
             assert.isTrue(ctx.vfs.FileExists("C:\\foo.txt"));
         });
 
-        it("should bit throw if being moved to itself", () => {
+        xit("should bit throw if being moved to itself", () => {
 
             const ctx = make_ctx();
 
@@ -599,7 +599,7 @@ describe("FileObject", () => {
             assert.doesNotThrow(() => file.Move("C:\\foo.txt"));
         });
 
-        it("should throw if the destination filename contains a wildcard char", () => {
+        xit("should throw if the destination filename contains a wildcard char", () => {
 
             const ctx = make_ctx({
                 exceptions: {
@@ -614,7 +614,7 @@ describe("FileObject", () => {
             assert.throws(() => file.move("*.txt"), "no wildcards");
         });
 
-        it("should throw if the inputs are invalid", () => {
+        xit("should throw if the inputs are invalid", () => {
 
             const ctx = make_ctx({
                 exceptions: {
@@ -634,7 +634,7 @@ describe("FileObject", () => {
             params.forEach(p => assert.throws(() => file.Move(p), "invalid arg"));
         });
 
-        it("should move to the CWD if no path is given", () => {
+        xit("should move to the CWD if no path is given", () => {
 
             const ctx  = make_ctx(),
                   srcpath = `${ctx.get_env("path")}\\foo.txt`,
@@ -653,7 +653,7 @@ describe("FileObject", () => {
             assert.isFalse(ctx.vfs.FileExists(srcpath));
         });
 
-        it("should move to the CWD if only 'C:<filename>' is given", () => {
+        xit("should move to the CWD if only 'C:<filename>' is given", () => {
 
             const ctx  = make_ctx(),
                   srcpath = `${ctx.get_env("path")}\\foo.txt`,
@@ -672,7 +672,7 @@ describe("FileObject", () => {
             assert.isFalse(ctx.vfs.FileExists(srcpath));
         });
 
-        it("should throw when overwriting an existing file by default", () => {
+        xit("should throw when overwriting an existing file by default", () => {
 
             const ctx = make_ctx({
                 exceptions: {
@@ -699,7 +699,7 @@ describe("FileObject", () => {
             assert.deepEqual(ctx.vfs.ReadFileContents(dst).toString(), "world");
         });
 
-        it("should move to one folder up if '../filename' is used", () => {
+        xit("should move to one folder up if '../filename' is used", () => {
 
             const ctx = make_ctx(),
                   src = `C:\\Users\\Construct\\foo.txt`,
@@ -716,7 +716,7 @@ describe("FileObject", () => {
             assert.isFalse(ctx.vfs.FileExists(src));
         });
 
-        it("should move the filename if the path is '../'", () => {
+        xit("should move the filename if the path is '../'", () => {
 
             const ctx = make_ctx(),
                   src = "C:\\Users\\Construct\\foo.txt",
@@ -732,7 +732,7 @@ describe("FileObject", () => {
             assert.isFalse(ctx.vfs.FileExists(src));
         });
 
-        it("should throw if destination contains a folder name matching dest filename", () => {
+        xit("should throw if destination contains a folder name matching dest filename", () => {
 
             const ctx = make_ctx({
                 exceptions: {
@@ -750,7 +750,7 @@ describe("FileObject", () => {
             assert.throws(() => file.Move("C:\\RootOne\\bar"), "filename not uniq");
         });
 
-        it("should move shortpaths", () => {
+        xit("should move shortpaths", () => {
 
             const ctx = make_ctx();
 
@@ -762,10 +762,58 @@ describe("FileObject", () => {
             file.Move("C:\\FOOBAR~1\\bar.txt");
             assert.isTrue(ctx.vfs.FileExists("C:\\FooBarBaz\\bar.txt"));
         });
-    });
+    });*/
 
 
     describe("#OpenAsTextStream", () => {
+
+        it("should allow text to be written to the file", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\foo.txt");
+
+            const FOR_WRITING   = 2,
+                  OPEN_AS_ASCII = 0;
+
+            const file = new File(ctx, "C:\\foo.txt"),
+                  ts   = file.OpenAsTextStream(FOR_WRITING, OPEN_AS_ASCII);
+
+            ts.Write("Hello, World!");
+            assert.equal(ctx.vfs.ReadFileContents("C:\\foo.txt").toString(), "Hello, World!");
+
+        });
+
+        it("should open and only allow appending in append-only mode", () => {});
+        it("should open and only allow reading in read-only mode", () => {});
+        it("should open and only allow writing in write-only mode", () => {});
+
+        it("should use ASCII as the format if format=0", () => {});
+        it("should use Unicode as the format if format=-1", () => {});
+        it("should use the ASCII as the default if format =-2", () => {});
+        it("should use the default if no FORMAT param is set", () => {});
+
+
+        /*xit("should throw 'bad file mode' if opened with no args and a write is attemped", () => {
+
+        });
+
+        xit("should auto-write to the file after each call to #Write", () => {
+
+        });
+
+        xit("should overwrite the text file if opened with mode '2' (for writing)", () => {
+
+        });
+
+        xit("should not add a BOM to an ASCII file if opened in append+unicode", () => {
+
+        });
+
+        xit("should throw if the inputs for either 'iomode' or 'format' are invalid", () => {
+
+            // Throws: invalid procedure call or argument
+
+        });*/
 
     });
 });

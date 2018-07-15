@@ -1,8 +1,9 @@
-const Component = require("../Component");
-const proxify   = require("../proxify2");
-const win32path = require("path").win32;
-const Drive     = require("./DriveObject");
-const Folder    = require("./FolderObject");
+const Component  = require("../Component");
+const proxify    = require("../proxify2");
+const win32path  = require("path").win32;
+const Drive      = require("./DriveObject");
+const Folder     = require("./FolderObject");
+const TextStream = require("./TextStream");
 
 class JS_FileObject extends Component {
 
@@ -401,8 +402,108 @@ class JS_FileObject extends Component {
         this._path = destination;
     }
 
-    openastextstream () {
+    // OpenAsTextStream
+    // ================
+    //
+    // Opens the given text file for reading or writing.
+    //
+    // IO Modes:
+    //
+    //   | Value | Mnemonic | Description                             |
+    //   |-------|----------|-----------------------------------------|
+    //   |   1   |   Read   | Open file for reading only (no writes). |
+    //   |   2   |   Write  | Write only. All content is overwritten. |
+    //   |   8   |  Append  | Appends to existing file contents.      |
+    //
+    //
+    // Formats:
+    //   | Value | Open As  | Description                                 |
+    //   |-------|----------|---------------------------------------------|
+    //   |   0   |  ASCII   | Open the file in ASCII mode.                |
+    //   |  -1   |  Unicode | Open the file in Unicode mode.              |
+    //   |  -2   |  Default | Open the file in the system's default mode. |
+    //
+    openastextstream (iomode, format) {
 
+        const IO_MODE = {
+            read:   1,
+            write:  2,
+            append: 8
+        };
+
+        const FORMAT = {
+            ascii:    0,
+            unicode: -1,
+            default: -2
+        };
+
+        // Defaults
+        if (iomode === undefined || iomode === null) {
+            iomode = IO_MODE.read;
+        }
+
+        if (format === undefined || format === null) {
+            format = FORMAT.ascii;
+        }
+
+        // We translate the `iomode' and `format' inputs in to
+        // something our `TextStream' object will accept. The
+        // `TextStream' constructor needs to be given:
+        //
+        //  backing_stream_spec --> this._path
+        //  can_read            --> derive from iomode
+        //  write_mode          --> derive from iomode
+        //  use_unicode         --> derive from format
+        //  persist             --> need to test in Win VM
+        //
+        let ts_args = {
+            can_read: null,
+            write_mode: null,
+            use_unicode: null,
+            persist: true
+        };
+
+        switch (iomode) {
+        case IO_MODE.read:
+            ts_args.write_mode = 0;
+            ts_args.can_read   = true;
+            break;
+
+        case IO_MODE.write:
+            ts_args.write_mode = 1;
+            ts_args.can_read   = true;
+            break;
+
+        case IO_MODE.append:
+            ts_args.write_mode = 2;
+            ts_args.can_read   = true;
+            break;
+        default:
+            console.log("FIXME: do we throw here?!");
+        }
+
+        switch (format) {
+        case FORMAT.ascii:
+        case FORMAT.default:
+            ts_args.use_unicode = false;
+            break;
+
+        case FORMAT.unicode:
+            ts_args.use_unicode = true;
+            break;
+
+        default:
+            console.log("FIXME: do we throw here?!");
+        }
+
+        return new TextStream(
+            this.context,
+            this._path,
+            ts_args.can_read,
+            ts_args.write_mode,
+            ts_args.unicode,
+            ts_args.persist
+        );
     }
 
 }

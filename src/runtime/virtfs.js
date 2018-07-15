@@ -1067,10 +1067,10 @@ class VirtualFileSystem {
     // the encoding scheme.  If no encoding is set a Buffer is
     // returned.
     //
-    ReadFileContents (filepath, encoding) {
+    ReadFileContents (filepath) {
 
         const ipath = this._ConvertExternalToInternalPath(filepath),
-              buf   = this.vfs.readFileSync(ipath, encoding);
+              buf   = this.vfs.readFileSync(ipath);
 
         return buf;
     }

@@ -6,7 +6,41 @@ const AbstractIOStream = require("./support/AbstractIOStream");
 
 class JS_TextStream extends Component {
 
-    constructor (context, backing_stream_spec, can_read, can_write, use_unicode, persist) {
+    // TextStream
+    // ==========
+    //
+    // Creates a read/write text stream.
+    //
+    // Arguments
+    // *********
+    //
+    //   - context [string]
+    //     The Construct context object.
+    //
+    //   - backing_stream_spec [string]
+    //     A path to the file which will "back" this stream.
+    //
+    //   - can_read [bool]
+    //     Streams can be in read or write mode.  When `can_read' is
+    //     true, reading is enabled.
+    //
+    //   - write_mode [number]
+    //     There are three write modes:
+    //       0 :: writing is forbidden,
+    //       1 :: overwrite the contents of the file (pos marker at zero)
+    //       2 :: append new content to the end of an existing file.
+    //
+    //   - use_unicode [bool]
+    //     Streams may be open in either ASCII or Unicode mode.  If
+    //     `use_unicode' is TRUE then Unicode text will be written to
+    //     the backing file.  ASCII by default.
+    //
+    //   - persist [bool]
+    //     When set to TRUE, will ensure that after each
+    //     #Write... call, the contents written are immediately
+    //     serialised to disk.
+    //
+    constructor (context, backing_stream_spec, can_read, write_mode, use_unicode, persist) {
 
         let charset = "ASCII";
 
@@ -25,7 +59,7 @@ class JS_TextStream extends Component {
             context,
             backing_stream_spec,
             can_read,
-            can_write,
+            write_mode,
             charset
         );
     }
@@ -118,7 +152,7 @@ class JS_TextStream extends Component {
             this.stream.close();
 
             // '2' below means "overwrite on create":
-            this.stream.save_to_file(this.backing_stream, 2);
+            this.stream.Write(this.backing_stream, 2);
         }
         catch (_) {
             // Multiple calls to #Close are fine -- just trap the
@@ -308,9 +342,11 @@ class JS_TextStream extends Component {
         try {
             this.stream.Write(msg);
 
-            if (this.persist) {
-                this.stream.save_to_file(this.backing_stream, 2);
-            }
+            //if (this.persist) {
+            //    console.log(this.stream);
+            //    this.stream.save_to_file(this.backing_stream, 2);
+            //}
+
         }
         catch (e) {
 
@@ -335,7 +371,7 @@ class JS_TextStream extends Component {
             this.stream.WriteBlankLines(num_blank_lines_to_write);
 
             if (this.persist) {
-                this.stream.save_to_file(this.backing_stream, 2);
+                this.stream.Write(this.backing_stream, 2);
             }
         }
         catch (e) {
@@ -359,7 +395,7 @@ class JS_TextStream extends Component {
             this.stream.WriteLine(msg);
 
             if (this.persist) {
-                this.stream.save_to_file(this.backing_stream, 2);
+                this.stream.Write(this.backing_stream, 2);
             }
         }
         catch (e) {
@@ -376,7 +412,7 @@ class JS_TextStream extends Component {
     }
 }
 
-module.exports = function create(context, backing_path, can_read, can_write, use_unicode, persist) {
-    let ts = new JS_TextStream(context, backing_path, can_read, can_write, use_unicode, persist);
+module.exports = function create(context, backing_path, can_read, write_mode, use_unicode, persist) {
+    let ts = new JS_TextStream(context, backing_path, can_read, write_mode, use_unicode, persist);
     return proxify(context, ts);
 };

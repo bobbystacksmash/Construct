@@ -1213,6 +1213,8 @@ describe("Scripting.FileSystemObject", () => {
 
     describe("#GetFile", () => {
 
+
+
     });
 
     xdescribe("#GetFileName", NOOP);

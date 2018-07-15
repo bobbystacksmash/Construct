@@ -326,7 +326,7 @@ class Stream {
         if (save_opt === this.SAVE_OPTIONS_ENUM.adSaveCreateNotExist) {
 
             // Does this file exist?
-            if(this.vfs.GetFile(path)) {
+            if (this.vfs.FileExists(path)) {
                 throw new Error("Cannot save file -- file already exists.");
             }
         }

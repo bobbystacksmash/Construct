@@ -1094,10 +1094,10 @@ describe("TextStream", () => {
 
     describe("#savetofile", () => {
 
-        it("should save to a file when the stream is open", (done) => {
+        it("should save to a file when the stream is open", () => {
 
-            let vfs = new VirtualFileSystem({ register: () => {} });
-            let ts = new TextStream({ vfs: vfs });
+            let vfs = new VirtualFileSystem({ register: () => {} }),
+                ts  = new TextStream({ vfs: vfs });
 
             ts.open();
             ts.put("abcdef");
@@ -1105,11 +1105,9 @@ describe("TextStream", () => {
             const save_file_path = "C:\\hello.txt";
             ts.save_to_file(save_file_path);
             assert.deepEqual(
-                vfs.GetFile(save_file_path).__contents,
+                vfs.ReadFileContents(save_file_path),
                 Buffer.from(iconv.encode("abcdef", "utf16le", { addBOM: true }))
             );
-
-            done();
         });
 
         it("should throw when attempting to save a file when the stream is not open", (done) => {
@@ -1128,7 +1126,7 @@ describe("TextStream", () => {
             done();
         });
 
-        it("should write an empty buffer to the file system if the buffer is empty or null", (done) => {
+        it("should write an empty buffer to the file system if the buffer is empty or null", () => {
 
             let vfs = new VirtualFileSystem({ register: () => {} });
             let ts = new TextStream({ vfs: vfs });
@@ -1138,12 +1136,10 @@ describe("TextStream", () => {
 
             ts.save_to_file(save_file_path);
 
-            assert.deepEqual(vfs.GetFile(save_file_path).__contents, Buffer.alloc(0));
-
-            done();
+            assert.deepEqual(vfs.ReadFileContents(save_file_path), Buffer.alloc(0));
         });
 
-        it("should save the BOM if the buffer contains only the empty string", (done) => {
+        it("should save the BOM if the buffer contains only the empty string", () => {
 
             let vfs = new VirtualFileSystem({ register: () => {} }),
                 ts  = new TextStream({ vfs: vfs });
@@ -1156,11 +1152,10 @@ describe("TextStream", () => {
             ts.save_to_file(save_file_path);
 
             assert.deepEqual(
-                vfs.GetFile(save_file_path).__contents,
+                vfs.ReadFileContents(save_file_path),
                 Buffer.from([0xFF, 0xFE]) // UTF-16LE Byte-Order-Mark (BOM)
             );
 
-            done();
         });
 
         it("should save the BOM + str to a file", (done) => {
@@ -1176,7 +1171,7 @@ describe("TextStream", () => {
             ts.save_to_file(save_file_path);
 
             assert.deepEqual(
-                vfs.GetFile(save_file_path).__contents,
+                vfs.ReadFileContents(save_file_path),
                 Buffer.from(iconv.encode("abcdef", "utf16le", { addBOM: true }))
             );
 

@@ -231,8 +231,6 @@ class AbstractIOStream {
             msg = msg.toString();
         }
 
-
-
         if (this.write_mode === this.WRITE_MODE_ENUM.APPEND_ONLY) {
             msg = `${this.stream.fetch_all()}${msg}`;
             this.stream.position = 0;

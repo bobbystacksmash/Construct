@@ -1,5 +1,3 @@
-// https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/windows-scripting/z9ty6h50(v=vs.84)
-
 const Component           = require("../Component");
 const proxify             = require("../proxify2");
 const FSOHelper           = require("../absFileSystemObject");
@@ -9,7 +7,6 @@ const JS_File             = require("./FileObject");
 const JS_Drive            = require("./DriveObject");
 const JS_DrivesCollection = require("./DrivesCollection");
 const win32path           = require("path").win32;
-
 
 class JS_FileSystemObject extends Component {
 
