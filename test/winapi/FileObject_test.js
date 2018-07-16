@@ -848,10 +848,32 @@ describe("FileObject", () => {
 
             // This test seems to turn up a lot of issues with the
             // TextStream implementation.
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\file.txt", "AAAA");
 
+            assert.equal(ctx.vfs.ReadFileContents("C:\\file.txt"), "AAAA");
+
+            const file = new File(ctx, "C:\\file.txt"),
+                  ts   = file.OpenAsTextStream(8, /* for appending */
+                                               -1 /* use unicode */);
+
+            const A   = 0x41,
+                  B   = 0x42,
+                  NUL = 0x00;
+
+            ts.Write("BBBB");
+
+            assert.deepEqual(
+                ctx.vfs.ReadFileContents("C:\\file.txt"),
+                Buffer.from([
+                    A, A, A, A,
+                    B, NUL,
+                    B, NUL,
+                    B, NUL,
+                    B, NUL
+                ])
+            );
         });
-
-
 
         /*it("should open and only allow reading in read-only mode", () => {});
         it("should open and only allow writing in write-only mode", () => {});

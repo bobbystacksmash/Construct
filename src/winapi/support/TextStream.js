@@ -326,12 +326,22 @@ class TextStream extends Stream {
         dest_stream.put(stream_contents);
     }
 
-    load_from_file (path) {
+    load_from_file (path, decode_contents) {
+
+        if (decode_contents === undefined || decode_contents === null) {
+            decode_contents = true;
+        }
 
         let file_contents = this._load_from_file(path);
-        this.pos = 0;
-        this.buffer = Buffer.alloc(0);
-        this.put(iconv.decode(file_contents, this._charset.encoding));
+
+        if (decode_contents) {
+            this.buffer = Buffer.alloc(0);
+            this.put(iconv.decode(file_contents, this._charset.encoding));
+        }
+        else {
+            this.buffer = Buffer.from(file_contents);
+        }
+
         this.pos = 0;
     }
 

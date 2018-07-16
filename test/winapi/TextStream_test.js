@@ -676,6 +676,51 @@ describe("TextStream", () => {
                 done();
             });
 
+
+            it("should only encode text after existing content when opened in append mode", () => {
+
+                context.vfs.AddFile("C:\\file.txt", "AAAA");
+
+                const UNICODE = true,
+                      PERSIST = true;
+
+                let ts = new TextStream(context,
+                                        "C:\\file.txt",
+                                        CANNOT_READ,
+                                        CAN_APPEND,
+                                        UNICODE,
+                                        PERSIST);
+
+                assert.deepEqual(
+                    context.vfs.ReadFileContents("C:\\file.txt"),
+                    Buffer.from("AAAA")
+                );
+
+                ts.Write("BBBB");
+
+                assert.deepEqual(
+                    context.vfs.ReadFileContents("C:\\file.txt"),
+                    Buffer.from([
+                        0x41, 0x41, 0x41, 0x41,
+                        0x42, 0x00, 0x42, 0x00,
+                        0x42, 0x00, 0x42, 0x00
+                    ])
+                );
+
+                ts.write("CCCC");
+
+                assert.deepEqual(
+                    context.vfs.ReadFileContents("C:\\file.txt"),
+                    Buffer.from([
+                        0x41, 0x41, 0x41, 0x41,
+                        0x42, 0x00, 0x42, 0x00,
+                        0x42, 0x00, 0x42, 0x00,
+                        0x43, 0x00, 0x43, 0x00,
+                        0x43, 0x00, 0x43, 0x00
+                    ])
+                );
+            });
+
             it("should continually update the file after each call to #Write", (done) => {
 
                 context.vfs.AddFile("C:\\file.txt");

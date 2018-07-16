@@ -501,7 +501,7 @@ class JS_FileObject extends Component {
             this._path,
             ts_args.can_read,
             ts_args.write_mode,
-            ts_args.unicode,
+            ts_args.use_unicode,
             ts_args.persist
         );
     }

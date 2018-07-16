@@ -58,6 +58,8 @@ class AbstractIOStream {
         this.stream.charset = encoding;
         this.stream.open();
 
+        this.append_only = (this.write_mode === this.WRITE_MODE_ENUM.APPEND_ONLY);
+
         // Let's load the contents of `filepath' in to our stream:
         //
         // TODO: Look at 'filespec' and add in Std{In,Out,Err} stuff here...
@@ -67,12 +69,12 @@ class AbstractIOStream {
             context.vfs.AddFile(filespec);
         }
 
-        this.stream.load_from_file(filespec);
+        this.stream.load_from_file(filespec, !this.append_only);
 
         // When loading a file, the position marker is set back to
         // zero.  When opened in append mode, we want to move pos to
         // the end of the buffer.
-        if (this.write_mode === this.WRITE_MODE_ENUM.APPEND_ONLY) {
+        if (this.append_only) {
             this.stream.position = this.stream.buffer_length_bytes();
         }
     }
