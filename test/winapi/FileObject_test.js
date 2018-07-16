@@ -770,7 +770,7 @@ describe("FileObject", () => {
         it("should allow text to be written to the file", () => {
 
             const ctx = make_ctx();
-            ctx.vfs.AddFile("C:\\foo.txt");
+            ctx.vfs.AddFile("C:\\foo.txt", "testing");
 
             const FOR_WRITING   = 2,
                   OPEN_AS_ASCII = 0;
@@ -778,32 +778,78 @@ describe("FileObject", () => {
             const file = new File(ctx, "C:\\foo.txt"),
                   ts   = file.OpenAsTextStream(FOR_WRITING, OPEN_AS_ASCII);
 
+            assert.equal(ctx.vfs.ReadFileContents("C:\\foo.txt").toString(), "testing");
             ts.Write("Hello, World!");
             assert.equal(ctx.vfs.ReadFileContents("C:\\foo.txt").toString(), "Hello, World!");
-
         });
 
-        it("should open and only allow appending in append-only mode", () => {});
-        it("should open and only allow reading in read-only mode", () => {});
+        it("should throw 'bad file mode' if opened with no args and a write is attemped", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_bad_file_mode: () => {
+                        throw new Error("bad file mode");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\foo.txt", "testing");
+
+            const file = new File(ctx, "C:\\foo.txt"),
+                  ts   = new file.OpenAsTextStream();
+
+            assert.throws(() => ts.Write("hello"), "bad file mode");
+        });
+
+        it("should auto-write to the file after each call to #Write", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\foo.txt", "alpha");
+
+            let iomode = 2, // write
+                format = 0; // ascii
+
+            const file = new File(ctx, "C:\\foo.txt"),
+                  ts   = file.OpenAsTextStream(iomode, format);
+
+            assert.equal(ctx.vfs.ReadFileContents("C:\\foo.txt"), "alpha");
+
+            ts.Write("bravo");
+            assert.equal(ctx.vfs.ReadFileContents("C:\\foo.txt"), "bravo");
+
+            ts.Write("charlie");
+            assert.equal(ctx.vfs.ReadFileContents("C:\\foo.txt"), "bravocharlie");
+
+            ts.Write("delta");
+            assert.equal(ctx.vfs.ReadFileContents("C:\\foo.txt"), "bravocharliedelta");
+        });
+
+        it("should open and correctly append when opened in append-only mode", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\foo.txt", "existing content");
+
+            const file = new File(ctx, "C:\\foo.txt"),
+                  ts   = file.OpenAsTextStream(8, /* for appending */
+                                               0, /* use ASCII */);
+
+            assert.equal(ctx.vfs.ReadFileContents("C:\\foo.txt"), "existing content");
+
+            ts.Write("hello");
+            //ts.Write("world");
+
+            assert.equal(ctx.vfs.ReadFileContents("C:\\foo.txt").toString(),
+                         "existing contenthelloworld");
+        });
+
+
+        /*it("should open and only allow reading in read-only mode", () => {});
         it("should open and only allow writing in write-only mode", () => {});
 
         it("should use ASCII as the format if format=0", () => {});
         it("should use Unicode as the format if format=-1", () => {});
         it("should use the ASCII as the default if format =-2", () => {});
         it("should use the default if no FORMAT param is set", () => {});
-
-
-        /*xit("should throw 'bad file mode' if opened with no args and a write is attemped", () => {
-
-        });
-
-        xit("should auto-write to the file after each call to #Write", () => {
-
-        });
-
-        xit("should overwrite the text file if opened with mode '2' (for writing)", () => {
-
-        });
 
         xit("should not add a BOM to an ASCII file if opened in append+unicode", () => {
 
