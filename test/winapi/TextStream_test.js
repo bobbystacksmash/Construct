@@ -65,7 +65,7 @@ describe("TextStream", () => {
         context = make_ctx();
     });
 
-    describe("Properties", () => {
+    /*describe("Properties", () => {
 
         describe(".AtEndOfLine", () => {
 
@@ -822,6 +822,25 @@ describe("TextStream", () => {
                 assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "abcd\r\n1234\r\n");
                 done();
             });
+        });
+    });*/
+
+    describe("TODO fix this TextStream bug", () => {
+
+        it("should keep appending after each write.", () => {
+
+            context.vfs.AddFile("C:\\file.txt", "existing content");
+
+            const ts = new TextStream(context, "C:\\file.txt", false, CAN_APPEND);
+
+            assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "existing content");
+
+            ts.Write("hello");
+            assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "existing contenthello");
+
+            ts.Write("world");
+            assert.equal(context.vfs.ReadFileContents("C:\\file.txt").toString(), "existing contenthelloworld");
+
         });
     });
 });
