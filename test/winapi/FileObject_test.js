@@ -846,8 +846,6 @@ describe("FileObject", () => {
 
         it("should not add a BOM to an ASCII file if opened in append+unicode", () => {
 
-            // This test seems to turn up a lot of issues with the
-            // TextStream implementation.
             const ctx = make_ctx();
             ctx.vfs.AddFile("C:\\file.txt", "AAAA");
 
@@ -875,20 +873,124 @@ describe("FileObject", () => {
             );
         });
 
-        /*it("should open and only allow reading in read-only mode", () => {});
-        it("should open and only allow writing in write-only mode", () => {});
+        it("should open and only allow reading in read-only mode", () => {
 
-        it("should use ASCII as the format if format=0", () => {});
-        it("should use Unicode as the format if format=-1", () => {});
-        it("should use the ASCII as the default if format =-2", () => {});
-        it("should use the default if no FORMAT param is set", () => {});
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_bad_file_mode: () => {
+                        throw new Error("read only mode");
+                    }
+                }
+            });
+            ctx.vfs.AddFile("C:\\file.txt", "AAAA");
+
+            const file = new File(ctx, "C:\\file.txt"),
+                  ts   = file.OpenAsTextStream(1, /* for reading */
+                                               0, /* use ASCII   */);
+
+            assert.equal(ts.ReadAll(), "AAAA");
+            assert.throws(() => ts.Write("BBBB"), "read only ");
+        });
+
+        it("should open and only allow writing in write-only mode", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_bad_file_mode: () => {
+                        throw new Error("write only mode");
+                    }
+                }
+            });
+            ctx.vfs.AddFile("C:\\file.txt", "AAAA");
+
+            const file = new File(ctx, "C:\\file.txt"),
+                  ts   = file.OpenAsTextStream(2, /* for writing */
+                                               0, /* use ASCII   */);
+
+            assert.doesNotThrow(() => ts.Write("BBBB"));
+            assert.throws(() => ts.ReadAll(), "write only mode");
+        });
+
+        it("should write ASCII chars when the format=0", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\file.txt", "AAAA");
+
+            const file = new File(ctx, "C:\\file.txt"),
+                  ts   = file.OpenAsTextStream(2, /* for writing */
+                                               0, /* use ASCII */);
+
+            ts.Write("BBBB");
+
+            assert.deepEqual(
+                ctx.vfs.ReadFileContents("C:\\file.txt"),
+                Buffer.from("BBBB")
+            );
+        });
+
+        it("should use Unicode as the format if format=-1", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\file.txt");
+
+            const file = new File(ctx, "C:\\file.txt"),
+                  ts   = file.OpenAsTextStream(2,  /* for writing */
+                                               -1, /* use ASCII */);
+
+            ts.Write("BBBB");
+
+            assert.deepEqual(
+                ctx.vfs.ReadFileContents("C:\\file.txt"),
+                Buffer.from([
+                    0xFF, 0xFE, /* BOM */
+                    0x42, 0x00,
+                    0x42, 0x00,
+                    0x42, 0x00,
+                    0x42, 0x00
+                ])
+            );
+        });
+
+        it("should use the ASCII as the default if format =-2", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\file.txt");
+
+            const file = new File(ctx, "C:\\file.txt"),
+                  ts   = file.OpenAsTextStream(2,  /* for writing */
+                                               -2, /* use default */);
+
+            ts.Write("BBBB");
+
+            assert.deepEqual(
+                ctx.vfs.ReadFileContents("C:\\file.txt"),
+                Buffer.from([0x42, 0x42, 0x42, 0x42])
+            );
+        });
+
+        it("should use the system default if no FORMAT param is set", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\file.txt");
+
+            const file = new File(ctx, "C:\\file.txt"),
+                  ts   = file.OpenAsTextStream(2,  /* for writing */);
+
+            ts.Write("BBBB");
+
+            assert.deepEqual(
+                ctx.vfs.ReadFileContents("C:\\file.txt"),
+                Buffer.from([0x42, 0x42, 0x42, 0x42])
+            );
+        });
+
+        it("should throw if the inputs for either 'iomode' or 'format' are invalid", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\file.txt");
 
 
-        xit("should throw if the inputs for either 'iomode' or 'format' are invalid", () => {
-
-            // Throws: invalid procedure call or argument
-
-        });*/
+        });
 
     });
 });

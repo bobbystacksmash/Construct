@@ -471,12 +471,12 @@ class JS_FileObject extends Component {
 
         case IO_MODE.write:
             ts_args.write_mode = 1;
-            ts_args.can_read   = true;
+            ts_args.can_read   = false;
             break;
 
         case IO_MODE.append:
             ts_args.write_mode = 2;
-            ts_args.can_read   = true;
+            ts_args.can_read   = false;
             break;
         default:
             console.log("FIXME: do we throw here?!");
