@@ -1145,6 +1145,7 @@ describe("ADODBStream", () => {
 
                 let mock_vfs = {
                     GetFile: () => {},
+                    FileExists: () => false,
                     AddFile: (path, contents) => {
                         assert.equal(path, "C:\\test.txt");
                         assert.instanceOf(contents, Buffer);
@@ -1184,6 +1185,7 @@ describe("ADODBStream", () => {
 
                 let mock_vfs = {
                     GetFile: () => {},
+                    FileExists: () => false,
                     AddFile: (path, contents) => {
                         assert.equal(path, "C:\\empty.txt");
                         assert.instanceOf(contents, Buffer);
@@ -1256,6 +1258,7 @@ describe("ADODBStream", () => {
 
                 let mock_vfs = {
                     GetFile: () => {},
+                    FileExists: () => false,
                     AddFile: (path, contents) => {
                         assert.equal(path, "C:\\ascii-file.txt");
                         assert.instanceOf(contents, Buffer);
@@ -1278,6 +1281,7 @@ describe("ADODBStream", () => {
 
                 let mock_vfs = {
                     GetFile: () => {},
+                    FileExists: () => false,
                     AddFile: (path, contents) => {
                         assert.equal(path, "C:\\whole-buffer-file.txt");
                         assert.instanceOf(contents, Buffer);

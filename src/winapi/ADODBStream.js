@@ -712,7 +712,7 @@ class JS_ADODBStream extends Component {
                         "not permitted in Windows paths."
                 );
             }
-            else if (e.message.includes("Filename contains invalid characters.")) {
+            else if (e.message.includes("Invalid filepath:")) {
                 this.context.exceptions.throw_write_to_file_failed(
                     "ADODB.Stream",
                     "Unable to write to the file - the filename contains invalid characters.",
