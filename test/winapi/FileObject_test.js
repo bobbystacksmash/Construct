@@ -844,6 +844,14 @@ describe("FileObject", () => {
             );
         });
 
+        it("should not add a BOM to an ASCII file if opened in append+unicode", () => {
+
+            // This test seems to turn up a lot of issues with the
+            // TextStream implementation.
+
+        });
+
+
 
         /*it("should open and only allow reading in read-only mode", () => {});
         it("should open and only allow writing in write-only mode", () => {});
@@ -853,9 +861,6 @@ describe("FileObject", () => {
         it("should use the ASCII as the default if format =-2", () => {});
         it("should use the default if no FORMAT param is set", () => {});
 
-        xit("should not add a BOM to an ASCII file if opened in append+unicode", () => {
-
-        });
 
         xit("should throw if the inputs for either 'iomode' or 'format' are invalid", () => {
 
