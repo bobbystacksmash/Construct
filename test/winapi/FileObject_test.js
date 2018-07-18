@@ -836,10 +836,12 @@ describe("FileObject", () => {
             assert.equal(ctx.vfs.ReadFileContents("C:\\foo.txt"), "existing content");
 
             ts.Write("hello");
-            //ts.Write("world");
+            ts.Write("world");
 
-            assert.equal(ctx.vfs.ReadFileContents("C:\\foo.txt").toString(),
-                         "existing contenthelloworld");
+            assert.equal(
+                ctx.vfs.ReadFileContents("C:\\foo.txt"),
+                "existing contenthelloworld"
+            );
         });
 
 
