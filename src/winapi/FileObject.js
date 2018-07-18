@@ -446,6 +446,14 @@ class JS_FileObject extends Component {
             format = FORMAT.ascii;
         }
 
+        let throw_invalid_fn_arg = function () {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FileObject",
+                "Invalid argument passed to #OpenAsTextStream.",
+                "Invalid argument passed to #OpenAsTextStream.",
+            );
+        }.bind(this);
+
         // We translate the `iomode' and `format' inputs in to
         // something our `TextStream' object will accept. The
         // `TextStream' constructor needs to be given:
@@ -479,7 +487,7 @@ class JS_FileObject extends Component {
             ts_args.can_read   = false;
             break;
         default:
-            console.log("FIXME: do we throw here?!");
+            throw_invalid_fn_arg();
         }
 
         switch (format) {
@@ -493,7 +501,7 @@ class JS_FileObject extends Component {
             break;
 
         default:
-            console.log("FIXME: do we throw here?!");
+            throw_invalid_fn_arg();
         }
 
         return new TextStream(

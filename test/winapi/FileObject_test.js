@@ -984,12 +984,50 @@ describe("FileObject", () => {
             );
         });
 
+        it("should open in read-only mode when no args are given", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_bad_file_mode: () => {
+                        throw new Error("bad file mode");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\file.txt", "AAAA");
+
+            const file = new File(ctx, "C:\\file.txt"),
+                  ts   = file.OpenAsTextStream();
+
+            assert.equal(ts.ReadAll(), "AAAA");
+            assert.throws(() => ts.Write("BBBB"), "bad file mode");
+        });
+
         it("should throw if the inputs for either 'iomode' or 'format' are invalid", () => {
 
-            const ctx = make_ctx();
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("invalid input");
+                    }
+                }
+            });
+
             ctx.vfs.AddFile("C:\\file.txt");
+            const file       = new File(ctx, "C:\\file.txt"),
+                  bad_inputs = [
+                      { format: 3, iomode: 0 },
+                      { format: 4, iomode: 0 },
+                      { format: 5, iomode: 0 },
+                      { format: 6, iomode: 0 },
+                      { format: 2, iomode: 1 },
+                      { format: 2, iomode: 2 },
+                      { format: 2, iomode: null },
+                  ];
 
-
+            bad_inputs.forEach((t) => {
+                assert.throws(() => file.OpenAsTextStream(t.format, t.iomode), "invalid input");
+            });
         });
 
     });
