@@ -65,7 +65,7 @@ describe("TextStream", () => {
         context = make_ctx();
     });
 
-    /*describe("Properties", () => {
+    describe("Properties", () => {
 
         describe(".AtEndOfLine", () => {
 
@@ -694,6 +694,21 @@ describe("TextStream", () => {
                 done();
             });
 
+            it("should keep appending after each write in append mode.", () => {
+
+                context.vfs.AddFile("C:\\file.txt", "AAAA");
+
+                const ts = new TextStream(context, "C:\\file.txt", false, CAN_APPEND);
+
+                assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "AAAA");
+
+                ts.Write("BBBB");
+                assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "AAAABBBB");
+
+                ts.Write("CCCC");
+                assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "AAAABBBBCCCC");
+            });
+
             it("should append only to the file when opened in append mode", (done) => {
 
                 context.vfs.AddFile("C:\\file.txt", "aaaa");
@@ -822,25 +837,6 @@ describe("TextStream", () => {
                 assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "abcd\r\n1234\r\n");
                 done();
             });
-        });
-    });*/
-
-    describe("TODO fix this TextStream bug", () => {
-
-        it("should keep appending after each write.", () => {
-
-            context.vfs.AddFile("C:\\file.txt", "existing content");
-
-            const ts = new TextStream(context, "C:\\file.txt", false, CAN_APPEND);
-
-            assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "existing content");
-
-            ts.Write("hello");
-            assert.equal(context.vfs.ReadFileContents("C:\\file.txt"), "existing contenthello");
-
-            ts.Write("world");
-            assert.equal(context.vfs.ReadFileContents("C:\\file.txt").toString(), "existing contenthelloworld");
-
         });
     });
 });

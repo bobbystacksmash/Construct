@@ -68,6 +68,13 @@ class AbstractIOStream {
         }
 
         this.stream.load_from_file(filespec);
+
+        // When loading a file, the position marker is set back to
+        // zero.  When opened in append mode, we want to move pos to
+        // the end of the buffer.
+        if (this.write_mode === this.WRITE_MODE_ENUM.APPEND_ONLY) {
+            this.stream.position = this.stream.buffer_length_bytes();
+        }
     }
 
     //
@@ -233,7 +240,6 @@ class AbstractIOStream {
 
         if (this.write_mode === this.WRITE_MODE_ENUM.APPEND_ONLY) {
             msg = `${this.stream.fetch_all()}${msg}`;
-            this.stream.position = 0;
         }
 
         if (append_this) {

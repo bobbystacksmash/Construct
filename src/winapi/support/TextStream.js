@@ -307,6 +307,7 @@ class TextStream extends Stream {
         else if (options !== 0) {
             throw new Error("Unknown option value to #put -- only '0' and '1' are allowed.");
         }
+
         this.put_buf(data);
     }
 
@@ -461,6 +462,10 @@ class TextStream extends Stream {
         }
 
         this.pos = skip_distance;
+    }
+
+    buffer_length_bytes () {
+        return this.buffer.byteLength;
     }
 }
 
