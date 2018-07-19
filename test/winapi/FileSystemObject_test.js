@@ -4,7 +4,7 @@ const VirtualFileSystem = require("../../src/runtime/virtfs");
 
 var ctx = null;
 
-function MakeFSO (opts) {
+function make_FSO (opts) {
 
     opts = opts || {};
 
@@ -51,11 +51,11 @@ function MakeFSO (opts) {
 
 describe("Scripting.FileSystemObject", () => {
 
-    /*describe("#BuildPath", () => {
+    describe("#BuildPath", () => {
 
         it("should build a path from two parts", () => {
 
-            let fso = MakeFSO();
+            let fso = make_FSO();
 
             assert.equal(fso.BuildPath("foo", "bar"), "foo\\bar");
             assert.equal(fso.BuildPath("\\\\foo\\bar", "testing\\test.txt"),
@@ -65,7 +65,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should just combine the two parts, not check if they're valid", () => {
 
-            let fso = MakeFSO();
+            let fso = make_FSO();
 
             assert.equal(fso.BuildPath("C:\\foo\\bar", "../../../baz"),
                          "C:\\foo\\bar\\../../../baz");
@@ -77,7 +77,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw file not found if src file does not exist", () => {
 
-            fso = MakeFSO({
+            fso = make_FSO({
                 exceptions: {
                     throw_file_not_found: () => {
                         throw new Error("cannot find src file");
@@ -95,7 +95,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw path not found if the dest dir does not exist", () => {
 
-            fso = MakeFSO({
+            fso = make_FSO({
                 exceptions: {
                     throw_path_not_found: () => {
                         throw new Error("cannot find dest dir");
@@ -111,7 +111,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw if a file copy operation matches destination folder (ambiguous)", () => {
 
-            let fso = MakeFSO({
+            let fso = make_FSO({
                 exceptions: {
                     throw_permission_denied: () => {
                         throw new Error("file copy is ambiguous");
@@ -129,7 +129,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should copy in to a directory when a path ends with a trailing slash", () => {
 
-            let fso = MakeFSO();
+            let fso = make_FSO();
 
             ctx.vfs.AddFile("C:\\Users\\Construct\\file_a.txt");
             ctx.vfs.AddFolder("C:\\Users\\Construct\\bar");
@@ -146,7 +146,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should support copying wildcards", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFolder("C:\\Users\\Construct\\source");
             ctx.vfs.AddFile("C:\\Users\\Construct\\source\\foo.txt");
@@ -167,7 +167,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should copy a file and all SFN/LFN paths to it should be correct", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFile("C:\\HelloWorld\\SubFolderA\\LongFilename.txt", "source file");
             ctx.vfs.AddFolder("C:\\dest");
@@ -188,7 +188,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should copy a folder from one place to another with all files", () => {
 
-            const fso = MakeFSO({});
+            const fso = make_FSO({});
 
             ctx.vfs.AddFolder("C:\\source\\dir1");
             ctx.vfs.AddFile("C:\\source\\dir1\\foo.txt");
@@ -206,7 +206,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should copy all folders matching a wildcard expression", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFolder("C:\\source\\dir1");
             ctx.vfs.AddFolder("C:\\source\\dir2");
@@ -240,7 +240,7 @@ describe("Scripting.FileSystemObject", () => {
         it("should correctly copy with no trailing separator on the destination path", () => {
 
             // From Chapter 10, P.280 "VBScript in a Nutshell" book.
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1");
             ctx.vfs.AddFolder("C:\\RootOne\\SubFolder2");
@@ -256,7 +256,7 @@ describe("Scripting.FileSystemObject", () => {
 
             // From Chapter 10, P.280 "VBScript in a Nutshell" book.
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1");
             ctx.vfs.AddFolder("C:\\RootOne\\SubFolder2");
@@ -279,7 +279,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw if a wildcard character is used anywhere in the destination", () => {
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 exceptions: {
                     throw_invalid_fn_arg: () => {
                         throw new Error("no wildcards in dest path");
@@ -299,7 +299,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw if source contains a wildcard which isn't the last part", () =>{
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 exceptions: {
                     throw_invalid_fn_arg: () => {
                         throw new Error("no wildcards in src dirname");
@@ -316,7 +316,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should successfully copy to the root of the volume.", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1");
 
@@ -327,7 +327,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should not throw when source and destination are the same", () => {
 
-            const vfs = MakeFSO();
+            const vfs = make_FSO();
 
             ctx.vfs.AddFile("C:\\RootOne\\SubFolder1\\foo.txt");
 
@@ -337,7 +337,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should recursively copy until source and dest paths are equal, then throw", () => {
 
-            const vfs = MakeFSO({
+            const vfs = make_FSO({
                 exceptions: {
                     throw_invalid_fn_arg: () => {
                         throw new Error("copy in to self not allowed");
@@ -373,7 +373,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw if overwrite is false and a file already exists", () => {
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 exceptions: {
                     throw_file_already_exists: () => {
                         throw new Error("file exists");
@@ -405,7 +405,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should copy and all SFNs should resolve correctly", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFile("C:\\HelloWorld\\SubFolderA\\LongFilename.txt", "source file");
             ctx.vfs.AddFolder("C:\\dest");
@@ -425,7 +425,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should copy to paths which contain '/../'", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFile("C:\\HelloWorld\\SubFolderA\\LongFilename.txt", "source file");
             ctx.vfs.AddFolder("C:\\dest");
@@ -441,7 +441,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should successfully create and return a Folder instance", () => {
 
-            let fso = MakeFSO();
+            let fso = make_FSO();
             assert.isFalse(ctx.vfs.FolderExists("C:\\foo\\bar"));
 
             let dir = fso.CreateFolder("C:\\foo\\bar");
@@ -452,7 +452,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw if the folder already exists", () => {
 
-            let fso = MakeFSO({
+            let fso = make_FSO({
                 exceptions: {
                     throw_file_already_exists: () => {
                         throw new Error("folder exists");
@@ -467,7 +467,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should create a folder in the CWD if only a foldername is given", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             // CWD is ctx.get_env("path") == "C:\Users\Construct".
             assert.isFalse(ctx.vfs.FolderExists("C:\\Users\\Construct\\RootOne"));
@@ -478,7 +478,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should correctly handle relative paths", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             // CWD is ctx.get_env("path") == "C:\Users\Construct".
             assert.isFalse(ctx.vfs.FolderExists("C:\\Users\\RootOne"));
@@ -489,7 +489,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw 'type mismatch' for a null argument", () => {
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 exceptions: {
                     throw_type_mismatch: () => {
                         throw new Error("null is type mismatch");
@@ -502,7 +502,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw 'invalid procedure call or argument' for non-string arguments", () => {
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 exceptions: {
                     throw_invalid_fn_arg: () => {
                         throw new Error("bad foldername");
@@ -522,7 +522,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should create a folder named '1' if the Number 1 is given as a folder name", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             assert.isFalse(ctx.vfs.FolderExists("C:\\Users\\Construct\\1"));
 
@@ -532,7 +532,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should create a folder named '[Object object]' for folder name param '{}'", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
             assert.isFalse(ctx.vfs.FolderExists("C:\\Users\\Construct\\[Object object]"));
             fso.CreateFolder({});
             assert.isTrue(ctx.vfs.FolderExists("C:\\Users\\Construct\\[object Object]"));
@@ -540,7 +540,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw 'bad filename or number' if the path param is invalid", () => {
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 exceptions: {
                     throw_bad_filename_or_number: () => {
                         throw new Error("bad filename");
@@ -563,7 +563,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw 'bad filename or number' if a wildcard appears in the filename", () => {
 
-            let fso = MakeFSO({
+            let fso = make_FSO({
                 exceptions: {
                     throw_bad_filename_or_number: () => {
                         throw new Error("wildcards not permitted");
@@ -573,13 +573,11 @@ describe("Scripting.FileSystemObject", () => {
             assert.throws(() => fso.CreateTextFile("foo*.txt"),       "wildcards not permitted");
             assert.throws(() => fso.CreateTextFile("C:\\foo>.txt"),   "wildcards not permitted");
             assert.throws(() => fso.CreateTextFile("C:\\*\\foo.txt"), "wildcards not permitted");
-
-
         });
 
         it("should throw if overwriting is is disabled", () => {
 
-            let fso = MakeFSO({
+            let fso = make_FSO({
                 exceptions: {
                     throw_file_already_exists: () => {
                         throw new Error("file exists...");
@@ -597,7 +595,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should create the text file in the CWD if no path is given", () => {
 
-            let fso = MakeFSO();
+            let fso = make_FSO();
 
             assert.isFalse(ctx.vfs.GetFile("C:\\Users\\Construct\\file.txt"));
             fso.CreateTextFile("file.txt");
@@ -619,7 +617,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw if the filepath does not exist", () => {
 
-            let fso = MakeFSO({
+            let fso = make_FSO({
                 exceptions: {
                     throw_path_not_found: () => {
                         throw new Error("path not found (av:false)");
@@ -636,7 +634,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should return a TextStream instance", () => {
 
-            let fso = MakeFSO(),
+            let fso = make_FSO(),
                 ts  = fso.CreateTextFile("file.txt");
 
             let ts_api = [
@@ -653,7 +651,7 @@ describe("Scripting.FileSystemObject", () => {
 
             ctx.vfs.AddFile("C:\\file.txt", "Hello, World!");
 
-            let fso = MakeFSO();
+            let fso = make_FSO();
 
             var ts;
             assert.doesNotThrow(() => ts = fso.CreateTextFile("C:\\file.txt"));
@@ -666,7 +664,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should write unicode if signalled to do so", () => {
 
-            let fso = MakeFSO(),
+            let fso = make_FSO(),
                 ts  = fso.CreateTextFile("C:\\unicode.txt", true, true);
 
             ts.Write("7-bit ASCII or GTFO...");
@@ -693,7 +691,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should delete the file given in the supplied filespec", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
             assert.isTrue(ctx.vfs.FileExists("C:\\RootOne\\SubDir1\\foo.txt"));
@@ -704,7 +702,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should delete all files matching the wildcard expression", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFile("C:\\RootOne\\foo_1.txt");
             ctx.vfs.AddFile("C:\\RootOne\\foo_2.txt");
@@ -719,7 +717,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should not throw 'file not found' if no files match", () => {
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 exceptions: {
                     throw_file_not_found: () => {
                         throw new Error("no files match");
@@ -736,7 +734,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw 'bad filename or number' if non-filepart contains a wildcard", () => {
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 exceptions: {
                     throw_bad_filename_or_number: () => {
                         throw new Error("no wildcards");
@@ -750,7 +748,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should delete the file if the filename is literal", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFile("C:\\RootOne\\foo.txt");
             assert.doesNotThrow(() => fso.DeleteFile("C:\\RootOne\\foo.txt"));
@@ -759,7 +757,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should delete files in the CWD if the path is relative", () => {
 
-            const fso  = MakeFSO(),
+            const fso  = make_FSO(),
                   file = ctx.get_env("path") + "\\foo.txt";
 
             ctx.vfs.AddFile(file);
@@ -771,7 +769,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should do the right thing when deleting from the root", () => {
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 ENVIRONMENT: { path: "C:\\" }
             });
 
@@ -784,7 +782,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw 'bad filename or number' if the path is invalid", () => {
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 exceptions: {
                     throw_bad_filename_or_number: () => {
                         throw new Error("invalid filename");
@@ -797,7 +795,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should do nothing when the file to delete is a folder", () => {
 
-            const fso  = MakeFSO(),
+            const fso  = make_FSO(),
                   path = "C:\\RootOne\\SubDir1";
 
             ctx.vfs.AddFolder(path);
@@ -810,7 +808,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should successfully delete a folder", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFolder("C:\\RootOne\\SubDir1");
             assert.isTrue(ctx.vfs.FolderExists("C:\\RootOne\\SubDir1"));
@@ -821,7 +819,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should delete all folders (empty/not empty) which match PATTERN", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFile("C:\\RootOne\\Subdir1\\foo\\bar.txt");
             ctx.vfs.AddFile("C:\\RootOne\\SubDir2\\baz.txt");
@@ -838,7 +836,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw 'Path not found' if the folder does not exist", () => {
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 exceptions: {
                     throw_path_not_found: () => {
                         throw new Error("no path found");
@@ -851,7 +849,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw 'Path not found' if the wildcard expr matches zero folders", () => {
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 exceptions: {
                     throw_path_not_found: () => {
                         throw new Error("Wildcard matched nothing");
@@ -868,7 +866,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should handle relative deletes from the CWD of the process", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFolder(`${ctx.get_env("path")}\\foo`);
             ctx.vfs.AddFolder(`${ctx.get_env("path")}\\fox`);
@@ -884,7 +882,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should correctly handle and delete paths which are relative", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFolder(`${ctx.get_env("path")}\\foo`);
             ctx.vfs.AddFolder(`${ctx.get_env("path")}\\fox`);
@@ -899,7 +897,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw 'invalid procedure call or argument' if path ends in trailing \\", () => {
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 exceptions: {
                     throw_invalid_fn_arg: () => {
                         throw new Error("path ends with trailing sep");
@@ -916,7 +914,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should return true for 'C', 'C:' or 'C:\\'", () => {
 
-        const fso = MakeFSO();
+        const fso = make_FSO();
 
         let true_drives  = ["C", "C:", "C:\\", "c:/"],
         false_drives = ["D", "A:\\", ""];
@@ -930,7 +928,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should return a DrivesCollection object", () => {
 
-            const fso = MakeFSO(),
+            const fso = make_FSO(),
                   dco = fso.Drives;
 
             assert.equal(dco.count, 1);
@@ -939,7 +937,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw if the DrivesCollection property is assigned to", () => {
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 exceptions: {
                     throw_unsupported_prop_or_method: () => {
                         throw new Error(".drives is read only");
@@ -955,7 +953,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should return true|false upon file existance", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
             ctx.vfs.AddFile("C:\\RootOne\\SubDir2\\bar.txt");
@@ -983,7 +981,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should return false if filespec contains wildcard characters", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFile("C:\\RootOne\\foo.txt");
             ctx.vfs.AddFile("C:\\RootOne\\bar.txt");
@@ -997,7 +995,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should return true|false upon file existance", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
             ctx.vfs.AddFile("C:\\RootOne\\SubDir2\\bar.txt");
@@ -1026,7 +1024,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should return false if filespec contains wildcard characters", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
             ctx.vfs.AddFile("C:\\RootOne\\Subdir2\\bar.txt");
@@ -1038,17 +1036,17 @@ describe("Scripting.FileSystemObject", () => {
     describe("#GetAbsolutePathName", () => {
 
         it("should return the drive letter and complete path of CWD if arg is '.'", () => {
-            const fso = MakeFSO();
+            const fso = make_FSO();
             assert.equal(fso.GetAbsolutePathName("."), ctx.get_env("path"));
         });
 
         it("should return the full path to the parent folder if arg is '..'", () => {
-            const fso = MakeFSO();
+            const fso = make_FSO();
             assert.equal(fso.GetAbsolutePathName(".."), "C:\\Users");
         });
 
         it("should concat CWD and filename if filename is relative", () => {
-            const fso  = MakeFSO(),
+            const fso  = make_FSO(),
                   path = `${ctx.get_env("path")}\\foo.txt`;
 
             ctx.vfs.AddFile(path);
@@ -1057,7 +1055,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should allow wildcards anywhere in the path", () => {
 
-            const fso   = MakeFSO(),
+            const fso   = make_FSO(),
                   paths = [
                       { in: "C:\\Users\\*\\Desktop\\*", out: "C:\\Users\\*\\Desktop\\*" },
                       { in: "foo.*", out: "C:\\Users\\Construct\\foo.*" },
@@ -1072,11 +1070,11 @@ describe("Scripting.FileSystemObject", () => {
     describe("#GetBaseName", () => {
 
         it("should return an empty string if the input path is '.'", () => {
-            assert.equal((MakeFSO()).GetBaseName("."), "");
+            assert.equal((make_FSO()).GetBaseName("."), "");
         });
 
         it("should return '.' if input string is '..'", () => {
-            assert.equal((MakeFSO()).GetBaseName(".."), ".");
+            assert.equal((make_FSO()).GetBaseName(".."), ".");
         });
 
         it("should strip off the last '.EXT' part of a filename", () => {
@@ -1088,7 +1086,7 @@ describe("Scripting.FileSystemObject", () => {
             ];
 
             paths.forEach(p => assert.equal(
-                (MakeFSO()).GetBaseName(p.in),
+                (make_FSO()).GetBaseName(p.in),
                 p.out
             ));
         });
@@ -1097,7 +1095,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should return a Drive object for all valid drivespecs for C:", () => {
 
-            const fso = MakeFSO();
+            const fso = make_FSO();
 
             assert.equal((fso.GetDrive("C")).driveletter,    "C");
             assert.equal((fso.GetDrive("C:")).driveletter,   "C");
@@ -1110,7 +1108,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw 'device unavailable' for inputs which aren't 'C:'", () => {
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 exceptions: {
                     throw_device_unavailable: () => {
                         throw new Error("drive not found");
@@ -1134,7 +1132,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should return the correct drive letter for paths", () => {
 
-            const fso   = MakeFSO(),
+            const fso   = make_FSO(),
                   paths = [
                       { in: "C:\\foo\\bar", out: "C:" },
                       { in: "foo", out: "" },
@@ -1153,7 +1151,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw if the input is invalid", () => {
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 exceptions: {
                     throw_invalid_fn_arg: () => {
                         throw new Error("bad input");
@@ -1172,7 +1170,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should return the correct extensions from a given set of inputs", () => {
 
-            const fso   = MakeFSO(),
+            const fso   = make_FSO(),
                   tests = [
                       { in: "C:\\Users\\foo.txt", out: "txt" },
                       { in: "foo", out: "" },
@@ -1190,7 +1188,7 @@ describe("Scripting.FileSystemObject", () => {
 
         it("should throw if the input is invalid", () => {
 
-            const fso = MakeFSO({
+            const fso = make_FSO({
                 exceptions: {
                     throw_wrong_argc_or_invalid_prop_assign: () => {
                         throw new Error("no input");
@@ -1206,17 +1204,125 @@ describe("Scripting.FileSystemObject", () => {
         });
     });
 
-*/
-
-
-    const NOOP = () => {};
-
     describe("#GetFile", () => {
 
+        it("should return a File object when the passed file exists", () => {
 
+            const fso  = make_FSO();
+            ctx.vfs.AddFile("C:\\foo.txt", "AAAA");
 
+            const file = fso.GetFile("C:\\foo.txt");
+            assert.equal(file.name, "foo.txt");
+            assert.equal(file.path, "C:\\foo.txt");
+            assert.equal(file.OpenAsTextStream().ReadAll(), "AAAA");
+        });
+
+        it("should correctly open relative paths when the file exists", () => {
+
+            const fso  = make_FSO(),
+                  path1 = `${ctx.get_env("path")}\\foo.txt`,
+                  path2 = `C:\\Users\\bar.txt`,
+                  path3 = `${ctx.get_env("path")}\\7`;
+
+            ctx.vfs.AddFile(path1, "AAAA");
+            {
+                let file = fso.GetFile("foo.txt");
+                assert.equal(file.name, "foo.txt");
+                assert.equal(file.path, path1);
+            }
+            {
+                let file = fso.GetFile("C:foo.txt");
+                assert.equal(file.name, "foo.txt");
+                assert.equal(file.path, path1);
+            }
+
+            ctx.vfs.AddFile(path2, "BBBB");
+            {
+                let file = fso.GetFile("../bar.txt");
+                assert.equal(file.name, "bar.txt");
+                assert.equal(file.path, path2);
+            }
+
+            ctx.vfs.AddFile(path3, "CCCC");
+            {
+                let file = fso.GetFile(7);
+                assert.equal(file.name, "7");
+                assert.equal(file.path, path3);
+            }
+        });
+
+        it("should throw if the method inputs are illegal", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("bad input");
+                    }
+                }
+            });
+
+            const inputs = [
+                undefined,
+                ""
+            ];
+
+            inputs.forEach(i => assert.throws(() => fso.GetFile(i), "bad input"));
+        });
+
+        it("should throw 'File not found' if the given path contains wildcards", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_file_not_found: () => {
+                        throw new Error("no wildcards");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\foo.txt", "AAAA");
+            assert.throws(() => fso.GetFile("C:\\*.txt"), "no wildcards");
+        });
+
+        it("should throw 'File not found' when filepath is a folder", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_file_not_found: () => {
+                        throw new Error("is folder");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFolder("C:\\foo");
+            assert.throws(() => fso.GetFile("C:\\foo"), "is folder");
+        });
+
+        it("should open a SFN path correctly", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFile("C:\\SubDirectory\\helloworld.txt", "hello world");
+
+            const file = fso.GetFile("C:\\SUBDIR~1\\HELLOW~1.TXT");
+
+            assert.equal(file.name, "HELLOW~1.TXT");
+            assert.equal(file.path, "C:\\SUBDIR~1\\HELLOW~1.TXT");
+        });
+
+        it("should throw 'File not found' when the file does not exist", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_file_not_found: () => {
+                        throw new Error("file not exists");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.GetFile("C:\\not_exists.txt"), "file not exists");
+        });
     });
 
+    const NOOP = () => {};
     xdescribe("#GetFileName", NOOP);
     xdescribe("#GetFolder", NOOP);
     xdescribe("#GetParentFolderName", NOOP);

@@ -381,6 +381,7 @@ class JS_FileSystemObject extends Component {
         }
 
         if (this.vfs.PathIsRelative(path)) {
+            path = path.replace(/^C:/i, "");
             path = win32path.join(this.context.get_env("path"), path);
         }
 
@@ -425,6 +426,7 @@ class JS_FileSystemObject extends Component {
         }
 
         if (this.vfs.PathIsRelative(path)) {
+            path = path.replace(/^C:/i, "");
             path = win32path.join(this.context.get_env("path"), path);
         }
 
@@ -588,8 +590,48 @@ class JS_FileSystemObject extends Component {
 
     // Returns a File object corresponding to the file in a specified
     // path.
-    getfile () {
+    getfile (filepath) {
 
+        const throw_invalid_fn_arg = function () {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FileSystemObject",
+                "FileSystemObject.GetFile requires param.",
+                "A required parameter (filepath) was missing from " +
+                    "the call to #GetFile."
+            );
+        }.bind(this);
+
+        const throw_file_not_found = function (reason) {
+            this.context.exceptions.throw_file_not_found(
+                "FileSystemObject",
+                "Cannot find file.",
+                reason
+            );
+        }.bind(this);
+
+        if (filepath === undefined || filepath === null || filepath === "") {
+            throw_invalid_fn_arg();
+        }
+
+        if (typeof filepath !== "string") {
+            try {
+                filepath = filepath.toString();
+            }
+            catch (_) {
+                throw_invalid_fn_arg();
+            }
+        }
+
+        if (this.vfs.IsWildcard(filepath)) {
+            throw_file_not_found("The given filepath must not contain wildcards.");
+        }
+
+        if (this.vfs.PathIsRelative(filepath)) {
+            filepath = filepath.replace(/^C:/i, "");
+            filepath = win32path.join(this.context.get_env("path"), filepath);
+        }
+
+        return new JS_File(this.context, filepath);
     }
 
     // Returns the last component of specified path that is not part

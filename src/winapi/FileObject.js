@@ -27,6 +27,7 @@ class JS_FileObject extends Component {
         }
 
         this._assert_exists = () => {
+
             if (this.vfs.FileExists(this._path)) return;
 
             this.context.exceptions.throw_file_not_found(

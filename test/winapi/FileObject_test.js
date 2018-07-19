@@ -226,7 +226,6 @@ describe("FileObject", () => {
             const file = new File(ctx, path);
             assert.throws(() => file.Name = "foo.txt", "file exists");
         });
-
     });
 
     describe(".Parentfolder", () => {
@@ -271,6 +270,17 @@ describe("FileObject", () => {
 
             const file = new File(ctx, path);
             assert.equal(file.path, path);
+        });
+
+        it("should use the shortname only where specified in the path", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\SubDirectory\\HelloWorld.txt", "AAAA");
+
+            const file = new File(ctx, "C:\\SubDirectory\\HELLOW~1.TXT");
+
+            assert.equal(file.Name, "HELLOW~1.TXT");
+            assert.equal(file.Path, "C:\\SubDirectory\\HELLOW~1.TXT");
         });
     });
 
