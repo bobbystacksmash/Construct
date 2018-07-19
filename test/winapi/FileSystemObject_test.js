@@ -559,7 +559,7 @@ describe("Scripting.FileSystemObject", () => {
         });
     });
 
-    xdescribe("#CreateTextFile", () => {
+    describe("#CreateTextFile", () => {
 
         it("should throw 'bad filename or number' if a wildcard appears in the filename", () => {
 
@@ -588,9 +588,7 @@ describe("Scripting.FileSystemObject", () => {
             ctx.vfs.AddFile("C:\\file.txt", "abcd");
             const OVERWRITE = false;
             assert.throws(() => fso.CreateTextFile("C:\\file.txt", OVERWRITE), "file exists...");
-            assert.equal(ctx.vfs.GetFile("C:\\file.txt").contents, "abcd");
-
-
+            assert.equal(ctx.vfs.ReadFileContents("C:\\file.txt"), "abcd");
         });
 
         it("should create the text file in the CWD if no path is given", () => {
