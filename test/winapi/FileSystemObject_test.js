@@ -1377,8 +1377,26 @@ describe("Scripting.FileSystemObject", () => {
         });
     });
 
+    describe("#GetFolder", () => {
+
+        it("should get a folder with an absolute path", () => {
+            const fso = make_FSO();
+            ctx.vfs.AddFolder("C:\\RootOne\\SubDir1");
+            assert.equal(fso.GetFolder("C:\\RootOne").name, "RootOne");
+        });
+
+        it("should get a folder with a relative path", () => {
+            const fso     = make_FSO(),
+                  relpath = `${ctx.get_env("path")}\\foo\\bar`;
+
+            ctx.vfs.AddFolder(relpath);
+            assert.equal(fso.getfolder("foo").name, "foo");
+            assert.equal(fso.getfolder("C:foo").name, "foo");
+            assert.equal(fso.getFolder("foo").ParentFolder.name, "Construct");
+        });
+    });
+
     const NOOP = () => {};
-    xdescribe("#GetFolder", NOOP);
     xdescribe("#GetParentFolderName", NOOP);
     xdescribe("#GetSpecialFolders", NOOP);
     xdescribe("#GetTempName", NOOP);

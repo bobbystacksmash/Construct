@@ -736,6 +736,38 @@ class JS_FileSystemObject extends Component {
     // specified path.
     getfolder (path) {
 
+        const throw_invalid_fn_arg = function () {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FileSystemObject",
+                "FileSystemObject.GetFile requires param.",
+                "A required parameter (path) was missing from " +
+                    "the call to #GetFile."
+            );
+        }.bind(this);
+
+        if (path === undefined || path === null || path === "") {
+            throw_invalid_fn_arg();
+        }
+
+        if (typeof path !== "string") {
+            try {
+                path = path.toString();
+            }
+            catch (_) {
+                throw_invalid_fn_arg();
+            }
+        }
+
+        if (this.vfs.IsWildcard(path)) {
+            this.throw_file_not_found("The given path must not contain wildcards.");
+        }
+
+        if (this.vfs.PathIsRelative(path)) {
+            path = path.replace(/^C:/i, "");
+            path = win32path.join(this.context.get_env("path"), path);
+        }
+
+        return new JS_Folder(this.context, path);
     }
 
     // Returns a string containing the name of the parent folder of
