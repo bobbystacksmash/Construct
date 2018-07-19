@@ -1353,6 +1353,30 @@ describe("Scripting.FileSystemObject", () => {
         });
     });
 
+    describe("#GetFileVersion", () => {
+
+        it("should return an empty string for files which exist", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFile("C:\\foo.dll");
+            assert.equal(fso.GetFileVersion("C:\\foo.dll"), "");
+        });
+
+        it("should throw an error if the file cannot be found", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_error: () => {
+                        throw new Error("not found");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.GetFileVersion("C:\\foo.dll"), "not found");
+            assert.throws(() => fso.GetFileVersion("C:\\*.txt"), "not found");
+        });
+    });
+
     const NOOP = () => {};
     xdescribe("#GetFolder", NOOP);
     xdescribe("#GetParentFolderName", NOOP);

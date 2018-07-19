@@ -694,6 +694,44 @@ class JS_FileSystemObject extends Component {
         return basename;
     }
 
+    // GetFileVersion
+    // ==============
+    //
+    // Retrieves version information about the file.
+    //
+    // PLUGIN
+    // ------
+    //
+    // TODO: write plugin code.
+    //
+    getfileversion (filepath) {
+
+        // TODO: Add plugin code here.
+
+        if (this.vfs.IsWildcard(filepath)) {
+            this.context.exceptions.throw_error(
+                "FileSystemObject",
+                "Wildcard characters not allowed in GetFileVersion.",
+                "Wildcard characters not allowed in GetFileVersion."
+            );
+        }
+
+        if (this.vfs.PathIsRelative(filepath)) {
+            filepath = filepath.replace(/^C:/i, "");
+            filepath = win32path.join(this.context.get_env("path"), filepath);
+        }
+
+        if (this.vfs.FileExists(filepath) === false) {
+            this.context.exceptions.throw_error(
+                "FileSystemObject",
+                "Cannot find file.",
+                "Unable to obtain version number -- file does not exist."
+            );
+        }
+
+        return "";
+    }
+
     // Returns a Folder object corresponding to the folder in a
     // specified path.
     getfolder (path) {

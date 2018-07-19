@@ -52,12 +52,27 @@ class ExceptionHandler extends Component {
         throw err;
     }
 
+    throw_error (source, summary, details) {
+        this._throw(
+            "Error",
+            "",
+            -2147024894,
+            "",
+            source,
+            summary,
+            details
+        );
+    }
+
     throw_file_not_found (source, summary, details) {
         this._throw(
             "Error",
             "File not found",
             -2146828235,
-            "File not found"
+            "File not found",
+            source,
+            summary,
+            details
         );
     }
 
