@@ -18,6 +18,15 @@ class JS_FileSystemObject extends Component {
         // Shortcuts...
         this.ee  = this.context.emitter;
         this.vfs = this.context.vfs;
+
+        this.throw_file_not_found = function (reason) {
+            this.context.exceptions.throw_file_not_found(
+                "FileSystemObject",
+                "Cannot find file.",
+                reason
+            );
+        }.bind(this);
+
     }
 
     //
@@ -289,6 +298,9 @@ class JS_FileSystemObject extends Component {
         return new JS_Folder(this.context, path);
     }
 
+    // CreateTextFile
+    // ==============
+    //
     // Creates a specified file name and returns a TextStream object
     // that can be used to read from or write to the file.
     createtextfile (filespec, overwrite, unicode) {
@@ -299,6 +311,32 @@ class JS_FileSystemObject extends Component {
 
         if (unicode === undefined || unicode === null) {
             unicode = false;
+        }
+
+        if (this.vfs.IsWildcard(filespec)) {
+            this.context.exceptions.throw_bad_filename_or_number(
+                "FileSystemObject",
+                "The given filepath must not contain wildcards.",
+                "Ensure that the supplied filepath does not contain " +
+                    "wildcard symbols."
+            );
+        }
+
+        if (this.vfs.PathIsRelative(filespec)) {
+            filespec = filespec.replace(/^C:/i, "");
+            filespec = win32path.join(this.context.get_env("path"), filespec);
+        }
+
+        const dirname  = win32path.dirname(filespec),
+              filename = win32path.basename(filespec);
+
+        if (this.vfs.FolderExists(dirname) === false) {
+            this.context.exceptions.throw_path_not_found(
+                "FileSystemObject",
+                "Cannot create text file in a path which does not exist.",
+                "The CreateTextFile method will not automatically create " +
+                    "the path to the text file."
+            );
         }
 
         try {
@@ -601,14 +639,6 @@ class JS_FileSystemObject extends Component {
             );
         }.bind(this);
 
-        const throw_file_not_found = function (reason) {
-            this.context.exceptions.throw_file_not_found(
-                "FileSystemObject",
-                "Cannot find file.",
-                reason
-            );
-        }.bind(this);
-
         if (filepath === undefined || filepath === null || filepath === "") {
             throw_invalid_fn_arg();
         }
@@ -623,7 +653,7 @@ class JS_FileSystemObject extends Component {
         }
 
         if (this.vfs.IsWildcard(filepath)) {
-            throw_file_not_found("The given filepath must not contain wildcards.");
+            this.throw_file_not_found("The given filepath must not contain wildcards.");
         }
 
         if (this.vfs.PathIsRelative(filepath)) {

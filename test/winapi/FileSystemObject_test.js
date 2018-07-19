@@ -559,6 +559,7 @@ describe("Scripting.FileSystemObject", () => {
         });
     });
 
+
     describe("#CreateTextFile", () => {
 
         it("should throw 'bad filename or number' if a wildcard appears in the filename", () => {
@@ -595,25 +596,23 @@ describe("Scripting.FileSystemObject", () => {
 
             let fso = make_FSO();
 
-            assert.isFalse(ctx.vfs.GetFile("C:\\Users\\Construct\\file.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\Users\\Construct\\file.txt"));
             fso.CreateTextFile("file.txt");
-            assert.equal(
-                ctx.vfs.GetFile("C:\\Users\\Construct\\file.txt").constructor.name, "FileObject"
-            );
+            assert.isTrue(ctx.vfs.FileExists("C:\\Users\\Construct\\file.txt"));
         });
 
-        it("should create a file even if the path is partial", () => {
+        it("should create a file even if the path is relative", () => {
 
             let fso = new FSO(ctx);
 
-            assert.isFalse(ctx.vfs.GetFile("C:\\relative.txt"));
-            fso.CreateTextFile("../../relative.txt");
-            assert.equal(ctx.vfs.GetFile("C:\\relative.txt").constructor.name, "FileObject");
+            ctx.vfs.AddFolder("C:\\RootDir\\subdir1");
+            assert.isFalse(ctx.vfs.FileExists("C:\\RootDir\\subdir1\\helloworld.txt"));
 
-
+            fso.CreateTextFile("..\\..\\RootDir\\subdir1\\helloworld.txt");
+            assert.isTrue(ctx.vfs.FileExists("C:\\RootDir\\subdir1\\helloworld.txt"));
         });
 
-        it("should throw if the filepath does not exist", () => {
+        it("should throw path not found if the path does not exist", () => {
 
             let fso = make_FSO({
                 exceptions: {
@@ -626,8 +625,6 @@ describe("Scripting.FileSystemObject", () => {
             assert.throws(
                 () => fso.CreateTextFile("C:\\bogus\\path.txt"), "path not found (av:false)"
             );
-
-
         });
 
         it("should return a TextStream instance", () => {
@@ -641,8 +638,6 @@ describe("Scripting.FileSystemObject", () => {
             ];
 
             ts_api.forEach((method) => assert.isFunction(ts[method]));
-
-
         });
 
         it("should open a text file and then fail to write to it by default", () => {
@@ -655,9 +650,7 @@ describe("Scripting.FileSystemObject", () => {
             assert.doesNotThrow(() => ts = fso.CreateTextFile("C:\\file.txt"));
             assert.doesNotThrow(() => ts.write("overwrite successful"));
 
-            assert.equal(ctx.vfs.GetFile("C:\\file.txt").contents, "overwrite successful");
-
-
+            assert.equal(ctx.vfs.ReadFileContents("C:\\file.txt"), "overwrite successful");
         });
 
         it("should write unicode if signalled to do so", () => {
@@ -667,7 +660,7 @@ describe("Scripting.FileSystemObject", () => {
 
             ts.Write("7-bit ASCII or GTFO...");
 
-            let filebuf = ctx.vfs.GetFile("C:\\unicode.txt").contents;
+            let filebuf = ctx.vfs.ReadFileContents("C:\\unicode.txt");
 
             assert.deepEqual(
                 filebuf.slice(0, 8),
@@ -1329,4 +1322,7 @@ describe("Scripting.FileSystemObject", () => {
     xdescribe("#MoveFile", NOOP);
     xdescribe("#MoveFolder", NOOP);
     xdescribe("#OpenTextfile", NOOP);
+
+
+
 });
