@@ -1313,8 +1313,47 @@ describe("Scripting.FileSystemObject", () => {
         });
     });
 
+    describe("#GetFileName", () => {
+
+        it("should correctly return filenames", () => {
+
+            const fso   = make_FSO(),
+                  tests = [
+                      { in: "",                      out: "" },
+                      { in: " ",                     out: "" },
+                      { in: "*.txt",                 out: "*.txt" },
+                      { in: "C:\\foo\\",             out: "foo" },
+                      { in: "C:\\foo",               out: "foo" },
+                      { in: "../",                   out: ".." },
+                      { in: "../.",                  out: "." },
+                      { in: "C:",                    out: "" },
+                      { in: "C:\\",                  out: "" },
+                      { in: "C:\\foo\\bar\\abc.txt", out: "abc.txt" },
+                      { in: undefined,               out: "" }
+                  ];
+
+            tests.forEach(t => assert.equal(fso.GetFileName(t.in), t.out));
+        });
+
+        it("should throw appropriate exceptions certain inputs", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_type_mismatch: () => {
+                        throw new Error("type mismatch");
+                    },
+                    throw_wrong_argc_or_invalid_prop_assign: () => {
+                        throw new Error("bad arg");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.GetFileName(), "bad arg");
+            assert.throws(() => fso.GetFileName(null), "type mismatch");
+        });
+    });
+
     const NOOP = () => {};
-    xdescribe("#GetFileName", NOOP);
     xdescribe("#GetFolder", NOOP);
     xdescribe("#GetParentFolderName", NOOP);
     xdescribe("#GetSpecialFolders", NOOP);
@@ -1322,7 +1361,4 @@ describe("Scripting.FileSystemObject", () => {
     xdescribe("#MoveFile", NOOP);
     xdescribe("#MoveFolder", NOOP);
     xdescribe("#OpenTextfile", NOOP);
-
-
-
 });

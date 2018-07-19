@@ -664,10 +664,34 @@ class JS_FileSystemObject extends Component {
         return new JS_File(this.context, filepath);
     }
 
+    // GetFileName
+    // ===========
+    //
     // Returns the last component of specified path that is not part
     // of the drive specification.
-    getfilename () {
+    getfilename (filename) {
 
+        if (Array.prototype.slice.call(arguments).length === 0) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "FileSystemObject",
+                "No arguments passed to GetFileName",
+                "No arguments passed to GetFileName"
+            );
+        }
+
+        if (filename === null) {
+            this.context.exceptions.throw_type_mismatch(
+                "FileObject",
+                "Unsupported parameter type: null",
+                "Null is not a valid function parameter."
+            );
+        }
+
+        if (filename === " ") return "";
+        if (filename === undefined) return "";
+
+        const basename = win32path.basename(filename);
+        return basename;
     }
 
     // Returns a Folder object corresponding to the folder in a
