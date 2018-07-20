@@ -141,7 +141,7 @@ describe("FolderObject", () => {
 
             const ctx = make_ctx();
 
-            ctx.vfs.AddFile("C:\\RootOne\\SubFolder1");
+            ctx.vfs.AddFolder("C:\\RootOne\\SubFolder1");
 
             assert.isFalse(new Folder(ctx, "C:\\RootOne\\SubFolder1").isRootFolder);
             assert.isFalse(new Folder(ctx, "C:\\RootOne").isrootfolder);

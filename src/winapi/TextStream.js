@@ -369,10 +369,6 @@ class JS_TextStream extends Component {
 
         try {
             this.stream.WriteBlankLines(num_blank_lines_to_write);
-
-            if (this.persist) {
-                this.stream.Write(this.backing_stream, 2);
-            }
         }
         catch (e) {
 
@@ -393,10 +389,6 @@ class JS_TextStream extends Component {
 
         try {
             this.stream.WriteLine(msg);
-
-            if (this.persist) {
-                this.stream.Write(this.backing_stream, 2);
-            }
         }
         catch (e) {
 

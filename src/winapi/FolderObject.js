@@ -39,6 +39,8 @@ class JS_FolderObject extends Component {
                     "have been deleted)."
             );
         };
+
+        this._assert_exists();
     }
 
     get attributes () {}
