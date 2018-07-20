@@ -163,6 +163,14 @@ describe("FolderObject", () => {
 
             assert.equal(folder.name, "SubFolder1");
         });
+
+        it("should return an empty string when the given folder is 'C:\'", () => {
+
+            const ctx    = make_ctx(),
+                  folder = new Folder(ctx, "C:\\");
+
+            assert.equal(folder.name, "");
+        });
     });
 
     describe(".Name", () => {
