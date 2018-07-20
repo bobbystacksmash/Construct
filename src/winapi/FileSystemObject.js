@@ -739,14 +739,19 @@ class JS_FileSystemObject extends Component {
         const throw_invalid_fn_arg = function () {
             this.context.exceptions.throw_invalid_fn_arg(
                 "FileSystemObject",
-                "FileSystemObject.GetFile requires param.",
+                "FileSystemObject.GetFolder requires param.",
                 "A required parameter (path) was missing from " +
-                    "the call to #GetFile."
+                    "the call to #GetFolder."
             );
         }.bind(this);
 
-        if (path === undefined || path === null || path === "") {
-            throw_invalid_fn_arg();
+        if (path === undefined || path === null) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "FileSystemObject",
+                "FileSystemObject.GetFolder - no input.",
+                "Method requires a string representing a valid path " +
+                    "to a file."
+            );
         }
 
         if (typeof path !== "string") {
@@ -756,6 +761,10 @@ class JS_FileSystemObject extends Component {
             catch (_) {
                 throw_invalid_fn_arg();
             }
+        }
+
+        if (path === "") {
+            throw_invalid_fn_arg();
         }
 
         if (this.vfs.IsWildcard(path)) {

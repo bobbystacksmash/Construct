@@ -1394,6 +1394,71 @@ describe("Scripting.FileSystemObject", () => {
             assert.equal(fso.getfolder("C:foo").name, "foo");
             assert.equal(fso.getFolder("foo").ParentFolder.name, "Construct");
         });
+
+        it("should throw 'Path not found' if the folder does not exist", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_path_not_found: () => {
+                        throw new Error("path not found");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.GetFolder("C:\\bogus"), "path not found");
+        });
+
+        it("should throw if the folder is a file", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_path_not_found: () => {
+                        throw new Error("path is file");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\RootOne\\foo.txt", "hello world");
+            assert.throws(() => fso.GetFolder("C:\\RootOne\\foo.txt"), "path is file");
+        });
+
+        it("should open a short filepath successfully", () => {
+            const fso = make_FSO();
+            ctx.vfs.AddFolder("C:\\Subdirectory\\HelloWorld");
+            assert.equal(fso.GetFolder("C:\\SUBDIR~1\\HELLOW~1").name, "HELLOW~1");
+        });
+
+        it("should throw if no inputs are passed", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_wrong_argc_or_invalid_prop_assign: () => {
+                        throw new Error("no input");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.GetFolder(), "no input");
+        });
+
+        it("should throw if inputs are illegal", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("invalid arg");
+                    }
+                }
+            });
+
+            const invalid_inputs = [
+                "", []
+            ];
+
+            invalid_inputs.forEach((input) => {
+                assert.throws(() => fso.GetFolder(input), "invalid arg");
+            });
+        });
     });
 
     const NOOP = () => {};
