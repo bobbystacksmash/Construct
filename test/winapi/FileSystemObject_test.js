@@ -1459,6 +1459,18 @@ describe("Scripting.FileSystemObject", () => {
                 assert.throws(() => fso.GetFolder(input), "invalid arg");
             });
         });
+
+        it("should correctly handle cases where 'C:\' is the requested folder", () => {
+
+            const fso = make_FSO();
+
+            assert.doesNotThrow(() => fso.GetFolder("C:\\"));
+            assert.equal(fso.GetFolder("C:\\").name, "");
+            assert.equal(fso.GetFolder("C:\\").path, "C:\\");
+
+            // Relative path!
+            assert.equal(fso.GetFolder("C:").path, ctx.get_env("path"));
+        });
     });
 
     const NOOP = () => {};
