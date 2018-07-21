@@ -1028,7 +1028,7 @@ class VirtualFileSystem {
     //                  an absolute path to the file, not just the
     //                  filename.
     //
-    FindFiles (search_dir_path, pattern, options) {
+    FindFiles (search_dir_path, pattern) {
 
         const isearch_path = this._ConvertExternalToInternalPath(search_dir_path);
 

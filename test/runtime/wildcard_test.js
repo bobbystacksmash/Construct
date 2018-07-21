@@ -215,4 +215,12 @@ describe("Wildcard Matcher", () => {
             );
         });
     });
+
+    describe("Common match patterns", () => {
+
+        it("should match all files with the same extension", () => {
+            let files = ["foo.txt", "bar.txt", "baz.zip"];
+            assert.deepEqual(wildcard.match(files, "*.txt"), ["foo.txt", "bar.txt"]);
+        });
+    });
 });

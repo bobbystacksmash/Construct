@@ -194,7 +194,7 @@ function matcher (filename, pattern) {
     if (tok_pattern.type === "literal") {
 
         if (tok_filename && tok_pattern.value.toLowerCase() === tok_filename.value.toLowerCase()) {
-            var match = matcher(filename.slice(1), pattern.slice(1));
+            let match = matcher(filename.slice(1), pattern.slice(1));
             return match;
         }
 
@@ -203,7 +203,9 @@ function matcher (filename, pattern) {
 
     if (tok_pattern.value === "ASTERISK" /* * */) {
 
-        if (filename.length === 0) return true;
+        if (filename.length === 0) {
+            return matcher(filename, pattern.slice(1));
+        }
 
         if (matcher(filename.slice(1), pattern) === false) {
             return matcher(filename, pattern.slice(1));
@@ -212,7 +214,7 @@ function matcher (filename, pattern) {
         return matcher(filename.slice(1), pattern);
     }
     else if (tok_pattern.value === "QMARK" /* ? */) {
-        var match = matcher(filename.slice(1), pattern.slice(1));
+        let match = matcher(filename.slice(1), pattern.slice(1));
         return match;
     }
     else if (tok_pattern.value === "DOS_STAR" /* < */) {
