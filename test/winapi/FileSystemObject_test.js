@@ -6,11 +6,14 @@ var ctx = null;
 
 function make_FSO (opts) {
 
+    const NOOP = () => {};
+
     opts = opts || {};
 
     opts.exceptions  = opts.exceptions  || {};
     opts.environment = opts.environment || {};
     opts.config      = opts.config      || {};
+    opts.streams     = opts.streams     || {};
 
     var default_env = {
         path: "C:\\Users\\Construct"
@@ -20,9 +23,15 @@ function make_FSO (opts) {
         "autovivify": true
     };
 
+    var default_streams = {
+        stdin: NOOP,
+        stdout: NOOP,
+        stderr: NOOP
+    };
 
-    let env = Object.assign({}, default_env, opts.ENVIRONMENT),
-        cfg = Object.assign({}, default_cfg, opts.config);
+    let env     = Object.assign({}, default_env,     opts.ENVIRONMENT),
+        cfg     = Object.assign({}, default_cfg,     opts.config),
+        streams = Object.assign({}, default_streams, opts.streams);
 
     let context = {
         epoch: 1,
@@ -31,6 +40,7 @@ function make_FSO (opts) {
         emitter: { emit: () => {} },
         exceptions: {},
         vfs: {},
+        streams: streams,
         get_env: (e) => env[e],
         get_cfg: (c) => cfg[c]
     };
@@ -1585,6 +1595,107 @@ describe("Scripting.FileSystemObject", () => {
 
             assert.throws(() => fso.GetSpecialFolder(-1), "invalid argument");
         });
+
+    });
+
+    describe("GetStandardstream", () => {
+
+        const STDIN  = 0,
+              STDOUT = 1,
+              STDERR = 2;
+
+        it("should return the STDIN stream", (done) => {
+
+            const fso = make_FSO({
+                streams: {
+                    stdin: {
+                        Read: () => {
+                            assert.isTrue(true);
+                            done();
+                        }
+                    }
+                }
+            });
+
+            assert.doesNotThrow(() => fso.GetStandardStream(STDIN).Read());
+        });
+
+        it("should return the STDOUT stream", (done) => {
+
+            const fso = make_FSO({
+                streams: {
+                    stdout: {
+                        Write: (msg) => {
+                            assert.equal(msg, "stdout stream");
+                            done();
+                        }
+                    }
+                }
+            });
+
+            assert.doesNotThrow(() => fso.GetStandardStream(STDOUT).Write("stdout stream"));
+        });
+
+        it("should return the STDERR stream", (done) => {
+
+            const fso = make_FSO({
+                streams: {
+                    stderr: {
+                        Write: (msg) => {
+                            assert.equal(msg, "stderr stream");
+                            done();
+                        }
+                    }
+                }
+            });
+
+            assert.doesNotThrow(() => fso.GetStandardStream(STDERR).Write("stderr stream"));
+        });
+
+        it("should throw if the stream selector is numeric but not known", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_range_error: () => {
+                        throw new Error("out of range");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.GetStandardStream(-1),  "out of range");
+            assert.throws(() => fso.GetStandardStream(3),   "out of range");
+            assert.throws(() => fso.GetStandardStream(100), "out of range");
+        });
+
+        it("should throw 'bad file mode' if the input is 'false' or undefined", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_bad_file_mode: () => {
+                        throw new Error("bad file mode");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.GetStandardStream(false), "bad file mode");
+            assert.throws(() => fso.GetStandardStream(undefined), "bad file mode");
+        });
+
+        it("should throw 'type mismatch' when given null, [], {}", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_type_mismatch: () => {
+                        throw new Error("type mismatch");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.GetStandardStream(null), "type mismatch");
+            assert.throws(() => fso.GetStandardStream([]),   "type mismatch");
+            assert.throws(() => fso.GetStandardStream({}),   "type mismatch");
+        });
+
 
     });
 

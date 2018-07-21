@@ -4,6 +4,7 @@ const ExceptionHandler = require("../ExceptionHandler");
 const JScript_Date          = require("../winapi/Date");
 const JScript_WScript       = require("../winapi/WScript");
 const JScript_ActiveXObject = require("../winapi/ActiveXObject");
+const JScript_TextStream    = require("../winapi/TextStream");
 const win32path = require("path").win32;
 
 class HostContext {
@@ -127,6 +128,37 @@ class HostContext {
 	// anywhere.  In the absence of an `opts.epoch' value, we
 	// fall-back to using the system's time.
 	this.epoch = opts.epoch || new Date().getTime();
+
+        // We need to create the Standard{In,Out,Err} streams, which
+        // are just differently configured instances of a TextStream
+        // object.
+        this.streams = {};
+
+        const NOT_READABLE  = false,
+              NOT_WRITEABLE = 0,
+              IS_READABLE   = true,
+              IS_WRITEABLE  = 1;
+
+        this.streams.stdin = new JScript_TextStream(
+            this,
+            { stream: "stdin" },
+            IS_READABLE,
+            NOT_WRITEABLE
+        );
+
+        this.streams.stderr = new JScript_TextStream(
+            this,
+            { stream: "stderr" },
+            NOT_READABLE,
+            IS_WRITEABLE
+        );
+
+        this.streams.stdout = new JScript_TextStream(
+            this,
+            { stream: "stdout" },
+            NOT_READABLE,
+            IS_WRITEABLE
+        );
 
 	this._setup_components();
     }

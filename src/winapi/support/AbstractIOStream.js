@@ -65,11 +65,30 @@ class AbstractIOStream {
         // TODO: Look at 'filespec' and add in Std{In,Out,Err} stuff here...
         //
 
-        if (context.vfs.FileExists(filespec) === false) {
-            context.vfs.AddFile(filespec);
-        }
+        if (typeof filespec === "string") {
 
-        this.stream.load_from_file(filespec, !this.append_only);
+            if (context.vfs.FileExists(filespec) === false) {
+                context.vfs.AddFile(filespec);
+            }
+
+            this.stream.load_from_file(filespec, !this.append_only);
+        }
+        else if (typeof filespec === "object") {
+
+            // Standard stream handling!
+            switch (filespec.stream.toLowerCase()) {
+            case "stdin":
+                // todo
+                break;
+            case "stdout":
+                // todo
+                break;
+            case "stderr":
+                // todo
+                break;
+            }
+
+        }
 
         // When loading a file, the position marker is set back to
         // zero.  When opened in append mode, we want to move pos to
@@ -257,6 +276,7 @@ class AbstractIOStream {
         // the EOS.
 
         const overwrite_if_exists = 2;
+
         this.stream.save_to_file(this.backed_by, overwrite_if_exists);
         this.stream.position = pos;
     }

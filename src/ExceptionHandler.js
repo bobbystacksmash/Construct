@@ -174,6 +174,16 @@ class ExceptionHandler extends Component {
     }
 
 
+    throw_range_error (source, summary, details) {
+        this.throw(
+            "RangeError",
+            "",
+            -2147024890,
+            "",
+            source, summary, details);
+    }
+
+
     throw_args_wrong_type_or_out_of_range_or_conflicted (source, summary, details) {
         this.throw(
             "Error",

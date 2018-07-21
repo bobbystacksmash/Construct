@@ -857,6 +857,64 @@ class JS_FileSystemObject extends Component {
         );
     }
 
+    // GetStandardStream
+    // =================
+    //
+    // Fetches one of the Std{In,Out,Err} TextStream instances.  The
+    // streams and their corresponding constants are:
+    //
+    // | Const | Stream           |
+    // |-------|------------------|
+    // |   0   | Standard Input.  |
+    // |   1   | Standard Output. |
+    // |   2   | Standard Error.  |
+    //
+    getstandardstream (stream, unicode) {
+
+        if (stream === false || stream === undefined) {
+            this.context.exceptions.throw_bad_file_mode(
+                "FileSystemObject",
+                "Stream option 'false' is not valid.",
+                "Stream option 'false' is not valid."
+            );
+        }
+        else if (stream === null || Array.isArray(stream) || typeof stream === "object") {
+            this.context.exceptions.throw_type_mismatch(
+                "FileSystemObject",
+                "Null is not a valid stream type.",
+                "Please select a different stream type [0, 1, 2]."
+            );
+        }
+
+        const STDIN  = 0,
+              STDOUT = 1,
+              STDERR = 2;
+
+        const STD_STREAMS = {
+            0: "STDIN",
+            1: "STDOUT",
+            2: "STDERR"
+        };
+
+        switch (STD_STREAMS[stream]) {
+        case "STDIN":
+            return this.context.streams.stdin;
+
+        case "STDERR":
+            return this.context.streams.stderr;
+
+        case  "STDOUT":
+            return this.context.streams.stdout;
+
+        default:
+            this.context.exceptions.throw_range_error(
+                "FileSystemObject",
+                "Cannot get standard stream - ID out of range.",
+                "Accepted ranges for standard streams is 0-2 inclusive."
+            );
+        }
+    }
+
     // Returns a randomly generated temporary file or folder name that
     // is useful for performing operations that require a temporary
     // file or folder.

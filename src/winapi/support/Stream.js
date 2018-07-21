@@ -5,6 +5,7 @@ class Stream {
         context = context || { register: () => {} };
 
         this.context = context;
+        this.ee      = context.emitter;
         this.vfs = context.vfs;
 
         this.CONNECT_MODE_ENUM = {
@@ -303,6 +304,21 @@ class Stream {
     }
 
     save_to_file (path, save_opt) {
+
+        if (typeof path === "object" && path.hasOwnProperty("stream")) {
+
+            // We handle the StdOut stream specially here...
+            if (/^std(?:out|err)$/i.test(path.stream)) {
+                // When writing to StdOut, we send it to the *actual*
+                // STDOUT attached to console.log().  We emit the
+                // 'STDOUT>' event for event processors to consume
+                // STDOUT messages.
+                let event = `${path.stream.toUpperCase()}>`;
+                this.ee.emit(event, this.buffer);
+                console.log(this.buffer.toString());
+                return;
+            }
+        }
 
         if (this.stream_is_open === false) {
             throw new Error("Unable to save to file -- the stream is not open.");
