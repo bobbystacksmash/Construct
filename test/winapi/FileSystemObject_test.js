@@ -1723,12 +1723,155 @@ describe("Scripting.FileSystemObject", () => {
 
             assert.throws(() => fso.GetTempName(1), "invalid arg");
         });
+    });
 
+    describe("#MoveFile", () => {
+
+        it("should move a single file from dirA to dirB", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFile("C:\\dirA\\foo.txt");
+            ctx.vfs.AddFolder("C:\\dirB");
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\dirB\\foo.txt"));
+
+            assert.doesNotThrow(() => fso.MoveFile("C:\\dirA\\foo.txt", "C:\\dirB\\foo.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dirB\\foo.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\foo.txt"));
+        });
+
+        it("should use process working dir for relative paths", () => {
+
+            const fso = make_FSO(),
+                  src = `${ctx.get_env("path")}\\aaa.txt`,
+                  dst = `${ctx.get_env("path")}\\bbb.txt`;
+
+            ctx.vfs.AddFile(src);
+            assert.isFalse(ctx.vfs.FileExists(dst));
+
+            fso.MoveFile("aaa.txt", "bbb.txt");
+            assert.isTrue(ctx.vfs.FileExists(dst));
+            assert.isFalse(ctx.vfs.FileExists(src));
+        });
+
+        it("should follow '../' in relative paths", () => {
+
+            const fso = make_FSO(),
+                  src = `C:\\Users\\aaa.txt`,
+                  dst = `${ctx.get_env("path")}\\bbb.txt`;
+
+            ctx.vfs.AddFile(src);
+            assert.isFalse(ctx.vfs.FileExists(dst));
+
+            fso.MoveFile("..\\aaa.txt", "bbb.txt");
+            assert.isTrue(ctx.vfs.FileExists(dst));
+            assert.isFalse(ctx.vfs.FileExists(src));
+        });
+
+        it("should move the file when dest ends in pathsep.", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFile("C:\\dirA\\foo.txt");
+            ctx.vfs.AddFolder("C:\\dirB");
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\dirB\\foo.txt"));
+            assert.doesNotThrow(() => fso.movefile("C:\\dirA\\foo.txt", "C:\\dirB\\"));
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\foo.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dirB\\foo.txt"));
+        });
+
+        it("should move all files matching a wildcard expression.", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFile("C:\\dirA\\foo.txt");
+            ctx.vfs.AddFile("C:\\dirA\\bar.txt");
+            ctx.vfs.AddFile("C:\\dirA\\baz.zip");
+            ctx.vfs.AddFolder("C:\\dirB");
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\dirB\\foo.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\dirB\\bar.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\dirB\\baz.zip"));
+
+            fso.MoveFile("C:\\dirA\\*.txt", "C:\\dirB\\");
+
+            assert.isTrue(ctx.vfs.FileExists("C:\\dirB\\foo.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dirB\\bar.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\dirB\\baz.zip"));
+        });
+
+        it("should match a single file matching a wildcard expression", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFile("C:\\dirA\\foo.txt");
+            ctx.vfs.AddFolder("C:\\dirB");
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\dirB\\foo.txt"));
+
+            fso.MoveFile("C:\\dirA\\*.txt", "C:\\dirB");
+
+            assert.isTrue(ctx.vfs.FileExists("C:\\dirB\\foo.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\foo.txt"));
+        });
+
+         it("should throw when moving a single file and dest does not end in pathsep", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_file_already_exists: () => {
+                        throw new Error("no trailing pathsep");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\dirA\\foo.txt");
+            ctx.vfs.AddFolder("C:\\dirB");
+
+            assert.throws(
+                () => fso.MoveFile("C:\\dirA\\foo.txt", "C:\\dirB"),
+                "no trailing pathsep"
+            );
+        });
+
+        it("should throw 'file already exists' when the destination file already exists.", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_file_already_exists: () => {
+                        throw new Error("dstfile exists");
+                    }
+                }
+            });
+
+            const src = "C:\\dirA\\foo.txt",
+                  dst = "C:\\dirB\\bar.txt";
+
+            ctx.vfs.AddFile(src);
+            ctx.vfs.AddFile(dst);
+
+            assert.throws(() => fso.MoveFile(src, dst), "dstfile exists");
+        });
+
+        it("should not require destination to end in a trailing pathsep when src is wildcard", () => {
+
+            const fso = make_FSO();
+
+            ctx.vfs.AddFile("C:\\dirA\\foo.txt");
+            ctx.vfs.AddFile("C:\\dirA\\bar.txt");
+            ctx.vfs.AddFile("C:\\dirA\\baz.zip");
+            ctx.vfs.AddFolder("C:\\dirB");
+
+            assert.doesNotThrow(() => fso.MoveFile("C:\\dirA\\*.txt", "C:\\dirB"));
+
+            assert.isTrue(ctx.vfs.FileExists("C:\\dirB\\foo.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dirB\\bar.txt"));
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\foo.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\bar.txt"));
+        });
     });
 
     const NOOP = () => {};
-
-    xdescribe("#MoveFile", NOOP);
     xdescribe("#MoveFolder", NOOP);
     xdescribe("#OpenTextfile", NOOP);
 });

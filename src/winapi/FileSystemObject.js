@@ -939,9 +939,55 @@ class JS_FileSystemObject extends Component {
         return mktmp();
     }
 
+    // MoveFile
+    // ========
+    //
     // Moves one or more files from one location to another.
-    movefile () {
+    movefile (source, destination) {
 
+        let srcpath = this.vfs.Resolve(source),
+            dstpath = this.vfs.Resolve(destination),
+            dstpath_trailing_pathsep = /[\\/]$/.test(destination),
+            dstpath_exists = (this.vfs.FileExists(dstpath) || this.vfs.FolderExists(dstpath));
+
+        if (this.vfs.IsWildcard(srcpath)) {
+
+            const parent_dir  = win32path.dirname(srcpath),
+                  pattern     = win32path.basename(srcpath),
+                  match_files = this.vfs.FindFiles(parent_dir, pattern);
+
+            match_files.forEach(filename => {
+                let fullpath_src = win32path.join(parent_dir, filename),
+                    fullpath_dst = win32path.join(dstpath,    filename);
+                this.vfs.Move(fullpath_src, fullpath_dst);
+            });
+
+            return;
+        }
+
+        if (dstpath_trailing_pathsep === false && dstpath_exists) {
+            this.context.exceptions.throw_file_already_exists(
+                "FileSystemObject",
+                "File move destination name already exists.",
+                "The requested destination already exists and " +
+                    "is a folder."
+            );
+        }
+
+        if (this.vfs.FolderExists(dstpath)) {
+            dstpath = win32path.join(dstpath, win32path.basename(srcpath));
+        }
+
+        if (this.vfs.FileExists(dstpath)) {
+            this.context.exceptions.throw_file_already_exists(
+                "FileSystemObject",
+                "Destination already exists.",
+                "The destination file already exists -- cannot move."
+            );
+        }
+
+
+        this.vfs.Move(srcpath, dstpath);
     }
 
     // Moves one or more folders from one location to another.
