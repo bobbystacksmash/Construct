@@ -488,17 +488,17 @@ class VirtualFileSystem {
         this.volume_c = this.volumes.c;
         this.vfs = make_mem_ntfs_proxy(this.volume_c);
 
-        this._InitFS();
+        this._ConfigureFilesystem();
     }
 
-    // [PRIVATE] InitFS
-    // ================
+    // [PRIVATE] ConfigureFilesystem
+    // =============================
     //
     // Handles VFS setup when the VFS is constructed.  Responsible for
     // loading paths from the Construct config, as well as setting up
     // a base file system.
     //
-    _InitFS () {
+    _ConfigureFilesystem () {
 
         // .TODO1
         // The VFS does not load any paths from a configuration file.
@@ -518,6 +518,14 @@ class VirtualFileSystem {
         // however it's still possible to `cd' in to "My Documents".
         // Needs more investigation to see WTF is going on.
         // .TODO2
+
+        // These folders are necessary for the correct running of
+        // FileSystemObject.GetSpecialFolders() method.
+
+        // This is a temporary fix, until we begin loading files from
+        // a config.
+        this.AddFolder("C:\\Users\\Construct\\AppData\\Local\\Temp");
+        this.AddFolder("C:\\Windows\\System32");
     }
 
 

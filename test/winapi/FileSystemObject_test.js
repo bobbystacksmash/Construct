@@ -1492,8 +1492,103 @@ describe("Scripting.FileSystemObject", () => {
         });
     });
 
+    describe("#GetSpecialFolders", () => {
+
+        it("should fetch the 'C:\\Windows' folder when given 0", () => {
+
+            const fso     = make_FSO(),
+                  win_dir = fso.GetSpecialFolder(0);
+
+            assert.equal(win_dir.name, "Windows");
+            assert.equal(win_dir.path, "C:\\Windows");
+        });
+
+        it("should fetch the 'C:\\Windows\\System32' folder when given 1", () => {
+
+            const fso     = make_FSO(),
+                  win_dir = fso.GetSpecialFolder(1);
+
+            assert.equal(win_dir.name, "System32");
+            assert.equal(win_dir.path, "C:\\Windows\\System32");
+        });
+
+        it("should fetch the user's Temp folder when given 2", () => {
+
+            const fso     = make_FSO(),
+                  win_dir = fso.GetSpecialFolder(2);
+
+            assert.equal(win_dir.name, "Temp");
+            assert.equal(win_dir.path, "C:\\Users\\Construct\\AppData\\Local\\Temp");
+        });
+
+        it("should fetch the correct dir when the input is string|number", () => {
+
+            const fso = make_FSO();
+
+            assert.equal(fso.GetSpecialFolder("0").path, "C:\\Windows");
+            assert.equal(fso.GetSpecialFolder("1").path, "C:\\Windows\\System32");
+            assert.equal(fso.GetSpecialFolder("2").path, "C:\\Users\\Construct\\AppData\\Local\\Temp");
+        });
+
+        it("should throw when called with zero arguments", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_wrong_argc_or_invalid_prop_assign: () => {
+                        throw new Error("no inputs");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.GetSpecialFolder(), "no inputs");
+        });
+
+        it("should throw a 'type mismatch' exception for the following inputs", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_type_mismatch: () => {
+                        throw new Error("type mismatch");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.GetSpecialFolder(null), "type mismatch");
+            assert.throws(() => fso.GetSpecialFolder([]),   "type mismatch");
+        });
+
+        it("should coerce 'undefined' to '0' and return the 'C:\\Windows' folder.", () => {
+
+            const fso = make_FSO();
+
+            assert.doesNotThrow(() => fso.GetSpecialFolder(undefined));
+            assert.equal(fso.GetSpecialFolder(undefined).path, "C:\\Windows");
+        });
+
+        it("should coerce 'false' to '0' and return the 'C:\\Windows' folder.", () => {
+
+            const fso = make_FSO();
+
+            assert.doesNotThrow(() => fso.GetSpecialFolder(false));
+            assert.equal(fso.GetSpecialFolder(false).path, "C:\\Windows");
+        });
+
+        it("should throw 'invalid procedure call or argument' for unknown constants", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("invalid argument");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.GetSpecialFolder(-1), "invalid argument");
+        });
+
+    });
+
     const NOOP = () => {};
-    xdescribe("#GetSpecialFolders", NOOP);
     xdescribe("#GetTempName", NOOP);
     xdescribe("#MoveFile", NOOP);
     xdescribe("#MoveFolder", NOOP);

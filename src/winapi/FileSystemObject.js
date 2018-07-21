@@ -803,9 +803,58 @@ class JS_FileSystemObject extends Component {
         }
     }
 
-    // Returns the special folder object specified.
-    getspecialfolder () {
+    // GetSpecialFolder
+    // ================
+    //
+    // Returns a Folder object which represents one of three "special"
+    // folder locations:
+    //
+    // | Const | Path                                  |
+    // |-------|---------------------------------------|
+    // |   0   | C:\Windows                            |
+    // |   1   | C:\Windows\System32                   |
+    // |   2   | C:\Users\Construct\AppData\Local\Temp |
+    //
+    // Any other values will cause GetSpecialFolder() to throw.
+    //
+    getspecialfolder (special_folder) {
 
+        if (arguments.length === 0) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "FileSystemObject",
+                "No arguments supplied to GetSpecialFolder.",
+                "Ensure that an argument is passed to GetSpecialFolder()."
+            );
+        }
+
+        if (special_folder === null || (Array.isArray(special_folder))) {
+            this.context.exceptions.throw_type_mismatch(
+                "FileSystemObject",
+                "The value 'null' is not a valid input for GetSpecilFolder().",
+                "The value 'null' is not a valid input for GetSpecilFolder()."
+            );
+        }
+
+        // Notice double-equal below.
+        if (special_folder === undefined || special_folder == false) {
+            special_folder = 0;
+        }
+
+        const SPECDIR = {
+            0: "C:\\Windows",
+            1: "C:\\Windows\\System32",
+            2: "C:\\Users\\Construct\\AppData\\Local\\Temp"
+        };
+
+        if (SPECDIR.hasOwnProperty(special_folder)) {
+            return new JS_Folder(this.context, SPECDIR[special_folder]);
+        }
+
+        this.context.exceptions.throw_invalid_fn_arg(
+            "FileSystemObject",
+            "Invalid function argument passed to GetSpecialFolder().",
+            "Invalid function argument passed to GetSpecialFolder()."
+        );
     }
 
     // Returns a randomly generated temporary file or folder name that
