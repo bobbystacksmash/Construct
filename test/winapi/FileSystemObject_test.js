@@ -31,15 +31,17 @@ function make_FSO (opts) {
 
     let env     = Object.assign({}, default_env,     opts.ENVIRONMENT),
         cfg     = Object.assign({}, default_cfg,     opts.config),
-        streams = Object.assign({}, default_streams, opts.streams);
+        streams = Object.assign({}, default_streams, opts.streams),
+        epoch   = 1234567890;
 
     let context = {
-        epoch: 1,
+        epoch: epoch,
         ENVIRONMENT: env,
         CONFIG: cfg,
         emitter: { emit: () => {} },
         exceptions: {},
         vfs: {},
+        skew_time_ahead_by: (n) => { this.epoch++ },
         streams: streams,
         get_env: (e) => env[e],
         get_cfg: (c) => cfg[c]
@@ -1699,8 +1701,33 @@ describe("Scripting.FileSystemObject", () => {
 
     });
 
+    describe("#GetTempName", () => {
+
+        it("should generate a PRNG temp name", () => {
+            const fso = make_FSO();
+            assert.match(fso.GetTempName(), /^[a-z]{3}[a-f0-9]{5}\.tmp$/i);
+            assert.match(fso.GetTempName(), /^[a-z]{3}[a-f0-9]{5}\.tmp$/i);
+            assert.match(fso.GetTempName(), /^[a-z]{3}[a-f0-9]{5}\.tmp$/i);
+            assert.match(fso.GetTempName(), /^[a-z]{3}[a-f0-9]{5}\.tmp$/i);
+        });
+
+        it("should throw if args are passed to GetTempName()", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_wrong_argc_or_invalid_prop_assign: () => {
+                        throw new Error("invalid arg");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.GetTempName(1), "invalid arg");
+        });
+
+    });
+
     const NOOP = () => {};
-    xdescribe("#GetTempName", NOOP);
+
     xdescribe("#MoveFile", NOOP);
     xdescribe("#MoveFolder", NOOP);
     xdescribe("#OpenTextfile", NOOP);

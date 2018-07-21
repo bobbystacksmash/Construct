@@ -915,11 +915,28 @@ class JS_FileSystemObject extends Component {
         }
     }
 
+    // GetTempName
+    // ===========
+    //
     // Returns a randomly generated temporary file or folder name that
     // is useful for performing operations that require a temporary
     // file or folder.
     gettempname () {
 
+        if (arguments.length > 0) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "FileSystemObject",
+                "GetTempName() does not accept any parameters.",
+                "GetTempName() does not accept any parameters."
+            );
+        }
+
+        let mktmp = () => {
+            let ht = (this.context.epoch * 100000).toString(16).substr(0, 5).toUpperCase();
+            return `ado${ht}.tmp`;
+        };
+        this.context.skew_time_ahead_by(1);
+        return mktmp();
     }
 
     // Moves one or more files from one location to another.

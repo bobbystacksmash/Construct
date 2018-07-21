@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-      "test": "node_modules/.bin/mocha --reporter dot -w ./test/winapi/FileSystemObject_test.js",
+    "test": "node_modules/.bin/mocha --reporter dot -w ./test/winapi/FileSystemObject_test.js",
     "comspec": "node tools/comspec/cmd",
     "code": "node src/index.js",
     "debug": "node --inspect --inspect-brk src/index.js "
@@ -36,12 +36,12 @@
     "istanbul": "^0.4.5",
     "js-beautify": "^1.7.4",
     "linkfs": "^2.1.0",
-    "lodash": "^4.17.4",
+    "lodash": "^4.17.10",
     "md5": "^2.2.1",
     "memfs": "^2.9.0",
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
-    "npm": "^5.10.0",
+    "npm": "^6.2.0",
     "sprintf-js": "^1.1.1",
     "spyfs": "^1.0.2",
     "stack-trace": "0.0.10",
