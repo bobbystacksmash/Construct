@@ -442,6 +442,15 @@ class JS_FolderObject extends Component {
             throw e;
         }
     }
+
+    // toString
+    // ========
+    //
+    // Returns a string representation of this class.
+    //
+    tostring () {
+        return this._path;
+    }
 }
 
 module.exports = function create(context, path) {

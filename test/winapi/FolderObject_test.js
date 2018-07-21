@@ -688,4 +688,17 @@ describe("FolderObject", () => {
             assert.isTrue(ctx.vfs.FolderExists("C:\\dest\\subdir1\\empty_folder"));
         });
     });
+
+    describe("#toString", () => {
+
+        it("should return the backing filepath when .toString() is called", () => {
+
+            const ctx = make_ctx();
+            ctx.vfs.AddFile("C:\\RootOne\\foo.txt");
+
+            const folder = new Folder(ctx, "C:\\RootOne");
+
+            assert.equal(folder.toString(), "C:\\RootOne");
+        });
+    });
 });
