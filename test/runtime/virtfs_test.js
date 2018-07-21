@@ -682,6 +682,20 @@ describe("Virtual File System", () => {
                 ["helloworld.txt"]
             );
         });
+
+        it("should find all files with the same extension", () => {
+
+            const vfs = make_vfs();
+
+            vfs.AddFile("C:\\RootOne\\foo.txt");
+            vfs.AddFile("C:\\RootOne\\bar.txt");
+            vfs.AddFile("C:\\RootOne\\baz.zip");
+
+            assert.deepEqual(
+                vfs.FindFiles("C:\\RootOne", "*.txt"),
+                ["foo.txt", "bar.txt"]
+            );
+        });
     });
 
     describe("FolderContentsSize", () => {
@@ -732,8 +746,8 @@ describe("Virtual File System", () => {
             assert.isTrue(vfs.FileExists("C:\\dest\\SubDir2\\bar.txt"));
         });
 
-        it("should throw when trying to move to a destination which does not exist", () => {
+        /*it("should throw when trying to move to a destination which does not exist", () => {
             assert.equal("not implemented", "implemented");
-        });
+        });*/
     });
 });
