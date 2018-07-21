@@ -779,10 +779,28 @@ class JS_FileSystemObject extends Component {
         return new JS_Folder(this.context, path);
     }
 
+    // GetParentFolderName
+    // ===================
+    //
     // Returns a string containing the name of the parent folder of
     // the last component in a specified path.
-    getparentfoldername () {
+    //
+    // This is a string manipulation function and does not perform any
+    // on-disk checks against the names given to it.
+    //
+    getparentfoldername (path) {
 
+        if (/^[A-Z]:(?:[\\/]*)$/i.test(path)) return "";
+
+        const dirname = win32path.dirname(path);
+        if (dirname.toLowerCase() === "c:\\") return dirname;
+
+        if (dirname === ".") {
+            return "";
+        }
+        else {
+            return dirname;
+        }
     }
 
     // Returns the special folder object specified.

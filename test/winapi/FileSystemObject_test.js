@@ -1473,8 +1473,26 @@ describe("Scripting.FileSystemObject", () => {
         });
     });
 
+    describe("#GetParentFolderName", () => {
+
+        it("should return the correct parent folder name for a given input", () => {
+
+            const fso   = make_FSO(),
+                  paths = [
+                      { in: "C:\\foo", out: "C:\\" },
+                      { in: "C:\\foo\\bar\\baz", out: "C:\\foo\\bar" },
+                      { in: "C:", out: "" },
+                      { in: "C:\\", out: "" },
+                      { in: "foobar", out: "" },
+                      { in: "/var/log/blah", out: "/var/log" },
+                      { in: "../foo", out: ".." },
+                  ];
+
+            paths.forEach(p => assert.equal(fso.GetParentFolderName(p.in), p.out));
+        });
+    });
+
     const NOOP = () => {};
-    xdescribe("#GetParentFolderName", NOOP);
     xdescribe("#GetSpecialFolders", NOOP);
     xdescribe("#GetTempName", NOOP);
     xdescribe("#MoveFile", NOOP);
