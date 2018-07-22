@@ -1354,6 +1354,8 @@ class VirtualFileSystem {
                     throw new Error("Cannot move: destination file already exists");
                 }
 
+                // Using AddFile here will create the destination (if not exists).
+                this.AddFile(destfile);
                 this.vfs.copyFileSync(srcfile, destfile);
                 this.vfs.unlinkSync(srcfile);
             }
