@@ -968,6 +968,15 @@ class JS_FileSystemObject extends Component {
             );
         }
 
+        if (this.vfs.IsFolder(srcpath)) {
+            this.context.exceptions.throw_file_not_found(
+                "FileSystemObject",
+                "Cannot apply MoveFile to a folder.",
+                "Failed because a move was attempted on a source which was a " +
+                    "folder when a file was expected."
+            );
+        }
+
         if (this.vfs.IsWildcard(srcpath)) {
 
             const pattern     = win32path.basename(srcpath),
@@ -1022,80 +1031,7 @@ class JS_FileSystemObject extends Component {
     // are expanded here before moving.
     //
     movefolder (source, destination) {
-
-        let srcpath                  = this.vfs.Resolve(source, { sfn_to_lfn: true }),
-            srcpath_parent_dir       = win32path.dirname(srcpath),
-            dstpath                  = this.vfs.Resolve(destination, { sfn_to_lfn: true }),
-            dstpath_trailing_pathsep = /[\\/]$/.test(destination),
-            dstpath_exists           = (this.vfs.FileExists(dstpath) || this.vfs.FolderExists(dstpath));
-
-        console.log("movefolder", srcpath, dstpath);
-
-        this.vfs.MoveFolder(srcpath, dstpath);
-
-
-        /*if (this.vfs.IsWildcard(destination)) {
-            this.context.exceptions.throw_invalid_fn_arg(
-                "FileSystemObject",
-                "Destination path must not contain wildcard chars.",
-                "The destination path contains wildcard character(s) " +
-                    "which are not permitted."
-            );
-        }
-        else if (this.vfs.IsWildcard(srcpath_parent_dir)) {
-            this.context.exceptions.throw_invalid_fn_arg(
-                "FileSystemObject",
-                "Source path may only contain wildcards as the last part.",
-                "Only the last part of the source path may contain wildcard " +
-                    "characters."
-            );
-        }
-
-        if (this.vfs.IsWildcard(srcpath)) {
-
-            const pattern     = win32path.basename(srcpath),
-                  match_files = this.vfs.FindFiles(srcpath_parent_dir, pattern);
-
-            match_files.forEach(filename => {
-                let fullpath_src = win32path.join(srcpath_parent_dir, filename),
-                    fullpath_dst = win32path.join(dstpath,    filename);
-
-                if (this.vfs.Exists(fullpath_dst)) {
-                    this.context.exceptions.throw_file_exists(
-                        "FileSystemObject",
-                        "Cannot move because destination exists.",
-                        "Cannot move because destination exists."
-                    );
-                }
-
-                this.vfs.Move(fullpath_src, fullpath_dst);
-            });
-
-            return;
-        }
-
-        if (dstpath_trailing_pathsep === false && dstpath_exists) {
-            this.context.exceptions.throw_file_already_exists(
-                "FileSystemObject",
-                "File move destination name already exists.",
-                "The requested destination already exists and " +
-                    "is a folder."
-            );
-        }
-
-        if (this.vfs.FolderExists(dstpath)) {
-            dstpath = win32path.join(dstpath, win32path.basename(srcpath));
-        }
-
-        if (this.vfs.FileExists(dstpath)) {
-            this.context.exceptions.throw_file_already_exists(
-                "FileSystemObject",
-                "Destination already exists.",
-                "The destination file already exists -- cannot move."
-            );
-        }
-
-        this.vfs.Move(srcpath, dstpath);*/
+        this.vfs.MoveFolder(source, destination);
     }
 
     // Opens a specified file and returns a TextStream object that can

@@ -63,7 +63,7 @@ function make_FSO (opts) {
 
 describe("Scripting.FileSystemObject", () => {
 
-    describe("#BuildPath", () => {
+    /*describe("#BuildPath", () => {
 
         it("should build a path from two parts", () => {
 
@@ -2005,14 +2005,38 @@ describe("Scripting.FileSystemObject", () => {
             );
         });
 
-     //it("should throw if trying to move src which is a folder", () => {
-     //assert.isTrue(false);
-     //});
-    });
+        it("should throw 'file not found' if trying to move src which is a folder", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_file_not_found: () => {
+                        throw new Error("file is folder");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFolder("C:\\foo");
+            ctx.vfs.AddFolder("C:\\dst");
+
+            assert.throws(() => fso.MoveFile("C:\\foo", "C:\\dst"), "file is folder");
+        });
+    });*/
 
     describe("#MoveFolder", () => {
 
-        it("should move (rename) a single folder from dirA to dirB", () => {
+        it("should move 'src' to 'dst' when src does not end with a wildcard or pathsep", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFolder("C:\\src");
+
+            assert.isFalse(ctx.vfs.FolderExists("C:\\dst"));
+
+            assert.doesNotThrow(() => fso.MoveFolder("C:\\src", "C:\\dst"));
+            assert.isTrue(ctx.vfs.FolderExists("C:\\dst"));
+            assert.isFalse(ctx.vfs.FolderExists("C:\\src"));
+        });
+
+        /*it("should move (rename) a single folder from dirA to dirB", () => {
 
             const fso = make_FSO();
             ctx.vfs.AddFile("C:\\dirA\\foo.txt");
@@ -2030,10 +2054,9 @@ describe("Scripting.FileSystemObject", () => {
             assert.isTrue(ctx.vfs.FolderExists("C:\\dirB"));
 
             //assert.isTrue(ctx.vfs.FileExists("C:\\dirB\\foo.txt"));
-            /*assert.isTrue(ctx.vfs.FileExists("C:\\dirB\\bar.txt"));
-
-            assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\foo.txt"));
-            assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\bar.txt"));*/
+            //assert.isTrue(ctx.vfs.FileExists("C:\\dirB\\bar.txt"));
+            //assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\foo.txt"));
+            //assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\bar.txt"));
         });
 
         it("should move folders up to the root-volume location", () => {
@@ -2300,7 +2323,7 @@ describe("Scripting.FileSystemObject", () => {
                 () => fso.MoveFile("C:\\dirA\\*\\foo.txt", "C:\\dirB\\"),
                 "no wildcards in parent src"
             );
-        });
+        });*/
     });
 
     const NOOP = () => {};
