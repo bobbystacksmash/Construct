@@ -1740,6 +1740,52 @@ describe("Scripting.FileSystemObject", () => {
             assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\foo.txt"));
         });
 
+        it("should move files up to the root-volume location", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFile("C:\\dirA\\foo.txt");
+
+            assert.isFalse(ctx.vfs.Exists("C:\\foo.txt"));
+            assert.doesNotThrow(() => fso.MoveFile("C:\\dirA\\foo.txt", "C:\\"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\foo.txt"));
+        });
+
+        it("should move a single file from the root volume", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFile("C:\\foo.txt");
+            ctx.vfs.AddFolder("C:\\dirA");
+
+            assert.isFalse(ctx.vfs.Exists("C:\\dirA\\foo.txt"));
+            assert.doesNotThrow(() => fso.MoveFile("C:\\foo.txt", "C:\\dirA\\"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dirA\\foo.txt"));
+        });
+
+        it("should move multiple files from the root volume to another dir", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFile("C:\\foo.txt");
+            ctx.vfs.AddFile("C:\\bar.txt");
+            ctx.vfs.AddFile("C:\\baz.txt");
+
+            ctx.vfs.AddFolder("C:\\dirA");
+
+            assert.doesNotThrow(() => fso.MoveFile("C:\\*.txt", "C:\\dirA"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dirA\\foo.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dirA\\bar.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\dirA\\baz.txt"));
+        });
+
+        it("should move a file from C:\foo.txt to C:\bar.txt.", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFile("C:\\foo.txt");
+
+            assert.doesNotThrow(() => fso.MoveFile("C:\\foo.txt", "C:\\bar.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\bar.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\foo.txt"));
+        });
+
         it("should use process working dir for relative paths", () => {
 
             const fso = make_FSO(),
@@ -1766,6 +1812,20 @@ describe("Scripting.FileSystemObject", () => {
             fso.MoveFile("..\\aaa.txt", "bbb.txt");
             assert.isTrue(ctx.vfs.FileExists(dst));
             assert.isFalse(ctx.vfs.FileExists(src));
+        });
+
+        it("should consider 'c:file.txt' a relative path and move accordingly", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFile("C:\\Users\\Construct\\foo.txt");
+
+            assert.isTrue(ctx.vfs.FileExists("C:\\Users\\Construct\\foo.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\Users\\Construct\\bar.txt"));
+
+            assert.doesNotThrow(() => fso.MoveFile("C:foo.txt", "C:bar.txt"));
+
+            assert.isFalse(ctx.vfs.FileExists("C:\\Users\\Construct\\foo.txt"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\Users\\Construct\\bar.txt"));
         });
 
         it("should move the file when dest ends in pathsep.", () => {
@@ -1869,7 +1929,73 @@ describe("Scripting.FileSystemObject", () => {
             assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\foo.txt"));
             assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\bar.txt"));
         });
+
+         it("should move files until a dest file exists and then stop", () => {
+
+             const fso = make_FSO({
+                 exceptions: {
+                     throw_file_exists: () => {
+                         throw new Error("dest file exists");
+                     }
+                 }
+             });
+
+             ctx.vfs.AddFile("C:\\dirA\\bar.txt");
+             ctx.vfs.AddFile("C:\\dirA\\baz.txt");
+             ctx.vfs.AddFile("C:\\dirA\\foo.txt");
+             ctx.vfs.AddFile("C:\\dirB\\foo.txt");
+
+             assert.throws(() => fso.MoveFile("C:\\dirA\\*.txt", "C:\\dirB"), "dest file exists");
+
+             assert.isTrue(ctx.vfs.FileExists("C:\\dirA\\foo.txt"));
+
+             assert.isTrue(ctx.vfs.FileExists("C:\\dirB\\bar.txt"));
+             assert.isTrue(ctx.vfs.FileExists("C:\\dirB\\baz.txt"));
+
+             assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\bar.txt"));
+             assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\baz.txt"));
+         });
+
+        it("should throw invalid proc call if destination contains wildcards", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("no wildcards in dstpath");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\dirA\\foo.txt");
+            ctx.vfs.AddFolder("C:\\dirB\\SubDir1");
+
+            assert.throws(
+                () => fso.MoveFile("C:\\dirA\\foo.txt", "C:\\dir*\\SubDir1\\bar.txt"),
+                "no wildcards in dstpath"
+            );
+
+        });
+
+        it("should throw invalid proc call if source parent path contains wildcards", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("no wildcards in parent src");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\dirA\\SubDir1\\foo.txt");
+            ctx.vfs.AddFolder("C:\\dirB\\SubDir1");
+
+            assert.throws(
+                () => fso.MoveFile("C:\\dirA\\*\\foo.txt", "C:\\dirB\\"),
+                "no wildcards in parent src"
+            );
+        });
     });
+
 
     const NOOP = () => {};
     xdescribe("#MoveFolder", NOOP);

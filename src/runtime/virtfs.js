@@ -1134,6 +1134,16 @@ class VirtualFileSystem {
         }
     }
 
+    // Exists
+    // ======
+    //
+    // Tests whether the given path resolves to either a file or
+    // folder, and returns true/false.
+    //
+    Exists (path) {
+        return this.FileExists(path) || this.FolderExists(path);
+    }
+
     // Stats
     // =====
     //

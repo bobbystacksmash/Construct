@@ -946,19 +946,45 @@ class JS_FileSystemObject extends Component {
     movefile (source, destination) {
 
         let srcpath = this.vfs.Resolve(source),
+            srcpath_parent_dir  = win32path.dirname(srcpath),
             dstpath = this.vfs.Resolve(destination),
             dstpath_trailing_pathsep = /[\\/]$/.test(destination),
             dstpath_exists = (this.vfs.FileExists(dstpath) || this.vfs.FolderExists(dstpath));
 
+        if (this.vfs.IsWildcard(destination)) {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FileSystemObject",
+                "Destination path must not contain wildcard chars.",
+                "The destination path contains wildcard character(s) " +
+                    "which are not permitted."
+            );
+        }
+        else if (this.vfs.IsWildcard(srcpath_parent_dir)) {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FileSystemObject",
+                "Source path may only contain wildcards as the last part.",
+                "Only the last part of the source path may contain wildcard " +
+                    "characters."
+            );
+        }
+
         if (this.vfs.IsWildcard(srcpath)) {
 
-            const parent_dir  = win32path.dirname(srcpath),
-                  pattern     = win32path.basename(srcpath),
-                  match_files = this.vfs.FindFiles(parent_dir, pattern);
+            const pattern     = win32path.basename(srcpath),
+                  match_files = this.vfs.FindFiles(srcpath_parent_dir, pattern);
 
             match_files.forEach(filename => {
-                let fullpath_src = win32path.join(parent_dir, filename),
+                let fullpath_src = win32path.join(srcpath_parent_dir, filename),
                     fullpath_dst = win32path.join(dstpath,    filename);
+
+                if (this.vfs.Exists(fullpath_dst)) {
+                    this.context.exceptions.throw_file_exists(
+                        "FileSystemObject",
+                        "Cannot move because destination exists.",
+                        "Cannot move because destination exists."
+                    );
+                }
+
                 this.vfs.Move(fullpath_src, fullpath_dst);
             });
 
