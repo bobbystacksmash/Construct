@@ -739,9 +739,113 @@ describe("Virtual File System", () => {
         });
     });
 
-    describe("#Move", () => {
+    describe("#MoveFile", () => {
 
-        it("should support moving from fileA to fileB", () => {
+        it("should move a file from one abs path to another.", () => {
+
+            const vfs = make_vfs();
+            vfs.AddFile("C:\\foo.txt");
+
+            assert.isTrue(vfs.FileExists("C:\\foo.txt"));
+            assert.isFalse(vfs.FileExists("C:\\bar.txt"));
+
+            assert.doesNotThrow(() => vfs.MoveFile("C:\\foo.txt", "C:\\bar.txt"));
+
+            assert.isTrue(vfs.FileExists("C:\\bar.txt"));
+            assert.isFalse(vfs.FileExists("C:\\foo.txt"));
+        });
+
+        it("should move a file from 'src' in to a folder in 'dst'", () => {
+
+            const vfs = make_vfs();
+            vfs.AddFile("C:\\foo.txt");
+            vfs.AddFolder("C:\\destination");
+
+            assert.isFalse(vfs.FileExists("C:\\destination\\foo.txt"));
+            assert.doesNotThrow(() => vfs.MoveFile("C:\\foo.txt", "C:\\destination"));
+
+            assert.isTrue(vfs.FileExists("C:\\destination\\foo.txt"));
+            assert.isFalse(vfs.FileExists("C:\\foo.txt"));
+        });
+
+        it("should throw if attempting to move a file which cannot be found", () => {
+            const vfs = make_vfs();
+            vfs.AddFile("C:\\foo.txt");
+            assert.throws(() => vfs.MoveFile("C:\\bar.txt", "C:\\foo.txt"), "cannot find src");
+        });
+
+        it("should move a file using its LFN when the move input uses a SFN", () => {
+
+            const vfs = make_vfs();
+            vfs.AddFile("C:\\HelloWorld.txt");
+            vfs.AddFolder("C:\\dest");
+
+            assert.isFalse(vfs.FileExists("C:\\dest\\HelloWorld.txt"));
+            vfs.MoveFile("C:\\HELLOW~1.TXT", "C:\\dest");
+
+            assert.isTrue(vfs.FileExists("C:\\dest\\HelloWorld.txt"));
+        });
+
+        it("should throw if src/dest are relative paths", () => {
+
+            const vfs = make_vfs();
+            vfs.AddFile("C:\\foo");
+
+            assert.throws(() => vfs.MoveFile("C:foo.txt", "C:\\bar.txt"), "not support relative paths");
+            assert.throws(() => vfs.MoveFile("C:\\foo.txt", "C:bar.txt"), "not support relative paths");
+        });
+
+        it("should throw if src/dest contain wildcard characters", () => {
+
+            const vfs = make_vfs();
+            vfs.AddFile("C:\\foo.txt");
+
+            assert.throws(() => vfs.MoveFile("C:\\*.txt", "C:\\bar.txt"), "not support wildcards");
+            assert.throws(() => vfs.MoveFile("C:\\foo.txt", "C:\\*.txt"), "not support wildcards");
+        });
+
+        it("should throw if the source file is a folder", () => {
+
+            const vfs = make_vfs();
+            vfs.AddFolder("C:\\foo");
+
+            assert.throws(() => vfs.MoveFile("C:\\foo", "C:\\bar"), "cannot move folders");
+        });
+
+        it("should throw if overwrite=false and dest file exists", () => {
+
+            const vfs = make_vfs();
+            vfs.AddFile("C:\\src.txt");
+            vfs.AddFile("C:\\dst.txt");
+
+            assert.throws(
+                () => vfs.MoveFile("C:\\src.txt", "C:\\dst.txt", false),
+                "MoveFile cannot overwrite destination file."
+            );
+        });
+    });
+
+    describe("#MoveFolder", () => {
+
+        it("should move folder (and all files) from src->dst (creating dst)", () => {
+
+            const vfs = make_vfs();
+            vfs.AddFile("C:\\src\\foo.txt");
+            vfs.AddFile("C:\\src\\bar.txt");
+
+            assert.isFalse(vfs.FolderExists("C:\\dst"));
+
+            assert.doesNotThrow(() => vfs.MoveFolder("C:\\src", "C:\\dst"));
+
+            assert.isTrue(vfs.FolderExists("C:\\dst"));
+            assert.isTrue(vfs.FileExists("C:\\dst\\foo.txt"));
+            assert.isTrue(vfs.FileExists("C:\\dst\\bar.txt"));
+            assert.isFalse(vfs.FolderExists("C:\\src"));
+
+
+        });
+
+        /*it("should support moving from fileA to fileB", () => {
 
             const vfs = make_vfs();
 
@@ -764,12 +868,50 @@ describe("Virtual File System", () => {
             vfs.Move("C:\\RootOne", "C:\\dest");
 
             assert.isTrue(vfs.FolderExists("C:\\dest"));
-            assert.isTrue(vfs.FileExists("C:\\dest\\SubDir1\\foo.txt"));
-            assert.isTrue(vfs.FileExists("C:\\dest\\SubDir2\\bar.txt"));
+            assert.isTrue(vfs.FileExists("C:\\dest\\RootOne\\SubDir1\\foo.txt"));
+            assert.isTrue(vfs.FileExists("C:\\dest\\RootOne\\SubDir2\\bar.txt"));
         });
+
+        it("should move a subdir to match parent dirs level", () => {
+
+            const vfs = make_vfs();
+            vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
+
+            assert.isFalse(vfs.Exists("C:\\SubDir1"));
+            assert.doesNotThrow(() => vfs.Move("C:\\RootOne\\SubDir1", "C:\\"));
+            assert.isTrue(vfs.Exists("C:\\SubDir1"));
+            assert.isFalse(vfs.Exists("C:\\RootOne\\SubDir1"));
+        });
+
+        it("should move folders src->dest (rename)", () => {
+
+            const vfs = make_vfs();
+
+            vfs.AddFile("C:\\src\\foo.txt");
+            vfs.AddFile("C:\\src\\bar.txt");
+
+            assert.isFalse(vfs.Exists("C:\\dst"));
+
+            assert.doesNotThrow(() => vfs.Move("C:\\src", "C:\\dst"));
+
+            assert.isTrue(vfs.Exists("C:\\dst"));
+            assert.isTrue(vfs.Exists("C:\\foo.txt"));
+
+        });*/
+
+        /*it("should move and merge files and folders from src->dst", () => {
+
+            const vfs = make_vfs();
+            vfs.AddFile("C:\\src\\foo.txt");
+            vfs.AddFile("C:\\src\\baz.txt");
+
+            assert.doesNotThrow(() => vfs.Move("C:\\src", "C:\\dst"));
+
+            console.log(vfs.GetVFS());
+        });*/
 
         //it("should throw when trying to move to a destination which does not exist", () => {
         // assert.equal("not implemented", "implemented");
         //});
-     });
+    });
 });

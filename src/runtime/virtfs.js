@@ -1312,13 +1312,119 @@ class VirtualFileSystem {
         this.vfs.renameSync(isource, idestination);
     }
 
+    // MoveFile
+    // ========
+    //
+    // When given a source and a destination, attempts to move the
+    // given file in to the destination.  Does not support wildcards.
+    // Set `overwrite=true' to suppress 'file exists' errors during a
+    // move.  Only works on absolute paths.
+    MoveFile (source, destination, overwrite) {
+
+        if (overwrite === undefined || overwrite === null) {
+            overwrite = true;
+        }
+
+        let isrc = this._ConvertExternalToInternalPath(source),
+            idst = this._ConvertExternalToInternalPath(destination);
+
+        if (this.PathIsRelative(source) || this.PathIsRelative(destination)) {
+            throw new Error("MoveFile does not support relative paths.");
+        }
+
+        if (this.IsWildcard(isrc) || this.IsWildcard(idst)) {
+            throw new Error("MoveFile does not support wildcards.");
+        }
+
+        if (this.IsFolder(isrc)) {
+            throw new Error("MoveFile cannot move folders.");
+        }
+
+        if (this.IsFolder(idst)) {
+            idst = this._ConvertExternalToInternalPath(
+                win32path.join(destination, win32path.basename(isrc))
+            );
+        }
+
+        if (this.FileExists(isrc) === false) {
+            throw new Error("MoveFile cannot find src file to move.");
+        }
+
+        if (this.FileExists(idst) && overwrite === false) {
+            throw new Error("MoveFile cannot overwrite destination file.");
+        }
+
+        this.vfs.copyFileSync(isrc, idst);
+        this.vfs.unlinkSync(isrc);
+    }
+
+    // MoveFolder
+    // ==========
+    //
+    // Moves the source folder to the destination folder.
+    //
+    MoveFolder (source, destination, overwrite) {
+
+        let isrc = this._ConvertExternalToInternalPath(source),
+            idst = this._ConvertExternalToInternalPath(destination);
+
+        if (this.PathIsRelative(source) || this.PathIsRelative(destination)) {
+            throw new Error("MoveFile does not support relative paths.");
+        }
+
+        if (this.IsWildcard(isrc) || this.IsWildcard(idst)) {
+            throw new Error("MoveFile does not support wildcards.");
+        }
+
+        if (this.Exists(idst) === false) {
+            return this.Rename(source, destination);
+        }
+
+        this.CopyFolder(isrc, idst);
+        this.Delete(source);
+    }
+
     // Move
     // ====
     //
     // Recursively moves files and folders from `source' to
-    // `destination'.
+    // `destination'.  When moving folders, trailing separators are
+    // important as they denote "contents of folder", rather than the
+    // folder itself.  For example:
+    //
+    //   Move('C:\foo\bar', 'C:\')
+    //
+    // Will move the folder `bar' (and its contents) in to `C:\',
+    // whereas:
+    //
+    //   Move('C:\foo\bar\', 'C:\')
+    //
+    // ...will move the contents of `bar' in to `C:\'.
     //
     Move (source, destination, overwrite) {
+
+        const isrc = this._ConvertExternalToInternalPath(source),
+              idst = this._ConvertExternalToInternalPath(destination);
+
+        const isrc_trailing = /[\\/]$/.test(isrc),
+              idst_trailing = /[\\/]$/.test(idst);
+
+        if (this.IsFolder(isrc)) {
+            this.CopyFolder(source, destination);
+            this.Delete(source);
+            return;
+        }
+
+        // Source is either a wildcard or a single file.
+        const basename = win32path.basename(source),
+              dirname  = win32path.dirname(source);
+
+        this.CopyFile(source, destination);
+        this.Delete(source);
+    }
+
+
+    OldMove (source, destination, overwrite) {
 
         if (overwrite === undefined || overwrite === null) overwrite = false;
 
@@ -1333,10 +1439,20 @@ class VirtualFileSystem {
             return;
         }
 
+        if (this.IsFolder(isource) && this.IsFolder(idestination)) {
+            this.CopyFolder(source, destination);
+            this.Delete(source);
+            return;
+        }
+
         let walk = (source, dest) => {
 
             let folders = this.FindAllFolders(source),
                 files   = this.FindAllFiles(source);
+
+            console.log("");
+            console.log("Moving", source, dest);
+            console.log("files", files, "folders", folders);
 
             if (folders.length) {
                 for (let i = 0; i < folders.length; i++) {
