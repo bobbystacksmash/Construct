@@ -832,6 +832,7 @@ describe("Virtual File System", () => {
             const vfs = make_vfs();
             vfs.AddFile("C:\\src\\foo.txt");
             vfs.AddFile("C:\\src\\bar.txt");
+            vfs.AddFile("C:\\src\\subdir1\\baz.txt");
 
             assert.isFalse(vfs.FolderExists("C:\\dst"));
 
@@ -840,50 +841,81 @@ describe("Virtual File System", () => {
             assert.isTrue(vfs.FolderExists("C:\\dst"));
             assert.isTrue(vfs.FileExists("C:\\dst\\foo.txt"));
             assert.isTrue(vfs.FileExists("C:\\dst\\bar.txt"));
+            assert.isTrue(vfs.FileExists("C:\\dst\\subdir1\\baz.txt"));
             assert.isFalse(vfs.FolderExists("C:\\src"));
         });
 
-
-        /*it("should move a subdir to match parent dirs level", () => {
-
-            const vfs = make_vfs();
-            vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
-
-            assert.isFalse(vfs.Exists("C:\\SubDir1"));
-            assert.doesNotThrow(() => vfs.Move("C:\\RootOne\\SubDir1", "C:\\"));
-            assert.isTrue(vfs.Exists("C:\\SubDir1"));
-            assert.isFalse(vfs.Exists("C:\\RootOne\\SubDir1"));
-        });
-
-        it("should move folders src->dest (rename)", () => {
+        it("should move folder 'src' in to 'dst' when 'dst' ends with pathsep", () => {
 
             const vfs = make_vfs();
-
             vfs.AddFile("C:\\src\\foo.txt");
             vfs.AddFile("C:\\src\\bar.txt");
+            vfs.AddFolder("C:\\dst");
 
-            assert.isFalse(vfs.Exists("C:\\dst"));
+            assert.doesNotThrow(() => vfs.MoveFolder("C:\\src", "C:\\dst\\"));
 
-            assert.doesNotThrow(() => vfs.Move("C:\\src", "C:\\dst"));
+            assert.isTrue(vfs.FileExists("C:\\dst\\src\\foo.txt"));
+            assert.isTrue(vfs.FileExists("C:\\dst\\src\\bar.txt"));
 
-            assert.isTrue(vfs.Exists("C:\\dst"));
-            assert.isTrue(vfs.Exists("C:\\foo.txt"));
+            assert.isFalse(vfs.FileExists("C:\\src"));
+        });
 
-        });*/
-
-        /*it("should move and merge files and folders from src->dst", () => {
+        it("should throw if 'src' ends with a pathsep", () => {
 
             const vfs = make_vfs();
-            vfs.AddFile("C:\\src\\foo.txt");
-            vfs.AddFile("C:\\src\\baz.txt");
+            vfs.AddFolder("C:\\src");
+            vfs.AddFolder("C:\\dst");
 
-            assert.doesNotThrow(() => vfs.Move("C:\\src", "C:\\dst"));
+            assert.throws(
+                () => vfs.MoveFolder("C:\\src\\", "C:\\dst"),
+                "Source folder must not end with a path separator."
+            );
 
-            console.log(vfs.GetVFS());
-        });*/
+            assert.throws(
+                () => vfs.MoveFolder("C:\\src/", "C:\\dst"),
+                "Source folder must not end with a path separator."
+            );
+        });
 
-        //it("should throw when trying to move to a destination which does not exist", () => {
-        // assert.equal("not implemented", "implemented");
-        //});
+        it("should throw if the destination doesn't exist", () => {
+
+            const vfs = make_vfs();
+            vfs.AddFolder("C:\\src\\foo.txt");
+
+            assert.throws(
+                () => vfs.MoveFolder("C:\\src", "C:\\missing\\folder\\path"),
+                "Path to destination does not exist."
+            );
+        });
+
+        it("should merge folders if paths already exist between 'src' and 'dst'", () => {
+
+            const vfs = make_vfs();
+            vfs.AddFolder("C:\\foo\\subdir1\\foo.txt");
+            vfs.AddFolder("C:\\foo\\subdir1\\subdir2\\subdir3\\bar.txt");
+
+            vfs.AddFile("C:\\dst\\foo\\subdir1\\subdir2\\subdir3\\hello.txt");
+            vfs.AddFile("C:\\dst\\foo\\subdir1\\existing.txt");
+
+            assert.doesNotThrow(() => vfs.MoveFolder("C:\\foo", "C:\\dst"));
+
+            assert.isTrue(vfs.Exists("C:\\dst\\foo\\subdir1\\foo.txt"));
+            assert.isTrue(vfs.Exists("C:\\dst\\foo\\subdir1\\subdir2\\subdir3\\bar.txt"));
+            assert.isTrue(vfs.Exists("C:\\dst\\foo\\subdir1\\existing.txt"));
+
+            assert.isFalse(vfs.Exists("C:\\foo"));
+        });
+
+        it("should throw if trying to overwrite an existing file in 'dst'", () => {
+
+            const vfs = make_vfs();
+            vfs.AddFile("C:\\src\\foo\\existing.txt");
+            vfs.AddFile("C:\\dst\\foo\\existing.txt");
+
+            assert.throws(
+                () => vfs.MoveFolder("C:\\src\\foo", "C:\\dst\\"),
+                "Cannot copy - destination file exists"
+            );
+        });
     });
 });

@@ -1365,23 +1365,39 @@ class VirtualFileSystem {
     //
     MoveFolder (source, destination, overwrite) {
 
+        if (overwrite === undefined || overwrite === null) {
+            overwrite = false;
+        }
+
         let isrc = this._ConvertExternalToInternalPath(source),
             idst = this._ConvertExternalToInternalPath(destination);
 
+        let src_endswith_pathsep = /[\\/]$/.test(source);
+
         if (this.PathIsRelative(source) || this.PathIsRelative(destination)) {
-            throw new Error("MoveFile does not support relative paths.");
+            throw new Error("MoveFolder does not support relative paths.");
+        }
+
+        if (src_endswith_pathsep) {
+            throw new Error("Source folder must not end with a path separator.");
         }
 
         if (this.IsWildcard(isrc) || this.IsWildcard(idst)) {
-            throw new Error("MoveFile does not support wildcards.");
+            throw new Error("MoveFolder does not support wildcards.");
+        }
+
+        let path_before_dest = win32path.dirname(destination);
+        path_before_dest = this._ConvertExternalToInternalPath(path_before_dest);
+
+        if (this.Exists(path_before_dest) === false) {
+            throw new Error("Path to destination does not exist.");
         }
 
         if (this.Exists(idst) === false) {
             return this.Rename(source, destination);
         }
-        else
 
-        this.CopyFolder(isrc, idst);
+        this.CopyFolder(isrc, idst, overwrite);
         this.Delete(source);
     }
 
@@ -1428,7 +1444,7 @@ class VirtualFileSystem {
                       srcfile  = `${source}/${files[i]}`;
 
                 if (overwrite === false && this.FileExists(destfile)) {
-                    throw new Error("Cannot move: destination file already exists");
+                    throw new Error("Cannot move: destination file exists");
                 }
 
                 // Using AddFile here will create the destination (if not exists).
@@ -1482,7 +1498,7 @@ class VirtualFileSystem {
                     recursive_copy(srcpath, dstpath);
                 }
                 else if (vfs.existsSync(dstpath) && overwrite === false) {
-                    throw new Error("Cannot copy - destination file already exists");
+                    throw new Error("Cannot copy - destination file exists");
                 }
                 else {
                     vfs.copyFileSync(srcpath, dstpath);
