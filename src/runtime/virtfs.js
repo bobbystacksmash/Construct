@@ -552,7 +552,6 @@ class VirtualFileSystem {
             return ipath_expanded;
         }
         catch (e) {
-            //console.log(e);
             return internal_path;
         }
     }
@@ -828,6 +827,8 @@ class VirtualFileSystem {
             path = win32path.join(this.context.get_env("path"), path);
         }
 
+        let norm_path = this.Normalise(path);
+
         return this.Normalise(path);
     }
 
@@ -862,6 +863,26 @@ class VirtualFileSystem {
         } while (parts.length);
 
         return shortpath.join("\\");
+    }
+
+    // ConvertShortPathToLongPath
+    // ==========================
+    //
+    // Given any valid path, attempts to expand each component out in
+    // to its long filename form.  Works by querying the underlying
+    // filesystem, so all SFNs must resolve to a valid file in order
+    // for the path to be correctly expanded.
+    //
+    // If the path cannot be expanded (for example, one of the SFNs
+    // does not map to a file on disk), #ConvertShortPathToLongPath
+    // will return the original path.
+    //
+    ConvertShortPathToLongPath (path) {
+        const ipath = this._ConvertExternalToInternalPath(path),
+              parts = ipath.split("/");
+
+        parts[0] = "c:";
+        return parts.join("\\");
     }
 
     // FolderContentsSize

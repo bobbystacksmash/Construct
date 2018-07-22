@@ -119,6 +119,28 @@ describe("Virtual File System", () => {
         });
     });
 
+    describe("ConvertShortPathToLongPath", () => {
+
+        it("should correctly convert short parts in a path to equal LFN names", () => {
+
+            const vfs = make_vfs();
+
+            vfs.AddFile("C:\\FooBarBaz\\HelloWorld.txt");
+
+            assert.equal(
+                vfs.ConvertShortPathToLongPath("C:\\FOOBAR~1\\HELLOW~1.TXT"),
+                "c:\\foobarbaz\\helloworld.txt"
+            );
+        });
+
+        it("should return false if the path is valid but files matching SFN don't exist", () => {
+
+            const vfs = make_vfs(),
+                  path = "C:\\FOOBAR~1\\HELLOW~1.TXT";
+            assert.equal(vfs.ConvertShortPathToLongPath(path), path.toLowerCase());
+        });
+    });
+
     describe("Environment variables", () => {
 
         it("should correctly expand environment variables", () => {
@@ -693,7 +715,7 @@ describe("Virtual File System", () => {
 
             assert.deepEqual(
                 vfs.FindFiles("C:\\RootOne", "*.txt"),
-                ["foo.txt", "bar.txt"]
+                ["bar.txt", "foo.txt"]
             );
         });
     });
@@ -746,8 +768,8 @@ describe("Virtual File System", () => {
             assert.isTrue(vfs.FileExists("C:\\dest\\SubDir2\\bar.txt"));
         });
 
-        /*it("should throw when trying to move to a destination which does not exist", () => {
-            assert.equal("not implemented", "implemented");
-        });*/
-    });
+        //it("should throw when trying to move to a destination which does not exist", () => {
+        // assert.equal("not implemented", "implemented");
+        //});
+     });
 });
