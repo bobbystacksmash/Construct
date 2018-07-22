@@ -1750,6 +1750,16 @@ describe("Scripting.FileSystemObject", () => {
             assert.isTrue(ctx.vfs.FileExists("C:\\foo.txt"));
         });
 
+        it("should move files using shortnames", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFile("C:\\SubDirectory1\\HelloWorld.txt");
+            ctx.vfs.AddFolder("C:\\SubDirectory2");
+
+            assert.doesNotThrow(() => fso.MoveFile("C:\\SUBDIR~1\\HELLOW~1.TXT", "C:\\SUBDIR~2\\"));
+            assert.isTrue(ctx.vfs.FileExists("C:\\SubDirectory2\\Helloworld.txt"));
+        });
+
         it("should move a single file from the root volume", () => {
 
             const fso = make_FSO();

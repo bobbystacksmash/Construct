@@ -945,9 +945,9 @@ class JS_FileSystemObject extends Component {
     // Moves one or more files from one location to another.
     movefile (source, destination) {
 
-        let srcpath = this.vfs.Resolve(source),
+        let srcpath = this.vfs.Resolve(source, { sfn_to_lfn: true }),
             srcpath_parent_dir  = win32path.dirname(srcpath),
-            dstpath = this.vfs.Resolve(destination),
+            dstpath = this.vfs.Resolve(destination, { sfn_to_lfn: true }),
             dstpath_trailing_pathsep = /[\\/]$/.test(destination),
             dstpath_exists = (this.vfs.FileExists(dstpath) || this.vfs.FolderExists(dstpath));
 
@@ -1011,7 +1011,6 @@ class JS_FileSystemObject extends Component {
                 "The destination file already exists -- cannot move."
             );
         }
-
 
         this.vfs.Move(srcpath, dstpath);
     }

@@ -797,7 +797,9 @@ class VirtualFileSystem {
     // passed to the resolver.
     // .TODO
     //
-    Resolve (path) {
+    Resolve (path, opts) {
+
+        opts = opts || { sfn_to_lfn: false };
 
         path = this.ExpandEnvironmentStrings(path);
         path = this.Normalise(path);
@@ -828,6 +830,10 @@ class VirtualFileSystem {
         }
 
         let norm_path = this.Normalise(path);
+
+        if (opts.sfn_to_lfn) {
+            return this.ConvertShortPathToLongPath(norm_path);
+        }
 
         return this.Normalise(path);
     }
