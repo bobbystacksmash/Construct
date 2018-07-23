@@ -1031,6 +1031,46 @@ class JS_FileSystemObject extends Component {
     // are expanded here before moving.
     //
     movefolder (source, destination) {
+
+        const srcpath = this.vfs.Resolve(source),
+              dstpath = this.vfs.Resolve(destination);
+
+        if (this.vfs.IsWildcard(dstpath)) {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FileSystemObject",
+                "Destination path must not contain wildcard chars.",
+                "The destination path contains wildcard character(s) " +
+                    "which are not permitted."
+            );
+        }
+        else if (this.vfs.IsWildcard(win32path.dirname(srcpath))) {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "FileSystemObject",
+                "Source path may only contain wildcards as the last part.",
+                "Only the last part of the source path may contain wildcard " +
+                    "characters."
+            );
+        }
+
+        if (this.vfs.IsWildcard(srcpath)) {
+
+            const pattern       = win32path.basename(srcpath),
+                  src_dirname   = win32path.dirname(srcpath),
+                  match_folders = this.vfs.FindFolders(src_dirname, pattern);
+
+            match_folders.forEach(foldername => {
+                let fullpath_src = win32path.join(src_dirname, foldername),
+                    fullpath_dst = win32path.join(dstpath,     foldername);
+
+                if (!this.vfs.Exists(fullpath_dst)) {
+                    this.vfs.AddFolder(fullpath_dst);
+                }
+
+                this.vfs.MoveFolder(fullpath_src, fullpath_dst);
+            });
+            return;
+        }
+
         this.vfs.MoveFolder(source, destination);
     }
 

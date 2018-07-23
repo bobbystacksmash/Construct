@@ -2036,6 +2036,68 @@ describe("Scripting.FileSystemObject", () => {
             assert.isFalse(ctx.vfs.FolderExists("C:\\src"));
         });
 
+        it("should move all folders matching the wildcard expr in to dst", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFolder("C:\\src\\foo_foo");
+            ctx.vfs.AddFolder("C:\\src\\foo_bar");
+            ctx.vfs.AddFile("C:\\src\\foo_baz\\a\\b\\c.txt");
+            ctx.vfs.AddFolder("C:\\dst");
+
+            assert.doesNotThrow(() => fso.MoveFolder("C:\\src\\foo_*", "dst\\"));
+        });
+
+        it("should throw 'invalid procedure arg' if the destination contains a wildcard", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("dst cannot contain wildcards");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\src\\foo.txt");
+            assert.throws(() => fso.MoveFolder("C:\\src", "C:\\*\\dst"), "cannot contain wildcards");
+        });
+
+        it("should throw if the src path dirname contains a wildcard", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_invalid_fn_arg: () => {
+                        throw new Error("src non-last part cannot be wildcard");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\src\\subdir1\\foo.txt");
+
+            assert.throws(
+                () => fso.MoveFolder("C:\\*\\subdir1", "C:\\dst"),
+                "src non-last part cannot be wildcard"
+            );
+        });
+
+        it("should support relative paths", () => {
+
+            const fso = make_FSO();
+
+            ctx.vfs.AddFolder("C:\\Users\\Construct\\foo");
+            ctx.vfs.AddFolder("C:\\Users\\Construct\\bar");
+            ctx.vfs.AddFolder("C:\\Users\\Construct\\baz");
+
+            assert.doesNotThrow(() => fso.MoveFolder("*", "../"));
+
+            assert.isTrue(ctx.vfs.Exists("C:\\Users\\foo"));
+            assert.isTrue(ctx.vfs.Exists("C:\\Users\\bar"));
+            assert.isTrue(ctx.vfs.Exists("C:\\Users\\baz"));
+
+            assert.isFalse(ctx.vfs.Exists("C:\\Users\\Construct\\foo"));
+            assert.isFalse(ctx.vfs.Exists("C:\\Users\\Construct\\bar"));
+            assert.isFalse(ctx.vfs.Exists("C:\\Users\\Construct\\baz"));
+        });
+
         /*it("should move (rename) a single folder from dirA to dirB", () => {
 
             const fso = make_FSO();
