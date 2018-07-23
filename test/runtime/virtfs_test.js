@@ -841,38 +841,10 @@ describe("Virtual File System", () => {
             assert.isTrue(vfs.FileExists("C:\\dst\\foo.txt"));
             assert.isTrue(vfs.FileExists("C:\\dst\\bar.txt"));
             assert.isFalse(vfs.FolderExists("C:\\src"));
-
-
         });
 
-        /*it("should support moving from fileA to fileB", () => {
 
-            const vfs = make_vfs();
-
-            vfs.AddFile("C:\\fileA.txt");
-            assert.isFalse(vfs.FileExists("C:\\fileB.txt"));
-
-            vfs.Move("C:\\fileA.txt", "C:\\fileB.txt");
-            assert.isTrue(vfs.FileExists("C:\\fileB.txt"));
-        });
-
-        it("should move a folder (and files) correctly", () => {
-
-            const vfs = make_vfs();
-
-            vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
-            vfs.AddFile("C:\\RootOne\\SubDir2\\bar.txt");
-
-            assert.isFalse(vfs.FolderExists("C:\\dest"));
-
-            vfs.Move("C:\\RootOne", "C:\\dest");
-
-            assert.isTrue(vfs.FolderExists("C:\\dest"));
-            assert.isTrue(vfs.FileExists("C:\\dest\\RootOne\\SubDir1\\foo.txt"));
-            assert.isTrue(vfs.FileExists("C:\\dest\\RootOne\\SubDir2\\bar.txt"));
-        });
-
-        it("should move a subdir to match parent dirs level", () => {
+        /*it("should move a subdir to match parent dirs level", () => {
 
             const vfs = make_vfs();
             vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");

@@ -945,11 +945,11 @@ class JS_FileSystemObject extends Component {
     // Moves one or more files from one location to another.
     movefile (source, destination) {
 
-        let srcpath = this.vfs.Resolve(source, { sfn_to_lfn: true }),
-            srcpath_parent_dir  = win32path.dirname(srcpath),
-            dstpath = this.vfs.Resolve(destination, { sfn_to_lfn: true }),
+        let srcpath                  = this.vfs.Resolve(source, { sfn_to_lfn: true }),
+            srcpath_parent_dir       = win32path.dirname(srcpath),
+            dstpath                  = this.vfs.Resolve(destination, { sfn_to_lfn: true }),
             dstpath_trailing_pathsep = /[\\/]$/.test(destination),
-            dstpath_exists = (this.vfs.FileExists(dstpath) || this.vfs.FolderExists(dstpath));
+            dstpath_exists           = (this.vfs.FileExists(dstpath) || this.vfs.FolderExists(dstpath));
 
         if (this.vfs.IsWildcard(destination)) {
             this.context.exceptions.throw_invalid_fn_arg(
@@ -985,9 +985,8 @@ class JS_FileSystemObject extends Component {
                     );
                 }
 
-                this.vfs.Move(fullpath_src, fullpath_dst);
+                this.vfs.MoveFile(fullpath_src, fullpath_dst);
             });
-
             return;
         }
 
@@ -1012,23 +1011,28 @@ class JS_FileSystemObject extends Component {
             );
         }
 
-        this.vfs.Move(srcpath, dstpath);
+        this.vfs.MoveFile(srcpath, dstpath);
     }
 
     // MoveFolder
     // ==========
     //
     // Moves one or more folders from one location to another.
+    // Wildcards are not supported directly by the VFS, so wildcards
+    // are expanded here before moving.
     //
     movefolder (source, destination) {
 
-        let srcpath = this.vfs.Resolve(source, { sfn_to_lfn: true }),
-            srcpath_parent_dir  = win32path.dirname(srcpath),
-            dstpath = this.vfs.Resolve(destination, { sfn_to_lfn: true }),
+        let srcpath                  = this.vfs.Resolve(source, { sfn_to_lfn: true }),
+            srcpath_parent_dir       = win32path.dirname(srcpath),
+            dstpath                  = this.vfs.Resolve(destination, { sfn_to_lfn: true }),
             dstpath_trailing_pathsep = /[\\/]$/.test(destination),
-            dstpath_exists = (this.vfs.FileExists(dstpath) || this.vfs.FolderExists(dstpath));
+            dstpath_exists           = (this.vfs.FileExists(dstpath) || this.vfs.FolderExists(dstpath));
 
-        this.vfs.Move(srcpath, dstpath);
+        console.log("movefolder", srcpath, dstpath);
+
+        this.vfs.MoveFolder(srcpath, dstpath);
+
 
         /*if (this.vfs.IsWildcard(destination)) {
             this.context.exceptions.throw_invalid_fn_arg(
@@ -1092,9 +1096,6 @@ class JS_FileSystemObject extends Component {
         }
 
         this.vfs.Move(srcpath, dstpath);*/
-
-
-
     }
 
     // Opens a specified file and returns a TextStream object that can

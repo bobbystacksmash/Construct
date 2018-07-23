@@ -63,7 +63,7 @@ function make_FSO (opts) {
 
 describe("Scripting.FileSystemObject", () => {
 
-    /*describe("#BuildPath", () => {
+    describe("#BuildPath", () => {
 
         it("should build a path from two parts", () => {
 
@@ -2005,10 +2005,10 @@ describe("Scripting.FileSystemObject", () => {
             );
         });
 
-it("should throw if trying to move src which is a folder", () => {
-assert.isTrue(false);
-});
-    });*/
+     //it("should throw if trying to move src which is a folder", () => {
+     //assert.isTrue(false);
+     //});
+    });
 
     describe("#MoveFolder", () => {
 
@@ -2021,24 +2021,30 @@ assert.isTrue(false);
             assert.isFalse(ctx.vfs.FileExists("C:\\dirB\\foo.txt"));
             assert.isFalse(ctx.vfs.FileExists("C:\\dirB\\bar.txt"));
 
+            console.log(ctx.vfs.GetVFS());
+
             assert.doesNotThrow(() => fso.MoveFolder("C:\\dirA", "C:\\dirB"));
 
-            assert.isTrue(ctx.vfs.FileExists("C:\\dirB\\foo.txt"));
-            assert.isTrue(ctx.vfs.FileExists("C:\\dirB\\bar.txt"));
+
+
+            assert.isTrue(ctx.vfs.FolderExists("C:\\dirB"));
+
+            //assert.isTrue(ctx.vfs.FileExists("C:\\dirB\\foo.txt"));
+            /*assert.isTrue(ctx.vfs.FileExists("C:\\dirB\\bar.txt"));
 
             assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\foo.txt"));
-            assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\bar.txt"));
+            assert.isFalse(ctx.vfs.FileExists("C:\\dirA\\bar.txt"));*/
         });
 
-        /*it("should move folders up to the root-volume location", () => {
+        it("should move folders up to the root-volume location", () => {
 
             const fso = make_FSO();
-            ctx.vfs.AddFile("C:\\dirA\\foo.txt");
-
+            ctx.vfs.AddFile("C:\\dirA\\SubFolder\\foo.txt");
             assert.isFalse(ctx.vfs.Exists("C:\\dirB"));
 
-                           /*assert.doesNotThrow(() => fso.MoveFile("C:\\dirA\\foo.txt", "C:\\"));
-            assert.isTrue(ctx.vfs.FileExists("C:\\foo.txt"));
+            assert.doesNotThrow(() => fso.MoveFolder("C:\\dirA\\SubFolder", "C:\\"));
+            console.log(ctx.vfs.GetVFS());
+
         });
 
         it("should move files using shortnames", () => {
@@ -2294,7 +2300,7 @@ assert.isTrue(false);
                 () => fso.MoveFile("C:\\dirA\\*\\foo.txt", "C:\\dirB\\"),
                 "no wildcards in parent src"
             );
-        });*/
+        });
     });
 
     const NOOP = () => {};

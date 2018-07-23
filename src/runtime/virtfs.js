@@ -1379,50 +1379,11 @@ class VirtualFileSystem {
         if (this.Exists(idst) === false) {
             return this.Rename(source, destination);
         }
+        else
 
         this.CopyFolder(isrc, idst);
         this.Delete(source);
     }
-
-    // Move
-    // ====
-    //
-    // Recursively moves files and folders from `source' to
-    // `destination'.  When moving folders, trailing separators are
-    // important as they denote "contents of folder", rather than the
-    // folder itself.  For example:
-    //
-    //   Move('C:\foo\bar', 'C:\')
-    //
-    // Will move the folder `bar' (and its contents) in to `C:\',
-    // whereas:
-    //
-    //   Move('C:\foo\bar\', 'C:\')
-    //
-    // ...will move the contents of `bar' in to `C:\'.
-    //
-    Move (source, destination, overwrite) {
-
-        const isrc = this._ConvertExternalToInternalPath(source),
-              idst = this._ConvertExternalToInternalPath(destination);
-
-        const isrc_trailing = /[\\/]$/.test(isrc),
-              idst_trailing = /[\\/]$/.test(idst);
-
-        if (this.IsFolder(isrc)) {
-            this.CopyFolder(source, destination);
-            this.Delete(source);
-            return;
-        }
-
-        // Source is either a wildcard or a single file.
-        const basename = win32path.basename(source),
-              dirname  = win32path.dirname(source);
-
-        this.CopyFile(source, destination);
-        this.Delete(source);
-    }
-
 
     OldMove (source, destination, overwrite) {
 
