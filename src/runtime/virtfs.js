@@ -1378,6 +1378,10 @@ class VirtualFileSystem {
             throw new Error("MoveFolder does not support relative paths.");
         }
 
+        if (this.Exists(source) === false) {
+            throw new Error("MoveFolder cannot find source dir (does not exist).");
+        }
+
         if (src_endswith_pathsep) {
             throw new Error("Source folder must not end with a path separator.");
         }
@@ -1394,67 +1398,12 @@ class VirtualFileSystem {
         }
 
         if (this.Exists(idst) === false) {
-            return this.Rename(source, destination);
+            this.vfs.renameSync(isrc, idst);
+            return;
         }
 
-        this.CopyFolder(isrc, idst, overwrite);
+        this.CopyFolder(isrc, idst, overwrite, true);
         this.Delete(source);
-    }
-
-    OldMove (source, destination, overwrite) {
-
-        if (overwrite === undefined || overwrite === null) overwrite = false;
-
-        const isource      = this._ConvertExternalToInternalPath(source),
-              idestination = this._ConvertExternalToInternalPath(destination);
-
-        if (this.FileExists(isource)) {
-
-            this.vfs.copyFileSync(isource, idestination);
-            this.vfs.unlinkSync(isource);
-
-            return;
-        }
-
-        if (this.IsFolder(isource) && this.IsFolder(idestination)) {
-            this.CopyFolder(source, destination);
-            this.Delete(source);
-            return;
-        }
-
-        let walk = (source, dest) => {
-
-            let folders = this.FindAllFolders(source),
-                files   = this.FindAllFiles(source);
-
-            console.log("");
-            console.log("Moving", source, dest);
-            console.log("files", files, "folders", folders);
-
-            if (folders.length) {
-                for (let i = 0; i < folders.length; i++) {
-                    this.AddFolder(`${dest}/${folders[i]}`);
-                    walk(`${source}/${folders[i]}`, `${dest}/${folders[i]}`);
-                }
-            }
-
-            for (let i = 0; i < files.length; i++) {
-
-                const destfile = `${dest}/${files[i]}`,
-                      srcfile  = `${source}/${files[i]}`;
-
-                if (overwrite === false && this.FileExists(destfile)) {
-                    throw new Error("Cannot move: destination file exists");
-                }
-
-                // Using AddFile here will create the destination (if not exists).
-                this.AddFile(destfile);
-                this.vfs.copyFileSync(srcfile, destfile);
-                this.vfs.unlinkSync(srcfile);
-            }
-        };
-
-        walk(isource, idestination);
     }
 
     // CopyFolder
@@ -1465,9 +1414,13 @@ class VirtualFileSystem {
     // with a trailing path separator, it indicates that the folder's
     // contents should be copied, rather than the top-level folder.
     //
-    CopyFolder (source, destination, overwrite) {
+    CopyFolder (source, destination, overwrite, halt_if_dir_exists) {
 
         if (overwrite === undefined || overwrite === null) overwrite = true;
+
+        if (halt_if_dir_exists === undefined || halt_if_dir_exists === null) {
+            halt_if_dir_exists = false;
+        }
 
         let isource      = this._ConvertExternalToInternalPath(source),
             idestination = this._ConvertExternalToInternalPath(destination);
@@ -1487,6 +1440,11 @@ class VirtualFileSystem {
 
         function recursive_copy (src, dst) {
 
+            if (vfs.existsSync(dst) && halt_if_dir_exists) {
+                console.log("THROW EXISTS HERE", dst);
+                //throw new Error("Halting: dir exists (will not create).");
+            }
+
             vfs.readdirSync(src).forEach(item => {
 
                 let srcpath = `${src}/${item}`,
@@ -1496,9 +1454,6 @@ class VirtualFileSystem {
                 if (vfs.statSync(srcpath).isDirectory()) {
                     vfs.mkdirpSync(dstpath);
                     recursive_copy(srcpath, dstpath);
-                }
-                else if (vfs.existsSync(dstpath) && overwrite === false) {
-                    throw new Error("Cannot copy - destination file exists");
                 }
                 else {
                     vfs.copyFileSync(srcpath, dstpath);

@@ -1065,13 +1065,51 @@ class JS_FileSystemObject extends Component {
                 if (!this.vfs.Exists(fullpath_dst)) {
                     this.vfs.AddFolder(fullpath_dst);
                 }
+                else {
+                    this.context.exceptions.throw_file_exists(
+                        "FileSystemObject",
+                        "The MoveFolder method throws when moving the same name from src->dst.",
+                        "When moving a folder, if that folder exists in the destination, rather " +
+                            "than merging the two folders, FSO.MoveFolder throws instead."
+                    );
+                }
 
-                this.vfs.MoveFolder(fullpath_src, fullpath_dst);
+                console.log(`vfs.MoveFolder(${fullpath_src}, ${fullpath_dst}`);
+                this.vfs.MoveFolder(fullpath_src, fullpath_dst, false);
             });
             return;
         }
 
-        this.vfs.MoveFolder(source, destination);
+        if (this.vfs.Exists(srcpath) === false) {
+            this.context.exceptions.throw_path_not_found(
+                "FileSystemObject",
+                "Cannot find source path to move.",
+                "The source file location cannot be found so cannot be moved."
+            );
+        }
+
+        if (this.vfs.Exists(win32path.dirname(dstpath)) === false) {
+            this.context.exceptions.throw_path_not_found(
+                "FileSystemObject",
+                "Cannot find the destination path.",
+                "Cannot move files to a destination path that does not exist."
+            );
+        }
+
+        try {
+            this.vfs.MoveFolder(srcpath, dstpath, false, true);
+        }
+        catch (e) {
+
+            if (e.message.includes("Halting: dir exists")) {
+                this.context.exceptions.throw_file_exists(
+                    "FileSystemObject",
+                    "Destination folder already exists - will not create.",
+                    "When MoveFile encounters a folder that already exists " +
+                        "it throws, rather than merging the contents."
+                );
+            }
+        }
     }
 
     // Opens a specified file and returns a TextStream object that can
