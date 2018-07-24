@@ -905,17 +905,5 @@ describe("Virtual File System", () => {
 
             assert.isFalse(vfs.Exists("C:\\foo"));
         });
-
-        it("should throw if trying to overwrite an existing file in 'dst'", () => {
-
-            const vfs = make_vfs();
-            vfs.AddFile("C:\\src\\foo\\existing.txt");
-            vfs.AddFile("C:\\dst\\foo\\existing.txt");
-
-            assert.throws(
-                () => vfs.MoveFolder("C:\\src\\foo", "C:\\dst\\"),
-                "Cannot copy - destination file exists"
-            );
-        });
     });
 });

@@ -1058,6 +1058,16 @@ class JS_FileSystemObject extends Component {
                   src_dirname   = win32path.dirname(srcpath),
                   match_folders = this.vfs.FindFolders(src_dirname, pattern);
 
+            if (match_folders.length === 0) {
+                this.context.exceptions.throw_path_not_found(
+                    "FileSystemObject",
+                    "No folders could be found for copying in srcdir.",
+                    "The wildcard expression didn't match any folders in srcdir, " +
+                        "either because the dir contains zero folders, or no folders " +
+                        "match the wildcard expression."
+                );
+            }
+
             match_folders.forEach(foldername => {
                 let fullpath_src = win32path.join(src_dirname, foldername),
                     fullpath_dst = win32path.join(dstpath,     foldername);
@@ -1074,8 +1084,7 @@ class JS_FileSystemObject extends Component {
                     );
                 }
 
-                console.log(`vfs.MoveFolder(${fullpath_src}, ${fullpath_dst}`);
-                this.vfs.MoveFolder(fullpath_src, fullpath_dst, false);
+                this.vfs.MoveFolder(fullpath_src, `${fullpath_dst}\\`, false);
             });
             return;
         }
@@ -1087,6 +1096,14 @@ class JS_FileSystemObject extends Component {
                 "The source file location cannot be found so cannot be moved."
             );
         }
+        else if (this.vfs.IsFile(srcpath)) {
+            this.context.exceptions.throw_path_not_found(
+                "FileSystemObject",
+                "Cannot apply MoveFolder to a source file.",
+                "The source argument to MoveFolder must be a folder, not " +
+                    "a file."
+            );
+        }
 
         if (this.vfs.Exists(win32path.dirname(dstpath)) === false) {
             this.context.exceptions.throw_path_not_found(
@@ -1095,21 +1112,16 @@ class JS_FileSystemObject extends Component {
                 "Cannot move files to a destination path that does not exist."
             );
         }
-
-        try {
-            this.vfs.MoveFolder(srcpath, dstpath, false, true);
+        else if (this.vfs.IsFile(dstpath)) {
+            this.context.exceptions.throw_file_already_exists(
+                "FileSystemObject",
+                "Cannot move folder in to an existing file.",
+                "The destination is a file.  Destination should either not exist " +
+                    "or be a folder."
+            );
         }
-        catch (e) {
 
-            if (e.message.includes("Halting: dir exists")) {
-                this.context.exceptions.throw_file_exists(
-                    "FileSystemObject",
-                    "Destination folder already exists - will not create.",
-                    "When MoveFile encounters a folder that already exists " +
-                        "it throws, rather than merging the contents."
-                );
-            }
-        }
+        this.vfs.MoveFolder(srcpath, dstpath, false);
     }
 
     // Opens a specified file and returns a TextStream object that can

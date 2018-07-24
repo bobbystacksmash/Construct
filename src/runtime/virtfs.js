@@ -1414,13 +1414,9 @@ class VirtualFileSystem {
     // with a trailing path separator, it indicates that the folder's
     // contents should be copied, rather than the top-level folder.
     //
-    CopyFolder (source, destination, overwrite, halt_if_dir_exists) {
+    CopyFolder (source, destination, overwrite) {
 
         if (overwrite === undefined || overwrite === null) overwrite = true;
-
-        if (halt_if_dir_exists === undefined || halt_if_dir_exists === null) {
-            halt_if_dir_exists = false;
-        }
 
         let isource      = this._ConvertExternalToInternalPath(source),
             idestination = this._ConvertExternalToInternalPath(destination);
@@ -1440,20 +1436,19 @@ class VirtualFileSystem {
 
         function recursive_copy (src, dst) {
 
-            if (vfs.existsSync(dst) && halt_if_dir_exists) {
-                console.log("THROW EXISTS HERE", dst);
-                //throw new Error("Halting: dir exists (will not create).");
-            }
-
             vfs.readdirSync(src).forEach(item => {
 
-                let srcpath = `${src}/${item}`,
-                    dstpath = `${dst}/${item}`;
+                let srcpath    = `${src}/${item}`,
+                    dstpath    = `${dst}/${item}`,
+                    dst_exists = vfs.existsSync(dstpath);
 
                 // Does the file exist in the destination already?
                 if (vfs.statSync(srcpath).isDirectory()) {
                     vfs.mkdirpSync(dstpath);
                     recursive_copy(srcpath, dstpath);
+                }
+                else if (dst_exists  && vfs.statSync(dstpath).isFile() && ! overwrite) {
+                    throw new Error("Copy Folder failed - destination file already exists");
                 }
                 else {
                     vfs.copyFileSync(srcpath, dstpath);

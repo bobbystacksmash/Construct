@@ -63,7 +63,7 @@ function make_FSO (opts) {
 
 describe("Scripting.FileSystemObject", () => {
 
-    /*describe("#BuildPath", () => {
+    describe("#BuildPath", () => {
 
         it("should build a path from two parts", () => {
 
@@ -1723,9 +1723,9 @@ describe("Scripting.FileSystemObject", () => {
 
             assert.throws(() => fso.GetTempName(1), "invalid arg");
         });
-    });*/
+    });
 
-    /*describe("#MoveFile", () => {
+    describe("#MoveFile", () => {
 
         it("should move a single file from dirA to dirB", () => {
 
@@ -2020,11 +2020,11 @@ describe("Scripting.FileSystemObject", () => {
 
             assert.throws(() => fso.MoveFile("C:\\foo", "C:\\dst"), "file is folder");
         });
-    });*/
+    });
 
     describe("#MoveFolder", () => {
 
-        /*it("should move 'src' to 'dst' when src does not end with a wildcard or pathsep", () => {
+        it("should move 'src' to 'dst' when src does not end with a wildcard or pathsep", () => {
 
             const fso = make_FSO();
             ctx.vfs.AddFolder("C:\\src");
@@ -2034,7 +2034,7 @@ describe("Scripting.FileSystemObject", () => {
             assert.doesNotThrow(() => fso.MoveFolder("C:\\src", "C:\\dst"));
             assert.isTrue(ctx.vfs.FolderExists("C:\\dst"));
             assert.isFalse(ctx.vfs.FolderExists("C:\\src"));
-        });*/
+        });
 
         it("should move all folders matching the wildcard expr in to dst", () => {
 
@@ -2042,12 +2042,18 @@ describe("Scripting.FileSystemObject", () => {
             ctx.vfs.AddFolder(`${ctx.get_env("path")}\\aa\\foo_foo`);
             ctx.vfs.AddFolder(`${ctx.get_env("path")}\\aa\\foo_bar`);
             ctx.vfs.AddFolder(`${ctx.get_env("path")}\\aa\\foo_baz`);
+            ctx.vfs.AddFolder(`${ctx.get_env("path")}\\aa\\bar_bar`);
             ctx.vfs.AddFolder(`${ctx.get_env("path")}\\bb`);
 
-            assert.doesNotThrow(() => fso.MoveFolder("aa\\foo_*", "bb\\"));
+            fso.MoveFolder("aa\\foo_*", "bb\\");
+            assert.isTrue(ctx.vfs.Exists(`${ctx.get_env("path")}\\bb\\foo_foo`));
+            assert.isTrue(ctx.vfs.Exists(`${ctx.get_env("path")}\\bb\\foo_bar`));
+            assert.isTrue(ctx.vfs.Exists(`${ctx.get_env("path")}\\bb\\foo_baz`));
+
+            assert.isFalse(ctx.vfs.Exists(`${ctx.get_env("path")}\\bb\\bar_bar`));
         });
 
-        /*it("should throw 'invalid procedure arg' if the destination contains a wildcard", () => {
+        it("should throw 'invalid procedure arg' if the destination contains a wildcard", () => {
 
             const fso = make_FSO({
                 exceptions: {
@@ -2260,7 +2266,7 @@ describe("Scripting.FileSystemObject", () => {
             assert.isFalse(ctx.vfs.FolderExists("C:\\dirA\\foo_a"));
         });
 
-        it("should not require destination to end in a trailing pathsep when src is wildcard", () => {
+        it("should not require dest to end in a trailing pathsep when src is wildcard", () => {
 
             const fso = make_FSO();
 
@@ -2276,9 +2282,9 @@ describe("Scripting.FileSystemObject", () => {
 
             assert.isFalse(ctx.vfs.FolderExists("C:\\dirA\\foo_aaa"));
             assert.isFalse(ctx.vfs.FolderExists("C:\\dirA\\bar_aaa"));
-        });*/
+        });
 
-        /*it("should move folders until a dest folder exists and then stop", () => {
+        it("should move folders until a dest folder exists and then stop", () => {
 
              const fso = make_FSO({
                  exceptions: {
@@ -2288,18 +2294,88 @@ describe("Scripting.FileSystemObject", () => {
                  }
              });
 
+            ctx.vfs.AddFolder("C:\\src\\aaa");
+            ctx.vfs.AddFolder("C:\\src\\bbb");
             ctx.vfs.AddFolder("C:\\src\\exists");
             ctx.vfs.AddFolder("C:\\dst\\exists");
 
-            assert.throws(() => fso.MoveFolder("C:\\src\\*", "C:\\dst\\"),      "dest folder exists");
-            assert.throws(() => fso.Movefolder("C:\\src\\exists", "C:\\dst\\"), "dest folder exists");
-        });*/
+            assert.throws(
+                () => fso.MoveFolder("C:\\src\\*", "C:\\dst\\"),
+                "dest folder exists"
+            );
 
-        // add a test if src is file
-        // test if dst is file
-        // test throws when merging where folder->file in dst (same name)
+            assert.isTrue(ctx.vfs.Exists("C:\\dst\\aaa"));
+            assert.isTrue(ctx.vfs.Exists("C:\\dst\\bbb"));
+            assert.isTrue(ctx.vfs.Exists("C:\\dst\\exists"));
+            assert.isTrue(ctx.vfs.Exists("C:\\src\\exists"));
+        });
 
-        /*it("should throw invalid proc call if destination contains wildcards", () => {
+        it("should throw if folder source is not a folder", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_path_not_found: () => {
+                        throw new Error("src is file");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\foo.txt");
+            ctx.vfs.AddFolder("C:\\dest");
+
+            assert.throws(() => fso.MoveFolder("C:\\foo.txt", "C:\\dest\\"), "src is file");
+        });
+
+        it("should throw if the destination is a file", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_file_already_exists: () => {
+                        throw new Error("dst file");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFolder("C:\\src\\subdir");
+            ctx.vfs.AddFile("C:\\dest.txt");
+
+            assert.throws(() => fso.MoveFolder("C:\\src\\subdir", "C:\\dest.txt"), "dst file");
+        });
+
+        it("should throw a 'file already exists' if dst dir contains file with same name", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_file_exists: () => {
+                        throw new Error("dst file same name");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFolder("C:\\src\\foo");
+            ctx.vfs.AddFile("C:\\dst\\foo");
+
+            assert.throws(() => fso.MoveFolder("C:\\src\\*", "C:\\dst"), "dst file same name");
+        });
+
+        it("should throw 'path not found' if no folders exist in src dir", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_path_not_found: () => {
+                        throw new Error("no dirs");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFolder("C:\\src");
+            ctx.vfs.AddFile("C:\\src\\foo.txt");
+            ctx.vfs.AddFolder("C:\\dst");
+
+            assert.throws(() => fso.MoveFolder("C:\\src\\*", "C:\\dst"), "no dirs");
+        });
+
+        it("should throw invalid proc call if destination contains wildcards", () => {
 
             const fso = make_FSO({
                 exceptions: {
@@ -2309,14 +2385,13 @@ describe("Scripting.FileSystemObject", () => {
                 }
             });
 
-            ctx.vfs.AddFolder("C:\\dirA\\foo.txt");
+            ctx.vfs.AddFolder("C:\\dirA\\foo");
             ctx.vfs.AddFolder("C:\\dirB\\SubDir1");
 
             assert.throws(
-                () => fso.MoveFolder("C:\\dirA\\foo.txt", "C:\\dir*\\SubDir1\\bar.txt"),
+                () => fso.MoveFolder("C:\\dirA\\foo", "C:\\dir*\\SubDir1\\"),
                 "no wildcards in dstpath"
             );
-
         });
 
         it("should throw invalid proc call if source parent path contains wildcards", () => {
@@ -2329,14 +2404,14 @@ describe("Scripting.FileSystemObject", () => {
                 }
             });
 
-            ctx.vfs.AddFolder("C:\\dirA\\SubDir1\\foo.txt");
+            ctx.vfs.AddFolder("C:\\dirA\\SubDir1\\foo");
             ctx.vfs.AddFolder("C:\\dirB\\SubDir1");
 
             assert.throws(
-                () => fso.MoveFolder("C:\\dirA\\*\\foo.txt", "C:\\dirB\\"),
+                () => fso.MoveFolder("C:\\dirA\\*\\foo", "C:\\dirB\\"),
                 "no wildcards in parent src"
             );
-        });*/
+        });
     });
 
     const NOOP = () => {};
