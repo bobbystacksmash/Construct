@@ -1144,6 +1144,41 @@ class JS_FileSystemObject extends Component {
             );
         }
 
+        if (create === undefined || create === null) {
+            create = true;
+        }
+
+        let throw_type_mismatch = () => {
+            this.context.exceptions.throw_type_mismatch(
+                "FileSystemObject",
+                "Invalid 'create' type given.",
+                "Invalid 'create' type given."
+            );
+        };
+
+        // TODO This is very messy.  We need a new handling lib for
+        // all classes.
+        if (typeof create === "string") {
+            let tmpcreate = parseInt(create, 10);
+            if (isNaN(tmpcreate)) {
+
+                if (/^true|false$/.test(create)) {
+                    create = (create.toLowerCase() === "true");
+                }
+                else {
+                    throw_type_mismatch();
+                }
+            }
+
+            create = (tmpcreate == true);
+        }
+        else if (Array.isArray(create)) {
+            throw_type_mismatch();
+        }
+        else {
+            create = !!create;
+        }
+
         filepath = this.vfs.Resolve(filepath);
 
         if (create && this.vfs.Exists(filepath) === false) {

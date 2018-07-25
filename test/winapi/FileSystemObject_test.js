@@ -63,7 +63,7 @@ function make_FSO (opts) {
 
 describe("Scripting.FileSystemObject", () => {
 
-    /*describe("#BuildPath", () => {
+    describe("#BuildPath", () => {
 
         it("should build a path from two parts", () => {
 
@@ -2412,7 +2412,7 @@ describe("Scripting.FileSystemObject", () => {
                 "no wildcards in parent src"
             );
         });
-    });*/
+    });
 
     describe("#OpenTextfile", () => {
 
@@ -2448,6 +2448,50 @@ describe("Scripting.FileSystemObject", () => {
             assert.isTrue(ctx.vfs.FileExists("C:\\src.txt"));
         });
 
+        it("should open an existing text file for reading by default", () => {
 
+            const fso = make_FSO();
+            ctx.vfs.AddFile("C:\\src.txt", "hello world");
+            const ts = fso.OpenTextfile("C:\\src.txt");
+            assert.equal(ts.ReadAll(), "hello world");
+        });
+
+        it("should open a relative text file for reading", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFile(`${ctx.get_env("path")}\\foo.txt`, "Hello, World!");
+
+            const ts = fso.OpenTextfile("foo.txt");
+
+            assert.equal(ts.ReadAll(), "Hello, World!");
+        });
+
+        it("should open an text file and allow appending", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFile("C:\\foo.txt", "hi, world");
+
+            const ts = fso.OpenTextFile("C:\\foo.txt", 8 /* for appending */);
+            ts.Write("testing");
+            assert.deepEqual(ctx.vfs.ReadFileContents("C:\\foo.txt").toString(), "hi, worldtesting");
+        });
+
+        it("should throw a type mismatch if the 'create' field isn't valid", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_type_mismatch: () => {
+                        throw new Error("type mismatch");
+                    }
+                }
+            });
+            ctx.vfs.AddFile("C:\\src.txt", "hi");
+
+            assert.doesNotThrow(() => fso.OpenTextFile("C:\\src.txt", 1, "1"));
+            assert.doesNotThrow(() => fso.OpenTextFile("C:\\src.txt", 1, "true"));
+
+            assert.throws(() => fso.OpenTextFile("C:\\src.txt", 1, "x"));
+            assert.throws(() => fso.OpenTextFile("C:\\src.txt", 1, []));
+        });
     });
 });
