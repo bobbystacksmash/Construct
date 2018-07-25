@@ -7,7 +7,6 @@
 const Component         = require("../Component");
 const proxify           = require("../proxify2");
 const win32path         = require("path").win32;
-const Drive             = require("./DriveObject");
 const FilesCollection   = require("./FilesCollection");
 const FoldersCollection = require("./FoldersCollection");
 const TextStream        = require("./TextStream");
@@ -95,6 +94,9 @@ class JS_FolderObject extends Component {
     // multiple drives, the Drive is always C:\.
     //
     get drive () {
+        // We import this here because of a cyclic dependency between
+        // FolderObj<->DriveObj.
+        const Drive = require("./DriveObject");
         this.ee.emit("Folder.Drive");
         return new Drive(this.context);
     }

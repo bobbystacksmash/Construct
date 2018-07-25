@@ -1,5 +1,5 @@
 const Component     = require("../Component");
-const FolderObject  = require("./FolderObject");
+
 const proxify       = require("../proxify2");
 const win32path     = require("path").win32;
 
@@ -98,6 +98,9 @@ class JS_DriveObject extends Component {
     set rootfolder (x) { this._throw_read_only("rootfolder"); }
     get rootfolder () {
         this.ee.emit("drive.rootfolder");
+        // We import this here because of a cyclic dependency between
+        // FolderObj<->DriveObj.
+        const FolderObject  = require("./FolderObject");
         return new FolderObject(this.context, "C:\\");
     }
 
