@@ -15,6 +15,8 @@ class JS_FileSystemObject extends Component {
 	super(context, "FileSystemObject");
         this.context = context;
 
+        this.__name__ = "FileSystemObject";
+
         // Shortcuts...
         this.ee  = this.context.emitter;
         this.vfs = this.context.vfs;
@@ -517,6 +519,15 @@ class JS_FileSystemObject extends Component {
     // Returns true if a specified folder exists; false if it does
     // not.
     folderexists (dirpath) {
+
+        if (typeof dirpath !== "string") {
+            try {
+                dirpath = dirpath.toString();
+            }
+            catch (e) {
+                throw e;
+            }
+        }
 
         if (this.vfs.IsWildcard(dirpath)) {
             return false;

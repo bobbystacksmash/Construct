@@ -17,10 +17,11 @@ class JS_FolderObject extends Component {
 
 	super(context, "Folder");
 
-	this.context = context;
-        this.ee      = this.context.emitter;
-        this.vfs     = this.context.vfs;
-        this._path   = path;
+	this.context  = context;
+        this.ee       = this.context.emitter;
+        this.vfs      = this.context.vfs;
+        this._path    = path;
+        this.__name__ = "FolderObject";
 
         if (path.toLowerCase() === "c:") {
             this._path = this.context.get_env("path");

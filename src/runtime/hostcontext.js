@@ -35,6 +35,7 @@ class HostContext {
         };
 
 	this.ENVIRONMENT = {
+            path: "C:\\Users\\Construct",
 	    UserLevel: "SYSTEM",
 	    Variables: {
 		SYSTEM: {

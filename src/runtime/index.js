@@ -5,7 +5,6 @@ const istanbul       = require("istanbul");
 const EventEmitter2  = require("eventemitter2").EventEmitter2;
 const urlparse       = require("url-parse");
 const vm             = require("vm");
-const stacktrace     = require('stack-trace');
 const glob           = require("glob");
 const path           = require("path");
 
@@ -75,14 +74,14 @@ Runtime.prototype.load_plugins = function (path_to_plugins_dir) {
 	network: network_hook.bind(this)
     };
 
-    // Loop-over all of the 
+    // Loop-over all of the
     found_plugins_files.forEach((plugin_file) => {
 
 	let this_plugin = require(path.resolve(plugin_file)),
 	    plugin_dir  = path.basename(path.parse(plugin_file).dir);
 
 	let plugin_info = {};
-	
+
 	plugin_info.description = this_plugin.description || "No description.",
 	plugin_info.author      = this_plugin.author      || "Unknown author.",
 	plugin_info.version     = this_plugin.version     || "0.0.0";
@@ -106,7 +105,7 @@ Runtime.prototype.load_plugins = function (path_to_plugins_dir) {
 	//
 	console.log(`Plugin loader loaded "${plugin_dir}" (${plugin_info.version})`,
 		    `-- "${plugin_info.description}"`);
-	
+
     }, this);
 
     console.log("\n");
@@ -128,10 +127,10 @@ Runtime.prototype._make_runnable = function () {
             return;
         }
 
-        events.push({ 
-            event: this.event, 
-            args: x, 
-            t: new Date().getTime() 
+        events.push({
+            event: this.event,
+            args: x,
+            t: new Date().getTime()
         });
     });
 
@@ -181,8 +180,7 @@ Runtime.prototype._make_runnable = function () {
 		// TODO...
 	    }
 	    else {
-		let stack = stacktrace.parse(e);
-		console.log(e.message, stack[0]);
+		console.log(e);
 	    }
 	}
     };
@@ -205,7 +203,7 @@ Runtime.prototype._filter_interesting_events  = function () {
                     return false;
             }
         })
-        .map((e) => { 
+        .map((e) => {
             return {
                 esrc: e.event,
                 summary: "Summary for why this event is bad...",
@@ -216,18 +214,18 @@ Runtime.prototype._filter_interesting_events  = function () {
     // Collect URLs
     let url_based_events = this.events
         .filter((e) => /(?:^WINAPI\.XMLHttpRequest\.send)$/.test(e.event))
-        .map((e)    => { 
+        .map((e)    => {
 
             let url    = urlparse(e.args.url),
                 domain = url.host,
                 safeish_domain = url.host.replace(/\./g, "[.]");
 
-            return { 
-                url:         e.args.url, 
-                safe_url:    e.args.safeish_url, 
+            return {
+                url:         e.args.url,
+                safe_url:    e.args.safeish_url,
                 domain:      url.host,
                 safe_domain: safeish_domain,
-                esrc:        e.event 
+                esrc:        e.event
             };
         });
 

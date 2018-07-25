@@ -9,9 +9,19 @@ let context = {
     vfs: {}
 };
 
+function get_wscript (opts) {
+
+    opts = opts || {};
+
+    let ctx = Object.assign(context, opts);
+    return new WScript(ctx);
+}
+
 describe("WScript", () => {
 
     describe("Properties", () => {
+
+        describe(".Application", () => {});
 
         describe(".Arguments", () => {
 
@@ -22,7 +32,18 @@ describe("WScript", () => {
             });
         });
 
-        describe(".BuildVersion", () => {
+        describe(".Fullname", () => {});
+        describe(".Name", () => {});
+        describe(".Path", () =>{});
+        describe(".ScriptFullName", () => {});
+        describe(".ScriptName", () => {});
+        describe(".StdErr", () => {});
+        describe(".StdIn", () => {});
+        describe(".StdOut", () => {});
+        describe(".Version", () => {});
+
+
+        /*describe(".BuildVersion", () => {
 
             it("should return the build version", (done) => {
 
@@ -255,12 +276,12 @@ describe("WScript", () => {
                 assert.throws(() => wsh.Version = "yes", "version is read only");
                 done();
             });
-        });
+        });*/
     });
 
     describe("Methods", () => {
 
-        describe("#ConnectObject", () => {});
+        /*describe("#ConnectObject", () => {});
         describe("#CreateObject", () => {
 
             it("should support creating different object types", (done) => {
@@ -383,7 +404,7 @@ describe("WScript", () => {
                 wsh.Sleep(1200);
             });
 
-        });
+        });*/
     });
 
 });

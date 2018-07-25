@@ -524,8 +524,9 @@ class VirtualFileSystem {
 
         // This is a temporary fix, until we begin loading files from
         // a config.
-        this.AddFolder("C:\\Users\\Construct\\AppData\\Local\\Temp");
         this.AddFolder("C:\\Windows\\System32");
+        this.AddFolder("C:\\Users\\Construct\\AppData\\Local\\Temp");
+        this.AddFolder("C:\\Users\\Public\\Pictures");
     }
 
 

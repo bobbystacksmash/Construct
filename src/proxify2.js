@@ -27,9 +27,9 @@ module.exports = function proxify(context, instance) {
                         retval: null
                     });
 
-	            if (context.DEBUG) {
+	            /*if (context.DEBUG) {
 		        console.log(`PROXDBG> ${emit_as}`);
-	            }
+	            }*/
 
                     try {
 		        let result = instance[actual_propkey](...args);

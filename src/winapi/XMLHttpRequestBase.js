@@ -13,6 +13,8 @@ class XMLHttpRequestBase extends Component {
 	this.tag = tag;
 	this.event_id = `@${tag}`;
 
+        this.__name__ = "XMLHttpRequest";
+
 	this.request  = {};
 	this.response = {};
 
@@ -46,7 +48,7 @@ class XMLHttpRequestBase extends Component {
     _response_body (type) {
 	return (this.response.body) ? this.response.body : null;
     }
-    
+
 
     _make_curl_request () {
 
@@ -54,7 +56,7 @@ class XMLHttpRequestBase extends Component {
 	if (/^POST$/i.test(this.request.method)) {
 	    data = JSON.stringify(this.request.body);
 	}
-	
+
 	let headers = this.request.headers.map((h) => `-H '${h}'`).join(" ");
 	let parts_of_cmd = [
 	    `curl`,
@@ -73,7 +75,7 @@ class XMLHttpRequestBase extends Component {
     // E V E N T   H A N D L E R S
     //  * * * * * * * * * * * * *
     //
-    
+
     // MSDN: https://msdn.microsoft.com/en-us/expression/dd576252(v=vs.71)
     //
     // `onreadystatechange'
@@ -130,7 +132,7 @@ class XMLHttpRequestBase extends Component {
     set withcredentials (yes_no) {
 	this.ee.emit(`${this.event_id}.withCredentials`, yes_no);
     }
-    
+
 
     // MDN: https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseType
     //
@@ -148,7 +150,7 @@ class XMLHttpRequestBase extends Component {
     // G E T T E R S
     //  * * * * * *
     //
-    
+
     // MSDN: https://msdn.microsoft.com/en-us/expression/ms534361(v=vs.71)
     //
     // `readyState'
@@ -201,7 +203,7 @@ class XMLHttpRequestBase extends Component {
 	this.ee.emit(`${this.event_id}.responseXML`, "NOT IMPLEMENTED");
     }
 
-    
+
     // MSDN: https://msdn.microsoft.com/en-us/expression/ms534650(v=vs.71)
     //
     // `status'
@@ -245,7 +247,7 @@ class XMLHttpRequestBase extends Component {
 	this.ee.emit(`${this.event_id}::Abort`, this.request);
     }
 
-    
+
     // MSDN: https://msdn.microsoft.com/en-us/expression/ms536428(v=vs.71)
     //
     // `getAllResponseHeaders'
@@ -300,7 +302,7 @@ class XMLHttpRequestBase extends Component {
 	return header_value;
     }
 
-    
+
     // MSDN: https://msdn.microsoft.com/en-us/expression/ms536648(v=vs.71)
     //
     // `Open'
@@ -309,7 +311,7 @@ class XMLHttpRequestBase extends Component {
     // Requests a synchronous or asynchronous file download from a specific URL.
     //
     open (method, url, asyn, user, password) {
-	
+
 	this.request.method        = method;
 	this.request.address       = url;
 	this.request.address_parts = urlparser(url);
@@ -317,9 +319,9 @@ class XMLHttpRequestBase extends Component {
 	this.request.user          = user;
 	this.request.password      = password;
 	this.request.sent          = false;
-	
+
 	this.ee.emit(`${this.event_id}::Open`, this.request);
-	
+
 	this._set_ready_state(1);
     }
 
@@ -356,7 +358,7 @@ class XMLHttpRequestBase extends Component {
 
 	let response  = nethook.handle(this.request, this.ee);
 	this.response = Object.assign(this.response, response);
-	
+
 	this.ee.emit(`${this.event_id}::Send`, {
 	    request  : this.request,
 	    response : this.response
@@ -415,4 +417,3 @@ module.exports = function (context, type) {
     let xhr = new XMLHttpRequestBase(context, type);
     return proxify(context, xhr);
 };
-

@@ -8,6 +8,9 @@ class JS_WshShell extends Component {
 
     constructor (context) {
         super(context, "WshShell");
+
+        this.__name__ = "WshShell";
+
         this.ee = this.context.emitter;
 
         this.special_folders = [
@@ -274,7 +277,10 @@ class JS_WshShell extends Component {
     }
 
     regread (key) {
+        console.log("REGREAD", key);
         console.log("WshShell.RegRead", arguments);
+
+        // TODO!
     }
 }
 

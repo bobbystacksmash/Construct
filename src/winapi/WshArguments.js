@@ -23,7 +23,7 @@ const Component = require("../Component");
 //   3. You can access the arguments that have no names with the
 //      WshUnnamed object.
 //
-class WshArguments extends Component {
+class JS_WshArguments extends Component {
 
     constructor (context) {
 	super(context, "WshArguments");
@@ -43,23 +43,23 @@ class WshArguments extends Component {
     // scripts when you write in JScript. It is similar to VBScript's
     // Count method.
     //
-    get Length () {
+    get length () {
 	let len = this.args.length;
 	this.ee.emit("@WshArguments.Length", { length: len });
 	return len;
     }
 
-    
-    get Named () {
+
+    get named () {
 
     }
 
-    get Unnamed () {
+    get unnamed () {
 
     }
-    
 
-    Item (n) {
+
+    item (n) {
 
 	try {
 	    var arg = this.args[n];
@@ -72,14 +72,16 @@ class WshArguments extends Component {
 	}
     }
 
-    
-    Count () {
+    count () {
 
     }
 
-    ShowUsage () {
+    showusage () {
 
     }
-
 }
 
+module.exports = function create(context) {
+    let args = new JS_WshArguments(context);
+    return proxify(context, args);
+};

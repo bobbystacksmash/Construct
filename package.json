@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
 
-    "test": "node_modules/.bin/mocha --reporter dot -w ./test/winapi/FileSystemObject_test.js",
+    "test": "node_modules/.bin/mocha --reporter dot -w ./test/winapi/WScript_test.js",
 
 
     "test_runtime": "node_modules/.bin/mocha --reporter dot -w ./test/runtime/**/*_test.js",
@@ -50,7 +50,6 @@
     "npm": "^6.2.0",
     "sprintf-js": "^1.1.1",
     "spyfs": "^1.0.2",
-    "stack-trace": "0.0.10",
     "text-table": "^0.2.0",
     "unionfs": "^3.0.2",
     "url-parse": "^1.2.0",

@@ -38,11 +38,17 @@ class JS_WScript extends Component {
 	super(context, "WScript");
         this.context = context;
 	this.ee = this.context.emitter;
+
+        this.__name__ = "WScript";
     }
 
     //
     // PROPERTIES
     // ==========
+
+    get application () {
+        return this;
+    }
 
     // WScript.Arguments: https://msdn.microsoft.com/en-us/library/z2b05k8s(v=vs.84).aspx
     get arguments () {
@@ -233,7 +239,7 @@ class JS_WScript extends Component {
 	let msg = args.join(" ");
 	this.ee.emit("@WScript::Echo", { msg: msg }, arguments);
 
-        this.context.write_to_ouput_buf(msg);
+        this.context.write_to_output_buf(msg);
 
 	if (this.context.output_behaviour === "repl") {
 	    console.log(" > ", ...args);
