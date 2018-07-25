@@ -63,7 +63,7 @@ function make_FSO (opts) {
 
 describe("Scripting.FileSystemObject", () => {
 
-    describe("#BuildPath", () => {
+    /*describe("#BuildPath", () => {
 
         it("should build a path from two parts", () => {
 
@@ -2412,8 +2412,42 @@ describe("Scripting.FileSystemObject", () => {
                 "no wildcards in parent src"
             );
         });
-    });
+    });*/
 
-    const NOOP = () => {};
-    xdescribe("#OpenTextfile", NOOP);
+    describe("#OpenTextfile", () => {
+
+        it("should open an existing stream in read mode using default args", () => {
+
+            const fso = make_FSO();
+            ctx.vfs.AddFile("C:\\src.txt", "Hello world!");
+            const ts = fso.OpenTextFile("C:\\src.txt");
+            assert.equal(ts.ReadAll(), "Hello world!");
+        });
+
+        it("should throw if filepath contains a wildcard", () => {
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_bad_filename_or_number: () => {
+                        throw new Error("no wildcards");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\src.txt");
+            ctx.vfs.AddFile("C:\\Users\\Construct\\Desktop\\foo.txt");
+
+            assert.throws(() => fso.OpenTextfile("C:\\*.txt"), "no wildcards");
+            assert.throws(() => fso.OpenTextFile("C:\\Users\\Construct\\*\\foo.txt"), "no wildcards");
+        });
+
+        it("should create the text file if configured to do so and create the file immediately", () => {
+            const fso = make_FSO();
+            assert.isFalse(ctx.vfs.Exists("C:\\src.txt"));
+            const ts = fso.OpenTextFile("C:\\src.txt", 2, true);
+            assert.isTrue(ctx.vfs.FileExists("C:\\src.txt"));
+        });
+
+
+    });
 });

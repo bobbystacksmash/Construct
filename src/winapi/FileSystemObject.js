@@ -1124,10 +1124,36 @@ class JS_FileSystemObject extends Component {
         this.vfs.MoveFolder(srcpath, dstpath, false);
     }
 
+    // OpenTextFile
+    // ============
+    //
     // Opens a specified file and returns a TextStream object that can
     // be used to read from, write to, or append to the file.
-    opentextfile () {
+    //
+    // This is exactly the same method as used by the
+    // File->OpenAsTextStream, with some minor scaffolding changes
+    // applied.
+    //
+    opentextfile (filepath, iomode, create, format) {
 
+        if (this.vfs.IsWildcard(filepath)) {
+            this.context.exceptions.throw_bad_filename_or_number(
+                "FileSystemObject",
+                "OpenTextFile will not accept a filepath which contains wildcards.",
+                "OpenTextFile will not accept a filepath which contains wildcards."
+            );
+        }
+
+        filepath = this.vfs.Resolve(filepath);
+
+        if (create && this.vfs.Exists(filepath) === false) {
+            this.vfs.AddFile(filepath);
+        }
+        // filepath: relative or absolute
+        // iomode setting is 'ForReading(1)' default
+        // Format setting is 'ASCII' default
+        //
+        return new JS_File(this.context, filepath).OpenAsTextStream(iomode, format);
     }
 }
 
