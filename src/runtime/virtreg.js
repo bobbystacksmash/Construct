@@ -7,17 +7,31 @@ class KeyNode {
         this.values  = {};
     }
 
-    add_subkey (name) {
+    get_subkey (name) {
 
-        let subkey_name_exists = this.subkeys.some((k) => {
+        let subkey = this.subkeys.filter((k) => {
             return k.name.toLowerCase() === name.toLowerCase();
         });
 
-        if (subkey_name_exists) {
-            throw new Error(`Cannot add ${name} - subkey already exists."`);
+        if (subkey.length) {
+            return subkey[0];
         }
 
-        this.subkeys.push(new KeyNode(name));
+        return false;
+    }
+
+    add_subkey (name) {
+
+        const subkey = this.get_subkey(name);
+
+        let key_node = new KeyNode(name);
+        this.subkeys.push(key_node);
+        return key_node;
+    }
+
+    get_value (key) {
+        const value = this.values[key.toLowerCase()];
+        return value;
     }
 
     add_value (key, value) {
@@ -40,25 +54,50 @@ class VirtualRegistry {
     constructor (context) {
         this.context = context;
 
-        this.hklm = new KeyNode("HKEY_LOCAL_MACHINE");
-        this.hkcu = new KeyNode("HKEY_CURRENT_USER");
+        this.reg = {
+            HKEY_CURRENT_USER:  new KeyNode("HKEY_CURRENT_USER"),
+            HKEY_LOCAL_MACHINE: new KeyNode("HKEY_LOCAL_MACHINE"),
+            HKEY_CLASSES_ROOT:  new KeyNode("HKEY_CLASSES_ROOT")
+        };
     }
 
-    _parse_path (path) {
-        // Assume that the path is already an array, meaning we don't
-        // litter all methods with tests about whether the path has
-        // been parsed already.
+
+    // [private] parse_path
+    // ====================
+    //
+    // Given a string, attempts to parse the path as if it were a
+    // registry value.
+    //
+    parse_path (path) {
+
         if (Array.isArray(path)) return path;
 
-        let path_parsed = path.split("\\");
-        return path_parsed;
-    }
+        let path_parsed = path.split("\\"),
+            root = path_parsed.shift();
 
-    _resolve_key (path) {
+        switch (root.toUpperCase()) {
+        case "HKLM":
+            root = "HKEY_LOCAL_MACHINE";
+            break;
+        case "HKCU":
+            root = "HKEY_CURRENT_USER";
+            break;
+        case "HKCR":
+            root = "HKEY_CLASSES_ROOT";
+            break;
+        case "HKEY_LOCAL_MACHINE":
+        case "HKEY_CURRENT_USER":
+        case "HKEY_CLASSES_ROOT":
+            break;
+        default:
+            return false;
+        }
 
-        console.log("attempting to resolve", path);
-
-
+        return {
+            orig:    path_parsed,
+            lowered: path_parsed.map(p => p.toLowerCase()),
+            root:    root
+        };
     }
 
     // Read
@@ -71,16 +110,58 @@ class VirtualRegistry {
     //
     read (path) {
 
+        const parsed_path = this.parse_path(path),
+              subkey      = parsed_path.lowered.pop(),
+              key_node    = this.get_key(parsed_path);
+
+        return key_node.get_value(subkey);
     }
 
     write (path, value) {
-        console.log("VREG [writing] =>", value, "to", path);
+
+        const parsed_path = this.parse_path(path),
+              subkey      = parsed_path.lowered.pop(),
+              root        = this.mkpathp(parsed_path);
+
+        root.add_value(subkey, value);
     }
 
     delete (path) {
 
     }
 
+    get_key (parsed_path) {
+
+        let root = this.reg[parsed_path.root],
+            path = parsed_path.lowered;
+
+        return (function walk (p, root) {
+
+            if (p.length === 0) return root;
+
+            const key = p.shift();
+
+            root = root.get_subkey(key);
+
+            return walk(p, root);
+        }(path, root));
+    }
+
+    mkpathp (parsed_path) {
+
+        let root = this.reg[parsed_path.root],
+            path = parsed_path.lowered;
+
+        return (function walk (p, root) {
+
+            if (p.length === 0) return root;
+
+            const key = p.shift();
+            root = root.add_subkey(key);
+
+            return walk(p, root);
+        }(path, root));
+    }
 }
 
 module.exports = VirtualRegistry;

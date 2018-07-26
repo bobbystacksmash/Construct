@@ -40,20 +40,26 @@ describe("Virtual Registry", () => {
 
     describe("#Write", () => {
 
-        it("should allow keys to be added.", () => {
+        it("should allow keys to be written.", () => {
+            const vreg = make_vreg(),
+                  key  = "HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\foo";
 
-            const vreg = make_vreg();
-            vreg.write("HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Hardware Profiles\\Current");
+            assert.doesNotThrow(() => vreg.write(key, "bar!"));
+            assert.equal(vreg.read(key), "bar!");
+        });
+
+        xit("should create the whole path without needing to create each key along the way", () => {
+            // mkdir -p
         });
     });
 
     xdescribe("#Read", () => {
 
-        it("should return the default value for a key which exists", () => {
+        xit("should ignore case when reading paths", () => {});
 
+        xit("should return the default value for a key which exists", () => {
             const vreg = make_vreg();
-            vreg.write("HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Hello", "hello world");
-
+            vreg.wrte("HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Hello", "hello world");
         });
     });
 });
