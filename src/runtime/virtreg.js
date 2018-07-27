@@ -53,6 +53,8 @@ class KeyNode {
     // =========
     //
     // Associates `key` with `value' in this KeyNode's value store.
+    // If `key' is the empty string ("") then this is interpreted to
+    // mean "the default value".
     add_value (key, value) {
 
         const existing_key = Object.keys(this.values).filter(
@@ -138,6 +140,13 @@ class VirtualRegistry {
         return key_node.get_value(subkey);
     }
 
+    // Write
+    // =====
+    //
+    // Given a `path' and a `value', #Write attempts to add a
+    // key=>value mapping, where the key is the last part of the
+    // `path' string.
+    //
     write (path, value) {
 
         const parsed_path = this.parse_path(path),

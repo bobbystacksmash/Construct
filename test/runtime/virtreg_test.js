@@ -85,20 +85,28 @@ describe("Virtual Registry", () => {
             assert.equal(vreg.read(path.toLowerCase()), "UPPER CASE");
         });
 
-        xit("should create the whole path without needing to create each key along the way", () => {
+        it("should allow writing a default value by sending a path which ends with a backslash", () => {
 
-            const vreg = make_vreg();
+            const vreg = make_vreg(),
+                  path = "HKLM\\aa\\bb\\foo\\";
 
+            vreg.write(path, "this is the default");
+            assert.equal(vreg.read(path), "this is the default");
         });
     });
 
-    xdescribe("#Read", () => {
+    describe("#Read", () => {
 
-        xit("should ignore case when reading paths", () => {});
+        it("should read the default value if the path ends in a backslash", () => {
 
-        xit("should return the default value for a key which exists", () => {
             const vreg = make_vreg();
-            vreg.wrte("HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Hello", "hello world");
+        });
+
+        it("should return the default value for a key which exists", () => {
+            const vreg = make_vreg(),
+                  path = "HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Hello\\";
+            vreg.write(path, "World!");
+            assert.equal(vreg.read(path), "World!");
         });
     });
 });
