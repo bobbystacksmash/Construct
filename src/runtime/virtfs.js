@@ -1403,7 +1403,7 @@ class VirtualFileSystem {
             return;
         }
 
-        this.CopyFolder(isrc, idst, overwrite, true);
+        this.CopyFolder(isrc, idst, overwrite);
         this.Delete(source);
     }
 
@@ -1448,7 +1448,7 @@ class VirtualFileSystem {
                     vfs.mkdirpSync(dstpath);
                     recursive_copy(srcpath, dstpath);
                 }
-                else if (dst_exists  && vfs.statSync(dstpath).isFile() && ! overwrite) {
+                else if (dst_exists && vfs.statSync(dstpath).isFile() && !overwrite) {
                     throw new Error("Copy Folder failed - destination file already exists");
                 }
                 else {

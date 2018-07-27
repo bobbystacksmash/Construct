@@ -398,12 +398,17 @@ class JS_FolderObject extends Component {
     //
     // Moves this folder to `destination', relative to the CWD.
     //
-    move (destination, overwrite) {
+    move (destination) {
         this.ee.emit("Folder.Move");
         this._assert_exists();
 
-        if (overwrite === undefined || overwrite === null) {
-            overwrite = false;
+        if (arguments.length > 1) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "FolderObject",
+                "Folder.Move only accepts one parameter.",
+                "Ensure that exactly one parameter (path) is given to " +
+                    "Folder.Move."
+            );
         }
 
         if (this.vfs.IsWildcard(destination)) {
@@ -423,13 +428,16 @@ class JS_FolderObject extends Component {
             destination = win32path.join(this.context.get_env("path"), destination);
         }
 
-        if (! this.vfs.FolderExists(destination)) {
-            this.vfs.AddFolder(destination);
+        if (this.vfs.FolderExists(destination)) {
+            this.context.exceptions.throw_file_already_exists(
+                "FolderObject",
+                "Destination file exists.",
+                "A file in the destination already exists."
+            );
         }
 
         try {
-            this.vfs.Move(this._path, destination, overwrite);
-            this.vfs.Delete(this._path);
+            this.vfs.MoveFolder(this._path, destination);
             this._path = destination;
         }
         catch (e) {

@@ -11,53 +11,51 @@
  *
  */
 
-const proxify2 = require("../proxify2");
+const proxify   = require("../proxify2");
+const Component = require("../Component");
 
-function Enumerator (ctx) {
+class JS_Enumerator extends Component {
 
-    var ee = ctx.emitter;
+    constructor (context, collection) {
 
-    return function (collection) {
+        super(context, "Enumerator");
+        this.context = context;
 
-        let ptr = 0;
+        this.ee  = this.context.emitter;
+        this.vfs = this.context.vfs;
 
-        collection = (collection && collection.constructor === Array) ? collection : undefined;
+        this.collection = collection;
+        this.ptr = 0;
+    }
 
-        function atEnd () {
+    atend () {
 
-            if (collection === undefined)            return true;
-            else if (ptr >= (collection.length - 1)) return true;
-            else if (collection.length === 0)        return true;
+        if (this.collection === undefined)            return true;
+        else if (this.ptr >= (this.collection.length - 1)) return true;
+        else if (this.collection.length === 0)        return true;
 
-            return false;
-        }
+        return false;
+    }
 
-        function item () {
+    item () {
 
-            if (collection.length === 0)       return undefined;
-            else if (collection === undefined) return undefined;
-            else if (ptr > collection.length)  return undefined;
-            
-            return collection[ptr];
-        }
+        if (this.collection.length === 0)       return undefined;
+        else if (this.collection === undefined) return undefined;
+        else if (this.ptr > this.collection.length)  return undefined;
 
-        function moveFirst () {
-            ptr = 0;
-        }
+        return this.collection[this.ptr];
+    }
 
-        function moveNext () {
-            ptr++;
-        }
+    movefirst () {
+        this.ptr = 0;
+    }
 
-        var Enumerator = {
-            atEnd: atEnd,
-            item: item,
-            moveFirst: moveFirst,
-            moveNext: moveNext
-        };
-
-        return proxify2(Enumerator, "Enumerator", ctx);
+    movenext () {
+        this.ptr++;
     }
 }
 
-module.exports = Enumerator;
+module.exports = function create(context, items) {
+    let enumerator = new JS_Enumerator(context, items);
+    return proxify(context, enumerator);
+};

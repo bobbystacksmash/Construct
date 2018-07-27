@@ -598,14 +598,21 @@ describe("FolderObject", () => {
             assert.equal(folder.path, "C:\\Users\\Construct\\dest");
         });
 
-        it("should move to an existing location without issue", () => {
+        it("should throw if the move-to location already exists", () => {
 
-            const ctx = make_ctx();
-            ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt");
-            ctx.vfs.AddFolder("C:\\dest\\subdir1");
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_file_already_exists: () => {
+                        throw new Error("dst exists");
+                    }
+                }
+            });
 
-            const folder = new Folder(ctx, "C:\\RootOne");
-            assert.doesNotThrow(() => folder.move("C:\\dest"));
+            ctx.vfs.AddFolder("C:\\src");
+            ctx.vfs.AddFolder("C:\\dst");
+
+            const folder = new Folder(ctx, "C:\\src");
+            assert.throws(() => folder.move("C:\\dst"));
         });
 
         it("should move the folder to 'C:\' if relative path tries to expand above C:", () => {
@@ -639,24 +646,20 @@ describe("FolderObject", () => {
             assert.throws(() => folder.move("dest"), "file exists");
         });
 
-        it("should overwrite destination files when overwrite=true", () => {
+        it("should throw when given more than 1 argument", () => {
 
-            const ctx = make_ctx();
-            ctx.vfs.AddFile("C:\\dest\\SubDir1\\foo.txt", "Destination file!");
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_wrong_argc_or_invalid_prop_assign: () => {
+                        throw new Error("too many args");
+                    }
+                }
+            });
             ctx.vfs.AddFile("C:\\RootOne\\SubDir1\\foo.txt", "Source file!");
+            ctx.vfs.AddFile("C:\\dest");
 
             const folder = new Folder(ctx, "C:\\RootOne");
-
-            assert.deepEqual(
-                ctx.vfs.ReadFileContents("C:\\dest\\subdir1\\foo.txt"),
-                Buffer.from("Destination file!")
-            );
-
-            folder.Move("C:\\dest", true);
-            assert.deepEqual(
-                ctx.vfs.ReadFileContents("C:\\dest\\subdir1\\foo.txt"),
-                Buffer.from("Source file!")
-            );
+            assert.throws(() => folder.Move("C:\\dest", true), "too many args");
         });
 
         it("should move all files and folders", () => {
@@ -700,5 +703,25 @@ describe("FolderObject", () => {
 
             assert.equal(folder.toString(), "C:\\RootOne");
         });
+        });
+
+    describe("xx", () => {
+        it("should throw a 'file already exists' if a file exists in the destination", () => {
+
+            const ctx = make_ctx({
+                exceptions: {
+                    throw_file_already_exists: () => {
+                        throw new Error("file exists");
+                    }
+                }
+            });
+
+            ctx.vfs.AddFile("C:\\FROM\\SubDir1\\EXISTS.TXT");
+            ctx.vfs.AddFile("C:\\TO__\\SubDir1\\EXISTS.TXT");
+
+            const folder = new Folder(ctx, "C:\\FROM");
+            assert.throws(() => folder.move("C:\\TO__"), "file exists");
+        });
+
     });
 });

@@ -169,7 +169,8 @@ describe("DriveObject", () => {
 
         it("should return a folder object", () => {
             const d = new Drive(make_ctx());
-            assert.equal(d.RootFolder.name, "C:\\");
+            assert.equal(d.RootFolder.name, "");
+            assert.equal(d.RootFolder.path, "C:\\");
         });
 
         it("should throw if property is assigned to", () => {

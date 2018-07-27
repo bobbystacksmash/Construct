@@ -2,7 +2,6 @@ const Component  = require("../Component");
 const proxify    = require("../proxify2");
 const win32path  = require("path").win32;
 const Drive      = require("./DriveObject");
-const Folder     = require("./FolderObject");
 const TextStream = require("./TextStream");
 
 class JS_FileObject extends Component {
@@ -181,6 +180,10 @@ class JS_FileObject extends Component {
     // already the root.
     //
     get parentfolder () {
+
+        // We require `Folder' here to avoid issues surrounding cyclic
+        // dependencies.
+        const Folder = require("./FolderObject");
 
         this._assert_exists();
 
@@ -400,7 +403,7 @@ class JS_FileObject extends Component {
             );
         }
 
-        this.vfs.Move(this._path, destination);
+        this.vfs.MoveFile(this._path, destination);
         this._path = destination;
     }
 
