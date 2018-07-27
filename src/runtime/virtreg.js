@@ -113,11 +113,11 @@ class VirtualRegistry {
         case "HKEY_CLASSES_ROOT":
             break;
         default:
-            return false;
+            throw new Error("Invalid root: " + root);
         }
 
         return {
-            orig:    path_parsed,
+            orig:    path,
             lowered: path_parsed.map(p => p.toLowerCase()),
             root:    root.toUpperCase()
         };
@@ -166,6 +166,10 @@ class VirtualRegistry {
             path = parsed_path.lowered;
 
         return (function walk (p, root) {
+
+            if (root.get_subkey === undefined) {
+                throw new Error(`Unable to open registry key: ${parsed_path.orig}`);
+            }
 
             if (p.length === 0) return root;
 
