@@ -7,6 +7,13 @@ class KeyNode {
         this.values  = {};
     }
 
+    // Get Subkey
+    // ==========
+    //
+    // Searches for `name' in this KeyNode's subkey values.  If `name'
+    // matches an existing subkey, that subkey is returned, otherwise
+    // `false' is returned.
+    //
     get_subkey (name) {
 
         let subkey = this.subkeys.filter((k) => {
@@ -20,6 +27,9 @@ class KeyNode {
         return false;
     }
 
+    // Add Subkey
+    // ==========
+    //
     add_subkey (name) {
 
         const subkey = this.get_subkey(name);
@@ -29,11 +39,20 @@ class KeyNode {
         return key_node;
     }
 
+    // Get Value
+    // =========
+    //
+    // Attempts to return the value associated with `key'.
+    //
     get_value (key) {
         const value = this.values[key.toLowerCase()];
         return value;
     }
 
+    // Add Value
+    // =========
+    //
+    // Associates `key` with `value' in this KeyNode's value store.
     add_value (key, value) {
 
         const existing_key = Object.keys(this.values).filter(
@@ -61,6 +80,8 @@ class VirtualRegistry {
         };
     }
 
+    get_vreg () {
+    }
 
     // [private] parse_path
     // ====================
@@ -96,7 +117,7 @@ class VirtualRegistry {
         return {
             orig:    path_parsed,
             lowered: path_parsed.map(p => p.toLowerCase()),
-            root:    root
+            root:    root.toUpperCase()
         };
     }
 
@@ -112,7 +133,7 @@ class VirtualRegistry {
 
         const parsed_path = this.parse_path(path),
               subkey      = parsed_path.lowered.pop(),
-              key_node    = this.get_key(parsed_path);
+              key_node    = this.get_key(parsed_path, subkey);
 
         return key_node.get_value(subkey);
     }
@@ -130,7 +151,7 @@ class VirtualRegistry {
 
     }
 
-    get_key (parsed_path) {
+    get_key (parsed_path, value_key) {
 
         let root = this.reg[parsed_path.root],
             path = parsed_path.lowered;
@@ -140,7 +161,6 @@ class VirtualRegistry {
             if (p.length === 0) return root;
 
             const key = p.shift();
-
             root = root.get_subkey(key);
 
             return walk(p, root);
@@ -156,8 +176,15 @@ class VirtualRegistry {
 
             if (p.length === 0) return root;
 
-            const key = p.shift();
-            root = root.add_subkey(key);
+            const subkey_name = p.shift(),
+                  key         = root.get_subkey(subkey_name);
+
+            if (key === false) {
+                root = root.add_subkey(subkey_name);
+            }
+            else {
+                root = key;
+            }
 
             return walk(p, root);
         }(path, root));

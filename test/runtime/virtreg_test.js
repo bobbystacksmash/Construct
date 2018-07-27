@@ -42,14 +42,53 @@ describe("Virtual Registry", () => {
 
         it("should allow keys to be written.", () => {
             const vreg = make_vreg(),
-                  key  = "HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\foo";
+                  path = "HKEY_LOCAL_MACHINE\\foo\\bar\\key";
 
-            assert.doesNotThrow(() => vreg.write(key, "bar!"));
-            assert.equal(vreg.read(key), "bar!");
+            assert.doesNotThrow(() => vreg.write(path, "value!"));
+            assert.equal(vreg.read(path), "value!");
+        });
+
+        it("should allow keys to be overwritten", () => {
+
+            const vreg = make_vreg(),
+                  path = "HKEY_LOCAL_MACHINE\\aa\\bb\\foo";
+
+            assert.doesNotThrow(() => vreg.write(path, "bar!"));
+            assert.equal(vreg.read(path), "bar!");
+
+            assert.doesNotThrow(() => vreg.write(path, "testing"));
+            assert.equal(vreg.read(path), "testing");
+        });
+
+        it("should allow 'HKLM' and 'HKEY_LOCAL_MACHINE' to be used interchangeably", () => {
+
+            const vreg1     = make_vreg(),
+                  vreg2     = make_vreg(),
+                  short_key = "HKLM\\aa\\bb\\foo",
+                  long_key  = "HKEY_LOCAL_MACHINE\\aa\\bb\\foo";
+
+            // write(HKLM) -> read(HKEY_LOCAL_MACHINE)
+            vreg1.write(short_key, "Hello, World!");
+            assert.equal(vreg1.read(long_key), "Hello, World!");
+
+            // write(HKEY_LOCAL_MACHINE) -> read(HKLM)
+            vreg2.write(long_key, "Hello, World!");
+            assert.equal(vreg2.read(short_key), "Hello, World!");
+        });
+
+        it("should ignore case differences between paths", () => {
+
+            const vreg = make_vreg(),
+                  path = "HKEY_LOCAL_MACHINE\\aa\\bb\\foo";
+
+            vreg.write(path.toUpperCase(), "UPPER CASE");
+            assert.equal(vreg.read(path.toLowerCase()), "UPPER CASE");
         });
 
         xit("should create the whole path without needing to create each key along the way", () => {
-            // mkdir -p
+
+            const vreg = make_vreg();
+
         });
     });
 
