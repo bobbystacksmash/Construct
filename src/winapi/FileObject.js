@@ -400,7 +400,7 @@ class JS_FileObject extends Component {
             );
         }
 
-        this.vfs.Move(this._path, destination);
+        this.vfs.MoveFile(this._path, destination);
         this._path = destination;
     }
 
