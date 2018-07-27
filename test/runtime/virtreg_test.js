@@ -97,11 +97,6 @@ describe("Virtual Registry", () => {
 
     describe("#Read", () => {
 
-        it("should read the default value if the path ends in a backslash", () => {
-
-            const vreg = make_vreg();
-        });
-
         it("should return the default value for a key which exists", () => {
             const vreg = make_vreg(),
                   path = "HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Hello\\";
@@ -109,4 +104,6 @@ describe("Virtual Registry", () => {
             assert.equal(vreg.read(path), "World!");
         });
     });
+
+    describe("#Delete", () => {});
 });
