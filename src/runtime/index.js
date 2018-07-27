@@ -1,5 +1,6 @@
 const HostContext    = require("./hostcontext");
 const detect_globals = require("acorn-globals");
+const capture_eval   = require("../../lib/eval/capture");
 const fs             = require("fs");
 const istanbul       = require("istanbul");
 const EventEmitter2  = require("eventemitter2").EventEmitter2;
@@ -155,6 +156,18 @@ Runtime.prototype._make_runnable = function () {
             done();
         }
 
+        function __EVAL__ (str) {
+            // Just a simple identity function which captures the
+            // incoming `str'.
+            ee.emit("eval", str);
+
+            // TODO
+            // We can instrument the code here before handing it to
+            // eval so we can collect more metrics about it.
+            return str;
+        }
+
+        // All of the constructable JScript types are set here.
         var sandbox = {
             Date          : context.get_component("Date"),
             WScript       : context.get_component("WScript"),
@@ -162,17 +175,14 @@ Runtime.prototype._make_runnable = function () {
             console       : console
         };
 
+        // Add the dynamic properties such as one-time names:
 	sandbox[completed_fn_name] = script_finished;
+        sandbox["__EVALCAP__"] = __EVAL__;
 
         vm.createContext(sandbox);
 
 	try {
-            vm.runInContext(assembled_code,
-			    sandbox,
-			    {
-				"timeout": 2000
-			    });
-
+            vm.runInContext(assembled_code, sandbox, { "timeout": 2000 });
 	}
 	catch (e) {
 
@@ -244,11 +254,13 @@ Runtime.prototype._filter_interesting_events  = function () {
 Runtime.prototype._instrument_code = function (code_file_contents) {
 
     let covered_code         = this._instrument_inject_coverage(code_file_contents),
-        hoisted_globals_code = this._instrument_hoist_global_defs(covered_code);
+        hoisted_globals_code = this._instrument_hoist_global_defs(covered_code),
+        eval_captured_code   = this._instrument_capture_eval(code_file_contents);
 
     this.instrumented_code = {
         covered_code      : covered_code,
         hoisted_globals   : hoisted_globals_code,
+        evalcap_code      : eval_captured_code,
         completed_fn_name : `___cstruct_completed_${new Date().getTime()}` // Needs thought.
     };
 }
@@ -275,27 +287,26 @@ Runtime.prototype._assemble_runnable = function () {
     // |                  | the end of script-exec so we
     // +------------------+ can capture coverage information.
     //
+    let code_to_run = [];
+
     // Let's assemble the code we'll eventually run, starting
-    // with globals.
-    let assembled_code = inscode.hoisted_globals;
+    // with globals:
+    code_to_run.push(inscode.hoisted_globals);
     //
     // Now let's add in the debugger...
     //
-    assembled_code += `\n\ndebugger;\n\n`;
+    code_to_run.push(`\n\ndebugger;\n\n`);
     //
     // ...and now our heavily instrumented coveraged code...
     //
-    assembled_code += inscode.covered_code;
+    code_to_run.push(inscode.evalcap_code);
     //
     // ...finally, the function call we use to grab coverage
     // info and bring it back to something we can analyse.
-    assembled_code += `\n\n${inscode.completed_fn_name}(__coverage__);`;
+    code_to_run.push(`\n\n${inscode.completed_fn_name}(__coverage__);`);
 
-    this.assembled_code = assembled_code;
+    this.assembled_code = code_to_run.join("\n");
 }
-
-
-
 
 Runtime.prototype._instrument_hoist_global_defs = function(code) {
 
@@ -326,14 +337,14 @@ Runtime.prototype._instrument_hoist_global_defs = function(code) {
     return unreserved_globals.join("\n");
 }
 
-
+Runtime.prototype._instrument_capture_eval = function (code) {
+    return capture_eval(code, "__EVALCAP__");
+}
 
 
 Runtime.prototype._instrument_inject_coverage = function (code, options) {
     options = options || {};
-
     let covered_code = instrumenter.instrumentSync(code, this.file_path);
-
     return covered_code;
 }
 
