@@ -60,7 +60,7 @@ describe("Virtual Registry", () => {
             assert.equal(vreg.read(path), "testing");
         });
 
-        it("should allow 'HKLM' and 'HKEY_LOCAL_MACHINE' to be used interchangeably", () => {
+        it("should use 'HKLM' and 'HKEY_LOCAL_MACHINE' interchangeably", () => {
 
             const vreg1     = make_vreg(),
                   vreg2     = make_vreg(),
@@ -85,7 +85,7 @@ describe("Virtual Registry", () => {
             assert.equal(vreg.read(path.toLowerCase()), "UPPER CASE");
         });
 
-        it("should allow writing a default value by sending a path which ends with a backslash", () => {
+        it("should write a default value a path ends with a backslash", () => {
 
             const vreg = make_vreg(),
                   path = "HKLM\\aa\\bb\\foo\\";
@@ -97,11 +97,31 @@ describe("Virtual Registry", () => {
 
     describe("#Read", () => {
 
+        it("should read the default value if the path ends in a backslash", () => {
+            const vreg = make_vreg();
+            // todo
+        });
+
         it("should return the default value for a key which exists", () => {
             const vreg = make_vreg(),
                   path = "HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Hello\\";
             vreg.write(path, "World!");
             assert.equal(vreg.read(path), "World!");
+        });
+
+        it("should throw 'invalid root' when trying to read an unknown root", () => {
+            const vreg = make_vreg();
+            assert.throws(() => vreg.read("FOOBAR\\baz"), "Invalid root: FOOBAR");
+        });
+
+        it("should throw when unable to open an non-existant registry key", () => {
+
+            const vreg = make_vreg(),
+                  path = "HKEY_LOCAL_MACHINE\\aa\\bb\\cc";
+
+            assert.throws(
+                () => vreg.read(path), `Unable to open registry key: ${path}`
+            );
         });
     });
 
