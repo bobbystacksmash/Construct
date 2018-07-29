@@ -1,6 +1,4 @@
 const HostContext    = require("./hostcontext");
-const detect_globals = require("acorn-globals");
-const capture_eval   = require("../../lib/eval/capture");
 const fs             = require("fs");
 const istanbul       = require("istanbul");
 const EventEmitter2  = require("eventemitter2").EventEmitter2;
@@ -8,10 +6,7 @@ const urlparse       = require("url-parse");
 const vm             = require("vm");
 const glob           = require("glob");
 const path           = require("path");
-
-var instrumenter = new istanbul.Instrumenter(),
-    cover_utils  = istanbul.utils,
-    collector    = new istanbul.Collector();
+const CodeRewriter   = require("../../lib/metaprogramming");
 
 
 function Runtime (options) {
@@ -25,8 +20,6 @@ function Runtime (options) {
         epoch   : this.epoch
     });
 
-    // Load routes
-    // TODO: Read this from a config file.
     this.load_plugins("./plugins");
 
     return this;
@@ -41,18 +34,12 @@ Runtime.prototype.load = function(path_to_file, options) {
     this.instrumented_code = null;
 
     try {
-        this.file_contents = fs.readFileSync(path_to_file).toString();
+        this.source_code = fs.readFileSync(path_to_file).toString();
     }
     catch (e) {
         throw e;
     }
 
-    this._instrument_code(this.file_contents);
-    this._assemble_runnable();
-
-    // We now have `this.assembled_code`, which holds code that's ready to run, but
-    // in order to do so, it needs its support scaffolding (the real magic).  Let's
-    // add all of that now...
     return this._make_runnable();
 };
 
@@ -117,88 +104,80 @@ Runtime.prototype._make_runnable = function () {
 
     let events            = this.events,
         assembled_code    = this.assembled_code,
-        completed_fn_name = this.instrumented_code.completed_fn_name,
         epoch             = this.context.epoch,
         ee                = this.context.emitter,
         context           = this.context;
 
-     ee.on("**", function (x) {
-
-        if (this.event.startsWith("DEBUG") || this.event.startsWith("Report")) {
-            return;
-        }
-
-        events.push({
-            event: this.event,
-            args: x,
-            t: new Date().getTime()
-        });
-    });
+    // ############
+    // # Coverage #
+    // ############
+    var instrumenter = new istanbul.Instrumenter(),
+        cover_utils  = istanbul.utils,
+        collector    = new istanbul.Collector();
 
     var self = this;
 
-    return function (done) {
+    function collect_coverage_info(coverage_obj) {
 
-        function script_finished(x) {
+        collector.add(coverage_obj);
 
-            collector.add(x);
-
-            let key = collector.files()[0];
-
-            let coverage_report = {
+        let key        = collector.files()[0],
+            cov_report = {
                 filename: key,
-                report: cover_utils.summarizeFileCoverage(collector.fileCoverageFor(key))
+                report:   cover_utils.summarizeFileCoverage(collector.fileCoverageFor(key))
             };
 
-            self.coverage           = coverage_report;
-            //self.interesting_events = self._filter_interesting_events();
+        self.coverage = cov_report;
+    };
 
+    // ################
+    // # Capture Eval #
+    // ################
+    function capture_eval (evalarg) {
+        ee.emit("capture eval", evalarg);
+        return evalarg;
+    }
+
+    // Instrument the code...
+    const rewrite_code = new CodeRewriter(this.source_code);
+    rewrite_code
+        .using("capture eval", { fn_name: "capture_eval" })
+        .using("hoist globals")
+        .using("coverage", { oncomplete: "collect_coverage_info" });
+
+    // All of the constructable JScript types are set here.
+    var sandbox = {
+        Date          : context.get_component("Date"),
+        WScript       : context.get_component("WScript"),
+        ActiveXObject : context.get_component("ActiveXObject"),
+        console       : console
+    };
+
+    // Add the dynamic properties such as one-time names:
+    sandbox["collect_coverage_info"] = collect_coverage_info;
+    sandbox["capture_eval"]          = capture_eval;
+
+    vm.createContext(sandbox);
+
+    return function (done) {
+        try {
+            vm.runInContext(rewrite_code.source(), sandbox, { "timeout": 2000 });
             done();
         }
-
-        function __EVAL__ (str) {
-            // Just a simple identity function which captures the
-            // incoming `str'.
-            ee.emit("eval", str);
-
-            // TODO
-            // We can instrument the code here before handing it to
-            // eval so we can collect more metrics about it.
-            return str;
-        }
-
-        // All of the constructable JScript types are set here.
-        var sandbox = {
-            Date          : context.get_component("Date"),
-            WScript       : context.get_component("WScript"),
-            ActiveXObject : context.get_component("ActiveXObject"),
-            console       : console
-        };
-
-        // Add the dynamic properties such as one-time names:
-	sandbox[completed_fn_name] = script_finished;
-        sandbox["__EVALCAP__"] = __EVAL__;
-
-        vm.createContext(sandbox);
-
-	try {
-            vm.runInContext(assembled_code, sandbox, { "timeout": 2000 });
-	}
-	catch (e) {
+        catch (e) {
 
 	    if (e.message === "Script execution timed out.") {
-		// TODO...
+	        // TODO...
 	    }
 	    else {
-		console.log(e);
+	        console.log(e);
 	    }
-	}
+        }
     };
 };
 
 
 Runtime.prototype._filter_interesting_events  = function () {
-
 
     // Collect high-severity events
     let high_severity_events = this.events
@@ -247,106 +226,6 @@ Runtime.prototype._filter_interesting_events  = function () {
         },
         url: url_based_events
     };
-}
-
-
-
-Runtime.prototype._instrument_code = function (code_file_contents) {
-
-    let covered_code         = this._instrument_inject_coverage(code_file_contents),
-        hoisted_globals_code = this._instrument_hoist_global_defs(covered_code),
-        eval_captured_code   = this._instrument_capture_eval(code_file_contents);
-
-    this.instrumented_code = {
-        covered_code      : covered_code,
-        hoisted_globals   : hoisted_globals_code,
-        evalcap_code      : eval_captured_code,
-        completed_fn_name : `___cstruct_completed_${new Date().getTime()}` // Needs thought.
-    };
-}
-
-
-Runtime.prototype._assemble_runnable = function () {
-
-    let inscode = this.instrumented_code;
-
-    // The outline of the code we run should look like this:
-    //
-    // +------------------+
-    // |                  |
-    // |  var foo;        | Hoisted globals, detected
-    // |  var bar;        | and added by the instrumenter.
-    // |                  |
-    // |  debugger;       | Debugger statement, injected
-    // |                  | for use with the debugger.
-    // |                  |
-    // |  <<code>>        | Code, as loaded from disk with
-    // |                  | all coverage info added.
-    // |                  |
-    // |  done(coverage); | Added by us to be called at
-    // |                  | the end of script-exec so we
-    // +------------------+ can capture coverage information.
-    //
-    let code_to_run = [];
-
-    // Let's assemble the code we'll eventually run, starting
-    // with globals:
-    code_to_run.push(inscode.hoisted_globals);
-    //
-    // Now let's add in the debugger...
-    //
-    code_to_run.push(`\n\ndebugger;\n\n`);
-    //
-    // ...and now our heavily instrumented coveraged code...
-    //
-    code_to_run.push(inscode.evalcap_code);
-    //
-    // ...finally, the function call we use to grab coverage
-    // info and bring it back to something we can analyse.
-    code_to_run.push(`\n\n${inscode.completed_fn_name}(__coverage__);`);
-
-    this.assembled_code = code_to_run.join("\n");
-}
-
-Runtime.prototype._instrument_hoist_global_defs = function(code) {
-
-    // JScript treats these variables as global (non-strict JS).  As
-    // we always run in strict mode, we clean-up these globals, and
-    // declare them at the top-level using `var`.
-    const reserved_globals = [
-        "Function",
-        "ActiveXObject",
-        "eval",
-        "this",
-        "String",
-        "parseInt",
-        "RegExp",
-        "Array",
-        "Date",
-        "WScript"
-    ];
-
-    let reserved_globals_RE     = new RegExp("^(?:" + reserved_globals.join("|") + ")$"),
-        list_of_all_globals     = detect_globals(code),
-        unreserved_globals      = [];
-
-    list_of_all_globals
-        .filter((g) => !reserved_globals_RE.test(g.name))          // Filter out reserved globals...
-        .map((g) => unreserved_globals.push(`var ${g.name};`)); // Anything that's left gets var'd.
-
-    return unreserved_globals.join("\n");
-}
-
-Runtime.prototype._instrument_capture_eval = function (code) {
-    return capture_eval(code, "__EVALCAP__");
-}
-
-
-Runtime.prototype._instrument_inject_coverage = function (code, options) {
-    options = options || {};
-    let covered_code = instrumenter.instrumentSync(code, this.file_path);
-    return covered_code;
-}
-
+};
 
 module.exports = Runtime;

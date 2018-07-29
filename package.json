@@ -4,10 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-
     "test": "node_modules/.bin/mocha --reporter dot -w ./test/winapi/FileObject_test.js",
-
-
     "test_runtime": "node_modules/.bin/mocha --reporter dot -w ./test/runtime/**/*_test.js",
     "test_winapi": "node_modules/.bin/mocha --reporter dot -w ./test/winapi/**/*_test.js",
     "testall": "node_modules/.bin/mocha --reporter nyan -w ./test/**/*_test.js",
@@ -22,7 +19,8 @@
     "chai": "^4.1.2",
     "expect": "^21.2.1",
     "mocha": "^4.0.1",
-    "mocha-cli": "^1.0.1"
+    "mocha-cli": "^1.0.1",
+    "nodemon": "^1.18.3"
   },
   "dependencies": {
     "acorn": "^5.2.1",
