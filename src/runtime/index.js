@@ -162,7 +162,7 @@ Runtime.prototype._make_runnable = function () {
     return function (done) {
         try {
             vm.runInContext(rewrite_code.source(), sandbox, { "timeout": 2000 });
-            done();
+            done(null, { "success": true });
         }
         catch (e) {
 
@@ -172,6 +172,8 @@ Runtime.prototype._make_runnable = function () {
 	    else {
 	        console.log(e);
 	    }
+
+            done(e);
         }
     };
 };
