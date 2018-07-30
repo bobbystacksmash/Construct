@@ -1,4 +1,5 @@
 const VirtualFileSystem = require("./virtfs");
+const VirtualRegistry   = require("./virtreg");
 const EventEmitter2     = require("eventemitter2").EventEmitter2;
 const ExceptionHandler = require("../ExceptionHandler");
 const JScript_Date          = require("../winapi/Date");
@@ -169,6 +170,10 @@ class HostContext {
 	this.components["VirtualFileSystem"] = new VirtualFileSystem(this);
 	this.register("VirtualFileSystem", this.components["VirtualfileSystem"]);
 	this.vfs = this.components["VirtualFileSystem"];
+
+        this.components["VirtualRegistry"] = new VirtualRegistry(this);
+        this.register("VirtualRegistry", this.components["VirtualRegistry"]);
+        this.vreg = this.components["VirtualRegistry"];
 
 	// The exception-thrower is an guard against VM code throwing
 	// exceptions without providing sufficient documentation that

@@ -93,6 +93,13 @@ describe("Virtual Registry", () => {
             vreg.write(path, "this is the default");
             assert.equal(vreg.read(path), "this is the default");
         });
+
+        it("should throw 'invalid root' when trying to write an unknown root", () => {
+            // TODO
+        });
+
+        // TODO: what about paths which don't yet exist - are they auto-vivified?
+
     });
 
     describe("#Read", () => {
@@ -120,10 +127,16 @@ describe("Virtual Registry", () => {
                   path = "HKEY_LOCAL_MACHINE\\aa\\bb\\cc";
 
             assert.throws(
-                () => vreg.read(path), `Unable to open registry key: ${path}`
+                () => vreg.read(path), `Unable to open registry key - path not found: ${path}`
             );
         });
     });
 
-    describe("#Delete", () => {});
+    describe("#Delete", () => {
+
+        it("should delete an existing key.", () => {});
+        it("should delete the default value if ending in a trailing slash", () => {});
+        it("shuold throw when trying to delete a path from an unknown root", () => {});
+
+    });
 });

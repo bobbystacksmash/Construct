@@ -168,7 +168,7 @@ class VirtualRegistry {
         return (function walk (p, root) {
 
             if (root.get_subkey === undefined) {
-                throw new Error(`Unable to open registry key: ${parsed_path.orig}`);
+                throw new Error(`Unable to open registry key - path not found: ${parsed_path.orig}`);
             }
 
             if (p.length === 0) return root;

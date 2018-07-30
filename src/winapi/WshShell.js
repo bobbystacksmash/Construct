@@ -277,10 +277,15 @@ class JS_WshShell extends Component {
     }
 
     regread (key) {
-        console.log("REGREAD", key);
-        console.log("WshShell.RegRead", arguments);
+        return this.context.vreg.read(key);
+    }
 
-        // TODO!
+    regwrite (key, value) {
+        this.context.vreg.write(key, value);
+    }
+
+    regdelete (key) {
+        this.context.vreg.delete(key);
     }
 }
 
