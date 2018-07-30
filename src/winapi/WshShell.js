@@ -60,7 +60,35 @@ class JS_WshShell extends Component {
         this.context.ENVIRONMENT.CurrentDirectory = new_cwd;
     }
 
-
+    //
+    // Environment
+    // ~~~~~~~~~~~
+    //
+    // MSDN: https://msdn.microsoft.com/fr-fr/library/fd7hxfdd(v=vs.84).aspx
+    //
+    // SYNOPSIS
+    // ========
+    //
+    // Returns the WshEnvironment object (a collection of environment
+    // variables).
+    //
+    // ARGUMENTS
+    // =========
+    //
+    //   - `type' [optional]
+    //      Specifies the location of the environment variable.
+    //
+    // USAGE
+    // =====
+    //
+    //   var WshShell = WScript.CreateObject("WScript.Shell");
+    //   var WshSysEnv = WshShell.Environment("SYSTEM");
+    //   WScript.Echo(WshSysEnv("NUMBER_OF_PROCESSORS"));
+    //
+    environment (type) {
+        this.ee.emit("@WshShell.Environment", { env_type: type, args: arguments });
+        return new JS_WshEnvironment(this.context, type);
+    }
     // MSDN: https://msdn.microsoft.com/en-gb/library/0ea7b5xe(v=vs.84).aspx
     //
     // SYNOPSIS
@@ -102,36 +130,10 @@ class JS_WshShell extends Component {
         };
     }
 
+    // =======
+    // METHODS
+    // =======
     //
-    // Environment
-    // ~~~~~~~~~~~
-    //
-    // MSDN: https://msdn.microsoft.com/fr-fr/library/fd7hxfdd(v=vs.84).aspx
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // Returns the WshEnvironment object (a collection of environment
-    // variables).
-    //
-    // ARGUMENTS
-    // =========
-    //
-    //   - `type' [optional]
-    //      Specifies the location of the environment variable.
-    //
-    // USAGE
-    // =====
-    //
-    //   var WshShell = WScript.CreateObject("WScript.Shell");
-    //   var WshSysEnv = WshShell.Environment("SYSTEM");
-    //   WScript.Echo(WshSysEnv("NUMBER_OF_PROCESSORS"));
-    //
-    environment (type) {
-        this.ee.emit("@WshShell.Environment", { env_type: type, args: arguments });
-        return new JS_WshEnvironment(this.context, type);
-    }
-
     //
     // AppActivate
     // ~~~~~~~~~~~
@@ -276,6 +278,18 @@ class JS_WshShell extends Component {
         /// TODO...
     }
 
+    logevent(type, message, target) {
+
+    }
+
+    popup (text, delay_seconds, title, type) {
+
+    }
+
+    regdelete (key) {
+        this.context.vreg.delete(key);
+    }
+
     regread (key) {
         return this.context.vreg.read(key);
     }
@@ -284,8 +298,12 @@ class JS_WshShell extends Component {
         this.context.vreg.write(key, value);
     }
 
-    regdelete (key) {
-        this.context.vreg.delete(key);
+    run (command) {
+
+    }
+
+    sendkeys (keystroke) {
+
     }
 }
 
