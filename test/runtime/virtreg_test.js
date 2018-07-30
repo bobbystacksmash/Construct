@@ -127,14 +127,25 @@ describe("Virtual Registry", () => {
                   path = "HKEY_LOCAL_MACHINE\\aa\\bb\\cc";
 
             assert.throws(
-                () => vreg.read(path), `Unable to open registry key - path not found: ${path}`
+                () => vreg.read(path),
+                `Unable to open registry key - path not found: ${path}`
             );
         });
     });
 
     describe("#Delete", () => {
 
-        it("should delete an existing key.", () => {});
+        it("should delete an existing key.", () => {
+            const vreg = make_vreg(),
+                  path = "HKLM\\foo\\bar\\baz";
+
+            vreg.write(path, "hello world");
+            assert.equal(vreg.read(path), "hello world");
+
+            assert.doesNotThrow(vreg.delete(path));
+        });
+
+
         it("should delete the default value if ending in a trailing slash", () => {});
         it("shuold throw when trying to delete a path from an unknown root", () => {});
 

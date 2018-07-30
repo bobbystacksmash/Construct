@@ -1,3 +1,27 @@
+//
+// Construct's Virtual Registry
+// ============================
+//
+//   SOFTWARE/                      <-- Key
+//   SYSTEM/                        <-- Key
+//     +-- ControlSet001/
+//     +-- ControlSet003/
+//     +-- CurrentControlSet/
+//     +-- LastKnownGood/
+//     +-- MountedDevices/
+//     +-- Select/                  <-- Subkey
+//         |
+//         +-- (Default) => alpha   <-- Value
+//         +-- Current   => bravo   <-- Value
+//         +-- Foobar    => tango   <-- Value
+//
+// When a registry path ends with a separator, for example:
+//
+//   HKLM\SYSTEM\Select\
+//
+// We interpret this to mean "read the key's default value", which in
+// this case would return "alpha".
+
 
 class KeyNode {
 
@@ -66,6 +90,14 @@ class KeyNode {
         }
 
         this.values[key] = value;
+    }
+
+    // Delete Value
+    // ============
+    //
+    // Deletes a given registry value.
+    delete_value (key) {
+
     }
 }
 
@@ -157,6 +189,8 @@ class VirtualRegistry {
     }
 
     delete (path) {
+        const parsed_path = this.parse_path(path),
+              subkey      = parsed_path.lowered.pop();
 
     }
 
@@ -168,7 +202,10 @@ class VirtualRegistry {
         return (function walk (p, root) {
 
             if (root.get_subkey === undefined) {
-                throw new Error(`Unable to open registry key - path not found: ${parsed_path.orig}`);
+                throw new Error(
+                    `Unable to open registry key - ` +
+                        `path not found: ${parsed_path.orig}`
+                );
             }
 
             if (p.length === 0) return root;
