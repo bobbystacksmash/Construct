@@ -38,7 +38,7 @@ function make_vreg (opts) {
 
 describe("Virtual Registry", () => {
 
-    describe("#Write", () => {
+    xdescribe("#Write", () => {
 
         it("should allow keys to be written.", () => {
             const vreg = make_vreg(),
@@ -102,26 +102,41 @@ describe("Virtual Registry", () => {
 
     });
 
+    describe("#ResolvePath", () => {
+
+        it("should return a resolved path object for a path which points to a value", () => {
+
+            const vreg  = make_vreg(),
+                  path  = "HKLM\\System\\foo\\bar",
+                  value = "hello world!";
+
+            vreg.write(path, value);
+            const resolved = vreg.resolve_path(path);
+
+        });
+
+    });
+
     describe("#Read", () => {
 
-        it("should read the default value if the path ends in a backslash", () => {
+        xit("should read the default value if the path ends in a backslash", () => {
             const vreg = make_vreg();
             // todo
         });
 
-        it("should return the default value for a key which exists", () => {
+        xit("should return the default value for a key which exists", () => {
             const vreg = make_vreg(),
                   path = "HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Hello\\";
             vreg.write(path, "World!");
             assert.equal(vreg.read(path), "World!");
         });
 
-        it("should throw 'invalid root' when trying to read an unknown root", () => {
+        xit("should throw 'invalid root' when trying to read an unknown root", () => {
             const vreg = make_vreg();
             assert.throws(() => vreg.read("FOOBAR\\baz"), "Invalid root: FOOBAR");
         });
 
-        it("should throw when unable to open an non-existant registry key", () => {
+        xit("should throw when unable to open an non-existant registry key", () => {
 
             const vreg = make_vreg(),
                   path = "HKEY_LOCAL_MACHINE\\aa\\bb\\cc";
@@ -133,17 +148,24 @@ describe("Virtual Registry", () => {
         });
     });
 
-    describe("#Delete", () => {
+    xdescribe("#Delete", () => {
 
-        it("should delete an existing key.", () => {
+        it("should delete an existing value.", () => {
             const vreg = make_vreg(),
                   path = "HKLM\\foo\\bar\\baz";
 
             vreg.write(path, "hello world");
             assert.equal(vreg.read(path), "hello world");
+            assert.doesNotThrow(() => vreg.delete(path));
 
-            assert.doesNotThrow(vreg.delete(path));
+            assert.throws(() => vreg.read(path));
         });
+
+        it("should throw when trying to delete a value which cannot be found", () => {});
+
+        it("should delete the entire key when path ends with a backslash", () => {});
+
+        it("should throw when trying to delete a key which cannot be found", () => {});
 
 
         it("should delete the default value if ending in a trailing slash", () => {});

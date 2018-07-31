@@ -2,14 +2,15 @@
 // Construct's Virtual Registry
 // ============================
 //
+// The registry is a tree of KeyNodes.
+//
+//
 //   SOFTWARE/                      <-- Key
 //   SYSTEM/                        <-- Key
-//     +-- ControlSet001/
-//     +-- ControlSet003/
-//     +-- CurrentControlSet/
-//     +-- LastKnownGood/
-//     +-- MountedDevices/
-//     +-- Select/                  <-- Subkey
+//     +-- ControlSet001/           <-- Sub-key of SYSTEM
+//     +-- ControlSet003/           <-- Sub-key of SYSTEM
+//     +-- CurrentControlSet/       <-- Sub-key of SYSTEM
+//     +-- Select/                  <-- Sub-key of SYSTEM
 //         |
 //         +-- (Default) => alpha   <-- Value
 //         +-- Current   => bravo   <-- Value
@@ -25,18 +26,17 @@
 
 class KeyNode {
 
-    constructor (name) {
+    constructor (name, parent) {
         this.name   = name;
         this.subkeys = [];
         this.values  = {};
+        this.parent  = parent; // the parent may be null
     }
 
     // Get Subkey
     // ==========
     //
-    // Searches for `name' in this KeyNode's subkey values.  If `name'
-    // matches an existing subkey, that subkey is returned, otherwise
-    // `false' is returned.
+    // Attempts to find and return the subkey of the current KeyNode.
     //
     get_subkey (name) {
 
@@ -54,11 +54,13 @@ class KeyNode {
     // Add Subkey
     // ==========
     //
+    // Adds `name' to the set of subkeys for this KeyNode.
+    //
     add_subkey (name) {
 
         const subkey = this.get_subkey(name);
 
-        let key_node = new KeyNode(name);
+        let key_node = new KeyNode(name, this);
         this.subkeys.push(key_node);
         return key_node;
     }
@@ -108,27 +110,78 @@ class VirtualRegistry {
         this.context = context;
 
         this.reg = {
-            HKEY_CURRENT_USER:  new KeyNode("HKEY_CURRENT_USER"),
-            HKEY_LOCAL_MACHINE: new KeyNode("HKEY_LOCAL_MACHINE"),
-            HKEY_CLASSES_ROOT:  new KeyNode("HKEY_CLASSES_ROOT")
+            HKEY_CURRENT_USER:  new KeyNode("HKEY_CURRENT_USER", null),
+            HKEY_LOCAL_MACHINE: new KeyNode("HKEY_LOCAL_MACHINE", null),
+            HKEY_CLASSES_ROOT:  new KeyNode("HKEY_CLASSES_ROOT", null)
         };
     }
 
     get_vreg () {
     }
 
+    resolve_path (path) {
+
+        let split_path = path.split("\\").map(p => p.toLowerCase()),
+            root       = split_path.shift();
+
+        switch (root.toUpperCase()) {
+        case "HKLM":
+            root = "HKEY_LOCAL_MACHINE";
+            break;
+        case "HKCU":
+            root = "HKEY_CURRENT_USER";
+            break;
+        case "HKCR":
+            root = "HKEY_CLASSES_ROOT";
+            break;
+        case "HKEY_LOCAL_MACHINE":
+        case "HKEY_CURRENT_USER":
+        case "HKEY_CLASSES_ROOT":
+            break;
+        default:
+            throw new Error("Invalid root: " + root);
+        }
+
+        // There are two types of paths we may be given:
+        //
+        //   1. HKLM\\System\\foo\\bar
+        //   2. HKLM\\System\\foo\\
+        //
+        // In both cases, the KeyNode we need to fetch is 'bar'.
+        //
+        let value_label = split_path.pop();
+
+        function get_key (path, root) {
+
+            if (path.length === 0) return root;
+
+            const subkey_name = path.shift();
+            root = root.get_subkey(subkey_name);
+
+            return get_key(path, root);
+        }
+
+        return {
+            key_node: get_key(split_path, this.reg[root])
+        };
+    }
+
     // [private] parse_path
     // ====================
     //
-    // Given a string, attempts to parse the path as if it were a
-    // registry value.
+    // Given a string, attempts to resolve the registry path and
+    // return an object which contains:
+    //
+    //   - TODO
     //
     parse_path (path) {
 
         if (Array.isArray(path)) return path;
 
         let path_parsed = path.split("\\"),
-            root = path_parsed.shift();
+            root        = path_parsed.shift();
+
+        const value_path = !path.endsWith("\\");
 
         switch (root.toUpperCase()) {
         case "HKLM":
@@ -165,9 +218,13 @@ class VirtualRegistry {
     //
     read (path) {
 
-        const parsed_path = this.parse_path(path),
+        /*const parsed_path = this.parse_path(path),
               subkey      = parsed_path.lowered.pop(),
-              key_node    = this.get_key(parsed_path, subkey);
+         key_node    = this.get_key(parsed_path, subkey);*/
+
+        let key_node = this.resolve_path(path);
+
+
 
         return key_node.get_value(subkey);
     }
@@ -190,11 +247,19 @@ class VirtualRegistry {
 
     delete (path) {
         const parsed_path = this.parse_path(path),
-              subkey      = parsed_path.lowered.pop();
+              subkey      = parsed_path.lowered.pop(),
+              key_node    = this.get_key(parsed_path, subkey);
 
+        if (path.endsWith("\\")) {
+            key_node.delete();
+        }
+        else {
+            console.log("delete value", subkey);
+            key_node.delete_value("subkey");
+        }
     }
 
-    get_key (parsed_path, value_key) {
+    get_key (parsed_path) {
 
         let root = this.reg[parsed_path.root],
             path = parsed_path.lowered;
