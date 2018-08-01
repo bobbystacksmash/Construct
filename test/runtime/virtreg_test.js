@@ -204,7 +204,7 @@ describe("Virtual Registry", () => {
 
     describe("#Delete", () => {
 
-        xit("should delete an existing value.", () => {
+        it("should delete an existing value", () => {
 
             const vreg = make_vreg(),
                   path = "HKLM\\foo\\bar\\baz";
@@ -213,10 +213,9 @@ describe("Virtual Registry", () => {
             assert.equal(vreg.read(path), "hello world");
             assert.doesNotThrow(() => vreg.delete(path));
             assert.equal(vreg.read(path), undefined);
-
         });
 
-        xit("should delete an entire if path ends with '\\'", () => {
+        it("should delete an entire if path ends with '\\'", () => {
 
             const vreg = make_vreg(),
                   path = "HKLM\\foo\\bar\\";
@@ -238,8 +237,7 @@ describe("Virtual Registry", () => {
 
         it("should throw 'invalid root' if trying to delete root key", () => {
 
-            const vreg = make_vreg(),
-                  path = "HKLM\\foo\\bar\\";
+            const vreg = make_vreg();
 
             vreg.write("HKLM\\foo\\bar\\default", "!default");
             vreg.write("HKLM\\foo\\bar\\hello",   "!world");
@@ -248,7 +246,22 @@ describe("Virtual Registry", () => {
             assert.throws(() => vreg.delete("HKLM"), "Cannot delete root keys");
         });
 
-        it("should throw when trying to delete an unknown value", () => {});
-        it("should delete the entire key when path ends with a backslash", () => {});
+        it("should throw when trying to delete an unknown value", () => {
+
+            const vreg = make_vreg();
+            assert.throws(
+                () => vreg.delete("HKLM\\foo\\bar\\baz"),
+                "Unable to remove registry key: HKLM\\foo\\bar\\baz"
+            );
+        });
+
+        it("should throw when trying to delete an unknown subkey", () => {
+
+            const vreg = make_vreg();
+            assert.throws(
+                () => vreg.delete("HKLM\\foo\\bar\\baz\\"),
+                "Unable to remove registry key: HKLM\\foo\\bar\\baz\\"
+            );
+        });
     });
 });

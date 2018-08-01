@@ -61,12 +61,12 @@ class KeyNode {
         delete this.subkeys[name];
     }
 
-    // Add Subkey
+    // Set Subkey
     // ==========
     //
-    // Adds `name' to the set of subkeys for this KeyNode.
+    // Sets `name' to the set of subkeys for this KeyNode.
     //
-    add_subkey (name) {
+    set_subkey (name) {
         let key_node = new KeyNode(name, this);
         this.subkeys.push(key_node);
         return key_node;
@@ -82,13 +82,13 @@ class KeyNode {
         return value;
     }
 
-    // Add Value
+    // Set Value
     // =========
     //
     // Associates `key` with `value' in this KeyNode's value store.
     // If `key' is the empty string ("") then this is interpreted to
     // mean "the default value".
-    add_value (key, value) {
+    set_value (key, value) {
 
         const existing_key = Object.keys(this.values).filter(
             k => k.toLowerCase === key.toLowerCase()
@@ -117,9 +117,6 @@ class VirtualRegistry {
             HKEY_LOCAL_MACHINE: new KeyNode("HKEY_LOCAL_MACHINE", null),
             HKEY_CLASSES_ROOT:  new KeyNode("HKEY_CLASSES_ROOT", null)
         };
-    }
-
-    get_vreg () {
     }
 
     resolve_key (path, options) {
@@ -156,8 +153,9 @@ class VirtualRegistry {
         // In both cases, the KeyNode we need to fetch or create is
         // 'bar'.
         //
-        let value_label = split_path.pop(),
-            error = null;
+        let value_label  = split_path.pop(),
+            is_root_path = split_path.length === 0,
+            error        = null;
 
         function walk (path, key) {
 
@@ -168,7 +166,7 @@ class VirtualRegistry {
 
             if (subkey_obj === false) {
                 if (options.create) {
-                    subkey_obj = key.add_subkey(subkey_label);
+                    subkey_obj = key.set_subkey(subkey_label);
                 }
                 else {
                     error = "Cannot find subkey: " + subkey_label;
@@ -182,13 +180,13 @@ class VirtualRegistry {
         const key = walk(split_path, this.reg[root]);
 
         return {
-            key:         key,
-            path:        path,
-            value_label: value_label,
-            is_root_path: split_path.length === 0,
-            error:       error,
-            get_value:   () => key.get_value(value_label),
-            del_value:   () => key.delete_value(value_label),
+            key:          key,
+            path:         path,
+            value_label:  value_label,
+            is_root_path: is_root_path,
+            error:        error,
+            get_value:    () => key.get_value(value_label),
+            del_value:    () => key.delete_value(value_label)
         };
     }
 
@@ -226,15 +224,22 @@ class VirtualRegistry {
         }
 
         // todo - needs work?
-        resolved.key.add_value(resolved.value_label, value);
+        resolved.key.set_value(resolved.value_label, value);
     }
 
-
+    // Delete
+    // ======
+    //
+    // Given a `path' to delete.  If path ends with a separator (\)
+    // then the whole key is deleted, else the value is deleted.
+    // Throws if trying to delete either the root key, or a registry
+    // key/value which cannot be found.
+    //
     delete (path) {
         let resolved = this.resolve_key(path);
 
         if (resolved.error) {
-            throw new Error(resolved.error);
+            throw new Error(`Unable to remove registry key: ${resolved.path}`);
         }
 
         if (resolved.is_root_path) {
