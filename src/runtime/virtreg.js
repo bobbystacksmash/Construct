@@ -27,6 +27,7 @@
 class KeyNode {
 
     constructor (name, parent) {
+
         this.name   = name;
         this.subkeys = [];
         this.values  = {};
@@ -51,15 +52,21 @@ class KeyNode {
         return false;
     }
 
+    // Delete Subkey
+    // =============
+    //
+    // Deletes a subkey where the `subkey.name' matches `name'.
+    //
+    delete_subkey (name) {
+        delete this.subkeys[name];
+    }
+
     // Add Subkey
     // ==========
     //
     // Adds `name' to the set of subkeys for this KeyNode.
     //
     add_subkey (name) {
-
-        const subkey = this.get_subkey(name);
-
         let key_node = new KeyNode(name, this);
         this.subkeys.push(key_node);
         return key_node;
@@ -87,10 +94,6 @@ class KeyNode {
             k => k.toLowerCase === key.toLowerCase()
         ).pop();
 
-        if (existing_key) {
-            delete this.values[existing_key];
-        }
-
         this.values[key] = value;
     }
 
@@ -99,7 +102,7 @@ class KeyNode {
     //
     // Deletes a given registry value.
     delete_value (key) {
-
+        delete this.values[key];
     }
 }
 
@@ -119,10 +122,13 @@ class VirtualRegistry {
     get_vreg () {
     }
 
-    resolve_path (path) {
+    resolve_key (path, options) {
+
+        options = options || {};
+        options = Object.assign({ create: false}, options);
 
         let split_path = path.split("\\").map(p => p.toLowerCase()),
-            root       = split_path.shift();
+            root       = split_path.shift().toUpperCase();
 
         switch (root.toUpperCase()) {
         case "HKLM":
@@ -147,64 +153,42 @@ class VirtualRegistry {
         //   1. HKLM\\System\\foo\\bar
         //   2. HKLM\\System\\foo\\
         //
-        // In both cases, the KeyNode we need to fetch is 'bar'.
+        // In both cases, the KeyNode we need to fetch or create is
+        // 'bar'.
         //
-        let value_label = split_path.pop();
+        let value_label = split_path.pop(),
+            error = null;
 
-        function get_key (path, root) {
+        function walk (path, key) {
 
-            if (path.length === 0) return root;
+            if (path.length === 0) return key;
 
-            const subkey_name = path.shift();
-            root = root.get_subkey(subkey_name);
+            let subkey_label = path.shift(),
+                subkey_obj   = key.get_subkey(subkey_label);
 
-            return get_key(path, root);
-        }
+            if (subkey_obj === false) {
+                if (options.create) {
+                    subkey_obj = key.add_subkey(subkey_label);
+                }
+                else {
+                    error = "Cannot find subkey: " + subkey_label;
+                    return;
+                }
+            }
 
-        return {
-            key_node: get_key(split_path, this.reg[root])
+            return walk(path, subkey_obj);
         };
-    }
 
-    // [private] parse_path
-    // ====================
-    //
-    // Given a string, attempts to resolve the registry path and
-    // return an object which contains:
-    //
-    //   - TODO
-    //
-    parse_path (path) {
-
-        if (Array.isArray(path)) return path;
-
-        let path_parsed = path.split("\\"),
-            root        = path_parsed.shift();
-
-        const value_path = !path.endsWith("\\");
-
-        switch (root.toUpperCase()) {
-        case "HKLM":
-            root = "HKEY_LOCAL_MACHINE";
-            break;
-        case "HKCU":
-            root = "HKEY_CURRENT_USER";
-            break;
-        case "HKCR":
-            root = "HKEY_CLASSES_ROOT";
-            break;
-        case "HKEY_LOCAL_MACHINE":
-        case "HKEY_CURRENT_USER":
-        case "HKEY_CLASSES_ROOT":
-            break;
-        default:
-            throw new Error("Invalid root: " + root);
-        }
+        const key = walk(split_path, this.reg[root]);
 
         return {
-            orig:    path,
-            lowered: path_parsed.map(p => p.toLowerCase()),
-            root:    root.toUpperCase()
+            key:         key,
+            path:        path,
+            value_label: value_label,
+            is_root_path: split_path.length === 0,
+            error:       error,
+            get_value:   () => key.get_value(value_label),
+            del_value:   () => key.delete_value(value_label),
         };
     }
 
@@ -217,16 +201,13 @@ class VirtualRegistry {
     // value.
     //
     read (path) {
+        let resolved = this.resolve_key(path);
 
-        /*const parsed_path = this.parse_path(path),
-              subkey      = parsed_path.lowered.pop(),
-         key_node    = this.get_key(parsed_path, subkey);*/
+        if (resolved.error) {
+            throw new Error(resolved.error);
+        }
 
-        let key_node = this.resolve_path(path);
-
-
-
-        return key_node.get_value(subkey);
+        return resolved.get_value();
     }
 
     // Write
@@ -238,71 +219,35 @@ class VirtualRegistry {
     //
     write (path, value) {
 
-        const parsed_path = this.parse_path(path),
-              subkey      = parsed_path.lowered.pop(),
-              root        = this.mkpathp(parsed_path);
+        let resolved = this.resolve_key(path, { create: true });
 
-        root.add_value(subkey, value);
+        if (resolved.error) {
+            throw new Error(resolved.error);
+        }
+
+        // todo - needs work?
+        resolved.key.add_value(resolved.value_label, value);
     }
+
 
     delete (path) {
-        const parsed_path = this.parse_path(path),
-              subkey      = parsed_path.lowered.pop(),
-              key_node    = this.get_key(parsed_path, subkey);
+        let resolved = this.resolve_key(path);
 
-        if (path.endsWith("\\")) {
-            key_node.delete();
+        if (resolved.error) {
+            throw new Error(resolved.error);
+        }
+
+        if (resolved.is_root_path) {
+            throw new Error("Cannot delete root keys");
+        }
+
+        if (resolved.value_label === "") {
+            // Delete the entire key.
+            resolved.key.parent.delete_subkey(resolved.name);
         }
         else {
-            console.log("delete value", subkey);
-            key_node.delete_value("subkey");
+            resolved.del_value();
         }
-    }
-
-    get_key (parsed_path) {
-
-        let root = this.reg[parsed_path.root],
-            path = parsed_path.lowered;
-
-        return (function walk (p, root) {
-
-            if (root.get_subkey === undefined) {
-                throw new Error(
-                    `Unable to open registry key - ` +
-                        `path not found: ${parsed_path.orig}`
-                );
-            }
-
-            if (p.length === 0) return root;
-
-            const key = p.shift();
-            root = root.get_subkey(key);
-
-            return walk(p, root);
-        }(path, root));
-    }
-
-    mkpathp (parsed_path) {
-
-        let root = this.reg[parsed_path.root],
-            path = parsed_path.lowered;
-
-        return (function walk (p, root) {
-
-            if (p.length === 0) return root;
-
-            const subkey_name = p.shift(),
-                  key         = root.get_subkey(subkey_name);
-
-            if (key === false) {
-                root = root.add_subkey(subkey_name);
-            }
-            else {
-                root = key;
-            }
-
-            return walk(p, root);
-        }(path, root));
     }
 }
 

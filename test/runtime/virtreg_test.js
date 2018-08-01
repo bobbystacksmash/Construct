@@ -38,11 +38,11 @@ function make_vreg (opts) {
 
 describe("Virtual Registry", () => {
 
-    xdescribe("#Write", () => {
+    describe("#Write", () => {
 
         it("should allow keys to be written.", () => {
             const vreg = make_vreg(),
-                  path = "HKEY_LOCAL_MACHINE\\foo\\bar\\key";
+                  path = "HKEY_LOCAL_MACHINE\\foo\\bar";
 
             assert.doesNotThrow(() => vreg.write(path, "value!"));
             assert.equal(vreg.read(path), "value!");
@@ -95,81 +95,160 @@ describe("Virtual Registry", () => {
         });
 
         it("should throw 'invalid root' when trying to write an unknown root", () => {
-            // TODO
+
+            const vreg = make_vreg();
+
+            assert.throws(
+                () => vreg.write("HKAM_BLAH\\foo\\bar", "baz"),
+                "Invalid root: HKAM_BLAH"
+            );
         });
-
-        // TODO: what about paths which don't yet exist - are they auto-vivified?
-
     });
 
-    describe("#ResolvePath", () => {
+    describe("#Resolve Key", () => {
 
-        it("should return a resolved path object for a path which points to a value", () => {
+        it("should create the path and return a the 'foo' key object", () => {
 
             const vreg  = make_vreg(),
-                  path  = "HKLM\\System\\foo\\bar",
-                  value = "hello world!";
+                  path  = "HKLM\\System\\foo\\bar";
 
-            vreg.write(path, value);
-            const resolved = vreg.resolve_path(path);
+            const result = vreg.resolve_key(path, { create: true });
 
+            assert.equal(result.path, path);
+            assert.equal(result.value_label, "bar");
+            assert.isNull(result.error);
+            assert.equal(result.key.name, "foo");
         });
 
+        it("should create and return a key obj when path ends with sep", () => {
+
+            const vreg  = make_vreg(),
+                  path  = "HKLM\\System\\foo\\";
+
+            const result = vreg.resolve_key(path, { create: true });
+
+            assert.equal(result.path, path);
+            assert.equal(result.value_label, "");
+            assert.equal(result.key.name, "foo");
+            assert.isNull(result.error);
+        });
+
+        it("should not create paths by default", () => {
+
+            const vreg  = make_vreg(),
+                  path  = "HKLM\\System\\foo\\";
+
+            const result = vreg.resolve_key(path);
+
+            assert.equal(result.error, "Cannot find subkey: system");
+            assert.equal(result.path, path);
+            assert.equal(result.value_label, "");
+        });
+
+        it("should return a resolved key object without a value label", () => {
+
+            const vreg = make_vreg();
+            vreg.write("HKLM\\System\\foo\\bar", "hello world");
+
+            const keyobj = vreg.resolve_key("HKLM\\System\\foo\\");
+
+            assert.isTrue(keyobj.hasOwnProperty("key"));
+            assert.equal(keyobj.key.name, "foo");
+            assert.equal(keyobj.path, "HKLM\\System\\foo\\");
+            assert.equal(keyobj.value_label, "");
+        });
+
+        it("should return an error field if resolution fails", () => {
+
+            const vreg = make_vreg();
+            assert.doesNotThrow(() => vreg.resolve_key("HKLM\\System\\missing\\foo"));
+
+            let result = vreg.resolve_key("HKLM\\System\\missing\\foo");
+            assert.equal(result.error, "Cannot find subkey: system");
+        });
     });
 
     describe("#Read", () => {
 
-        xit("should read the default value if the path ends in a backslash", () => {
+        it("should read the default value if the path ends in a backslash", () => {
             const vreg = make_vreg();
-            // todo
+
+            // First, let's write a default value.
+            vreg.write("HKLM\\foo\\bar\\", "baz");
+            assert.equal(vreg.read("HKLM\\foo\\bar", "baz"));
         });
 
-        xit("should return the default value for a key which exists", () => {
+        it("should return the default value for a key which exists", () => {
             const vreg = make_vreg(),
-                  path = "HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Hello\\";
+                  path = "HKEY_LOCAL_MACHINE\\Foo\\bar\\";
             vreg.write(path, "World!");
             assert.equal(vreg.read(path), "World!");
         });
 
-        xit("should throw 'invalid root' when trying to read an unknown root", () => {
+        it("should throw 'invalid root' when trying to read an unknown root", () => {
             const vreg = make_vreg();
             assert.throws(() => vreg.read("FOOBAR\\baz"), "Invalid root: FOOBAR");
         });
 
-        xit("should throw when unable to open an non-existant registry key", () => {
+        it("should throw when unable to open an non-existant registry key", () => {
 
             const vreg = make_vreg(),
                   path = "HKEY_LOCAL_MACHINE\\aa\\bb\\cc";
 
             assert.throws(
                 () => vreg.read(path),
-                `Unable to open registry key - path not found: ${path}`
+                `Cannot find subkey: aa`
             );
         });
     });
 
-    xdescribe("#Delete", () => {
+    describe("#Delete", () => {
 
-        it("should delete an existing value.", () => {
+        xit("should delete an existing value.", () => {
+
             const vreg = make_vreg(),
                   path = "HKLM\\foo\\bar\\baz";
 
             vreg.write(path, "hello world");
             assert.equal(vreg.read(path), "hello world");
             assert.doesNotThrow(() => vreg.delete(path));
+            assert.equal(vreg.read(path), undefined);
 
-            assert.throws(() => vreg.read(path));
         });
 
-        it("should throw when trying to delete a value which cannot be found", () => {});
+        xit("should delete an entire if path ends with '\\'", () => {
 
+            const vreg = make_vreg(),
+                  path = "HKLM\\foo\\bar\\";
+
+            vreg.write("HKLM\\foo\\bar\\default", "!default");
+            vreg.write("HKLM\\foo\\bar\\hello",   "!world");
+            vreg.write("HKLM\\foo\\bar\\boat",    "!train");
+
+            assert.equal(vreg.read("HKLM\\foo\\bar\\default"), "!default");
+            assert.equal(vreg.read("HKLM\\foo\\bar\\hello"), "!world");
+            assert.equal(vreg.read("HKLM\\foo\\bar\\boat"), "!train");
+
+            assert.doesNotThrow(() => vreg.delete(path));
+
+            assert.equal(vreg.read("HKLM\\foo\\bar\\default"), "!default");
+            assert.equal(vreg.read("HKLM\\foo\\bar\\hello"), "!world");
+            assert.equal(vreg.read("HKLM\\foo\\bar\\boat"), "!train");
+        });
+
+        it("should throw 'invalid root' if trying to delete root key", () => {
+
+            const vreg = make_vreg(),
+                  path = "HKLM\\foo\\bar\\";
+
+            vreg.write("HKLM\\foo\\bar\\default", "!default");
+            vreg.write("HKLM\\foo\\bar\\hello",   "!world");
+            vreg.write("HKLM\\foo\\bar\\boat",    "!train");
+
+            assert.throws(() => vreg.delete("HKLM"), "Cannot delete root keys");
+        });
+
+        it("should throw when trying to delete an unknown value", () => {});
         it("should delete the entire key when path ends with a backslash", () => {});
-
-        it("should throw when trying to delete a key which cannot be found", () => {});
-
-
-        it("should delete the default value if ending in a trailing slash", () => {});
-        it("shuold throw when trying to delete a path from an unknown root", () => {});
-
     });
 });
