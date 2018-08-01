@@ -543,7 +543,7 @@ class JS_ADODBStream extends Component {
         }
     }
 
-    write () {
+    write (binary_data) {
 
         this.ee.emit("@ADODBStream::Write", arguments);
 
@@ -555,6 +555,20 @@ class JS_ADODBStream extends Component {
                     "Either use WriteText, or change to a binary stream and use LoadFromFile " +
                     "to write data to this stream."
             );
+        }
+
+        if (binary_data instanceof Buffer) {
+            // TODO
+            // ----
+            // https://github.com/bobbystacksmash/Construct/issues/6.
+            //
+            // ADODBStream.Write will throw if given a "creatable"
+            // JScript type, such as strings or arrays.  However, it's
+            // possible to create binary types when using APIs like
+            // the XHR which is able to pass its `.ResponseBody` to
+            // write which handles the input correctly.
+            //
+            this.stream.put_buf(binary_data);
         }
 
         if (this._is_binary_stream()) {
