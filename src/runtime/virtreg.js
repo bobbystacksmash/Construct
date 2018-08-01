@@ -119,14 +119,24 @@ class VirtualRegistry {
         };
     }
 
-    resolve_key (path, options) {
+    resolve_key (fullpath, options) {
 
         options = options || {};
         options = Object.assign({ create: false}, options);
 
-        let split_path = path.split("\\").map(p => p.toLowerCase()),
-            root       = split_path.shift().toUpperCase();
+        let split_path = fullpath.split("\\"),
+            norm_path  = split_path.map(p => p.toLowerCase()),
+            orig_path  = {};
 
+        // Windows' registry is case-insensitive, so as part of the
+        // path-normalisation process we lowercase the path.  However,
+        // when we want to report back to the user, we want to give
+        // them the path using the same casing as they gave it to us.
+        // This object maps the normalised path part (key) to the
+        // original path (value).
+        norm_path.forEach((np, i) => orig_path[np] = split_path[i]);
+
+        let root = norm_path.shift().toUpperCase();;
         switch (root.toUpperCase()) {
         case "HKLM":
             root = "HKEY_LOCAL_MACHINE";
@@ -153,8 +163,8 @@ class VirtualRegistry {
         // In both cases, the KeyNode we need to fetch or create is
         // 'bar'.
         //
-        let value_label  = split_path.pop(),
-            is_root_path = split_path.length === 0,
+        let value_label  = norm_path.pop(),
+            is_root_path = norm_path.length === 0,
             error        = null;
 
         function walk (path, key) {
@@ -169,7 +179,7 @@ class VirtualRegistry {
                     subkey_obj = key.set_subkey(subkey_label);
                 }
                 else {
-                    error = "Cannot find subkey: " + subkey_label;
+                    error = `Cannot find subkey '${orig_path[subkey_label]}' in path '${fullpath}'`;
                     return;
                 }
             }
@@ -177,11 +187,11 @@ class VirtualRegistry {
             return walk(path, subkey_obj);
         };
 
-        const key = walk(split_path, this.reg[root]);
+        const key = walk(norm_path, this.reg[root]);
 
         return {
             key:          key,
-            path:         path,
+            path:         fullpath,
             value_label:  value_label,
             is_root_path: is_root_path,
             error:        error,

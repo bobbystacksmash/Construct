@@ -140,7 +140,7 @@ describe("Virtual Registry", () => {
 
             const result = vreg.resolve_key(path);
 
-            assert.equal(result.error, "Cannot find subkey: system");
+            assert.equal(result.error, `Cannot find subkey 'System' in path '${path}'`);
             assert.equal(result.path, path);
             assert.equal(result.value_label, "");
         });
@@ -164,7 +164,7 @@ describe("Virtual Registry", () => {
             assert.doesNotThrow(() => vreg.resolve_key("HKLM\\System\\missing\\foo"));
 
             let result = vreg.resolve_key("HKLM\\System\\missing\\foo");
-            assert.equal(result.error, "Cannot find subkey: system");
+            assert.equal(result.error, "Cannot find subkey 'System' in path 'HKLM\\System\\missing\\foo'");
         });
     });
 
@@ -197,7 +197,7 @@ describe("Virtual Registry", () => {
 
             assert.throws(
                 () => vreg.read(path),
-                `Cannot find subkey: aa`
+                `Cannot find subkey 'aa' in path '${path}'`
             );
         });
     });
