@@ -164,7 +164,7 @@ class ExceptionHandler extends Component {
 
 
     throw_operation_not_permitted_in_context (source, summary, details) {
-        this.throw(
+        this._throw(
             "Error",
             "Operation is not allowed in this context.",
             -2146825069,
@@ -175,7 +175,7 @@ class ExceptionHandler extends Component {
 
 
     throw_range_error (source, summary, details) {
-        this.throw(
+        this._throw(
             "RangeError",
             "",
             -2147024890,
@@ -185,7 +185,7 @@ class ExceptionHandler extends Component {
 
 
     throw_args_wrong_type_or_out_of_range_or_conflicted (source, summary, details) {
-        this.throw(
+        this._throw(
             "Error",
             "Arguments are of the wrong type, are out of acceptable range, or are in conflict with one another.",
             -2146825287,
@@ -196,7 +196,7 @@ class ExceptionHandler extends Component {
 
 
     throw_operation_not_allowed_when_object_is_open (source, summary, details) {
-        this.throw(
+        this._throw(
             "Error",
             "Operation is not allowed when the object is open.",
             -2146824583,
@@ -207,7 +207,7 @@ class ExceptionHandler extends Component {
 
 
     throw_operation_not_allowed_when_closed (source, summary, details) {
-        this.throw(
+        this._throw(
             "Error",
             "Operation is not allowed when the object is closed.",
             -2146824584,
@@ -218,7 +218,7 @@ class ExceptionHandler extends Component {
 
 
     throw_parameter_is_incorrect (source, summary, details) {
-        this.throw(
+        this._throw(
             "Error",
             "The parameter is incorrect.",
             -2147024809,
@@ -229,7 +229,7 @@ class ExceptionHandler extends Component {
 
 
     throw_access_denied (source, summary, details) {
-        this.throw(
+        this._throw(
             "TypeError",
             "Access Denied.",
             -2147287035,
@@ -239,7 +239,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_type_mismatch (source, summary, details) {
-        this.throw(
+        this._throw(
             "TypeError",
             "Type mismatch.",
             -2147352571,
@@ -249,7 +249,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_file_could_not_be_opened (source, summary, details) {
-        this.throw(
+        this._throw(
             "Error",
             "File could not be opened.",
             -2146825286,
@@ -259,7 +259,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_write_to_file_failed (source, summary, details) {
-        this.throw(
+        this._throw(
             "Error",
             "Write to file failed.",
             -2146825284,
@@ -269,7 +269,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_could_not_locate_automation_class (source, summary, details, class_name) {
-        this.throw(
+        this._throw(
             "RangeError",
             `Could not locate automation class named "${class_name}".`,
             -2147352567,
@@ -279,7 +279,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_file_already_exists (source, summary, details) {
-        this.throw(
+        this._throw(
             "Error",
             "File already exists",
             -2146828230,
@@ -289,7 +289,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_bad_filename_or_number (source, summary, details) {
-        this.throw(
+        this._throw(
             "Error",
             "Bad file name or number",
             -2146828236,
@@ -299,7 +299,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_input_past_end_of_file (source, summary, details) {
-        this.throw(
+        this._throw(
             "Error",
             "Input past end of file",
             -2146828226,
@@ -309,7 +309,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_bad_file_mode (source, summary, details) {
-        this.throw(
+        this._throw(
             "Error",
             "Bad file mode",
             -2146828234,
@@ -319,7 +319,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_permission_denied (source, summary, details) {
-        this.throw(
+        this._throw(
             "Error",
             "Permission denied",
             -2146828218,
