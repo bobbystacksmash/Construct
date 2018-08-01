@@ -148,7 +148,8 @@ Runtime.prototype._make_runnable = function () {
     rewrite_code
         .using("capture eval", { fn_name: "capture_eval" })
         .using("hoist globals")
-        .using("coverage", { oncomplete: "collect_coverage_info" });
+        .using("coverage", { oncomplete: "collect_coverage_info" })
+        .using("beautify");
 
     // All of the constructable JScript types are set here.
     var sandbox = {
