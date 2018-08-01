@@ -60,6 +60,15 @@ describe("Virtual Registry", () => {
             assert.equal(vreg.read(path), "testing");
         });
 
+        it("should support the use of spaces in paths", () => {
+
+            const vreg = make_vreg(),
+                  path = "HKLM\\AA\\Hello World\\foo";
+
+            assert.doesNotThrow(() => vreg.write(path, "bar"));
+            assert.equal(vreg.read(path), "bar");
+        });
+
         it("should use 'HKLM' and 'HKEY_LOCAL_MACHINE' interchangeably", () => {
 
             const vreg1     = make_vreg(),
