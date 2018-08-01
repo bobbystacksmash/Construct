@@ -71,6 +71,12 @@ function cmd_load_file(args) {
 
         try {
             runnable(function (err, results) {
+
+                if (err) {
+                    console.log("--- error ---");
+                    console.log(err.message);
+                }
+
                 if (err) reject(err);
 
                 let time_delta = new Date().getTime() - start_time,
@@ -251,7 +257,7 @@ function CMD_deceive (args, callback) {
  */
 const CMDHELP_timeline =
 `Display a list of events in the order they were emitted from the running
-  script.`
+  script.`;
 
 function cmd_show_timeline (args, callback) {
 
@@ -275,7 +281,6 @@ function cmd_show_timeline (args, callback) {
     });
 
     console.log(util_get_table_string(events));
-
     callback();
 }
 
