@@ -22,7 +22,8 @@ class HostContext {
 	this.DEBUG = true;
 
 	this.hooks = {
-	    network: []
+	    network:  [],
+            registry: { read: [], write: [], delete: [] }
 	};
 
 	// TODO
@@ -266,6 +267,37 @@ class HostContext {
     }
 
 
+    add_registry_hook (description, method, matcher, callback) {
+
+        // Method can be:
+        //
+        //  - read
+        //  - write
+        //  - delete
+
+        function match (regpath) {
+
+            if (matcher instanceof RegExp) {
+                return matcher.test(regpath);
+            }
+            else if (matcher instanceof Function) {
+                return matcher(regpath);
+            }
+            else if (typeof matcher === "string") {
+                return matcher.toLowerCase() === regpath.toLowerCase();
+            }
+
+            return false;
+        };
+
+        this.hooks.registry[method].push({
+            match: match,
+            desc: description,
+            handle: callback
+        });
+    }
+
+
     add_network_hook(description, method, addr, response_handler) {
 
 	if (! this.hooks.network.hasOwnProperty(method)) {
@@ -277,6 +309,15 @@ class HostContext {
 	    desc: description,
 	    handle: response_handler
 	});
+    }
+
+
+    get_registry_hook (method, path) {
+
+        console.log("get reg hook, hostcontext", this.hooks.registry[method]);
+
+        const reghook = this.hooks.registry[method].find(hook => hook.match(path));
+        return reghook;
     }
 
 

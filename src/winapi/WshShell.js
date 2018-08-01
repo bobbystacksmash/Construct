@@ -117,8 +117,7 @@ class JS_WshShell extends Component {
     //   strDesktop = WshShell.SpecialFolders("Desktop");
     //   var oShellLink = WshShell.CreateShortcut(strDesktop + "\\Shortcut Script.lnk");
     //
-    get specialfolders () {
-        this.ee.emit("@WshShell.SpecialFolders [GET]");
+    specialfolders () {
 
         let folders = this.special_folders,
             emitter = this.ee;
@@ -287,11 +286,32 @@ class JS_WshShell extends Component {
     }
 
     regdelete (key) {
-        this.context.vreg.delete(key);
+
+        try {
+            this.context.vreg.delete(key);
+        }
+        catch (e) {
+
+        }
     }
 
     regread (key) {
-        return this.context.vreg.read(key);
+
+        let regread_hook = this.context.get_registry_hook(
+            "read",
+            key
+        );
+
+        if (regread_hook) {
+            return regread_hook.handle(key);
+        }
+
+        //try {
+            return this.context.vreg.read(key);
+    /*}
+        catch (e) {
+
+        }*/
     }
 
     regwrite (key, value) {

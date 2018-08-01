@@ -70,8 +70,13 @@ Runtime.prototype.load_plugins = function (path_to_plugins_dir) {
 	this.context.add_network_hook(description, method, addr, response_fn);
     };
 
+    function registry_hook (description, method, matcher, callback) {
+        this.context.add_registry_hook(description, method, matcher, callback);
+    }
+
     const hooks = {
-	network: network_hook.bind(this)
+	network:  network_hook.bind(this),
+        registry: registry_hook.bind(this)
     };
 
     // Loop-over all of the
@@ -93,7 +98,7 @@ Runtime.prototype.load_plugins = function (path_to_plugins_dir) {
 	}
 
 	try {
-	    this_plugin.onload(hooks);
+	    this_plugin.onload.call(this.context, hooks);
 	}
 	catch (e) {
 	    console.log(`Plugin loader failed to load ${plugin_dir}: ${e.message}`);
