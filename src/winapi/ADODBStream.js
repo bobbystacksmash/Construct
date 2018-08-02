@@ -568,7 +568,8 @@ class JS_ADODBStream extends Component {
             // the XHR which is able to pass its `.ResponseBody` to
             // write which handles the input correctly.
             //
-            this.stream.put_buf(binary_data);
+            this.stream.put(binary_data);
+            return;
         }
 
         if (this._is_binary_stream()) {

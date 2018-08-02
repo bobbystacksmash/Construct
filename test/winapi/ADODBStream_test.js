@@ -97,7 +97,20 @@ describe("ADODBStream", () => {
                 done();
             });
 
-            it("should throw if calling write in a binary stream", (done) => {
+            it("should add data to the stream if the data passed to write is a Buffer instance", () => {
+
+                let ado = new ADODBStream(context);
+                ado.type = BINARY_STREAM;
+                ado.open();
+
+                assert.equal(ado.position, 0);
+
+                const buf = Buffer.from("Hello, World!");
+                assert.doesNotThrow(() => ado.Write(buf));
+                assert.equal(ado.position, "Hello, World!".length);
+            });
+
+            it("should throw if calling write in a binary stream with a creatable type", (done) => {
 
                 let ctx = Object.assign({}, context, {
                     exceptions: {
