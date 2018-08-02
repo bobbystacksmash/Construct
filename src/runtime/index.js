@@ -12,8 +12,7 @@ const CodeRewriter   = require("../../lib/metaprogramming");
 function Runtime (options) {
     options = options || {};
 
-    this.events         = [];
-    this.assembled_code = null;
+    this.events = [];
 
     this.context = new HostContext({
         emitter : new EventEmitter2({ wildcard: true }),
@@ -30,8 +29,7 @@ Runtime.prototype.load = function(path_to_file, options) {
 
     options = options || {};
 
-    this.file_path         = path_to_file;
-    this.instrumented_code = null;
+    this.file_path = path_to_file;
 
     try {
         this.source_code = fs.readFileSync(path_to_file).toString();
@@ -39,6 +37,14 @@ Runtime.prototype.load = function(path_to_file, options) {
     catch (e) {
         throw e;
     }
+
+    // We write the input file to the filesystem so the code is able
+    // to read itself should it need to.  The code written is the
+    // original code, rather than the instrumented version, this is to
+    // cater for the case where a self-referencing JScript program is
+    // attempting to read code from an exact line offset.
+    const filename = path.basename(path_to_file);
+    this.context.vfs.AddFile(`C:\\Users\\Construct\\${filename}`, this.source_code);
 
     return this._make_runnable();
 };
@@ -108,7 +114,6 @@ Runtime.prototype.load_plugins = function (path_to_plugins_dir) {
 Runtime.prototype._make_runnable = function () {
 
     let events            = this.events,
-        assembled_code    = this.assembled_code,
         epoch             = this.context.epoch,
         ee                = this.context.emitter,
         context           = this.context;
