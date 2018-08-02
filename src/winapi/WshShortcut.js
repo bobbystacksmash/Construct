@@ -1,10 +1,32 @@
-const Component = require("../Component");
+const Component = require("../Component"),
+      proxify   = require("../proxify2");
 
 class JS_WshShortcut extends Component {
 
-    constructor (context) {
+    constructor (context, backing_path) {
 	super(context, "WshShortcut");
-	this.ee = this.context.emitter;
+
+        this.context = this.context;
+	this.ee      = this.context.emitter;
+
+        this.backing_path = backing_path;
+
+        let lnk = {
+            _arguments: "",
+            _description: "",
+            _fullname: "",
+            _hotkey: "",
+            _targetpath: "",
+            _iconlocation: ",0"
+        };
+
+        if (this.context.vfs.Exists(backing_path)) {
+            let json     = this.context.vfs.ReadFileContents(this.backing_path).toString(),
+                shortcut = JSON.parse(json);
+            lnk = Object.assign({}, lnk, shortcut);
+        }
+
+        this.shortcut = lnk;
     }
 
     // GET Arguments
@@ -13,7 +35,7 @@ class JS_WshShortcut extends Component {
     // Gets the arguments as a single String.
     //
     get arguments () {
-
+        return this.shortcut._arguments;
     }
 
     // SET Arguments
@@ -22,7 +44,8 @@ class JS_WshShortcut extends Component {
     // Sets the arguments passed through to the shortcut.
     //
     set arguments (args) {
-
+        this.shortcut._arguments = args;
+        return this.arguments;
     }
 
     // GET description
@@ -31,7 +54,7 @@ class JS_WshShortcut extends Component {
     // Gets the description of the shortcut.
     //
     get description () {
-
+        return this.shortcut._description;
     }
 
     // SET description
@@ -40,7 +63,8 @@ class JS_WshShortcut extends Component {
     // Sets the description of the shortcut.
     //
     set description (desc) {
-
+        this.shortcut._description = desc;
+        return this.description;
     }
 
     // Get FullName
@@ -48,7 +72,7 @@ class JS_WshShortcut extends Component {
     //
     // Returns a string containing the full path to this lnk file.
     get fullname () {
-
+        return this.backing_path;
     }
 
     // Set FullName
@@ -57,7 +81,14 @@ class JS_WshShortcut extends Component {
     // This is not allowed.
     //
     set fullname (_) {
-        // throw...
+
+        this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            "WshShortcut",
+            "Cannot assign to property: 'FullName'.",
+            "The '.FullName' property cannot be assigned to.  It is a read-only " +
+                "property which returns the full fullpath to the backing shortcut " +
+                "file."
+        );
     }
 
     // GET Hotkey
@@ -67,7 +98,7 @@ class JS_WshShortcut extends Component {
     // launching this shortcut file.
     //
     get hotkey () {
-
+        return this.shortcut._hotkey;
     }
 
     // SET Hotkey
@@ -76,7 +107,8 @@ class JS_WshShortcut extends Component {
     // Sets the hotkey key-combo.
     //
     set hotkey (combo) {
-
+        this.shortcut._hotkey = combo;
+        return this.hotkey;
     }
 
     // GET IconLocation
@@ -85,7 +117,7 @@ class JS_WshShortcut extends Component {
     // Gets the IconLocation, ",0" by default.
     //
     get iconlocation () {
-        return ",0";
+        return this.shortcut._iconlocation;
     }
 
     // SET IconLocation
@@ -94,7 +126,8 @@ class JS_WshShortcut extends Component {
     // Sets the iconlocation.
     //
     set iconlocation (loc) {
-
+        this.shortcut._iconlocation = loc;
+        return this.iconlocation;
     }
 
     // GET TargetPath
@@ -105,7 +138,7 @@ class JS_WshShortcut extends Component {
     // data file that's associated with an EXE.
     //
     get targetpath () {
-
+        return this.shortcut._targetpath;
     }
 
     // SET TargetPath
@@ -115,7 +148,9 @@ class JS_WshShortcut extends Component {
     // executable.
     //
     set targetpath (path) {
-
+        // TODO: does this check the path is valid etc?
+        this.shortcut._targetpath = path;
+        return this.targetpath;
     }
 
     // GET WindowStyle
@@ -140,7 +175,7 @@ class JS_WshShortcut extends Component {
     // Sets the window style of the launched application.  See the
     // table defined for GET WindowStyle for valid options.
     //
-    get windowstyle (style) {
+    set windowstyle (style) {
 
     }
 
@@ -164,7 +199,6 @@ class JS_WshShortcut extends Component {
 
     }
 
-
     // Save
     // ====
     //
@@ -174,10 +208,14 @@ class JS_WshShortcut extends Component {
     save () {
 
     }
+
+    tostring () {
+        return this.backing_path;
+    }
 }
 
-module.exports = function create(context) {
-    let lnk = new JS_WshShortcut(context);
+module.exports = function create(context, backing_path) {
+    let lnk = new JS_WshShortcut(context, backing_path);
     return proxify(context, lnk)
 ;
 };

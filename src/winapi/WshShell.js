@@ -216,6 +216,8 @@ class JS_WshShell extends Component {
     //   oUrlLink.Save();
     //
     createshortcut() {
+        // TODO: if the path to the LNK file doesn't end with either
+        // '.lnk' or '.url' then throw.
     }
 
     //
