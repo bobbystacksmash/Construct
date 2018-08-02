@@ -575,12 +575,14 @@ class JS_ADODBStream extends Component {
         if (this._is_binary_stream()) {
             this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
                 "ADODB.Stream",
-                "Cannot call '.write' against an ADODB Stream in binary mode, use 'loadfromfile' instead.",
-                "Calling code has attempted to call '.write' while this ADODBStream is in abinary mode.  " +
-                    "By calling '.write', code is attempting to pass binary data across a COM bridge " +
-                    "but JScript lacks the language features (binary arrays) which would alllow it to " +
-                    "pass data across in any format COM could recognise.  The work around is to either " +
-                    "convert a text stream to a binary stream, or use 'LoadFromFile'."
+                "Calling '.write()' only works with a Buffer instance.",
+                "Calling code has attempted to call '.write()' while the stream is " +
+                    "in binary mode.  If the input type passed to '.write()' is not " +
+                    "a Buffer instance, this exception is thrown.  There is no way " +
+                    "to create a new Buffer from JScript code.  Instead, the Buffer " +
+                    "must be exported by a small set of APIs, such as XHR.ResponseBody. " +
+                    "A workaround is to write binary data to the disk, then load it in " +
+                    "to a stream using '.LoadFromFile()'."
             );
         }
 
