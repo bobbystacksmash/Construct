@@ -17,11 +17,13 @@ class JS_WshShortcut extends Component {
             _fullname: "",
             _hotkey: "",
             _targetpath: "",
-            _iconlocation: ",0"
+            _iconlocation: ",0",
+            _windowstyle: 1,
+            _workingdirectory: ""
         };
 
         if (this.context.vfs.Exists(backing_path)) {
-            let json     = this.context.vfs.ReadFileContents(this.backing_path).toString(),
+            let json = this.context.vfs.ReadFileContents(this.backing_path),
                 shortcut = JSON.parse(json);
             lnk = Object.assign({}, lnk, shortcut);
         }
@@ -108,7 +110,7 @@ class JS_WshShortcut extends Component {
     //
     set hotkey (combo) {
         this.shortcut._hotkey = combo;
-        return this.hotkey;
+        return combo;
     }
 
     // GET IconLocation
@@ -127,7 +129,7 @@ class JS_WshShortcut extends Component {
     //
     set iconlocation (loc) {
         this.shortcut._iconlocation = loc;
-        return this.iconlocation;
+        return loc;
     }
 
     // GET TargetPath
@@ -148,9 +150,8 @@ class JS_WshShortcut extends Component {
     // executable.
     //
     set targetpath (path) {
-        // TODO: does this check the path is valid etc?
         this.shortcut._targetpath = path;
-        return this.targetpath;
+        return path;
     }
 
     // GET WindowStyle
@@ -166,7 +167,7 @@ class JS_WshShortcut extends Component {
     //   |   7   | Displays the window as a minimised window.      |
     //
     get windowstyle () {
-
+        return this.shortcut._windowstyle;
     }
 
     // SET WindowStyle
@@ -177,7 +178,25 @@ class JS_WshShortcut extends Component {
     //
     set windowstyle (style) {
 
-    }
+        if (typeof style !== "number") {
+
+            if (/^-?\d+$/g.test(style)) {
+                style = parseInt(style, 10);
+            }
+            else {
+                this.context.exceptions.throw_type_mismatch(
+                    "WshShortcut",
+                    "Shortcut.WindowStyle property type must be numeric.",
+                    "The .WindowStyle property must be numeric, or a " +
+                        "string which contains only a number.  Any other " +
+                        "value will throw."
+                );
+            }
+        }
+
+        this.shortcut._windowstyle = style;
+        return style;
+     }
 
     // GET WorkingDirectory
     // ====================
@@ -186,7 +205,7 @@ class JS_WshShortcut extends Component {
     // will start from.
     //
     get workingdirectory () {
-
+        return this.shortcut._workingdirectory;
     }
 
     // SET WorkingDirectory
@@ -196,7 +215,8 @@ class JS_WshShortcut extends Component {
     // will start from.
     //
     set workingdirectory (working_dir) {
-
+        this.shortcut._workingdirectory = working_dir;
+        return working_dir;
     }
 
     // Save
@@ -206,7 +226,7 @@ class JS_WshShortcut extends Component {
     // will write the changed shortcut .lnk file to disk.
     //
     save () {
-
+        this.context.vfs.AddFile(this.backing_path, JSON.stringify(this.shortcut));
     }
 
     tostring () {
@@ -216,6 +236,5 @@ class JS_WshShortcut extends Component {
 
 module.exports = function create(context, backing_path) {
     let lnk = new JS_WshShortcut(context, backing_path);
-    return proxify(context, lnk)
-;
+    return proxify(context, lnk);
 };
