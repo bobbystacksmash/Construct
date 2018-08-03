@@ -63,11 +63,9 @@ class JS_WshArguments extends Component {
 
 	try {
 	    var arg = this.args[n];
-	    this.ee.emit("@WshArguments::Item", { index: n, value: arg });
 	    return arg;
 	}
 	catch (e) {
-	    this.ee.emit("@WshArguments::Item", { index: n, value: undefined });
 	    return undefined;
 	}
     }
