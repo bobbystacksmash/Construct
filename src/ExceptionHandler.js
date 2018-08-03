@@ -1,4 +1,30 @@
-const Component = require("./Component");
+const Component = require("./Component"),
+      WordWrap  = require("word-wrap");
+
+class ConstructError extends Error {
+
+    constructor (errobj) {
+        super(errobj.summary);
+        this.err = errobj;
+        Error.captureStackTrace(this, ConstructError);
+    }
+
+    get source () {
+        return this.err.source;
+    }
+
+    get summary () {
+        return this.err.summary;
+    }
+
+    get description () {
+        return this.err.description;
+    }
+
+    formatted () {
+        return WordWrap(this.description, {width: 72});
+    }
+}
 
 class ExceptionHandler extends Component {
 
@@ -39,14 +65,14 @@ class ExceptionHandler extends Component {
             number:       number,
             description:  description,
             toString:     () => message,
+
             // Construct informational properties
-            _source:      _source,
-            _summary:     _summary,
-            _description: _description
+            source:      _source,
+            summary:     _summary,
+            description: _description
         };
 
-        console.log("chucking", throw_obj);
-        let err = new Error(throw_obj);
+        const err = new ConstructError(throw_obj);
 
         this.ee.emit(`!Exception::${name}`, err);
         throw err;

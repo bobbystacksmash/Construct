@@ -56,9 +56,9 @@ Runtime.prototype.load_plugins = function (path_to_plugins_dir) {
 	plugins_glob_pathpat = `${plugins_load_path}/**/index.js`,
 	found_plugins_files  = glob.sync(plugins_glob_pathpat);
 
-    console.log(`Plugin loader will attempt to read plugins from "${path_to_plugins_dir}".`);
+    /*console.log(`Plugin loader will attempt to read plugins from "${path_to_plugins_dir}".`);
     console.log(`Plugin loader found ${found_plugins_files.length}`,
-		`${found_plugins_files.length === 1 ? "plugin" : "plugins"}.`);
+		`${found_plugins_files.length === 1 ? "plugin" : "plugins"}.`);*/
 
     function network_hook (description, method, addr, response_fn) {
 	this.context.add_network_hook(description, method, addr, response_fn);
@@ -181,7 +181,7 @@ Runtime.prototype._make_runnable = function () {
 	        // TODO...
 	    }
 	    else {
-	        console.log(e);
+//	        console.log(e);
 	    }
 
             done(e);

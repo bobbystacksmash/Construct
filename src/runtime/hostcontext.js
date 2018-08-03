@@ -313,9 +313,6 @@ class HostContext {
 
 
     get_registry_hook (method, path) {
-
-        console.log("get reg hook, hostcontext", this.hooks.registry[method]);
-
         const reghook = this.hooks.registry[method].find(hook => hook.match(path));
         return reghook;
     }

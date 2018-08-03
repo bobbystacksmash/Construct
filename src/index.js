@@ -16,6 +16,7 @@ const fs              = require("fs");
 const events          = require("./events");
 const hexy            = require("hexy");
 const _               = require("lodash");
+const colors          = require("colors/safe");
 
 console.log(`Construct version 0.1.0 (alpha)`);
 console.log(`GNU GENERAL PUBLIC LICENSE Version 3`);
@@ -63,8 +64,8 @@ function cmd_load_file(args) {
             var runnable = runtime.load(FILE);
         }
         catch (e) {
-            self.log("Error loading runnable code:", e.message);
-            reject(e);
+            //self.log("Error loading runnable code:", e.message);
+            return reject(e);
         }
 
         let start_time = new Date().getTime();
@@ -73,11 +74,14 @@ function cmd_load_file(args) {
             runnable(function (err, results) {
 
                 if (err) {
-                    console.log("--- error ---");
-                    console.log(err.message);
+                    console.log(colors.bold.underline("ERROR: Unhandled Runtime Exception"));
+                    console.log("");
+                    console.log(" Component:", colors.italic(err.source));
+                    console.log("");
+                    console.log(err.formatted());
+                    console.log("");
+                    return resolve(err);
                 }
-
-                if (err) reject(err);
 
                 let time_delta = new Date().getTime() - start_time,
                     cov_stmts  = runtime.coverage.report.statements;
