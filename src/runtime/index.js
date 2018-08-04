@@ -127,8 +127,46 @@ Runtime.prototype._make_runnable = function () {
 
     var self = this;
 
-    ee.on("**", function (x) {
-        events.push(x);
+    function tag_event (event) {
+
+        const num_props = Object.keys(event).length;
+        event.tags = [];
+
+        if (num_props !== 6) {
+            return event;
+        }
+
+        const api_call = `${event.target}.${event.prop}`.toLowerCase(),
+              tags     = [
+                  { re: /^wshshell\.reg/i, tag: "registry" },
+                  { re: /^filesystemobject/i, tag: "filesystem" },
+                  { re: /^wshshell\.specialfolders/i, tag: "filesystem" },
+                  { re: /^xmlhttprequest/i, tag: "net" },
+                  { re: /^adodbstream\.savetofile/i, tag: "filesystem" },
+                  { re: /^shell\.application.shellexecute/i, tag: "exec" },
+
+                  // TODO: keep updating this list, or consider moving
+                  // it to a config file.
+              ];
+
+        tags.forEach(tag => {
+            if (tag.re.test(api_call)) {
+                event.tags.push(tag.tag);
+            }
+        });
+
+        return event;
+    }
+
+    ee.on("**", function (event) {
+
+        if (event.target === undefined) {
+            return;
+        }
+
+        // We tag events as they come in so we can make better sense
+        // of them later.
+        events.push(tag_event(event));
     });
 
 

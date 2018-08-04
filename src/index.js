@@ -278,18 +278,11 @@ function cmd_show_timeline (args, callback) {
     }
 
     let events = runtime.events.map((e, i) => {
-
-        var event    = e.event.replace("WINAPI.", ""),
-            axo_test = /^(ActiveXObject)\.new\.(.+)$/.exec(event);
-
-        if (axo_test) {
-            event = `new ${axo_test[1]}("${axo_test[2]}")`;
-        }
-
-        return [i, event ];
+        console.log(`${e.target}.${e.prop}`, e.tags);
+//        return [i, e];
     });
 
-    console.log(util_get_table_string(events));
+    //console.log(util_get_table_string(events));
     callback();
 }
 
