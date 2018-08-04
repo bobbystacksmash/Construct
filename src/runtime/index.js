@@ -102,12 +102,10 @@ Runtime.prototype.load_plugins = function (path_to_plugins_dir) {
 	//
 	// Success! Plugin has been registered.
 	//
-	console.log(`Plugin loader loaded "${plugin_dir}" (${plugin_info.version})`,
-		    `-- "${plugin_info.description}"`);
+	/*console.log(`Plugin loader loaded "${plugin_dir}" (${plugin_info.version})`,
+		    `-- "${plugin_info.description}"`);*/
 
     }, this);
-
-    console.log("\n");
 };
 
 
