@@ -183,11 +183,11 @@ class XMLHttpRequestBase extends Component {
     //
     get responsetext () {
 	// Event is emitted from `_response_body'.
-	return this._response_body("responsetext");
+	return Buffer.from(this._response_body("responsetext"));
     }
     get responsebody () {
 	// Event is emitted from `_response_body'.
-	return this._response_body("responsebody");
+	return Buffer.from(this._response_body("responsebody"));
     }
 
 
