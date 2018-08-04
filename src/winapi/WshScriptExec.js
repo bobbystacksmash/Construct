@@ -25,6 +25,8 @@ module.exports = function WshScriptExec (opts) {
 
     let ee = opts.emitter;
 
+    this.__name__ = "WshScriptExec";
+
     let stdout = new TextStream({ emitter: ee, buffer: "stdout buf" });
     let stdin  = new TextStream({ emitter: ee, buffer: "stdin  buf" });
     let stderr = new TextStream({ emitter: ee, buffer: "stderr buf" });
@@ -42,5 +44,3 @@ module.exports = function WshScriptExec (opts) {
 
     return proxify2(WshScriptExec, "WshScriptExec", opts);
 };
-
-

@@ -127,6 +127,11 @@ Runtime.prototype._make_runnable = function () {
 
     var self = this;
 
+    ee.on("**", function (x) {
+        events.push(x);
+    });
+
+
     function collect_coverage_info(coverage_obj) {
 
         collector.add(coverage_obj);

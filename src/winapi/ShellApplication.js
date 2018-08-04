@@ -6,6 +6,7 @@ class JS_ShellApplication extends Component {
     constructor (context) {
 	super(context, "Shell.Application");
 	this.ee = this.context.emitter;
+        this.__name__ = "Shell.Application";
     }
 
     //
@@ -52,7 +53,7 @@ class JS_ShellApplication extends Component {
 	return true;
     }
 
-    
+
     cascadewindows () {
 	this.ee.emit("@ShellApplication::CascadeWindows", arguments);
     }
@@ -96,7 +97,7 @@ class JS_ShellApplication extends Component {
     findprinter (name, location, model) {
 	this.ee.emit("@ShellApplication::FindPrinter", arguments);
     }
-	
+
 
     getsetting (setting) {
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/gg537739(v=vs.85).aspx
@@ -114,7 +115,7 @@ class JS_ShellApplication extends Component {
 	this.ee.emit("@ShellApplication::Help", arguments);
     }
 
-    
+
     isrestricted (group, restriction) {
 	this.ee.emit("@ShellApplication::IsRestricted", arguments);
 	return true;
@@ -124,7 +125,7 @@ class JS_ShellApplication extends Component {
     isservicerunning (service_name) {
 
 	this.ee.emit("@ShellApplication::IsServiceRunning", arguments);
-	
+
 	let service_index = this.context.ENVIRONMENT.Services.findIndex((s) => s === service_name);
 	return (service_index > -1);
     }
@@ -140,7 +141,7 @@ class JS_ShellApplication extends Component {
 	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.NameSpace", arguments);
     }
 
-    
+
     open (dir) {
 	//https://msdn.microsoft.com/en-us/library/windows/desktop/bb774085(v=vs.85).aspx
 	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.Open", arguments);
@@ -286,7 +287,7 @@ class JS_ShellApplication extends Component {
 	this.ee.emit("@ShellApplication::TileHorizontally", arguments);
     }
 
-    
+
     tilevertically () {
 	this.ee.emit("@ShellApplication::TileVertically", arguments);
     }
@@ -318,7 +319,7 @@ class JS_ShellApplication extends Component {
 
 
     windowswitcher () {
-	this.ee.emit("@ShellApplication::WindowSwitcher", arguments);	
+	this.ee.emit("@ShellApplication::WindowSwitcher", arguments);
     }
 }
 

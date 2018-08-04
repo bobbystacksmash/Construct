@@ -11,7 +11,6 @@ const vorpal          = require("vorpal")();
 const vorpal_autocomp = require("vorpal-autocomplete-fs");
 const path            = require("path");
 const table           = require("text-table");
-const evts            = require("./events");
 const fs              = require("fs");
 const events          = require("./events");
 const hexy            = require("hexy");
@@ -78,7 +77,13 @@ function cmd_load_file(args) {
                     console.log("");
                     console.log(" Component:", colors.italic(err.source));
                     console.log("");
-                    console.log(err.formatted());
+
+                    if (err.hasOwnProperty("formatted")) {
+                        console.log(err.formatted());
+                    }
+                    else {
+                        console.log(err.message);
+                    }
                     console.log("");
                     return resolve(err);
                 }

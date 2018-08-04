@@ -18,6 +18,8 @@ function JS_WshEnvironment (context, type) {
     this.context = component.context;
     this.ee      = component.context.emitter;
 
+    this.__name__ = "WshEnvironment";
+
     // Valid types for the Environment variables collection are:
     //
     //  * SYSTEM
@@ -27,7 +29,7 @@ function JS_WshEnvironment (context, type) {
     // incoming `type', which matches what Windows does.
     //
     // If we cannot find a match for our given type, we throw.
-    //    
+    //
     if (!type) {
 	this.context.exceptions.throw_invalid_fn_arg(
 	    `WshEnvironment`,
@@ -37,7 +39,7 @@ function JS_WshEnvironment (context, type) {
     }
 
     type = type.toUpperCase();
-    
+
     if (type !== "SYSTEM" && type !== "USER") {
 	this.context.exceptions.throw_invalid_fn_arg(
 	    `WshEnvironment`,
@@ -55,7 +57,7 @@ function JS_WshEnvironment (context, type) {
 	let ENV_vars      = context.ENVIRONMENT.Variables[type],
 	    env_var_value = "",
 	    found_var     = false;
-	
+
 	// Does our variable exist?
 	if (ENV_vars[var_name]) {
 	    env_var_value = ENV_vars[var_name];
@@ -82,4 +84,3 @@ function JS_WshEnvironment (context, type) {
 
 
 module.exports = JS_WshEnvironment;
-

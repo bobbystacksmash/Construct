@@ -27,6 +27,7 @@ class JS_WshArguments extends Component {
 
     constructor (context) {
 	super(context, "WshArguments");
+        this.__name__ = "WshArguments";
 	this.ee   = this.context.emitter;
 	this.args = this.context.ENVIRONMENT.Arguments;
     }

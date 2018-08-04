@@ -15,6 +15,7 @@ class JS_ActiveXObject extends Component {
 	console.log("========================");*/
 
 	super(context, `ActiveXObject(${type})`);
+        this.__name__ = "ActiveXObject";
 	this.ee = this.context.emitter;
 
         return create_instance(context, type);
