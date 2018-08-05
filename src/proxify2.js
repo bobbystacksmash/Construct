@@ -18,44 +18,45 @@ module.exports = function proxify(context, instance) {
                     const name_of_target = target.__name__ || "Unknown",
                           emit_as        = `${name_of_target}.get.${actual_propkey}`;
 
-                    context.emitter.emit(emit_as, {
-                        target: name_of_target,
-                        getset: "get",
-                        prepost: "pre",
-                        prop:   actual_propkey,
-                        args:   [...args],
-                        retval: null
-                    });
-
-	            /*if (context.DEBUG) {
-		        console.log(`PROXDBG> ${emit_as}`);
-	            }*/
-
                     try {
-		        let result = instance[actual_propkey](...args);
-
-                        context.emitter.emit(emit_as, {
-                            target: name_of_target,
-                            getset: "get",
-                            prepost: "post",
-                            prop:   actual_propkey,
-                            args:   [...args],
-                            retval: result
-                        });
-
-                        return result;
+		        var result = instance[actual_propkey](...args);
                     }
                     catch (e) {
                         throw e;
                     }
+
+                    context.emitter.emit(emit_as, {
+                        target: name_of_target,
+                        getset: "get",
+                        prop:   actual_propkey,
+                        args:   [...args],
+                        return:  result
+                    });
+
+                    return result;
 		};
 	    }
 
 	    return original_method;
 	},
 
-        set (obj, prop, value) {
-            return Reflect.set(obj, prop.toLowerCase(), value);
+        set (target, prop_key, value) {
+
+            const actual_propkey = prop_key.toLowerCase(),
+                  name_of_target = target.__name__ || "Unknown",
+                  emit_as        = `${name_of_target}.get.${prop_key}`;
+
+            const returned_value = Reflect.set(target, prop_key.toLowerCase(), value);
+
+            context.emitter.emit(emit_as, {
+                target: name_of_target,
+                getset: "set",
+                prop:   actual_propkey,
+                args:   [value],
+                return: returned_value
+            });
+
+            return returned_value;
         }
     });
 };

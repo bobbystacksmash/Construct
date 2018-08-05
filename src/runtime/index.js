@@ -130,7 +130,7 @@ Runtime.prototype._make_runnable = function () {
         const num_props = Object.keys(event).length;
         event.tags = [];
 
-        if (num_props !== 6) {
+        if (!event.hasOwnProperty("target") && !event.hasOwnProperty("prop")) {
             return event;
         }
 

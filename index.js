@@ -41,6 +41,7 @@ class Construct {
         this.runnable(function (err, results) {
             if (err) {
                 console.log("TODO: fix the error handling for a crashed runnable!");
+                console.log(err.message);
                 return false;
             }
 
