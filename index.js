@@ -5,7 +5,8 @@
  *
  */
 
-const Runtime = require("./src/runtime");
+const Runtime  = require("./src/runtime"),
+      istanbul = require("istanbul");
 
 class Construct {
 
@@ -59,6 +60,21 @@ class Construct {
         return this.runtime.events.filter(filter_fn);
     }
 
+    coverage (type) {
+
+        type = type || "summary";
+
+        const collector = new istanbul.Collector();
+        collector.add(this.runtime.coverage);
+
+        if (type === "summary") {
+            return istanbul.utils.summarizeFileCoverage(
+                collector.fileCoverageFor(collector.files()[0])
+            );
+        }
+
+        console.log(JSON.stringify(this.runtime.coverage));
+    }
 }
 
 module.exports = Construct;

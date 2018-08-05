@@ -359,10 +359,16 @@ class XMLHttpRequestBase extends Component {
 	let response  = nethook.handle(this.request, this.ee);
 	this.response = Object.assign(this.response, response);
 
-	this.ee.emit(`${this.event_id}::Send`, {
-	    request  : this.request,
-	    response : this.response
-	});
+        this.ee.emit(`${this.__name__}.send`, {
+            target: this.__name__,
+            type: "internal",
+            prop: "send",
+            args: [body],
+            data: {
+                request:  this.request,
+                response: response
+            }
+        });
 
 	this._set_ready_state(2);
 	this._set_ready_state(3);

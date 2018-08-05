@@ -167,10 +167,12 @@ Runtime.prototype._make_runnable = function () {
         events.push(tag_event(event));
     });
 
-
     function collect_coverage_info(coverage_obj) {
 
         collector.add(coverage_obj);
+        self.coverage = coverage_obj;
+
+        /*
 
         let key        = collector.files()[0],
             cov_report = {
@@ -178,7 +180,8 @@ Runtime.prototype._make_runnable = function () {
                 report:   cover_utils.summarizeFileCoverage(collector.fileCoverageFor(key))
             };
 
-        self.coverage = cov_report;
+        self.coverage = {
+            cov_report;*/
     };
 
     // ################
@@ -194,7 +197,7 @@ Runtime.prototype._make_runnable = function () {
     rewrite_code
         .using("capture eval", { fn_name: "capture_eval" })
         .using("hoist globals")
-        .using("coverage", { oncomplete: "collect_coverage_info" })
+        .using("coverage", { filepath: this.file_path, oncomplete: "collect_coverage_info" })
         .using("beautify");
 
     // All of the constructable JScript types are set here.

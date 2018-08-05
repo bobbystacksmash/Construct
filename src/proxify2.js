@@ -27,7 +27,7 @@ module.exports = function proxify(context, instance) {
 
                     context.emitter.emit(emit_as, {
                         target: name_of_target,
-                        getset: "get",
+                        type: "get",
                         prop:   actual_propkey,
                         args:   [...args],
                         return:  result
@@ -50,7 +50,7 @@ module.exports = function proxify(context, instance) {
 
             context.emitter.emit(emit_as, {
                 target: name_of_target,
-                getset: "set",
+                type: "set",
                 prop:   actual_propkey,
                 args:   [value],
                 return: returned_value
