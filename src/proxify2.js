@@ -5,11 +5,6 @@ module.exports = function proxify(context, instance) {
 
 	    let actual_propkey = prop_key.toLowerCase();
 
-	    /*context.emitter.emit("$DEBUG::proxy-translate", {
-		prop_from: prop_key,
-		prop_to:   actual_propkey
-	    });*/
-
 	    const original_method = target[actual_propkey];
 
 	    if (typeof original_method === "function") {

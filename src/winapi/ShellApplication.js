@@ -14,13 +14,11 @@ class JS_ShellApplication extends Component {
     // ==========
     //
     get application () {
-	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.Application");
 	return null;
     }
 
 
     get parent () {
-	this.ee.emit("@ShellApplication.Parent", arguments);
 	return null;
     }
 

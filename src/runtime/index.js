@@ -108,6 +108,10 @@ Runtime.prototype.load_plugins = function (path_to_plugins_dir) {
     }, this);
 };
 
+Runtime.prototype.rewrite_source = function () {
+
+}
+
 
 Runtime.prototype._make_runnable = function () {
 
@@ -168,20 +172,7 @@ Runtime.prototype._make_runnable = function () {
     });
 
     function collect_coverage_info(coverage_obj) {
-
-        collector.add(coverage_obj);
         self.coverage = coverage_obj;
-
-        /*
-
-        let key        = collector.files()[0],
-            cov_report = {
-                filename: key,
-                report:   cover_utils.summarizeFileCoverage(collector.fileCoverageFor(key))
-            };
-
-        self.coverage = {
-            cov_report;*/
     };
 
     // ################

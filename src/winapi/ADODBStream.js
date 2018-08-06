@@ -706,8 +706,6 @@ class JS_ADODBStream extends Component {
 
     savetofile (path, opt) {
 
-        this.ee.emit("@ADODBStream::SaveToFile", arguments);
-
         try {
             this.stream.save_to_file(path, opt);
         }

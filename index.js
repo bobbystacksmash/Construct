@@ -5,8 +5,9 @@
  *
  */
 
-const Runtime  = require("./src/runtime"),
-      istanbul = require("istanbul");
+const Runtime     = require("./src/runtime"),
+      istanbul    = require("istanbul"),
+      gather_IOCs = require("./src/intelligence/iocs");
 
 class Construct {
 
@@ -42,6 +43,7 @@ class Construct {
         this.runnable(function (err, results) {
             if (err) {
                 console.log("TODO: fix the error handling for a crashed runnable!");
+                console.log(err);
                 console.log(err.message);
                 return false;
             }
@@ -73,7 +75,15 @@ class Construct {
             );
         }
 
-        console.log(JSON.stringify(this.runtime.coverage));
+        return this.runtime.coverage;
+    }
+
+    IOCs (events) {
+        return gather_IOCs(events);
+    }
+
+    runnable (output_filename) {
+        console.log(this.runnable.toString());
     }
 }
 
