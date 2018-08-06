@@ -105,7 +105,7 @@ class HostContext {
 	    // - ip addr?
 	};
 
-	this.make_uid = function* () { var i = 0; while (true) yield i++; };
+	this.make_uid = (function () { var i = 0; return () => i++; }());
 
 	// All components (ActiveXObject, WScript.Shell, ...) are
 	// expected to register with the `HostContext' when

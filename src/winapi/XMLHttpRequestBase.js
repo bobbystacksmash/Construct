@@ -361,6 +361,7 @@ class XMLHttpRequestBase extends Component {
 
         this.ee.emit(`${this.__name__}.send`, {
             target: this.__name__,
+            id:     this.__id__,
             type: "internal",
             prop: "send",
             args: [body],

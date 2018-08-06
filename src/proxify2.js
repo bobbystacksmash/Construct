@@ -11,6 +11,7 @@ module.exports = function proxify(context, instance) {
 		return function (...args) {
 
                     const name_of_target = target.__name__ || "Unknown",
+                          id_of_target   = target.__id__   || -1,
                           emit_as        = `${name_of_target}.get.${actual_propkey}`;
 
                     try {
@@ -22,6 +23,7 @@ module.exports = function proxify(context, instance) {
 
                     context.emitter.emit(emit_as, {
                         target: name_of_target,
+                        id:     id_of_target,
                         type: "get",
                         prop:   actual_propkey,
                         args:   [...args],
@@ -39,12 +41,14 @@ module.exports = function proxify(context, instance) {
 
             const actual_propkey = prop_key.toLowerCase(),
                   name_of_target = target.__name__ || "Unknown",
+                  id_of_target   = target.__id__   || -1,
                   emit_as        = `${name_of_target}.get.${prop_key}`;
 
             const returned_value = Reflect.set(target, prop_key.toLowerCase(), value);
 
             context.emitter.emit(emit_as, {
                 target: name_of_target,
+                id:     id_of_target,
                 type: "set",
                 prop:   actual_propkey,
                 args:   [value],

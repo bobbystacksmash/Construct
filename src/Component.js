@@ -18,8 +18,9 @@ class Component {
 	}
 
 	this.context = context;
-        this.__name__ = tag;
 
+        this.__name__ = tag;
+        this.__id__   = context.make_uid();
     }
 
     get emitter () {
