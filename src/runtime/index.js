@@ -146,9 +146,10 @@ Runtime.prototype._make_runnable = function () {
                   { re: /^xmlhttprequest/i, tag: "net" },
                   { re: /^adodbstream\.savetofile/i, tag: "filesystem" },
                   { re: /^shell\.application.shellexecute/i, tag: "exec" },
+                  { re: /^activexobject.constructor/i, tag: "constructor" },
+                  { re: /^adodbstream\.savetofile/i, tag: "filesystem" },
 
-                  // TODO: keep updating this list, or consider moving
-                  // it to a config file.
+                  { re: /./, tag: "generic" }
               ];
 
         tags.forEach(tag => {

@@ -10,15 +10,22 @@ class JS_ActiveXObject extends Component {
 
     constructor (context, type, location) {
 
-	/*console.log("========================");
-	console.log(`new ActiveXObject: ${type}`);
-	console.log("========================");*/
-
 	super(context, `ActiveXObject(${type})`);
         this.__name__ = "ActiveXObject";
 	this.ee = this.context.emitter;
 
-        return create_instance(context, type);
+        const instance = create_instance(context, type);
+
+        this.ee.emit(`${this.__name__}.new.${type}`, {
+            target: this.__name__,
+            id: this.__id__,
+            type: "new",
+            prop: "constructor",
+            args: [type, location],
+            return: instance.__id__
+        });
+
+        return instance;
     };
 };
 

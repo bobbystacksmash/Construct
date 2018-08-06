@@ -42,7 +42,7 @@ module.exports = function proxify(context, instance) {
             const actual_propkey = prop_key.toLowerCase(),
                   name_of_target = target.__name__ || "Unknown",
                   id_of_target   = target.__id__   || -1,
-                  emit_as        = `${name_of_target}.get.${prop_key}`;
+                  emit_as        = `${name_of_target}.set.${prop_key}`;
 
             const returned_value = Reflect.set(target, prop_key.toLowerCase(), value);
 

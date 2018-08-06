@@ -6,6 +6,7 @@ const hexy    = require("hexy");
 const colors  = require("colors/safe");
 const wrap    = require("word-wrap");
 const moment  = require("moment");
+const path    = require("path");
 
 const Construct = require("../index");
 
@@ -74,15 +75,23 @@ program
         new Date().toString()
     )
 
+    // TODO
     .option(
-        "-I, --IOCs",
-        "Display IOCs for all filtered events",
-        false
+        "--plugins <PLUGINS>",
+        "Additional directories to load plugins from (colon separated).",
+        () => [],
+        path.join(process.cwd(), "plugins")
     )
 
     .option(
-        "-r, --write-runnable [FILE]",
-        "Writes a ready-to-run version of the analysis file to FILE.",
+        "--reporter <REPORTER>",
+        "Uses the given REPORTER to produce output.",
+        "json"
+    )
+
+    .option(
+        "--list-reporters",
+        "Lists all available output reporters."
     )
 
     .parse(process.argv);
@@ -112,6 +121,7 @@ if (program.IOCs) {
     cstruct.IOCs(events);
 }
 else {
+    console.log(JSON.stringify(events));
     /*const cov = cstruct.coverage("x");
     console.log(JSON.stringify(cov));*/
 }

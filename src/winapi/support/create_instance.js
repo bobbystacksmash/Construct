@@ -8,15 +8,19 @@ function create_instance (context, type) {
 
     type = type.toLowerCase();
 
+    let instance = null;
+
     switch (type) {
 
     case "shell.application":
 	let shell_application = new JScript_ShellApplication(context);
-	return shell_application;
+	instance = shell_application;
+        break;
 
     case "wscript.shell":
 	let wsh = new JScript_WshShell(context);
-	return wsh;
+	instance = wsh;
+        break;
 
     case "WbemScripting.SWbemLocator":
 	console.log("TODO: Add WMI Scripting.");
@@ -34,20 +38,35 @@ function create_instance (context, type) {
     case "msxml2.xmlhttp":
     case "microsoft.xmlhttp":
 	let xhr = new JScript_XMLHttpRequestBase(context, type);
-	return xhr;
+	instance = xhr;
+        break;
 
     case "adodb.stream":
 	let ado = new JScript_ADODBStream(context);
-	return ado;
+	instance = ado;
+        break;
 
     case "scripting.filesystemobject":
         let fso = new JScript_FileSystemObject(context);
-        return fso;
+        instance = fso;
+        break;
 
     default:
         throw new Error("Unknown instance type: " + type);
 	break;
     }
+
+    /*this.ee.emit(`${this.__name__}.new.${type}`, {
+        target: this.__name__,
+        id: this.__id__,
+        type: "new",
+        prop: "constructor",
+        args: [type, location],
+        return: instance.__id__
+     });*/
+
+    return instance;
+
 }
 
 module.exports = create_instance;
