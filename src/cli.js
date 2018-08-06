@@ -5,6 +5,7 @@ const table   = require("text-table");
 const hexy    = require("hexy");
 const colors  = require("colors/safe");
 const wrap    = require("word-wrap");
+const moment  = require("moment");
 
 const Construct = require("../index");
 
@@ -43,6 +44,10 @@ function parse_show_tags (val) {
     });
 }
 
+function parse_date (dt) {
+    return new Date(moment(dt, "YYYY-MM-DD hh:mm:ss"));
+}
+
 let file_to_analyse = null;
 
 program
@@ -60,6 +65,13 @@ program
         "Display events tagged with <tag>.",
         parse_show_tags,
         ["all"]
+    )
+
+    .option(
+        "-d, --date <datestr>",
+        "Sets the sandbox clock for all dates within the virtualised environment.",
+        parse_date,
+        new Date().toString()
     )
 
     .option(
@@ -81,13 +93,12 @@ if (file_to_analyse === null) {
     return;
 }
 
-const cstruct = new Construct();
+const cstruct = new Construct({ epoch: program.date });
 cstruct.load(file_to_analyse);
 
 if (program.writeRunnable) {
     process.exit();
 }
-
 
 cstruct.run();
 
@@ -97,12 +108,10 @@ const events = cstruct.events(e => {
     });
 });
 
-
 if (program.IOCs) {
     cstruct.IOCs(events);
 }
 else {
-    const cov = cstruct.coverage("x");
-    console.log(JSON.stringify(cov));
-
+    /*const cov = cstruct.coverage("x");
+    console.log(JSON.stringify(cov));*/
 }
