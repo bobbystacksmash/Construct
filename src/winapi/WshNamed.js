@@ -13,6 +13,10 @@ class JS_WshNamed extends Component {
         return Object.keys(this.args).length;
     }
 
+    get length () {
+        return Object.keys(this.args).length;
+    }
+
     // Exists
     // ======
     //

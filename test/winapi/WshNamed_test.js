@@ -172,7 +172,22 @@ describe("WshNamed", () => {
             assert.equal(args.item("Foo"), "bar");
             assert.equal(args.item("FOO"), "bar");
         });
+    });
 
+    describe(".Length", () => {
 
+        it("should return a length of zero when there are no named args", () => {
+            assert.equal(new WshNamed(ctx).length, 0);
+        });
+
+        it("should return the correct length for the number of named args", () => {
+            assert.equal(new WshNamed(ctx, {foo:"bar"}).length, 1);
+            assert.equal(new WshNamed(ctx, {foo:"bar", bat: "baz"}).length, 2);
+            assert.equal(new WshNamed(ctx, {
+                foo:"bar",
+                bat: "baz",
+                "aaa": "bbb"
+            }).length, 3);
+        });
     });
 });
