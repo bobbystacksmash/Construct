@@ -19,7 +19,8 @@ function Runtime (options) {
         epoch   : this.epoch
     });
 
-    this.load_plugins("./plugins");
+    this.hooks = [];
+    this.load_hooks("./hooks");
 
     return this;
 }
@@ -50,68 +51,25 @@ Runtime.prototype.load = function(path_to_file, options) {
 };
 
 
-Runtime.prototype.load_plugins = function (path_to_plugins_dir) {
+Runtime.prototype.load_hooks = function (path_to_hooks_dir) {
 
-    let plugins_load_path    = path_to_plugins_dir.replace(/\/*$/, ""),
-	plugins_glob_pathpat = `${plugins_load_path}/**/index.js`,
-	found_plugins_files  = glob.sync(plugins_glob_pathpat);
+    path_to_hooks_dir = path_to_hooks_dir.replace(/\/*$/, "");
 
-    /*console.log(`Plugin loader will attempt to read plugins from "${path_to_plugins_dir}".`);
-    console.log(`Plugin loader found ${found_plugins_files.length}`,
-		`${found_plugins_files.length === 1 ? "plugin" : "plugins"}.`);*/
+    let globpat = `${path_to_hooks_dir}/**/*.js`;
 
-    function network_hook (description, method, addr, response_fn) {
-	this.context.add_network_hook(description, method, addr, response_fn);
-    };
-
-    function registry_hook (description, method, matcher, callback) {
-        this.context.add_registry_hook(description, method, matcher, callback);
-    }
-
-    const hooks = {
-	network:  network_hook.bind(this),
-        registry: registry_hook.bind(this)
-    };
-
-    // Loop-over all of the
-    found_plugins_files.forEach((plugin_file) => {
-
-	let this_plugin = require(path.resolve(plugin_file)),
-	    plugin_dir  = path.basename(path.parse(plugin_file).dir);
-
-	let plugin_info = {};
-
-	plugin_info.description = this_plugin.description || "No description.",
-	plugin_info.author      = this_plugin.author      || "Unknown author.",
-	plugin_info.version     = this_plugin.version     || "0.0.0";
-
-	if (!this_plugin.onload || ! this_plugin.onload instanceof Function) {
-	    console.log(`Plugin loader failed to load ${plugin_dir} plugin ("${plugin_info.description}")`,
-			`plugin does not export an 'onload' function.`);
-	    return;
-	}
-
-	try {
-	    this_plugin.onload.call(this.context, hooks);
-	}
-	catch (e) {
-	    console.log(`Plugin loader failed to load ${plugin_dir}: ${e.message}`);
-	    return;
-	}
-
-	//
-	// Success! Plugin has been registered.
-	//
-	/*console.log(`Plugin loader loaded "${plugin_dir}" (${plugin_info.version})`,
-		    `-- "${plugin_info.description}"`);*/
-
-    }, this);
+    glob.sync(globpat).forEach(hook_file => {
+        try {
+            const loaded_file = require(path.resolve(hook_file));
+            loaded_file.hooks.forEach(hook => this.context.register_hook(hook, loaded_file.meta));
+        }
+        catch (e) {
+            console.log("Error attempting to load hook:", hook_file);
+            console.log("Please remove or fix this file before rerunning.");
+            console.log(e.message);
+            process.exit(1);
+        }
+    });
 };
-
-Runtime.prototype.rewrite_source = function () {
-
-}
-
 
 Runtime.prototype._make_runnable = function () {
 

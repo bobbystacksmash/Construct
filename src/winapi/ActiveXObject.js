@@ -10,21 +10,20 @@ class JS_ActiveXObject extends Component {
 
     constructor (context, type, location) {
 
-	super(context, `ActiveXObject(${type})`);
-        this.__name__ = "ActiveXObject";
-	this.ee = this.context.emitter;
+	super(context, `ActiveXObject`);
+
+        const apiobj = {
+            target:  "ActiveXObject",
+            id:      this.__id__,
+            hooked:  false,
+            type:    "constructor",
+            prop:    "new",
+            args:    [type, location],
+            return:  `instanceOf(${type})`
+        };
+        context.emitter.emit(`ActiveXObject.new.${type}`, apiobj);
 
         const instance = create_instance(context, type);
-
-        this.ee.emit(`${this.__name__}.new.${type}`, {
-            target: this.__name__,
-            id: this.__id__,
-            type: "new",
-            prop: "constructor",
-            args: [type, location],
-            return: instance.__id__
-        });
-
         return instance;
     };
 };
@@ -32,11 +31,8 @@ class JS_ActiveXObject extends Component {
 
 module.exports = function create (context) {
 
-    let activex = class ActiveXObject extends JS_ActiveXObject {
-	constructor (type, location) {
-	    super(context, type, location);
-	}
+    return function ActiveXObject (type, location) {
+        const activex = new JS_ActiveXObject(context, type, location);
+        return activex;
     };
-
-    return proxify(context, activex);
 };

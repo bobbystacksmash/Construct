@@ -21,10 +21,7 @@ class HostContext {
 
 	this.DEBUG = true;
 
-	this.hooks = {
-	    network:  [],
-            registry: { read: [], write: [], delete: [] }
-	};
+        this.hooks = [];
 
 	// TODO
 	// This is hacky. Need to fix it.
@@ -211,6 +208,19 @@ class HostContext {
 	this.register("WScript", this.components["WScript"]);
     }
 
+    find_hook (target) {
+
+        const hook = this.hooks.find(hook => hook.match(this, target));
+
+        if (hook) {
+            return function (fallback) {
+                return hook.apply(this, target, fallback);
+            }.bind(this);
+        }
+
+        return undefined;
+    }
+
 
     get_vfs () {
 	return this.vfs;
@@ -267,7 +277,13 @@ class HostContext {
     }
 
 
-    add_registry_hook (description, method, matcher, callback) {
+    register_hook (hook) {
+        this.hooks.push(hook);
+    }
+
+
+
+    /*add_registry_hook (description, method, matcher, callback) {
 
         // Method can be:
         //
@@ -355,7 +371,7 @@ class HostContext {
 	}
 
 	return hook;
-    }
+    }*/
 
 
     get_component(name) {

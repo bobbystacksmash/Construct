@@ -103,6 +103,7 @@ if (file_to_analyse === null) {
 }
 
 const cstruct = new Construct({ epoch: program.date });
+cstruct.load_reporters("./reporters");
 cstruct.load(file_to_analyse);
 
 if (program.writeRunnable) {

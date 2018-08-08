@@ -5,9 +5,8 @@
  *
  */
 
-const Runtime     = require("./src/runtime"),
-      istanbul    = require("istanbul"),
-      gather_IOCs = require("./src/intelligence/iocs");
+const Runtime  = require("./src/runtime"),
+      istanbul = require("istanbul");
 
 class Construct {
 
@@ -17,7 +16,8 @@ class Construct {
 
         // Apply some sane defaults.
         const defaults = {
-            epoch: new Date().getTime()
+            epoch: new Date().getTime(),
+            plugins: `./plugins`
         };
         options = Object.assign(defaults, options);
 
@@ -38,6 +38,11 @@ class Construct {
         }
     }
 
+    load_reporters (plugin_path) {
+        // given either a string or an array of strings, where each
+        // string is a path, attempt to load reporters from each of
+        // the paths.
+    }
 
     run () {
         this.runnable(function (err, results) {
@@ -76,10 +81,6 @@ class Construct {
         }
 
         return this.runtime.coverage;
-    }
-
-    IOCs (events) {
-        return gather_IOCs(events);
     }
 
     runnable (output_filename) {

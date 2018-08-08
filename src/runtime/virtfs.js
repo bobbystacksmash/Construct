@@ -543,7 +543,7 @@ class VirtualFileSystem {
     //
     _ConvertExternalToInternalPath (extern_path) {
 
-        let internal_path = extern_path
+        let internal_path = ("" + extern_path)
                 .toLowerCase()
                 .replace(/^[a-z]:/ig, "")
                 .replace(/\\/g, "/");
@@ -1149,7 +1149,9 @@ class VirtualFileSystem {
     // decided for files.
     // .TODO2
     //
-    FolderExists (win_path, opts) {
+    FolderExists (win_path) {
+
+        win_path = "" + win_path;
 
         let ipath = this._ConvertExternalToInternalPath(win_path);
 

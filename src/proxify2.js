@@ -1,70 +1,95 @@
-module.exports = function proxify(context, instance) {
 
-    return new Proxy(instance, {
-	get (target, prop_key, receiver) {
+function try_run_hook (context, apiobj, default_action) {
 
-	    let actual_propkey = prop_key.toLowerCase();
+    let hook   = context.find_hook(apiobj),
+        result = undefined;
 
-	    const original_method = target[actual_propkey],
-                  name_of_target = target.__name__ || "Unknown",
-                  id_of_target   = target.__id__   || -1,
-                  emit_as        = `${name_of_target}.get.${actual_propkey}`;
+    if (hook) {
+        apiobj.hooked = true;
+        return hook(default_action);
+    }
+    else if (typeof default_action === "function") {
+        return default_action();
+    }
+    else {
+        return default_action;
+    }
+}
 
-	    if (typeof original_method === "function") {
-		return function (...args) {
+function make_emitter_message (target, property, type, args, retval) {
+    return {
+        target:  target.__name__,
+        id:      target.__id__,
+        hooked:  false,
+        type:    type,
+        prop:    property,
+        args:    args,
+        return:  (retval === undefined) ? null : retval
+    };
+}
 
-                    try {
-		        var result = instance[actual_propkey](...args);
-                    }
-                    catch (e) {
-                        throw e;
-                    }
+module.exports = function (context, jscript_class) {
 
-                    context.emitter.emit(emit_as, {
-                        target: name_of_target,
-                        id:     id_of_target,
-                        type: "method",
-                        prop:   actual_propkey,
-                        args:   [...args],
-                        return:  result
-                    });
+    const proxyobj = {
+        get (target, orig_property) {
 
-                    return result;
-		};
-	    }
+            console.log(target.__name__);
 
-            context.emitter.emit(emit_as, {
-                target: name_of_target,
-                id:     id_of_target,
-                type: "getter",
-                prop:   actual_propkey,
-                args:   [],
-                return:  original_method
-            });
+            const property = orig_property.toLowerCase(),
+                  objprop  = target[property],
+                  apiobj   = {
+                      name: target.__name__,
+                      property: property,
+                      original_property: orig_property,
+                      id:   target.__id__,
+                      args: null
+                  };
 
+            if (typeof objprop === "function") {
+                return function (...args) {
 
-	    return original_method;
-	},
+                    apiobj.args = [...args];
+                    const retval = try_run_hook(context, apiobj, () => jscript_class[property](...args));
 
-        set (target, prop_key, value) {
+                    context.emitter.emit(
+                        `${target}.${property}`,
+                        make_emitter_message(target, property, "method", [...args], retval)
+                    );
 
-            const actual_propkey = prop_key.toLowerCase(),
-                  name_of_target = target.__name__ || "Unknown",
-                  id_of_target   = target.__id__   || -1,
-                  emit_as        = `${name_of_target}.set.${prop_key}`;
+                    return retval;
+                };
+            }
+            else {
 
-            const returned_value = Reflect.set(target, prop_key.toLowerCase(), value);
+                const retval = try_run_hook(context, apiobj, objprop);
+                context.emitter.emit(
+                    `${target}.${property}`,
+                    make_emitter_message(target, property, "getter", null, retval)
+                );
 
-            context.emitter.emit(emit_as, {
-                target: name_of_target,
-                id:     id_of_target,
-                type: "setter",
-                prop:   actual_propkey,
-                args:   [value],
-                return: returned_value
-            });
+                return retval;
+            }
+        },
 
-            return returned_value;
+        set (target, orig_property, value) {
+
+            const property = orig_property.toLowerCase(),
+                  apiobj   = {
+                      name: target.__name__,
+                      property: property,
+                      original_property: orig_property,
+                      id: target.__id__
+                  };
+
+            const retval = try_run_hook(context, apiobj, () => Reflect.set(target, property, value));
+            context.emitter.emit(
+                `${target}.${property}`,
+                make_emitter_message(target, property, "setter", value, retval)
+            );
+
+            return retval;
         }
-    });
+    };
+
+    return new Proxy(jscript_class, proxyobj);
 };

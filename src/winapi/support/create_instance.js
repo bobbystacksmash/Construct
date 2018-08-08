@@ -56,17 +56,7 @@ function create_instance (context, type) {
 	break;
     }
 
-    /*this.ee.emit(`${this.__name__}.new.${type}`, {
-        target: this.__name__,
-        id: this.__id__,
-        type: "new",
-        prop: "constructor",
-        args: [type, location],
-        return: instance.__id__
-     });*/
-
     return instance;
-
 }
 
 module.exports = create_instance;
