@@ -33,8 +33,6 @@ module.exports = function (context, jscript_class) {
     const proxyobj = {
         get (target, orig_property) {
 
-            console.log(target.__name__);
-
             const property = orig_property.toLowerCase(),
                   objprop  = target[property],
                   apiobj   = {

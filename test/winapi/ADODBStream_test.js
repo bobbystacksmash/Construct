@@ -1,21 +1,18 @@
 const assert = require("chai").assert;
 const ADODBStream = require("../../src/winapi/ADODBStream");
 const VirtualFileSystem = require("../../src/runtime/virtfs");
-
-let context = {
-    epoch: 1234567890,
-    emitter: { emit: () => {} },
-    exceptions: {
-    },
-    vfs: {}
-};
+const make_context = require("../testlib");
 
 const vfs_factory = () => new VirtualFileSystem({ register: () => {} });
 
 const BINARY_STREAM = 1;
 const TEXT_STREAM   = 2;
 
+var context;
+
 describe("ADODBStream", () => {
+
+    beforeEach(() => context = make_context());
 
     describe("methods", () => {
 
