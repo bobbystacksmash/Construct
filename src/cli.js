@@ -122,7 +122,10 @@ if (program.IOCs) {
     cstruct.IOCs(events);
 }
 else {
-    console.log(JSON.stringify(events));
+
+    cstruct.apply_reporter("apicallgen", events);
+
+    //console.log(JSON.stringify(events));
     /*const cov = cstruct.coverage("x");
     console.log(JSON.stringify(cov));*/
 }
