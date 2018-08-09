@@ -28,7 +28,7 @@ class JS_WshUnnamed extends Component {
     // with that name.  If the name cannot be found, returns
     // undefined.
     //
-    item (name) {
+    item (index) {
 
         if (arguments.length === 0) {
             this.context.exceptions.throw_unsupported_prop_or_method(
@@ -38,24 +38,23 @@ class JS_WshUnnamed extends Component {
                     "unable to fetch the item."
             );
         }
-        else if (name === null) {
+        else if (index === null) {
             this.context.exceptions.throw_type_mismatch(
                 "WshUnnamed",
                 "Cannot lookup item type 'null'.",
                 "A null value was passed to WshUnnamed.item() which is illegal."
             );
         }
-
-        let item =  Object.keys(this.args).find(arg => {
-            return name.toLowerCase() === arg.toLowerCase();
-        });
-
-        if (item) {
-            return this.args[item];
+        else if (index < 0 || index >= this.args.length) {
+            this.context.exceptions.throw_range_error(
+                "WshUnnamed",
+                "The requested WshUnnamed argument index does not exist.",
+                "The given index is greater than the available number of " +
+                    "unnamed variables."
+            );
         }
-        else {
-            return undefined;
-        }
+
+        return this.args[index];
     }
 }
 

@@ -84,17 +84,34 @@ describe("WshUnnamed", () => {
             assert.equal(args.count, 0);
         });
 
-        it("should return the correct arg counts for named args", () => {
-            let args_named = new WshUnnamed(ctx, ["foo", "baz"]);
-            assert.equal(args_named.count, 2);
+        it("should return the correct arg counts for unnamed args", () => {
+            let args_unnamed = new WshUnnamed(ctx, ["foo", "baz"]);
+            assert.equal(args_unnamed.count, 2);
         });
     });
 
     describe("#Item", () => {
 
-        it("should return undefined when the named param does not exist", () => {
-            assert.equal(new WshUnnamed(ctx).item("foo"), undefined);
-            assert.equal(new WshUnnamed(ctx).item(""),    undefined);
+        it("should throw a RangeError when requesting an out of bounds index", () => {
+
+            make_context({
+                exceptions: {
+                    throw_range_error: () => {
+                        throw new Error("range err");
+                    }
+                }
+            });
+
+            assert.doesNotThrow(() => new WshUnnamed(ctx, ["foo", "bar"]).item(0));
+            assert.doesNotThrow(() => new WshUnnamed(ctx, ["foo", "bar"]).item(1));
+
+            assert.throws(
+                () => new WshUnnamed(ctx, ["foo", "bar"]).item(3), "range err"
+            );
+
+            assert.throws(() => new WshUnnamed(ctx).item(0),  "range err");
+            assert.throws(() => new WshUnnamed(ctx).item(-1), "range err");
+            assert.throws(() => new WshUnnamed(ctx).item(-5), "range err");
         });
 
         it("should throw if calling '.item()' with zero args", () => {
@@ -134,18 +151,14 @@ describe("WshUnnamed", () => {
 
     describe(".Length", () => {
 
-        it("should return a length of zero when there are no named args", () => {
+        it("should return a length of zero when there are no unnamed args", () => {
             assert.equal(new WshUnnamed(ctx).length, 0);
         });
 
-        it("should return the correct length for the number of named args", () => {
-            assert.equal(new WshUnnamed(ctx, {foo:"bar"}).length, 1);
-            assert.equal(new WshUnnamed(ctx, {foo:"bar", bat: "baz"}).length, 2);
-            assert.equal(new WshUnnamed(ctx, {
-                foo:"bar",
-                bat: "baz",
-                "aaa": "bbb"
-            }).length, 3);
+        it("should return the correct length for the number of unnamed args", () => {
+            assert.equal(new WshUnnamed(ctx, ["foo"]).length, 1);
+            assert.equal(new WshUnnamed(ctx, ["foo", "bar", "baz"]).length, 3);
+            assert.equal(new WshUnnamed(ctx, [1, 2, 3, 4]).length, 4);
         });
     });
 });
