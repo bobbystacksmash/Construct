@@ -9,16 +9,16 @@ class JS_Date extends Component {
 	this.ee   = this.context.emitter;
     }
 
-    
+
     skew (ms) {
 	this.context.epoch += ms;
     }
 
-    
+
     getDate() {
 
 	let dt = this.date.getDate();
-	
+
 	this.ee.emit("@Date::getDate", {
 	    fn: "getDate",
 	    v: dt
@@ -31,7 +31,7 @@ class JS_Date extends Component {
     getMonth() {
 
 	let dt = this.date.getMonth();
-    
+
 	this.ee.emit("@Date::getMonth", {
 	    fn: "getMonth",
 	    v: dt
@@ -102,6 +102,10 @@ class JS_Date extends Component {
 	});
 
 	return dt;
+    }
+
+    toString () {
+        return this.date.toString();
     }
 }
 

@@ -13,8 +13,6 @@ class XMLHttpRequestBase extends Component {
 	this.tag = tag;
 	this.event_id = `@${tag}`;
 
-        this.__name__ = "XMLHttpRequest";
-
 	this.request  = {};
 	this.response = {};
 
@@ -295,7 +293,7 @@ class XMLHttpRequestBase extends Component {
     open (method, url, asyn, user, password) {
 
 	this.request.method        = method;
-	this.request.address       = url;
+	this.request.address       = encodeURI(url);
 	this.request.address_parts = urlparser(url);
 	this.request.asyn          = asyn;
 	this.request.user          = user;

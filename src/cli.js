@@ -123,7 +123,7 @@ if (program.IOCs) {
 }
 else {
 
-    cstruct.apply_reporter("apicallgen", events);
+    cstruct.apply_reporter("dumpreg", events);
 
     //console.log(JSON.stringify(events));
     /*const cov = cstruct.coverage("x");
