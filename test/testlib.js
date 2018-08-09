@@ -32,8 +32,6 @@ function make_context (opts) {
         streams = Object.assign({}, default_streams, opts.streams),
         epoch   = 1234567890;
 
-
-
     var default_assoc = {
         "txt": "Text Document",
         "jpg": "JPEG image"

@@ -1,7 +1,7 @@
 const assert            = require("chai").assert;
 const File              = require("../../src/winapi/FileObject.js");
 const VirtualFileSystem = require("../../src/runtime/virtfs");
-const win32path         = require("path").win32;
+
 const make_ctx          = require("../testlib");
 
 describe("FileObject", () => {
