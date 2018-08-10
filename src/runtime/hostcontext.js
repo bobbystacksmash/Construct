@@ -3,6 +3,7 @@ const VirtualRegistry   = require("./virtreg");
 const EventEmitter2     = require("eventemitter2").EventEmitter2;
 const ExceptionHandler = require("../ExceptionHandler");
 const JScript_Date          = require("../winapi/Date");
+const JScript_Math          = require("../winapi/Math");
 const JScript_WScript       = require("../winapi/WScript");
 const JScript_ActiveXObject = require("../winapi/ActiveXObject");
 const JScript_TextStream    = require("../winapi/TextStream");
@@ -173,7 +174,7 @@ class HostContext {
         this.register("VirtualRegistry", this.components["VirtualRegistry"]);
         this.vreg = this.components["VirtualRegistry"];
 
-	// The exception-thrower is an guard against VM code throwing
+	// The exception-thrower guards against VM code throwing
 	// exceptions without providing sufficient documentation that
 	// will help when investigating a sample.  It's accessable
 	// from all components, and ensures we get exceptions with
@@ -200,6 +201,12 @@ class HostContext {
 	// From JScript, this component is used just as it is in node:
 	this.components["Date"] = new JScript_Date(this);
 	this.register("Date", this.components["Date"]);
+
+        // ====
+        // Math
+        // ====
+        this.components["Math"] = new JScript_Math(this);
+        this.register("Math", this.components["Math"]);
 
 	// =======
 	// WScript

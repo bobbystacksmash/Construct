@@ -110,7 +110,9 @@ if (program.writeRunnable) {
     process.exit();
 }
 
-cstruct.run();
+const run_result = cstruct.run();
+
+// todo: handle run_result.timed_out:true.
 
 const events = cstruct.events(e => {
     return e.tags.some(t => {

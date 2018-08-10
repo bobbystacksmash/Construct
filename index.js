@@ -75,7 +75,8 @@ class Construct {
     }
 
     run () {
-        this.runnable(function (err, results) {
+        return this.runnable(function (err, results) {
+
             if (err) {
                 console.log("TODO: fix the error handling for a crashed runnable!");
                 console.log(err);
@@ -83,7 +84,7 @@ class Construct {
                 return false;
             }
 
-            return results.success;
+            return results;
 
         }.bind(this.runtime));
     }

@@ -153,6 +153,7 @@ Runtime.prototype._make_runnable = function () {
     // All of the constructable JScript types are set here.
     var sandbox = {
         Date          : context.get_component("Date"),
+        Math          : context.get_component("Math"),
         WScript       : context.get_component("WScript"),
         ActiveXObject : context.get_component("ActiveXObject"),
         console       : console
@@ -172,10 +173,7 @@ Runtime.prototype._make_runnable = function () {
         catch (e) {
 
 	    if (e.message === "Script execution timed out.") {
-	        // TODO...
-	    }
-	    else {
-//	        console.log(e);
+                return done(null, { "success": true, "timeout_reached": true });
 	    }
 
             done(e);
