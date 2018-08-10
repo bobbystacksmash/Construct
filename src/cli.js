@@ -97,6 +97,11 @@ if (file_to_analyse === null) {
 const cstruct = new Construct({ epoch: program.date });
 cstruct.load_reporters("./reporters");
 
+// =================
+// R E P O R T E R S
+// =================
+let output_reporter = undefined;
+
 if (program.listReporters) {
 
     const reporters = cstruct.get_reporters();
@@ -114,6 +119,20 @@ if (program.listReporters) {
     console.log(table(info));
     process.exit();
 }
+
+if (program.outputReporter) {
+
+    let reporter = cstruct.get_reporters()[program.outputReporter.toLowerCase()];
+
+    if (!reporter) {
+        console.log(`Error: Unable to locate output reporter "${program.outputReporter}".`);
+        console.log(`       Run Construct with "--list-reporters" to see available reporters.`);
+        process.exit();
+    }
+
+    output_reporter = program.outputReporter.toLowerCase();
+}
+
 
 cstruct.load(file_to_analyse);
 
@@ -136,7 +155,7 @@ if (program.IOCs) {
 }
 else {
 
-    cstruct.apply_reporter("dumpnet", events);
+    cstruct.apply_reporter(output_reporter, events);
 
     //console.log(JSON.stringify(events));
     /*const cov = cstruct.coverage("x");

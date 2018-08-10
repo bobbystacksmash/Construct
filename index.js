@@ -52,7 +52,7 @@ class Construct {
         glob.sync(globpat).forEach(reporter_file => {
             try {
                 const loaded_file = require(path.resolve(reporter_file));
-                this.reporters[loaded_file.meta.name] = loaded_file;
+                this.reporters[loaded_file.meta.name.toLowerCase()] = loaded_file;
             }
             catch (e) {
                 console.log("Error attempting to load reporter:", reporter_file);
