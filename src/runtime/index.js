@@ -44,8 +44,11 @@ Runtime.prototype.load = function(path_to_file, options) {
     // original code, rather than the instrumented version, this is to
     // cater for the case where a self-referencing JScript program is
     // attempting to read code from an exact line offset.
-    const filename = path.basename(path_to_file);
-    this.context.vfs.AddFile(`C:\\Users\\Construct\\${filename}`, this.source_code);
+    const filename = path.basename(path_to_file),
+          script_path = `C:\\Users\\Construct\\${filename}`;
+
+    this.context.vfs.AddFile(script_path, this.source_code);
+    this.context.set_env("ScriptFullName", script_path);
 
     return this._make_runnable();
 };

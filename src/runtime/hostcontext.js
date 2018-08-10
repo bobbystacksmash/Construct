@@ -263,6 +263,10 @@ class HostContext {
         return this.ENVIRONMENT[var_name];
     }
 
+    set_env (key, value) {
+        this.ENVIRONMENT[key] = value;
+    }
+
     skew_time_ahead_by (ms) {
 	this.epoch += ms;
     }
