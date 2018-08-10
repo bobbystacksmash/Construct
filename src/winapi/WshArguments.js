@@ -1,4 +1,7 @@
-const Component = require("../Component");
+const Component      = require("../Component"),
+      proxify        = require("../proxify2"),
+      JS_WshNamed    = require("./WshNamed"),
+      JS_WshUnnamed  = require("./WshUnnamed");
 
 // MSDN: https://msdn.microsoft.com/en-us/subscriptions/ss1ysb2a(v=vs.84).aspx
 //
@@ -25,10 +28,28 @@ const Component = require("../Component");
 //
 class JS_WshArguments extends Component {
 
-    constructor (context) {
+    constructor (context, args) {
 	super(context, "WshArguments");
-	this.ee   = this.context.emitter;
-	this.args = this.context.ENVIRONMENT.Arguments;
+
+        args = args || [];
+        let named   = {},
+            unnamed = [];
+
+        args.forEach(arg => {
+            if (typeof arg === "string") {
+                unnamed.push(arg);
+            }
+            else {
+                named = Object.assign(named, arg);
+            }
+        });
+
+        this.argobj = {
+            named: new JS_WshNamed(context, named),
+            unnamed: new JS_WshUnnamed(context, unnamed)
+        };
+
+        this.args = args;
     }
 
     // MSDN: https://msdn.microsoft.com/en-us/subscriptions/zz1z71z6(v=vs.84).aspx
@@ -44,30 +65,68 @@ class JS_WshArguments extends Component {
     // Count method.
     //
     get length () {
-	let len = this.args.length;
-	this.ee.emit("@WshArguments.Length", { length: len });
-	return len;
+        return this.argobj.named.length + this.argobj.unnamed.length;
+    }
+
+    set length (_) {
+        this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            "WshArguments",
+            "Cannot assign to read-only property: .length.",
+            "The length of the WshArguments object cannot be assigned to."
+        );
     }
 
 
     get named () {
-
+        return this.argobj.named;
     }
 
     get unnamed () {
-
+        return this.argobj.unnamed;
     }
-
 
     item (n) {
 
-	try {
-	    var arg = this.args[n];
-	    return arg;
-	}
-	catch (e) {
-	    return undefined;
-	}
+        if (n === undefined) {
+            n = 0;
+        }
+
+        if (n === null) {
+            this.context.exceptions.throw_type_error(
+                "WshArguments",
+                "Cannot convert null to a valid index.",
+                "Passing null to the .item method is not allowed."
+            );
+        }
+
+        if (arguments.length === 0) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "WshArguments",
+                "No index value passed to WshArguments.Item()",
+                "In order to fetch an item by index, it must be given an " +
+                    "index.  No index supplied."
+            );
+        }
+
+        if (n >= this.length) {
+            this.context.exceptions.throw_subscript_out_of_range(
+                "WshArguments",
+                "Argument index out of range.",
+                `Cannot fetch an argument with index ${n} because ` +
+                    "this index is out of range."
+            );
+        }
+
+        let item = this.args[n];
+
+        if (typeof item === "string") {
+            return item;
+        }
+
+        const key = Object.keys(item)[0],
+              val = item[key];
+
+        return `/${key}:${val}`;
     }
 
     count () {
@@ -79,7 +138,7 @@ class JS_WshArguments extends Component {
     }
 }
 
-module.exports = function create(context) {
-    let args = new JS_WshArguments(context);
+module.exports = function create(context, a) {
+    let args = new JS_WshArguments(context, a);
     return proxify(context, args);
 };

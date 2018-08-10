@@ -152,6 +152,18 @@ class ExceptionHandler extends Component {
         );
     }
 
+    throw_subscript_out_of_range (source, summary, details) {
+        this._throw(
+            "RangeError",
+            "Subscript out of range",
+            -2146828279,
+            "Subscript out of range",
+            source,
+            summary,
+            details
+        );
+    }
+
     throw_device_unavailable (source, summary, details) {
         this._throw(
             "Error",
