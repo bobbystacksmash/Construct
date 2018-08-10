@@ -63,6 +63,10 @@ class Construct {
         });
     }
 
+    get_reporters () {
+        return this.reporters;
+    }
+
     apply_reporter (reporter, events) {
 
         reporter = reporter.toLowerCase();

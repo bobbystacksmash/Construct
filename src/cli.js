@@ -75,16 +75,8 @@ program
         new Date().toString()
     )
 
-    // TODO
     .option(
-        "--plugins <PLUGINS>",
-        "Additional directories to load plugins from (colon separated).",
-        () => [],
-        path.join(process.cwd(), "plugins")
-    )
-
-    .option(
-        "--reporter <REPORTER>",
+        "-r, --output-reporter <REPORTER>",
         "Uses the given REPORTER to produce output.",
         "json"
     )
@@ -104,6 +96,25 @@ if (file_to_analyse === null) {
 
 const cstruct = new Construct({ epoch: program.date });
 cstruct.load_reporters("./reporters");
+
+if (program.listReporters) {
+
+    const reporters = cstruct.get_reporters();
+
+    if (Object.keys(reporters).length === 0) {
+        console.log("No reporters found.");
+        process.exit();
+    }
+
+    const info = Object.keys(reporters).map(reporter => {
+        reporter = reporters[reporter].meta;
+        return [reporter.name, reporter.title, reporter.description];
+    });
+
+    console.log(table(info));
+    process.exit();
+}
+
 cstruct.load(file_to_analyse);
 
 if (program.writeRunnable) {
@@ -125,7 +136,7 @@ if (program.IOCs) {
 }
 else {
 
-    cstruct.apply_reporter("dumpreg", events);
+    cstruct.apply_reporter("dumpnet", events);
 
     //console.log(JSON.stringify(events));
     /*const cov = cstruct.coverage("x");
