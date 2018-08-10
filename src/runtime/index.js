@@ -167,7 +167,7 @@ Runtime.prototype._make_runnable = function () {
 
     return function (done) {
         try {
-            vm.runInContext(rewrite_code.source(), sandbox, { "timeout": 2000 });
+            vm.runInContext(rewrite_code.source(), sandbox, { "timeout": 200 });
             done(null, { "success": true });
         }
         catch (e) {
