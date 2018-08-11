@@ -6,7 +6,7 @@ const urlparse       = require("url-parse");
 const vm             = require("vm");
 const glob           = require("glob");
 const path           = require("path");
-const CodeRewriter   = require("../../lib/metaprogramming");
+const CodeRewriter   = require("../metaprogramming");
 
 
 function Runtime (options) {
