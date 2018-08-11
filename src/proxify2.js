@@ -17,6 +17,18 @@ function try_run_hook (context, apiobj, default_action) {
 }
 
 function make_emitter_message (target, property, type, args, retval) {
+
+    if (retval && retval.__name__) {
+        // The return value is an instance.  Instead of returning the
+        // *whole* instance, return some meta info about the instance
+        // so we can still track it later, without causing a cicular
+        // reference issue.
+        retval = {
+            target: retval.__name__,
+            id:     retval.__id__
+        };
+    }
+
     return {
         target:  target.__name__,
         id:      target.__id__,
@@ -49,10 +61,12 @@ module.exports = function (context, jscript_class) {
                     apiobj.args = [...args];
                     const retval = try_run_hook(context, apiobj, () => jscript_class[property](...args));
 
-                    context.emitter.emit(
-                        `${target}.${property}`,
-                        make_emitter_message(target, property, "method", [...args], retval)
-                    );
+                    if (/^__(?:name|id)__$/.test(property) === false) {
+                        context.emitter.emit(
+                            `${target}.${property}`,
+                            make_emitter_message(target, property, "method", [...args], retval)
+                        );
+                    }
 
                     return retval;
                 };
@@ -60,10 +74,13 @@ module.exports = function (context, jscript_class) {
             else {
 
                 const retval = try_run_hook(context, apiobj, objprop);
-                context.emitter.emit(
-                    `${target}.${property}`,
-                    make_emitter_message(target, property, "getter", null, retval)
-                );
+
+                if (/^__(?:name|id)__$/.test(property) === false) {
+                    context.emitter.emit(
+                        `${target}.${property}`,
+                        make_emitter_message(target, property, "getter", null, retval)
+                    );
+                }
 
                 return retval;
             }
@@ -80,10 +97,13 @@ module.exports = function (context, jscript_class) {
                   };
 
             const retval = try_run_hook(context, apiobj, () => Reflect.set(target, property, value));
-            context.emitter.emit(
-                `${target}.${property}`,
-                make_emitter_message(target, property, "setter", value, retval)
-            );
+
+            if (/^__(?:name|id)__$/.test(property) === false) {
+                context.emitter.emit(
+                    `${target}.${property}`,
+                    make_emitter_message(target, property, "setter", value, retval)
+                );
+            }
 
             return retval;
         }
