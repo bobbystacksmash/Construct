@@ -1,12 +1,13 @@
 
 function try_run_hook (context, apiobj, default_action) {
 
-    let hook   = context.find_hook(apiobj),
+    let hook   = context.get_hook(apiobj),
         result = undefined;
 
     if (hook) {
         apiobj.hooked = true;
-        return hook(default_action);
+        var value = hook(context, apiobj, default_action);
+        return value;
     }
     else if (typeof default_action === "function") {
         return default_action();
@@ -16,7 +17,7 @@ function try_run_hook (context, apiobj, default_action) {
     }
 }
 
-function make_emitter_message (target, property, type, args, retval) {
+function make_emitter_message (target, property, args, type, retval, hooked) {
 
     if (retval && retval.__name__) {
         // The return value is an instance.  Instead of returning the
@@ -29,13 +30,20 @@ function make_emitter_message (target, property, type, args, retval) {
         };
     }
 
+    if (hooked === undefined || hooked === null) {
+        hooked = false;
+    }
+    else if (hooked !== false) {
+        hooked = true;
+    }
+
     return {
-        target:  target.__name__,
+        target:  target.__name__.replace(".", ""),
         id:      target.__id__,
-        hooked:  false,
-        type:    type,
+        hooked:  hooked,
         prop:    property,
         args:    args,
+        type:    type,
         return:  (retval === undefined) ? null : retval
     };
 }
@@ -48,25 +56,28 @@ module.exports = function (context, jscript_class) {
             const property = orig_property.toLowerCase(),
                   objprop  = target[property],
                   apiobj   = {
-                      name: target.__name__,
+                      name: target.__name__.replace(".", "").toLowerCase(),
                       property: property,
                       original_property: orig_property,
                       id:   target.__id__,
                       args: null
                   };
 
+            if (/^__(?:name|id)__$/i.test(property)) {
+                return objprop;
+            }
+
             if (typeof objprop === "function") {
                 return function (...args) {
 
                     apiobj.args = [...args];
+                    apiobj.type = "method";
                     const retval = try_run_hook(context, apiobj, () => jscript_class[property](...args));
 
-                    if (/^__(?:name|id)__$/.test(property) === false) {
-                        context.emitter.emit(
-                            `${target}.${property}`,
-                            make_emitter_message(target, property, "method", [...args], retval)
-                        );
-                    }
+                    context.emitter.emit(
+                        `${target}.${property}`,
+                        make_emitter_message(target, property, [...args], apiobj.type, retval, apiobj.hooked)
+                    );
 
                     return retval;
                 };
@@ -74,11 +85,12 @@ module.exports = function (context, jscript_class) {
             else {
 
                 const retval = try_run_hook(context, apiobj, objprop);
+                apiobj.type = "getter";
 
                 if (/^__(?:name|id)__$/.test(property) === false) {
                     context.emitter.emit(
                         `${target}.${property}`,
-                        make_emitter_message(target, property, "getter", null, retval)
+                        make_emitter_message(target, property, null, apiobj.type, retval, apiobj.hooked)
                     );
                 }
 
@@ -93,17 +105,19 @@ module.exports = function (context, jscript_class) {
                       name: target.__name__,
                       property: property,
                       original_property: orig_property,
-                      id: target.__id__
+                      id: target.__id__,
+                      type: "setter"
                   };
 
-            const retval = try_run_hook(context, apiobj, () => Reflect.set(target, property, value));
-
-            if (/^__(?:name|id)__$/.test(property) === false) {
-                context.emitter.emit(
-                    `${target}.${property}`,
-                    make_emitter_message(target, property, "setter", value, retval)
-                );
+            if (/^__(?:name|id)__$/i.test(property)) {
+                return Reflect.set(target, property, value);
             }
+
+            const retval = try_run_hook(context, apiobj, () => Reflect.set(target, property, value));
+            context.emitter.emit(
+                `${target}.${property}`,
+                make_emitter_message(target, property, value, apiobj.type, retval, apiobj.hooked)
+            );
 
             return retval;
         }

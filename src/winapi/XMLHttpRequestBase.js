@@ -328,14 +328,6 @@ class XMLHttpRequestBase extends Component {
 	if (!body) body = null;
 	this.request.body = body;
 
-	let nethook = this.context.get_network_hook(
-	    this.request.method.toUpperCase(),
-	    this.request.address
-	);
-
-	let response  = nethook.handle(this.request, this.ee);
-	this.response = Object.assign(this.response, response);
-
         this.ee.emit(`${this.__name__}.send`, {
             target: this.__name__,
             id:     this.__id__,
@@ -345,7 +337,7 @@ class XMLHttpRequestBase extends Component {
             args: [body],
             data: {
                 request:  this.request,
-                response: response
+                response: this.response
             }
         });
 

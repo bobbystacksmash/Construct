@@ -63,7 +63,7 @@ function make_context (opts) {
         get_env: (e) => env[e],
         get_cfg: (c) => cfg[c],
         make_uid: () => 1,
-        find_hook: () => {},
+        get_hook: () => {},
         get_file_association: f => get_file_assoc(f)
     };
 

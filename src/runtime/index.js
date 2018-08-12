@@ -4,26 +4,31 @@ const istanbul       = require("istanbul");
 const EventEmitter2  = require("eventemitter2").EventEmitter2;
 const urlparse       = require("url-parse");
 const vm             = require("vm");
-const glob           = require("glob");
 const path           = require("path");
 const CodeRewriter   = require("../metaprogramming");
-
+const HookCollection = require("../hooks");
 
 function Runtime (options) {
-    options = options || {};
 
     this.events = [];
+    this.config = options.config;
+
+    // Load hooks
+    this.hooks = [];
+    if (this.config.hasOwnProperty("hooks")) {
+        if (this.config.hooks.hasOwnProperty("location")) {
+            this.hooks = new HookCollection(path.normalize(this.config.hooks.location));
+        }
+    }
 
     this.context = new HostContext({
-        emitter : new EventEmitter2({ wildcard: true }),
-        epoch   : this.epoch
+        emitter: new EventEmitter2({ wildcard: true }),
+        config:  options.config,
+        hooks:   this.hooks
     });
 
-    this.hooks = [];
-    this.load_hooks("./hooks");
-
     return this;
-}
+};
 
 
 Runtime.prototype.load = function(path_to_file, options) {
@@ -54,32 +59,13 @@ Runtime.prototype.load = function(path_to_file, options) {
 };
 
 
-Runtime.prototype.load_hooks = function (path_to_hooks_dir) {
-
-    path_to_hooks_dir = path_to_hooks_dir.replace(/\/*$/, "");
-
-    let globpat = `${path_to_hooks_dir}/**/*.js`;
-
-    glob.sync(globpat).forEach(hook_file => {
-        try {
-            const loaded_file = require(path.resolve(hook_file));
-            loaded_file.hooks.forEach(hook => this.context.register_hook(hook, loaded_file.meta));
-        }
-        catch (e) {
-            console.log("Error attempting to load hook:", hook_file);
-            console.log("Please remove or fix this file before rerunning.");
-            console.log(e.message);
-            process.exit(1);
-        }
-    });
-};
 
 Runtime.prototype._make_runnable = function () {
 
-    let events            = this.events,
-        epoch             = this.context.epoch,
-        ee                = this.context.emitter,
-        context           = this.context;
+    let events  = this.events,
+        epoch   = this.context.epoch,
+        ee      = this.context.emitter,
+        context = this.context;
 
     // ############
     // # Coverage #
@@ -171,16 +157,14 @@ Runtime.prototype._make_runnable = function () {
     return function (done) {
         try {
             vm.runInContext(rewrite_code.source(), sandbox, { "timeout": 200 });
-            done(null, { "success": true });
+            return done(null, { "success": true });
         }
         catch (e) {
 
 	    if (e.message === "Script execution timed out.") {
-                done(null, { "success": true, "timeout_reached": true });
-                return;
+                return done(null, { "success": true, "timeout_reached": true });
 	    }
-
-            done(e);
+            return done(e);
         }
     };
 };

@@ -8,32 +8,11 @@ const JScript_WScript       = require("../winapi/WScript");
 const JScript_ActiveXObject = require("../winapi/ActiveXObject");
 const JScript_TextStream    = require("../winapi/TextStream");
 const win32path = require("path").win32;
+const path = require("path");
+const fs   = require("fs");
 
-class HostContext {
 
-    constructor(opts) {
-
-	opts = opts || {};
-
-	this.user_agent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows " +
-	    "NT 6.1; Trident/7.0; SLCC2; .NET CLR 2.0.50727; " +
-	    ".NET CLR 3.5.30729; .NET CLR 3.0.30729; " +
-	    "Media Center PC 6.0; .NET4.0C)";
-
-	this.DEBUG = true;
-
-        this.hooks = [];
-
-	// TODO
-	// This is hacky. Need to fix it.
-	this.output_behaviour = "repl";
-
-        this.output_buf = [];
-
-        this.CONFIG = {
-            "autovivify": true
-        };
-
+        /*
 	this.ENVIRONMENT = {
             path: "C:\\Users\\Construct",
 	    UserLevel: "SYSTEM",
@@ -101,7 +80,21 @@ class HostContext {
 	    // - env vars
 	    // - hostname
 	    // - ip addr?
-	};
+	 };*/
+
+
+class HostContext {
+
+    constructor(opts) {
+
+        this.output_buf = [];
+        this.hooks = opts.hooks || [];
+
+        // Configuration
+        // =============
+        this.environment  = opts.config.environment;
+        this.current_user = this.environment.whoami   || "john";
+        this.hostname     = this.environment.hostname || "CVM-ABC-123";
 
 	this.make_uid = (function () { var i = 0; return () => i++; }());
 
@@ -111,8 +104,7 @@ class HostContext {
 	// components, such as those used by Construct behind the
 	// scenes.
 	this.component_register = [];
-
-	this.components = {};
+	this.components         = {};
 
 	//
 	// The emitter is how all events in Construct are passed
@@ -162,6 +154,10 @@ class HostContext {
         );
 
 	this._setup_components();
+
+        // Create the files specified in the config...
+        this._create_filesystem(opts.config.environment.filesystem);
+        this._create_registry(opts.config.environment.registry);
     }
 
     _setup_components () {
@@ -215,17 +211,59 @@ class HostContext {
 	this.register("WScript", this.components["WScript"]);
     }
 
-    find_hook (target) {
+    _create_filesystem (filesystem) {
 
-        const hook = this.hooks.find(hook => hook.match(this, target));
+        const vfs  = this.components["VirtualFileSystem"];
 
-        if (hook) {
-            return function (fallback) {
-                return hook.apply(this, target, fallback);
-            }.bind(this);
+        if (filesystem.hasOwnProperty("folders")) {
+            filesystem.folders.forEach(dir => {
+                vfs.AddFolder(dir);
+            });
         }
 
-        return undefined;
+        if (filesystem.hasOwnProperty("files")) {
+            Object.keys(filesystem.files).forEach(fp => {
+
+                const value = filesystem.files[fp];
+
+                // The value signals what kind of file to create.
+                // There are three options:
+                //
+                //  1. If value is FALSE, this means create a blank
+                //     file.
+                //
+                //  2. If value starts with an '@' symbol, it means
+                //     "load the file from local disk".
+                //
+                //  3. If the file doesn't start with an '@' symbol,
+                //     the string is the file contents.
+                //
+                var contents = "";
+                if (typeof value === "string") {
+                    if (value.startsWith("@")) {
+                        let file_to_read = path.resolve(value.replace(/^@/, ""));
+                        contents = fs.readFileSync(file_to_read).toString();
+                    }
+                    else {
+                        contents = value;
+                    }
+                }
+
+                vfs.AddFile(fp, contents);
+            });
+        }
+    }
+
+    _create_registry (registry) {
+
+        const vreg = this.components["VirtualRegistry"];
+        Object.keys(registry).forEach(regpath => {
+            vreg.write(regpath, registry[regpath]);
+        });
+    }
+
+    get_hook (obj) {
+        return this.hooks.match(obj);
     }
 
 
@@ -251,26 +289,25 @@ class HostContext {
                   .toLowerCase()
                   .replace(".", "");
 
-        if (this.ENVIRONMENT.FileAssociations.hasOwnProperty(extname)) {
-            return this.ENVIRONMENT.FileAssociations[extname];
+        if (this.environment.fileassociations.hasOwnProperty(extname)) {
+            return this.environment.FileAssociations[extname];
         }
 
         return `${extname} File`;
     }
 
     get_env (var_name) {
-        if (! this.ENVIRONMENT.hasOwnProperty(var_name)) return undefined;
-        return this.ENVIRONMENT[var_name];
+        if (! this.environment.hasOwnProperty(var_name)) return undefined;
+        return this.environment[var_name];
     }
 
     set_env (key, value) {
-        this.ENVIRONMENT[key] = value;
+        this.environment[key] = value;
     }
 
     skew_time_ahead_by (ms) {
 	this.epoch += ms;
     }
-
 
     register (friendly_name, instance, parent) {
 	if (parent === null || parent === undefined) parent = this;
@@ -281,114 +318,13 @@ class HostContext {
 	    parent:        parent._id
 	};
 
-	this.emitter.emit("$DEBUG::component-registered", component_register_entry);
-
 	// Return the index of the registered component.
 	return (this.component_register.push(component_register_entry) - 1);
     }
 
-
-    register_hook (hook) {
-        this.hooks.push(hook);
-    }
-
-
-
-    /*add_registry_hook (description, method, matcher, callback) {
-
-        // Method can be:
-        //
-        //  - read
-        //  - write
-        //  - delete
-
-        function match (regpath) {
-
-            if (matcher instanceof RegExp) {
-                return matcher.test(regpath);
-            }
-            else if (matcher instanceof Function) {
-                return matcher(regpath);
-            }
-            else if (typeof matcher === "string") {
-                return matcher.toLowerCase() === regpath.toLowerCase();
-            }
-
-            return false;
-        };
-
-        this.hooks.registry[method].push({
-            match: match,
-            desc: description,
-            handle: callback
-        });
-    }
-
-
-    add_network_hook(description, method, addr, response_handler) {
-
-	if (! this.hooks.network.hasOwnProperty(method)) {
-	    this.hooks.network[method] = [];
-	}
-
-	this.hooks.network[method].push({
-	    match: (a) => (addr instanceof RegExp) ? addr.test(a) : a.includes(addr),
-	    desc: description,
-	    handle: response_handler
-	});
-    }
-
-
-    get_registry_hook (method, path) {
-        const reghook = this.hooks.registry[method].find(hook => hook.match(path));
-        return reghook;
-    }
-
-
-    get_network_hook(method, addr) {
-
-	//
-	// Default hook
-	// ============
-	//
-	// We return the default hook if no user-supplied hook can be found.
-	//
-	let default_body = `<!DOCTYPE html><html><head></head><body>Construct.</body></html>`,
-	    default_nethook = {
-		match: () => true,
-		desc:  "Construct's default nethook response handler.",
-		handle: (req, ee) => {
-		    return {
-			status: 200, // TODO: Fetch this value from the config.
-			headers: {
-			    "content-length": default_body.length
-			},
-			body: default_body
-		    };
-		}
-	};
-
-	method = method.toUpperCase();
-
-	if (!this.hooks.network.hasOwnProperty(method)) {
-	    return default_nethook;
-	}
-
-
-	let hook = this.hooks.network[method].find((hook) => hook.match(addr));
-
-	if (!hook) {
-	    return default_nethook;
-	}
-
-	return hook;
-    }*/
-
-
     get_component(name) {
 	return this.components[name];
     }
-
 
     write_to_output_buf (...args) {
         this.output_buf.push(args.join(" "));

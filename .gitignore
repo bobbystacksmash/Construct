@@ -7,3 +7,4 @@ node_modules/
 .#.*
 f.js
 g.js
+*.tern-port

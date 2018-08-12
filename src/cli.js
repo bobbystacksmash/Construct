@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 
-const program = require("commander");
-const table   = require("text-table");
-const hexy    = require("hexy");
-const colors  = require("colors/safe");
-const wrap    = require("word-wrap");
-const moment  = require("moment");
-const path    = require("path");
+const program        = require("commander");
+const table          = require("text-table");
+const hexy           = require("hexy");
+const colors         = require("colors/safe");
+const wrap           = require("word-wrap");
+const moment         = require("moment");
+const path           = require("path");
+const Runtime        = require("./runtime");
+const HookCollection = require("./hooks");
 
 const Construct = require("../index");
 
@@ -78,8 +80,13 @@ program
     .option(
         "-r, --output-reporter <REPORTER>",
         "Uses the given REPORTER to produce output.",
-        "json"
+        "dumpevents"
     )
+
+    /*.option(
+        "-t, --trace",
+        "Attempts to trace the flow of data between API calls."
+    )*/
 
     .option(
         "--list-reporters",
@@ -94,8 +101,18 @@ if (file_to_analyse === null) {
     return;
 }
 
-const cstruct = new Construct({ epoch: program.date });
-cstruct.load_reporters("./reporters");
+
+let construct = new Construct({
+    config: "./construct.cfg"
+});
+
+construct.load_reporters("./reporters");
+construct.load(file_to_analyse);
+const res = construct.run();
+
+if (res === false) {
+    process.exit();
+}
 
 // =================
 // R E P O R T E R S
@@ -104,7 +121,7 @@ let output_reporter = undefined;
 
 if (program.listReporters) {
 
-    const reporters = cstruct.get_reporters();
+    const reporters = construct.get_reporters();
 
     if (Object.keys(reporters).length === 0) {
         console.log("No reporters found.");
@@ -122,7 +139,7 @@ if (program.listReporters) {
 
 if (program.outputReporter) {
 
-    let reporter = cstruct.get_reporters()[program.outputReporter.toLowerCase()];
+    let reporter = construct.get_reporters()[program.outputReporter.toLowerCase()];
 
     if (!reporter) {
         console.log(`Error: Unable to locate output reporter "${program.outputReporter}".`);
@@ -133,31 +150,14 @@ if (program.outputReporter) {
     output_reporter = program.outputReporter.toLowerCase();
 }
 
-
-cstruct.load(file_to_analyse);
-
 if (program.writeRunnable) {
     process.exit();
 }
 
-const run_result = cstruct.run();
-
-// todo: handle run_result.timed_out:true.
-
-const events = cstruct.events(e => {
+const events = construct.events(e => {
     return e.tags.some(t => {
         return program.filter.some(s => s === "all" || s === t);
     });
 });
 
-if (program.IOCs) {
-    cstruct.IOCs(events);
-}
-else {
-
-    cstruct.apply_reporter(output_reporter, events);
-
-    //console.log(JSON.stringify(events));
-    /*const cov = cstruct.coverage("x");
-    console.log(JSON.stringify(cov));*/
-}
+construct.apply_reporter(output_reporter, events);

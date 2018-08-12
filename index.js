@@ -5,29 +5,56 @@
  *
  */
 
-const Runtime  = require("./src/runtime"),
-      istanbul = require("istanbul"),
-      glob     = require("glob"),
-      path     = require("path");
+const Runtime        = require("./src/runtime"),
+      istanbul       = require("istanbul"),
+      toml           = require("toml"),
+      fs             = require("fs"),
+      glob           = require("glob"),
+      path           = require("path");
 
 class Construct {
 
     constructor (options) {
 
-        options = options || {};
+        this.config = this._load_config(options.config);
 
-        // Apply some sane defaults.
-        const defaults = {
-            epoch: new Date().getTime(),
-            plugins: `./plugins`
-        };
-        options = Object.assign(defaults, options);
+        var epoch = new Date().getTime();
+        try {
+            epoch = this.config.environment.epoch;
+        } catch (_) {}
+
+        try {
+            epoch = (epoch === "now")
+                ? new Date().getTime()
+                : new Date(epoch).getTime();
+            this.config.environment.epoch = epoch;
+        }
+        catch (e) {
+            throw e;
+        }
+
+        // This constructor is really a factory for building the
+        // Construct environment.  The first thing we need is the
+        // Runtime.  The runtime is the wrapper which handles
+        // transforming code in to something we can analyse.
+        this.runtime = new Runtime({
+            config: this.config
+        });
 
         this.reporters = {};
+    }
 
-        this.runtime = new Runtime({
-            epoch: options.epoch
-        });
+    _load_config (cfg_path) {
+
+        try {
+            var cfg = fs.readFileSync(cfg_path).toString();
+            return toml.parse(cfg);
+        }
+        catch (e) {
+            console.log("Error: Unable to load configuration file:", cfg_path);
+            console.log(e.message);
+            throw e;
+        }
     }
 
     load (path_to_file) {
@@ -35,7 +62,7 @@ class Construct {
         this.file = path_to_file;
 
         try {
-            this.runnable = this.runtime.load(path_to_file);
+            this._runnable = this.runtime.load(path_to_file);
         }
         catch (e) {
             throw e;
@@ -79,12 +106,14 @@ class Construct {
     }
 
     run () {
-        return this.runnable(function (err, results) {
+        return this._runnable(function (err, results) {
 
             if (err) {
                 console.log("TODO: fix the error handling for a crashed runnable!");
-                console.log(err);
                 console.log(err.message);
+                console.log(err);
+                console.log("\n\n");
+                console.log("Consider updating the Construct config file to fix this issue.");
                 return false;
             }
 
@@ -116,10 +145,6 @@ class Construct {
         }
 
         return this.runtime.coverage;
-    }
-
-    runnable (output_filename) {
-        console.log(this.runnable.toString());
     }
 }
 
