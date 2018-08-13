@@ -47,8 +47,24 @@ class Construct {
     _load_config (cfg_path) {
 
         try {
-            var cfg = fs.readFileSync(cfg_path).toString();
-            return toml.parse(cfg);
+            var cfg    = fs.readFileSync(cfg_path).toString(),
+                parsed = toml.parse(cfg),
+                whoami = parsed.whoami;
+
+            cfg = cfg.replace(/\$WHOAMI/g, whoami);
+
+            if (parsed.hasOwnProperty("general") && parsed.general.hasOwnProperty("override")) {
+
+                let opath  = path.resolve(parsed.general.override),
+                    orides = fs.readFileSync(opath).toString();
+
+                orides = orides.replace(/\$WHOAMI/g, whoami);
+                orides = toml.parse(orides);
+
+                parsed = Object.assign(parsed, orides);
+            }
+
+            return parsed;
         }
         catch (e) {
             console.log("Error: Unable to load configuration file:", cfg_path);

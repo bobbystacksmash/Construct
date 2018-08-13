@@ -37,7 +37,7 @@ function create_instance (context, type) {
     case "msxml2.xmlhttp.3.0":
     case "msxml2.xmlhttp":
     case "microsoft.xmlhttp":
-	let xhr = new JScript_XMLHttpRequestBase(context, type);
+	let xhr = new JScript_XMLHttpRequestBase(context, type, "xmlhttprequest");
 	instance = xhr;
         break;
 

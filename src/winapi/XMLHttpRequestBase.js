@@ -5,12 +5,12 @@ const HTTPStatus = require("http-status");
 
 class XMLHttpRequestBase extends Component {
 
-    constructor (context, tag) {
+    constructor (context, tag, type) {
 
-	super(context, tag);
+	super(context, type);
 
 	this.ee  = this.context.emitter;
-	this.tag = tag;
+	this.tag = type;
 	this.event_id = `@${tag}`;
 
 	this.request  = {};
@@ -294,7 +294,6 @@ class XMLHttpRequestBase extends Component {
 
 	this.request.method        = method;
 	this.request.address       = encodeURI(url);
-	this.request.address_parts = urlparser(url);
 	this.request.asyn          = asyn;
 	this.request.user          = user;
 	this.request.password      = password;
@@ -327,6 +326,8 @@ class XMLHttpRequestBase extends Component {
 
 	if (!body) body = null;
 	this.request.body = body;
+
+        this.response = this.context.get_nethook(this.request);
 
         this.ee.emit(`${this.__name__}.send`, {
             target: this.__name__,
@@ -366,8 +367,6 @@ class XMLHttpRequestBase extends Component {
     //
     setrequestheader (header, val) {
 
-	this.ee.emit(`${this.event_id}::SetRequestHeader`, { header: header, value: val });
-
 	// Does the current set of request headers contain this one?
 	let existing_hdr_idx = this.request.headers.findIndex(
 	    h => h.toLowerCase().startsWith(header.toLowerCase())
@@ -376,12 +375,6 @@ class XMLHttpRequestBase extends Component {
 	let hdr = `${header}: ${val}`;
 
 	if (existing_hdr_idx > -1) {
-	    this.ee.emit(`${this.event_id}::SetRequestHeader!hdr_overwritten`, {
-		old: this.request.headers[existing_hdr_idx],
-		new: hdr,
-		idx: existing_hdr_idx,
-		headers_old: this.request.headers
-	    });
 	    this.request.headers[existing_hdr_idx] = hdr;
 	}
 	else {
@@ -390,7 +383,7 @@ class XMLHttpRequestBase extends Component {
     }
 }
 
-module.exports = function (context, type) {
-    let xhr = new XMLHttpRequestBase(context, type);
+module.exports = function (context, tag, type) {
+    let xhr = new XMLHttpRequestBase(context, tag, type);
     return proxify(context, xhr);
 };

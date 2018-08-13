@@ -29,9 +29,14 @@ class Router {
 
         if (type === "method") {
             const hook = this.routes.method.find(hook => find_hook(hook));
-
             if (hook) {
-                return hook.fn
+                return hook.fn;
+            }
+        }
+        else if (type === "getter" || type === "setter") {
+            const hook = this.routes[type].find(hook => find_hook(hook));
+            if (hook) {
+                return hook.fn;
             }
         }
     }

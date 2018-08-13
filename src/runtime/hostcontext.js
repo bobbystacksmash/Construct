@@ -11,78 +11,6 @@ const win32path = require("path").win32;
 const path = require("path");
 const fs   = require("fs");
 
-
-        /*
-	this.ENVIRONMENT = {
-            path: "C:\\Users\\Construct",
-	    UserLevel: "SYSTEM",
-	    Variables: {
-		SYSTEM: {
-		    // TODO -- These need to be set via a config option.
-		    ALLUSERSPROFILE: "C:\\\\ProgramData",
-		    APPDATA:"C:\\Users\\User\\AppData\\Roaming",
-		    CommonProgramFiles:"C:\\Program Files\\Common Files",
-		    COMPUTERNAME:"USR11WIN7",
-		    ComSpec: "C:\\Windows\\system32\\cmd.exe",
-		    FP_NO_HOST_CHECK:"NO",
-		    HOMEDRIVE:"C:",
-		    HOMEPATH:"\\Users\\User",
-		    LOCALAPPDATA:"C:\\Users\\User\\AppData\\Local",
-		    LOGONSERVER:"\\\\USR11WIN7",
-		    NUMBER_OF_PROCESSORS:"1",
-		    OS:"Windows_NT",
-		    Path:"C:\\Python27\\;C:\\Python27\\Scripts;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\" +
-			"System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\",
-		    PATHEXT:".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC",
-		    PROCESSOR_ARCHITECTURE:"x86",
-		    PROCESSOR_IDENTIFIER:"x86 Family 6 Model 158 Stepping 9, GenuineIntel",
-		    PROCESSOR_LEVEL:"6",
-		    PROCESSOR_REVISION:"9e09",
-		    ProgramData:"C:\\ProgramData",
-		    ProgramFiles:"C:\\Program Files",
-		    PROMPT:"$P$G",
-		    PSModulePath:"C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules\\",
-		    PUBLIC:"C:\\Users\\Public",
-		    SESSIONNAME:"Console",
-		    SystemDrive:"C:",
-		    SystemRoot:"C:\\Windows",
-		    TEMP:"C:\\Users\\User\\AppData\\Local\\Temp",
-		    TMP:"C:\\Users\\User\\AppData\\Local\\Temp",
-		    USERDOMAIN:"IE11WIN7",
-		    USERNAME:"User",
-		    USERPROFILE:"C:\\Users\\User",
-		    windir:"C:\\Windows"
-		},
-		USER: {}
-	    },
-	    CurrentDirectory: "C:\\Windows\\Temp",
-	    Services: [],
-	    MRU: [], // Most-recently used list; maybe move this to vfs?
-	    Arguments: [],
-	    BuildVersion: 1,
-	    FullName: "C:\\Windows\\System32\\cscript.exe",
-	    Name: "Windows Script Host",
-	    Path: "C:\\Users\\Construct", // FIXME - this should REALLY be configurable.
-	    ScriptFullName: "Full path of the currently running script",
-	    ScriptName: "the .js file",
-	    StdErr: null,
-	    StdIn: null,
-	    StdOut: null,
-	    Version: 2,
-            FileAssociations: {
-                "txt": "Text Document",
-                "jpg": "JPEG image",
-                "js":  "JScript Script File"
-            }
-
-	    // TODO:
-	    // - processes
-	    // - env vars
-	    // - hostname
-	    // - ip addr?
-	 };*/
-
-
 class HostContext {
 
     constructor(opts) {
@@ -95,6 +23,15 @@ class HostContext {
         this.environment  = opts.config.environment;
         this.current_user = this.environment.whoami   || "john";
         this.hostname     = this.environment.hostname || "CVM-ABC-123";
+        this.config       = opts.config;
+
+        this.default_nethook_response = {
+            body: "CONSTRUCT-BODY",
+            status: 200,
+            headers: {
+                "Content-Length": "CONSTRUCT-BODY".length
+            }
+        };
 
 	this.make_uid = (function () { var i = 0; return () => i++; }());
 
@@ -158,7 +95,64 @@ class HostContext {
         // Create the files specified in the config...
         this._create_filesystem(opts.config.environment.filesystem);
         this._create_registry(opts.config.environment.registry);
+
+        this._prepare_nethooks(opts.config.network);
     }
+
+    _prepare_nethooks (netcfg) {
+
+        let responses = [];
+
+        Object.keys(netcfg.response).forEach(rkey => {
+            let res  = Object.assign(this.default_nethook_response, netcfg.response[rkey]),
+                body = res.body;
+
+            // NETWORK ADDRESS (URL)
+            // =====================
+            var reurl = res.url;
+            if (res.url.startsWith("/") && res.url.endsWith("/")) {
+                try {
+                    reurl = res.url.replace(/^\//, "").replace(/\/$/, "");
+                    reurl = new RegExp(reurl, "ig");
+                }
+                catch (e) {
+                    console.log(`Error compiling network response regexp URL: '${reurl}':`);
+                    console.log(e.message);
+                    process.exit();
+                }
+            }
+            res.match_url = (url) => {
+                if (reurl instanceof RegExp) {
+                    return reurl.test(url);
+                }
+                else {
+                    return url.toLowerCase().includes(reurl);
+                }
+            };
+
+            // BODY
+            // ====
+            if (res.body.startsWith("@")) {
+
+                let bodypath = path.resolve(res.body.replace(/^@/, ""));
+                try {
+                    body = fs.readFileSync(bodypath).toString();
+                }
+                catch (e) {
+                    console.log(`Error loading file '${bodypath}':`);
+                    console.log(e.message);
+                    process.exit();
+                }
+            }
+
+            res.body = body;
+            res.headers["Content-Length"] = Buffer.from(body).length;
+            responses.push(res);
+        });
+
+        this.nethooks = responses;
+    }
+
 
     _setup_components () {
 
@@ -262,8 +256,22 @@ class HostContext {
         });
     }
 
+
     get_hook (obj) {
         return this.hooks.match(obj);
+    }
+
+
+    get_nethook (req) {
+        let nethook = this.nethooks.find(nh => {
+            return nh.match_url(req.address);
+        });
+
+        if (!nethook) {
+            nethook = this.default_nethook_response;
+        }
+
+        return nethook;
     }
 
 

@@ -12,8 +12,12 @@ class HookCollection {
 
     match (obj) {
 
+        if (!obj.hasOwnProperty("name") || !obj.hasOwnProperty("property") || ! obj.hasOwnProperty("type")) {
+            return false;
+        }
+
         const path = `${obj.name.toLowerCase()}.${obj.property.toLowerCase()}`;
-        //console.log("hooks.match =>", obj);
+
 
         switch (obj.type.toLowerCase()) {
         case "method":
@@ -46,6 +50,10 @@ class HookCollection {
                 throw new Error(`Unable to load hook file: ${hook_file}: ${e.message}`);
             }
         });
+    }
+
+    add_hook (hook) {
+        hook(this.router);
     }
 }
 
