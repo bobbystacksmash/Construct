@@ -24,6 +24,7 @@ class HostContext {
         this.current_user = this.environment.whoami   || "john";
         this.hostname     = this.environment.hostname || "CVM-ABC-123";
         this.config       = opts.config;
+        this.DEBUG        = opts.config.general.debug || false;
 
         this.default_nethook_response = {
             body: "CONSTRUCT-BODY",

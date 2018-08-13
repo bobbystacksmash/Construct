@@ -83,10 +83,10 @@ program
         "dumpevents"
     )
 
-    /*.option(
-        "-t, --trace",
-        "Attempts to trace the flow of data between API calls."
-    )*/
+    .option(
+        "-d, --debug",
+        "Prints debug information to STDOUT."
+    )
 
     .option(
         "--list-reporters",
@@ -111,6 +111,10 @@ construct.load(file_to_analyse);
 const res = construct.run();
 
 if (res === false) {
+    process.exit();
+}
+
+if (program.debug) {
     process.exit();
 }
 

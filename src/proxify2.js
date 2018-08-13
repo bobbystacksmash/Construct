@@ -1,4 +1,3 @@
-
 function try_run_hook (context, apiobj, default_action) {
 
     let hook   = context.get_hook(apiobj),
@@ -65,6 +64,10 @@ module.exports = function (context, jscript_class) {
 
             if (/^__(?:name|id)__$/i.test(property)) {
                 return objprop;
+            }
+
+            if (context.DEBUG) {
+                console.log(`${target.__name__}.${property}`);
             }
 
             if (typeof objprop === "function") {
