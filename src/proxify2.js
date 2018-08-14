@@ -67,7 +67,7 @@ module.exports = function (context, jscript_class) {
             }
 
             if (context.DEBUG) {
-                console.log(`${target.__name__}.${property}`);
+                console.log("PROXYDBG>",`${target.__name__}.${property}`);
             }
 
             if (typeof objprop === "function") {

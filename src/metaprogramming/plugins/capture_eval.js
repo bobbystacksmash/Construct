@@ -1,5 +1,5 @@
-const falafel  = require("falafel"),
-      beautify = require('js-beautify').js_beautify;
+const falafel      = require("falafel"),
+      beautify     = require('js-beautify').js_beautify;
 
 // Instrument 'eval'
 // =================
@@ -29,7 +29,8 @@ function capture_eval (source, options) {
         }
     });
 
-    instrumented_source = instrumented_source.toString();
+    const capture_fnio = require("./capture_fnio");
+    instrumented_source = capture_fnio(instrumented_source.toString(), { fn_name: "capture_fnio" });
 
     if (options.beautify) {
         return beautify(instrumented_source, { indent_size: 2 });

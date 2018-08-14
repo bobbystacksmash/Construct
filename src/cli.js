@@ -164,4 +164,10 @@ const events = construct.events(e => {
     });
 });
 
-construct.apply_reporter(output_reporter, events);
+// This is not the right way to do this.
+if (output_reporter === "dumpfnio") {
+    console.log(JSON.stringify(construct.fnio()));
+}
+else {
+    construct.apply_reporter(output_reporter, events);
+}

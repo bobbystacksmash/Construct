@@ -27,6 +27,8 @@ function Runtime (options) {
         hooks:   this.hooks
     });
 
+    this.fnio = [];
+
     return this;
 };
 
@@ -123,6 +125,19 @@ Runtime.prototype._make_runnable = function () {
         self.coverage = coverage_obj;
     };
 
+    // ########################
+    // # Capture Function I/O #
+    // ########################
+    function capture_fnio (name, type, value) {
+        self.fnio.push({
+            name:  name,
+            type:  type,
+            value: value
+        });
+
+        return value;
+    }
+
     // ################
     // # Capture Eval #
     // ################
@@ -134,9 +149,10 @@ Runtime.prototype._make_runnable = function () {
     // Instrument the code...
     const rewrite_code = new CodeRewriter(this.source_code);
     rewrite_code
-        .using("capture eval", { fn_name: "capture_eval" })
+        .using("capture fnio", { fn_name: "capture_fnio" }) // TODO - weak name.
+        .using("capture eval", { fn_name: "capture_eval" }) // TODO - weak name.
         .using("hoist globals")
-        .using("coverage", { filepath: this.file_path, oncomplete: "collect_coverage_info" })
+        /*.using("coverage", { filepath: this.file_path, oncomplete: "collect_coverage_info" })*/
         .using("beautify");
 
     // All of the constructable JScript types are set here.
@@ -144,13 +160,14 @@ Runtime.prototype._make_runnable = function () {
         Date          : context.get_component("Date"),
         Math          : context.get_component("Math"),
         WScript       : context.get_component("WScript"),
-        ActiveXObject : context.get_component("ActiveXObject"),
-        console       : console
+        ActiveXObject : context.get_component("ActiveXObject")
     };
 
     // Add the dynamic properties such as one-time names:
     sandbox["collect_coverage_info"] = collect_coverage_info;
+    sandbox["capture_fnio"]          = capture_fnio,
     sandbox["capture_eval"]          = capture_eval;
+
 
     vm.createContext(sandbox);
 

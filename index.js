@@ -147,6 +147,11 @@ class Construct {
         return this.runtime.events.filter(filter_fn);
     }
 
+    // TODO: this should be moved to a more suitable home.
+    fnio () {
+        return this.runtime.fnio;
+    }
+
     coverage (type) {
 
         type = type || "summary";
