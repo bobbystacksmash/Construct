@@ -7,12 +7,19 @@ module.exports = {
     },
 
     report: (events) => {
-        events.forEach(event => {
 
-            if (/filesystemobject/i.test(event.target)) {
-                console.log(`"${event.target}","${event.prop},"${event.args[0]}","${event.return}"`);
+        const fs_events = events.reduce((collector, event) => {
+
+            if (event.meta && event.meta === "runtime.api.call") {
+
+                if (/^(?:filesystemobject|file|folder)/i.test(event.target)) {
+                    collector.push(event);
+                }
             }
-        });
 
+            return collector;
+        }, []);
+
+        console.log(JSON.stringify(fs_events));
     }
 };

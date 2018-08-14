@@ -7,12 +7,20 @@ module.exports = {
     },
 
     report: (events) => {
-        events.forEach(event => {
 
-            if (/wshshell/i.test(event.target) && /run/i.test(event.prop)) {
-                console.log(`"${event.target}","${event.prop}","${event.args[0]}","${event.return}"`);
+        const exec_events = events.reduce((collector, event) => {
+            if (event.meta && event.meta === "runtime.api.call") {
+                if (/wshshell/i.test(event.target) && /run/i.test(event.prop)) {
+                    collector.push(event);
+                }
+                else if (/ShellApplication/i.test(event.target) && /shellexecute/i.test(event.prop)) {
+                    collector.push(event);
+                }
             }
-        });
 
+            return collector;
+        }, []);
+
+        console.log(JSON.stringify(exec_events));
     }
 };

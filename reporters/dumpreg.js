@@ -7,15 +7,22 @@ module.exports = {
     },
 
     report: (events) => {
-        events.forEach(event => {
 
-            if (/wshshell/i.test(event.target) && /regread/i.test(event.prop)) {
-                console.log(`"${event.target}","${event.prop}","${event.args[0]}","${event.return}"`);
-            }
-            else if (/wshshell/i.test(event.target) && /regwrite/i.test(event.prop)) {
-                console.log("REGWRITE");
-            }
-        });
+        const reg_events = events.reduce((collector, event) => {
 
+            if (event.meta && event.meta === "runtime.api.call") {
+
+                if (/wshshell/i.test(event.target) && /regread/i.test(event.prop)) {
+                    collector.push(event);
+                }
+                else if (/wshshell/i.test(event.target) && /regwrite/i.test(event.prop)) {
+                    collector.push(event);
+                }
+            }
+
+            return collector;
+        }, []);
+
+        console.log(JSON.stringify(reg_events));
     }
 };

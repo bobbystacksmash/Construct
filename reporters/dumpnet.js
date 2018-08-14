@@ -7,10 +7,18 @@ module.exports = {
     },
 
     report: (events) => {
-        events.forEach(event => {
-            if (/xmlhttp/i.test(event.target) === false || event.prop !== "open") return;
-            console.log(`${event.target},${event.prop},${encodeURI(event.args[1])}`);
-        });
 
+        const net_events = events.reduce((collector, event) => {
+            if (event.meta && event.meta === "runtime.api.call") {
+                if (/xmlhttp/i.test(event.target) && event.prop === "open") {
+                    event.args[1] = encodeURI(event.args[1]);
+                    collector.push(event);
+                }
+            }
+
+            return collector;
+        }, []);
+
+        console.log(JSON.stringify(net_events));
     }
 };

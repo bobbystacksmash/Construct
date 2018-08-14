@@ -11,6 +11,7 @@ const HookCollection = require("../hooks");
 function Runtime (options) {
 
     this.events = [];
+
     this.config = options.config;
 
     // Load hooks
@@ -110,15 +111,19 @@ Runtime.prototype._make_runnable = function () {
         return event;
     }
 
-    ee.on("**", function (event) {
-
-        if (!event || event.hasOwnProperty("target") === false) {
-            return;
-        }
-
-        // We tag events as they come in so we can make better sense
-        // of them later.
+    ee.on("runtime.capture.fnio", function (event) {
+        event.meta = "runtime.capture.fnio";
         events.push(tag_event(event));
+    });
+
+    ee.on("runtime.capture.eval", function (event) {
+        event.meta = "runtime.capture.eval";
+        events.push(event);
+    });
+
+    ee.on("runtime.api.*", function (event) {
+        event.meta = "runtime.api.call";
+        events.push(event);
     });
 
     function collect_coverage_info(coverage_obj) {
@@ -129,12 +134,14 @@ Runtime.prototype._make_runnable = function () {
     // # Capture Function I/O #
     // ########################
     function capture_fnio (name, type, value) {
-        self.fnio.push({
+
+        const obj = {
             name:  name,
             type:  type,
             value: value
-        });
+        };
 
+        ee.emit("runtime.capture.fnio", obj);
         return value;
     }
 
@@ -142,12 +149,12 @@ Runtime.prototype._make_runnable = function () {
     // # Capture Eval #
     // ################
     function capture_eval (evalarg) {
-        ee.emit("capture.eval", evalarg);
+        ee.emit("runtime.capture.eval", evalarg);
         return evalarg;
     }
 
     function capture_function (...args) {
-        ee.emit("capture.function_constructor", [...args]);
+        ee.emit("runtime.capture.function_constructor", [...args]);
         return new Function(...args);
     }
 

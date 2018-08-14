@@ -158,11 +158,7 @@ if (program.writeRunnable) {
     process.exit();
 }
 
-const events = construct.events(e => {
-    return e.tags.some(t => {
-        return program.filter.some(s => s === "all" || s === t);
-    });
-});
+const events = construct.events();
 
 // This is not the right way to do this.
 if (output_reporter === "dumpfnio") {

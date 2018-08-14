@@ -80,7 +80,7 @@ module.exports = function (context, jscript_class) {
                     const retval = try_run_hook(context, apiobj, () => jscript_class[property](...args));
 
                     context.emitter.emit(
-                        `${target}.${property}`,
+                        `runtime.api.method`,
                         make_emitter_message(target, property, [...args], apiobj.type, retval, apiobj.hooked)
                     );
 
@@ -94,7 +94,7 @@ module.exports = function (context, jscript_class) {
 
                 if (/^__(?:name|id)__$/.test(property) === false) {
                     context.emitter.emit(
-                        `${target}.${property}`,
+                        "runtime.api.getter",
                         make_emitter_message(target, property, null, apiobj.type, retval, apiobj.hooked)
                     );
                 }
@@ -120,7 +120,7 @@ module.exports = function (context, jscript_class) {
 
             const retval = try_run_hook(context, apiobj, () => Reflect.set(target, property, value));
             context.emitter.emit(
-                `${target}.${property}`,
+                "runtime.api.setter",
                 make_emitter_message(target, property, value, apiobj.type, retval, apiobj.hooked)
             );
 
