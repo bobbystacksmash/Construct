@@ -1,12 +1,12 @@
 const proxify   = require("../proxify2");
 const Component = require("../Component");
+const FolderObject = require("./FolderObject");
 
 class JS_ShellApplication extends Component {
 
     constructor (context) {
-	super(context, "Shell.Application");
+	super(context, "ShellApplication");
 	this.ee = this.context.emitter;
-        this.__name__ = "Shell.Application";
     }
 
     //
@@ -21,7 +21,6 @@ class JS_ShellApplication extends Component {
     get parent () {
 	return null;
     }
-
 
     //
     // METHODS
@@ -134,9 +133,8 @@ class JS_ShellApplication extends Component {
     }
 
 
-    namespace (dir) {
-	//https://msdn.microsoft.com/en-us/library/windows/desktop/bb774085(v=vs.85).aspx
-	this.ee.emit("!ERROR::NOT_IMPLEMENTED", "ShellApplication.NameSpace", arguments);
+    namespace (idx) {
+        return new FolderObject(this.context, "C:\\ProgramData");
     }
 
 

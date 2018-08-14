@@ -47,6 +47,8 @@ function make_emitter_message (target, property, args, type, retval, hooked) {
     };
 }
 
+let proxified_objects_cache = {};
+
 module.exports = function (context, jscript_class) {
 
     const proxyobj = {
@@ -126,5 +128,17 @@ module.exports = function (context, jscript_class) {
         }
     };
 
-    return new Proxy(jscript_class, proxyobj);
+    // All JScript objects have an `__id__' property which is unique
+    // for each instance of each object.  We don't want to try and
+    // proxify something which is already wrapped in a proxy, so we
+    // check the ID in our cache, and either return the proxified
+    // instance, or create a new one (adding it to the cache).
+    let instance = context.get_instance_by_id(jscript_class.__id__);
+
+    if (!instance) {
+        instance = new Proxy(jscript_class, proxyobj);
+        context.add_instance(instance);
+    }
+
+    return instance;
 };

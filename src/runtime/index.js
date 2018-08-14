@@ -112,7 +112,7 @@ Runtime.prototype._make_runnable = function () {
 
     ee.on("**", function (event) {
 
-        if (event.target === undefined) {
+        if (!event || event.hasOwnProperty("target") === false) {
             return;
         }
 
@@ -157,10 +157,10 @@ Runtime.prototype._make_runnable = function () {
 
     // All of the constructable JScript types are set here.
     var sandbox = {
-        Date          : context.get_component("Date"),
-        Math          : context.get_component("Math"),
-        WScript       : context.get_component("WScript"),
-        ActiveXObject : context.get_component("ActiveXObject")
+        Date          : context.get_global_object("Date"),
+        Math          : context.get_global_object("Math"),
+        WScript       : context.get_global_object("WScript"),
+        ActiveXObject : context.get_global_object("ActiveXObject")
     };
 
     // Add the dynamic properties such as one-time names:

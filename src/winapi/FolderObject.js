@@ -203,6 +203,10 @@ class JS_FolderObject extends Component {
         return shortpath;
     }
 
+    get self () {
+        return this.context.get_instance_by_id(this.__id__);
+    }
+
     // Size
     // ====
     //

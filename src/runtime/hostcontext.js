@@ -17,6 +17,7 @@ class HostContext {
 
         this.output_buf = [];
         this.hooks = opts.hooks || [];
+        this.instances = [];
 
         // Configuration
         // =============
@@ -42,7 +43,7 @@ class HostContext {
 	// components, such as those used by Construct behind the
 	// scenes.
 	this.component_register = [];
-	this.components         = {};
+	this.global_objects         = {};
 
 	//
 	// The emitter is how all events in Construct are passed
@@ -91,7 +92,7 @@ class HostContext {
             IS_WRITEABLE
         );
 
-	this._setup_components();
+	this._setup_global_objects();
 
         // Create the files specified in the config...
         this._create_filesystem(opts.config.environment.filesystem);
@@ -155,15 +156,15 @@ class HostContext {
     }
 
 
-    _setup_components () {
+    _setup_global_objects () {
 
-	this.components["VirtualFileSystem"] = new VirtualFileSystem(this);
-	this.register("VirtualFileSystem", this.components["VirtualfileSystem"]);
-	this.vfs = this.components["VirtualFileSystem"];
+	this.global_objects["VirtualFileSystem"] = new VirtualFileSystem(this);
+	this.register("VirtualFileSystem", this.global_objects["VirtualfileSystem"]);
+	this.vfs = this.global_objects["VirtualFileSystem"];
 
-        this.components["VirtualRegistry"] = new VirtualRegistry(this);
-        this.register("VirtualRegistry", this.components["VirtualRegistry"]);
-        this.vreg = this.components["VirtualRegistry"];
+        this.global_objects["VirtualRegistry"] = new VirtualRegistry(this);
+        this.register("VirtualRegistry", this.global_objects["VirtualRegistry"]);
+        this.vreg = this.global_objects["VirtualRegistry"];
 
 	// The exception-thrower guards against VM code throwing
 	// exceptions without providing sufficient documentation that
@@ -175,40 +176,40 @@ class HostContext {
 	//   * a summary of WHY the exception was thrown,
 	//   * and a detailed description to give context.
 	//
-	this.components["Exceptions"] = new ExceptionHandler(this);
-	this.register("Exceptions", this.components["Exceptions"]);
-	this.exceptions = this.components["Exceptions"];
+	this.global_objects["Exceptions"] = new ExceptionHandler(this);
+	this.register("Exceptions", this.global_objects["Exceptions"]);
+	this.exceptions = this.global_objects["Exceptions"];
 
 	// =============
 	// ActiveXObject
 	// =============
-	this.components["ActiveXObject"] = new JScript_ActiveXObject(this);
-	this.register("ActiveXObject", this.components["ActiveXObject"]);
+	this.global_objects["ActiveXObject"] = new JScript_ActiveXObject(this);
+	this.register("ActiveXObject", this.global_objects["ActiveXObject"]);
 
 	// =======
 	// D A T E
 	// =======
 	//
 	// From JScript, this component is used just as it is in node:
-	this.components["Date"] = new JScript_Date(this);
-	this.register("Date", this.components["Date"]);
+	this.global_objects["Date"] = new JScript_Date(this);
+	this.register("Date", this.global_objects["Date"]);
 
         // ====
         // Math
         // ====
-        this.components["Math"] = new JScript_Math(this);
-        this.register("Math", this.components["Math"]);
+        this.global_objects["Math"] = new JScript_Math(this);
+        this.register("Math", this.global_objects["Math"]);
 
 	// =======
 	// WScript
 	// =======
-	this.components["WScript"] = new JScript_WScript(this);
-	this.register("WScript", this.components["WScript"]);
+	this.global_objects["WScript"] = new JScript_WScript(this);
+	this.register("WScript", this.global_objects["WScript"]);
     }
 
     _create_filesystem (filesystem) {
 
-        const vfs  = this.components["VirtualFileSystem"];
+        const vfs  = this.global_objects["VirtualFileSystem"];
 
         if (filesystem.hasOwnProperty("folders")) {
             filesystem.folders.forEach(dir => {
@@ -251,7 +252,7 @@ class HostContext {
 
     _create_registry (registry) {
 
-        const vreg = this.components["VirtualRegistry"];
+        const vreg = this.global_objects["VirtualRegistry"];
         Object.keys(registry).forEach(regpath => {
             vreg.write(regpath, registry[regpath]);
         });
@@ -331,8 +332,27 @@ class HostContext {
 	return (this.component_register.push(component_register_entry) - 1);
     }
 
-    get_component(name) {
-	return this.components[name];
+    add_instance (instance) {
+        let existing = this.instances.some(ins => instance.__id__ === ins.__id__);
+
+        if (!existing) {
+            this.instances.push(instance);
+        }
+    }
+
+    get_instance_by_id (id) {
+        let instance = this.instances.find(ins => ins.__id__ === id);
+
+        if (instance) {
+            return instance;
+        }
+        else {
+            return false;
+        }
+    }
+
+    get_global_object(name) {
+	return this.global_objects[name];
     }
 
     write_to_output_buf (...args) {
