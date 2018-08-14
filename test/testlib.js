@@ -64,7 +64,9 @@ function make_context (opts) {
         get_cfg: (c) => cfg[c],
         make_uid: () => 1,
         get_hook: () => {},
-        get_file_association: f => get_file_assoc(f)
+        get_file_association: f => get_file_assoc(f),
+        get_instance_by_id: () => {},
+        add_instance: () => undefined
     };
 
     let new_ctx = Object.assign({}, context, opts);

@@ -142,8 +142,13 @@ Runtime.prototype._make_runnable = function () {
     // # Capture Eval #
     // ################
     function capture_eval (evalarg) {
-        ee.emit("capture eval", evalarg);
+        ee.emit("capture.eval", evalarg);
         return evalarg;
+    }
+
+    function capture_function (...args) {
+        ee.emit("capture.function_constructor", [...args]);
+        return new Function(...args);
     }
 
     // Instrument the code...
@@ -160,14 +165,14 @@ Runtime.prototype._make_runnable = function () {
         Date          : context.get_global_object("Date"),
         Math          : context.get_global_object("Math"),
         WScript       : context.get_global_object("WScript"),
-        ActiveXObject : context.get_global_object("ActiveXObject")
+        ActiveXObject : context.get_global_object("ActiveXObject"),
+        Function      : capture_function
     };
 
     // Add the dynamic properties such as one-time names:
     sandbox["collect_coverage_info"] = collect_coverage_info;
     sandbox["capture_fnio"]          = capture_fnio,
     sandbox["capture_eval"]          = capture_eval;
-
 
     vm.createContext(sandbox);
 
