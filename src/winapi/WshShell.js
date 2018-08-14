@@ -2,7 +2,7 @@ const proxify           = require("../proxify2");
 const Component         = require("../Component");
 const JS_WshEnvironment = require("./WshEnvironment");
 const JS_WshShortcut    = require("./WshShortcut");
-const JS_WshSpecialFolders = require("./WshSpecialFolders");
+//const JS_WshSpecialFolders = require("./WshSpecialFolders");
 
 class JS_WshShell extends Component {
 
