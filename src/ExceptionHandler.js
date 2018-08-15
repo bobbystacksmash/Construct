@@ -48,13 +48,13 @@ class ExceptionHandler extends Component {
             type:        type
         };
         const err = new ConstructError(throw_obj);
-        this.context.emitter.emit("runtime.exception", err);
+        this.context.emitter.emit(`runtime.exception.${type.toLowerCase()}`, err);
         throw err;
     }
 
 
     _throw_winapi_exception (name, message, number, description, _source, _summary, _description) {
-        this._throw(name, message, number, description, _source, _summary, _description, "winapi");
+        this._throw(name, message, number, description, _source, _summary, _description, "api");
     }
 
     _throw_native_exception (name, message, number, description, _source, _summary, _description) {

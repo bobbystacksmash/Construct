@@ -126,6 +126,18 @@ Runtime.prototype._make_runnable = function () {
         events.push(event);
     });
 
+    ee.on("runtime.exception.api", function (event) {
+        event.meta = "runtime.exception.api";
+        console.log("ERR", event);
+        events.push(event);
+    });
+
+    ee.on("runtime.exception.native", function (event) {
+        event.meta = "runtime.exception.native";
+        events.push(event);
+    });
+
+
     function collect_coverage_info(coverage_obj) {
         self.coverage = coverage_obj;
     };
