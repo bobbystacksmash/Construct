@@ -1,30 +1,5 @@
 const Component = require("./Component"),
-      WordWrap  = require("word-wrap");
-
-class ConstructError extends Error {
-
-    constructor (errobj) {
-        super(errobj.summary);
-        this.err = errobj;
-        Error.captureStackTrace(this, ConstructError);
-    }
-
-    get source () {
-        return this.err.source;
-    }
-
-    get summary () {
-        return this.err.summary;
-    }
-
-    get description () {
-        return this.err.description;
-    }
-
-    formatted () {
-        return WordWrap(this.description, {width: 72});
-    }
-}
+      ConstructError = require("./ConstructError");
 
 class ExceptionHandler extends Component {
 
@@ -71,10 +46,8 @@ class ExceptionHandler extends Component {
             summary:     _summary,
             description: _description
         };
-
         const err = new ConstructError(throw_obj);
-
-        this.ee.emit(`!Exception::${name}`, err);
+        this.context.emitter.emit("runtime.exception.api", err);
         throw err;
     }
 
@@ -354,6 +327,50 @@ class ExceptionHandler extends Component {
         );
     }
 
+    // ###########################################
+    // # C O N S T R U C T   A P I   E R R O R S #
+    // ###########################################
+
+    // *** Virtual Registry ***
+    throw_native_vreg_invalid_root (source, summary, details) {
+        this._throw(
+            "VirtualRegistryError",
+            summary,
+            0,
+            summary,
+            source, summary, details
+        );
+    }
+
+    throw_native_vreg_cannot_delete_root_key (source, summary, details) {
+        this._throw(
+            "VirtualRegistryError",
+            summary,
+            0,
+            summary,
+            source, summary, details
+        );
+    }
+
+    throw_native_vreg_delete_path_failed (source, summary, details) {
+        this._throw(
+            "VirtualRegistry",
+            summary,
+            0,
+            summary,
+            source, summary, details
+        );
+    }
+
+    throw_native_vreg_subkey_not_exists (source, summary, details) {
+        this._throw(
+            "VirtualRegistry",
+            summary,
+            0,
+            summary,
+            source, summary, details
+        );
+    }
 }
 
 module.exports = ExceptionHandler;
