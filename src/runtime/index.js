@@ -116,7 +116,7 @@ Runtime.prototype._make_runnable = function () {
         events.push(tag_event(event));
     });
 
-    ee.on("runtime.capture.eval", function (event) {
+    ee.on("runtime.capture.*", function (event) {
         event.meta = "runtime.capture.eval";
         events.push(event);
     });
@@ -161,12 +161,19 @@ Runtime.prototype._make_runnable = function () {
     // # Capture Eval #
     // ################
     function capture_eval (evalarg) {
-        ee.emit("runtime.capture.eval", evalarg);
+        ee.emit("runtime.capture.eval", {
+            code: evalarg,
+            decoded: {
+                uri: decodeURI(evalarg)
+            }
+        });
         return evalarg;
     }
 
     function capture_function (...args) {
-        ee.emit("runtime.capture.function_constructor", [...args]);
+        ee.emit("runtime.capture.function_constructor", {
+            function: [...args]
+        });
         return new Function(...args);
     }
 
