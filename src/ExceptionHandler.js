@@ -28,7 +28,7 @@ class ExceptionHandler extends Component {
                 `addressed.`);
     }
 
-    _throw (name, message, number, description, _source, _summary, _description) {
+    _throw (name, message, number, description, _source, _summary, _description, type) {
 
         if (!_summary)     this._lazy_throw_protect(_source, "Summary is not defined.");
         if (!_description) this._lazy_throw_protect(_source, "Detailed description is not defined.");
@@ -44,15 +44,25 @@ class ExceptionHandler extends Component {
             // Construct informational properties
             source:      _source,
             summary:     _summary,
-            description: _description
+            description: _description,
+            type:        type
         };
         const err = new ConstructError(throw_obj);
-        this.context.emitter.emit("runtime.exception.api", err);
+        this.context.emitter.emit("runtime.exception", err);
         throw err;
     }
 
+
+    _throw_winapi_exception (name, message, number, description, _source, _summary, _description) {
+        this._throw(name, message, number, description, _source, _summary, _description, "winapi");
+    }
+
+    _throw_native_exception (name, message, number, description, _source, _summary, _description) {
+        this._throw(name, message, number, description, _source, _summary, _description, "native");
+    }
+
     throw_error (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             "",
             -2147024894,
@@ -64,7 +74,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_file_not_found (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             "File not found",
             -2146828235,
@@ -76,7 +86,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_path_not_found (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             "Path not found",
             -2146828112,
@@ -89,7 +99,7 @@ class ExceptionHandler extends Component {
 
 
     throw_invalid_fn_arg (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "TypeError",
             "Invalid procedure call or argument",
             -2146828283,
@@ -102,7 +112,7 @@ class ExceptionHandler extends Component {
 
 
     throw_unsupported_prop_or_method (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "TypeError",
             "Object doesn't support this property or method",
             -0, // TODO
@@ -114,7 +124,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_wrong_argc_or_invalid_prop_assign (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "TypeError",                                                // name
             "Wrong number of arguments or invalid property assignment", // message
             -2146827838,                                                // number
@@ -126,7 +136,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_device_unavailable (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             "Device unavailable",
             -2146828220,
@@ -138,7 +148,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_not_allowed (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             'Operation is not allowed when the object is open.',
             -2146824583,
@@ -150,7 +160,7 @@ class ExceptionHandler extends Component {
 
 
     throw_not_yet_implemented (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "NotImplementedError",
             "The method is not yet implemented.",
             -0,
@@ -163,7 +173,7 @@ class ExceptionHandler extends Component {
 
 
     throw_operation_not_permitted_in_context (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             "Operation is not allowed in this context.",
             -2146825069,
@@ -174,7 +184,7 @@ class ExceptionHandler extends Component {
 
 
     throw_range_error (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "RangeError",
             "",
             -2147024890,
@@ -184,7 +194,7 @@ class ExceptionHandler extends Component {
 
 
     throw_args_wrong_type_or_out_of_range_or_conflicted (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             "Arguments are of the wrong type, are out of acceptable range, or are in conflict with one another.",
             -2146825287,
@@ -195,7 +205,7 @@ class ExceptionHandler extends Component {
 
 
     throw_operation_not_allowed_when_object_is_open (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             "Operation is not allowed when the object is open.",
             -2146824583,
@@ -206,7 +216,7 @@ class ExceptionHandler extends Component {
 
 
     throw_operation_not_allowed_when_closed (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             "Operation is not allowed when the object is closed.",
             -2146824584,
@@ -217,7 +227,7 @@ class ExceptionHandler extends Component {
 
 
     throw_parameter_is_incorrect (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             "The parameter is incorrect.",
             -2147024809,
@@ -228,7 +238,7 @@ class ExceptionHandler extends Component {
 
 
     throw_access_denied (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "TypeError",
             "Access Denied.",
             -2147287035,
@@ -238,7 +248,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_type_mismatch (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "TypeError",
             "Type mismatch.",
             -2147352571,
@@ -248,7 +258,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_file_could_not_be_opened (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             "File could not be opened.",
             -2146825286,
@@ -258,7 +268,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_write_to_file_failed (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             "Write to file failed.",
             -2146825284,
@@ -268,7 +278,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_could_not_locate_automation_class (source, summary, details, class_name) {
-        this._throw(
+        this._throw_winapi_exception(
             "RangeError",
             `Could not locate automation class named "${class_name}".`,
             -2147352567,
@@ -278,7 +288,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_file_already_exists (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             "File already exists",
             -2146828230,
@@ -288,7 +298,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_bad_filename_or_number (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             "Bad file name or number",
             -2146828236,
@@ -298,7 +308,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_input_past_end_of_file (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             "Input past end of file",
             -2146828226,
@@ -308,7 +318,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_bad_file_mode (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             "Bad file mode",
             -2146828234,
@@ -318,7 +328,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_permission_denied (source, summary, details) {
-        this._throw(
+        this._throw_winapi_exception(
             "Error",
             "Permission denied",
             -2146828218,
@@ -333,7 +343,7 @@ class ExceptionHandler extends Component {
 
     // *** Virtual Registry ***
     throw_native_vreg_invalid_root (source, summary, details) {
-        this._throw(
+        this._throw_native_exception(
             "VirtualRegistryError",
             summary,
             0,
@@ -343,7 +353,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_native_vreg_cannot_delete_root_key (source, summary, details) {
-        this._throw(
+        this._throw_native_exception(
             "VirtualRegistryError",
             summary,
             0,
@@ -353,7 +363,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_native_vreg_delete_path_failed (source, summary, details) {
-        this._throw(
+        this._throw_native_exception(
             "VirtualRegistry",
             summary,
             0,
@@ -363,7 +373,7 @@ class ExceptionHandler extends Component {
     }
 
     throw_native_vreg_subkey_not_exists (source, summary, details) {
-        this._throw(
+        this._throw_native_exception(
             "VirtualRegistry",
             summary,
             0,
