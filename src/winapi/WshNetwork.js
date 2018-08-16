@@ -1,17 +1,4 @@
-/*
- * https://msdn.microsoft.com/en-us/library/s6wt333f(v=vs.84).aspx
- *
- * Provides access to the shared resources on the network to which your
- * computer is connected.
- *
- * You create a WshNetwork object when you want to connect to network shares
- * and network printers, disconnect from network shares and network printers,
- * map or remove network shares, or access information about a user on the
- * network.
- *
- * [ WScript > WshNetwork ]
- *
- * PROPERTIES
+/* PROPERTIES
  * ==========
  * [ ] ComputerName
  * [ ] UserDomain
@@ -30,60 +17,61 @@
  *
  */
 
-const winevts           = require("../events");
-const Proxify           = require("../proxify");
+const Component        = require("../Component");
+const proxify          = require("../proxify2");
 
-var ee;
+class WshNetwork extends Component {
 
-function mock_MISSING_METHOD (name) {
-    let msg = `[WshNetwork.${name}] - METHOD NOT YET IMPLEMENTED.`;
-    alert(msg)
-    console.log(msg);
+    constructor (context) {
+        super(context, "WshNetwork");
+    }
+
+    get computername () {
+        return this.context.config.computername;
+    }
+
+    get userdomain () {
+        return this.context.config.user.domain;
+    }
+
+    get username () {
+        return this.context.config.user.name;
+    }
+
+    addwindowsprinterconnection (lname, rname, update_profile, user, pass) {
+
+    }
+
+    addprinterconnection (path_to_printer) {
+
+    }
+
+    enumnetworkdrives () {
+
+    }
+
+    enumprinterconnections () {
+
+    }
+
+    mapnetworkdrive () {
+
+    }
+
+    removenetworkdrive () {
+
+    }
+
+    removeprinterconnection () {
+
+    }
+
+    setdefaultprinter () {
+
+    }
 }
 
-
-/*
- * ======================================
- * WshNetwork.AddWindowsPrinterConnection
- * ======================================
- *
- * https://msdn.microsoft.com/en-us/library/zsdh7hkb(v=vs.84).aspx
- *
- * Using this method is similar to using the Printer option on Control Panel to
- * add a printer connection. Unlike the AddPrinterConnection method, this method
- * allows you to create a printer connection without directing it to a specific
- * port, such as LPT1. If the connection fails, an error is thrown. In Windows
- * 9x/Me, the printer driver must already be installed on the machine for the
- * AddWindowsPrinterConnection method to work. If the driver is not installed,
- * Windows returns an error message.
- *
- */
-function mock_AddWindowsPrinterconnection (strPrinterPath, strDriverName, strPort) {
-
-    ee.winapi(winevts.WINAPI.WScript.WshNetwork.AddWindowsPrinterConnection, {
-        args: {
-            strPrinterPath: strPrinterPath,
-            strDriverName:  strDriverName
-        }
-    });
-}
-
-
-function create(opts) {
-
-    ee = opts.emitter || { emit: () => {}, on: () => {} };
-
-    let mock_WshNetwork_API = {
-    };
-
-    let overrides = {
-        get: (target, key) => {
-            return mock_WshNetwork_API[key]
-        }
-    };
-
-    var proxify = new Proxify({ emitter: ee });
-    return proxify(mock_WshNetwork_API, overrides, "WshNetwork");
-}
-
-module.exports = create;
+module.exports = function create(context) {
+    let wshnet = new JS_WshNetwork(context);
+    return proxify(context, wshnet);
+};
