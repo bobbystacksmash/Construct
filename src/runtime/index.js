@@ -8,6 +8,9 @@ const path           = require("path");
 const CodeRewriter   = require("../metaprogramming");
 const HookCollection = require("../hooks");
 
+const emitter = new EventEmitter2({ wildcard: true }),
+      make_id = function () { let x = 1; return () => x++;};
+
 function Runtime (options) {
 
     this.events = [];
@@ -23,7 +26,7 @@ function Runtime (options) {
     }
 
     this.context = new HostContext({
-        emitter: new EventEmitter2({ wildcard: true }),
+        emitter: emitter,
         config:  options.config,
         hooks:   this.hooks
     });
@@ -41,7 +44,7 @@ Runtime.prototype.load = function(path_to_file, options) {
     this.file_path = path_to_file;
 
     try {
-        this.source_code = fs.readFileSync(path_to_file).toString();
+        this.source = fs.readFileSync(path_to_file).toString();
     }
     catch (e) {
         throw e;
@@ -60,6 +63,118 @@ Runtime.prototype.load = function(path_to_file, options) {
 
     return this._make_runnable();
 };
+
+// #########################
+// # Capture Coverage Info #
+// #########################
+Runtime.prototype._capture_coverage_info = function (coverage_obj) {
+    console.log(Object.keys(coverage_obj));
+    this.coverage = coverage_obj;
+};
+
+// ########################
+// # Capture Function I/O #
+// ########################
+Runtime.prototype._capture_fnio = function (name, type, value) {
+
+    const obj = {
+        name:  name,
+        type:  type,
+        value: value
+    };
+
+    this.context.emitter.emit("runtime.capture.fnio", obj);
+    return value;
+}
+
+// ################
+// # Capture Eval #
+// ################
+Runtime.prototype._capture_eval = function (evalarg) {
+
+    this.emitter.emit("runtime.capture.eval", {
+        code: evalarg,
+        decoded: {
+            uri: decodeURI(evalarg)
+        }
+    });
+
+    return evalarg;
+};
+
+// ################################
+// # Capture Function Constructor #
+// ################################
+Runtime.prototype._capture_function_constructor = function (...args) {
+
+    emitter.emit("runtime.capture.function_constructor", {
+        function: [...args]
+    });
+
+    // TODO:
+    // turn ...args in to a function str -> pass to sandbox.
+    let source  = "";
+
+    if (arguments.length === 1) {
+        // The Function constructor says that the LAST `arguments'
+        // param is the function body, and all params which precede it
+        // are the function parameters.
+
+        source = `function SANDBOX () { ${arguments[0]} }`;
+
+    }
+    else {
+
+        // All params (except the last) are named fn parameters, which
+        // we create here:
+        let params_list = Array.prototype.slice.call(arguments),
+            fn_body     = params_list.pop(),
+            fn_params   = params_list.join(",");
+
+        source = `function SANDBOX (${fn_params}) { ${fn_body} }`;
+    }
+
+    return this._create_runtime_sandbox(source);
+};
+
+
+
+Runtime.prototype._create_runtime_sandbox = function (source) {
+
+    let context = this.context,
+        self = this;
+
+    // Instrument the code...
+    const rewrite_code = new CodeRewriter(source);
+    rewrite_code
+        .using("capture fnio", { fn_name: "capture_fnio" }) // TODO - weak name.
+        .using("capture eval", { fn_name: "capture_eval" }) // TODO - weak name.
+        .using("hoist globals")
+        //.using("coverage", { filepath: this.file_path, oncomplete: "collect_coverage_info" }) // TODO - config on/off
+        .using("beautify");
+
+    // All of the constructable JScript types are set here.
+    var sandbox = {
+        Date          : context.get_global_object("Date"),
+        Math          : context.get_global_object("Math"),
+        WScript       : context.get_global_object("WScript"),
+        ActiveXObject : context.get_global_object("ActiveXObject")
+    };
+
+    // Add the dynamic properties such as one-time names:
+    sandbox["collect_coverage_info"] = this._capture_coverage_info;
+    sandbox["capture_fnio"]          = (...args) => this._capture_fnio(...args);
+    sandbox["capture_eval"]          = (...args) => this._capture_eval(...args);
+    sandbox["Function"]              = function (...args) { return  self._capture_function_constructor(...args); };
+
+    console.log(rewrite_code.source());
+
+    vm.createContext(sandbox);
+
+    return function () {
+        return vm.runInContext(rewrite_code.source(), sandbox, { "timeout": 2000 });
+    }.bind(context);
+}
 
 
 
@@ -116,8 +231,13 @@ Runtime.prototype._make_runnable = function () {
         events.push(tag_event(event));
     });
 
-    ee.on("runtime.capture.*", function (event) {
+    ee.on("runtime.capture.eval", function (event) {
         event.meta = "runtime.capture.eval";
+        events.push(event);
+    });
+
+    ee.on("runtime.capture.function_constructor", function (event) {
+        event.meta = "runtime.capture.function_constructor";
         events.push(event);
     });
 
@@ -137,84 +257,23 @@ Runtime.prototype._make_runnable = function () {
         events.push(event);
     });
 
-
-    function collect_coverage_info(coverage_obj) {
-        self.coverage = coverage_obj;
-    };
-
-    // ########################
-    // # Capture Function I/O #
-    // ########################
-    function capture_fnio (name, type, value) {
-
-        const obj = {
-            name:  name,
-            type:  type,
-            value: value
-        };
-
-        ee.emit("runtime.capture.fnio", obj);
-        return value;
-    }
-
-    // ################
-    // # Capture Eval #
-    // ################
-    function capture_eval (evalarg) {
-        ee.emit("runtime.capture.eval", {
-            code: evalarg,
-            decoded: {
-                uri: decodeURI(evalarg)
-            }
-        });
-        return evalarg;
-    }
-
-    function capture_function (...args) {
-        ee.emit("runtime.capture.function_constructor", {
-            function: [...args]
-        });
-        return new Function(...args);
-    }
-
-    // Instrument the code...
-    const rewrite_code = new CodeRewriter(this.source_code);
-    rewrite_code
-        .using("capture fnio", { fn_name: "capture_fnio" }) // TODO - weak name.
-        .using("capture eval", { fn_name: "capture_eval" }) // TODO - weak name.
-        .using("hoist globals")
-        /*.using("coverage", { filepath: this.file_path, oncomplete: "collect_coverage_info" })*/
-        .using("beautify");
-
-    // All of the constructable JScript types are set here.
-    var sandbox = {
-        Date          : context.get_global_object("Date"),
-        Math          : context.get_global_object("Math"),
-        WScript       : context.get_global_object("WScript"),
-        ActiveXObject : context.get_global_object("ActiveXObject"),
-        Function      : capture_function
-    };
-
-    // Add the dynamic properties such as one-time names:
-    sandbox["collect_coverage_info"] = collect_coverage_info;
-    sandbox["capture_fnio"]          = capture_fnio,
-    sandbox["capture_eval"]          = capture_eval;
-
-    vm.createContext(sandbox);
+    let ready_to_run_env = this._create_runtime_sandbox(this.source);
 
     return function (done) {
+
         try {
-            vm.runInContext(rewrite_code.source(), sandbox, { "timeout": 200 });
-            return done(null, { "success": true });
+            ready_to_run_env();
+            return done(null, { success: true });
         }
         catch (e) {
-
-	    if (e.message === "Script execution timed out.") {
+            if (e.message === "Script execution timed out.") {
                 return done(null, { "success": true, "timeout_reached": true });
 	    }
             return done(e);
         }
     };
+
+    return this._create_runtime_sandbox(this.source);
 };
 
 
