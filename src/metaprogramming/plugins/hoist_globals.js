@@ -1,4 +1,5 @@
-const detect_globals = require("acorn-globals");
+const detect_globals = require("acorn-globals"),
+      falafel        = require("falafel");
 
 module.exports = function(source, options) {
 
@@ -25,14 +26,30 @@ module.exports = function(source, options) {
     let reserved_globals_RE = new RegExp("^(?:" + options.reserved_globals.join("|") + ")$"),
         list_of_all_globals = detect_globals(source);
 
-    const globals = list_of_all_globals
-              .filter(g   => !reserved_globals_RE.test(g.name))
-              .map(g => `var ${g.name};`);
+    const globals = list_of_all_globals.filter(g => !reserved_globals_RE.test(g.name));
 
-    if (globals.length === 0) {
+    let referenced_globals = [];
+
+    falafel(source, function (node) {
+
+        if (node.type === "AssignmentExpression") {
+            //
+            // Handles cases such as:
+            //   var x = 10;
+            //
+            let var_name = node.left.name;
+            if (globals.some(g => g.name === var_name)) {
+                referenced_globals.push(var_name);
+            }
+        }
+    });
+
+    referenced_globals = referenced_globals.map(g => `var ${g};`);
+
+    if (referenced_globals.length === 0) {
         return source;
     }
 
-    const hoisted_globals_source = `${globals.join("\n")}\n\n${source}`;
+    const hoisted_globals_source = `${referenced_globals.join("\n")}\n\n${source}`;
     return hoisted_globals_source;
 };
