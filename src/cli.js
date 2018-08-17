@@ -160,10 +160,4 @@ if (program.writeRunnable) {
 
 const events = construct.events();
 
-// This is not the right way to do this.
-if (output_reporter === "dumpfnio") {
-    console.log(JSON.stringify(construct.fnio()));
-}
-else {
-    construct.apply_reporter(output_reporter, events);
-}
+construct.apply_reporter(output_reporter, events);

@@ -6,7 +6,7 @@ module.exports = {
         description: "Dumps all captured function arguments and return values."
     },
 
-    report: (iolog) => {
-
+    report: (events) => {
+        console.log(JSON.stringify(events), null, 2);
     }
 };

@@ -167,8 +167,6 @@ Runtime.prototype._create_runtime_sandbox = function (source) {
     sandbox["capture_eval"]          = (...args) => this._capture_eval(...args);
     sandbox["Function"]              = function (...args) { return  self._capture_function_constructor(...args); };
 
-    console.log(rewrite_code.source());
-
     vm.createContext(sandbox);
 
     return function () {
