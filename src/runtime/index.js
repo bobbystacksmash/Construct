@@ -92,7 +92,7 @@ Runtime.prototype._capture_fnio = function (name, type, value) {
 // ################
 Runtime.prototype._capture_eval = function (evalarg) {
 
-    this.emitter.emit("runtime.capture.eval", {
+    this.context.emitter.emit("runtime.capture.eval", {
         code: evalarg,
         decoded: {
             uri: decodeURI(evalarg)
