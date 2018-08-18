@@ -83,7 +83,7 @@ class JS_Math extends Component {
     }
 
     ceil(...args) {
-        return this.math.cil(...args);
+        return this.math.ceil(...args);
     }
 
     cos(...args) {
