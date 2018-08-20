@@ -7,7 +7,6 @@ const colors         = require("colors/safe");
 const wrap           = require("word-wrap");
 const moment         = require("moment");
 const path           = require("path");
-const Runtime        = require("./runtime");
 const HookCollection = require("./hooks");
 
 const Construct = require("../index");
@@ -160,4 +159,4 @@ if (program.writeRunnable) {
 
 const events = construct.events();
 
-construct.apply_reporter(output_reporter, events);
+//construct.apply_reporter(output_reporter, events);

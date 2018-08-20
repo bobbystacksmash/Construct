@@ -7,6 +7,8 @@ const vm             = require("vm");
 const path           = require("path");
 const CodeRewriter   = require("../metaprogramming");
 const HookCollection = require("../hooks");
+const falafel        = require("falafel");
+const beautifier     = require("js-beautify");
 
 const emitter = new EventEmitter2({ wildcard: true }),
       make_id = function () { let x = 1; return () => x++;};
@@ -14,6 +16,8 @@ const emitter = new EventEmitter2({ wildcard: true }),
 function Runtime (options) {
 
     this.events = [];
+
+    options = options || {};
 
     this.config = options.config;
 
@@ -32,6 +36,7 @@ function Runtime (options) {
     });
 
     this.fnio = [];
+    this.expanders = [];
 
     return this;
 };
@@ -138,6 +143,31 @@ Runtime.prototype._capture_function_constructor = function (...args) {
 };
 
 
+Runtime.prototype._eval_handler = function (code) {
+
+    const StackTrace = require("stack-trace");
+    var trace  = StackTrace.get()[1],
+        column = trace.getColumnNumber() - 1,
+        line   = trace.getLineNumber();
+
+    // Walk the SRC until we find the call site of this eval
+    // call.
+    var updated = falafel(this.source, { locations: true }, function (node) {
+
+        let node_line   = node.loc.start.line,
+            node_column = node.loc.start.column;
+
+        if (node_line === line && node_column === column) {
+            node.update(`${code},stop()`);
+        }
+    });
+
+    console.log(updated);
+
+    this.expanders.push(updated);
+};
+
+
 
 Runtime.prototype._create_runtime_sandbox = function (source) {
 
@@ -145,20 +175,22 @@ Runtime.prototype._create_runtime_sandbox = function (source) {
         self = this;
 
     // Instrument the code...
-    const rewrite_code = new CodeRewriter(source);
+    /*const rewrite_code = new CodeRewriter(source);
     rewrite_code
         .using("capture fnio", { fn_name: "capture_fnio" }) // TODO - weak name.
         .using("capture eval", { fn_name: "capture_eval" }) // TODO - weak name.
         .using("hoist globals")
         //.using("coverage", { filepath: this.file_path, oncomplete: "collect_coverage_info" }) // TODO - config on/off
-        .using("beautify");
+        .using("beautify");*/
 
     // All of the constructable JScript types are set here.
+
     var sandbox = {
         Date          : context.get_global_object("Date"),
         Math          : context.get_global_object("Math"),
         WScript       : context.get_global_object("WScript"),
-        ActiveXObject : context.get_global_object("ActiveXObject")
+        ActiveXObject : context.get_global_object("ActiveXObject"),
+        eval          : this._eval_handler.bind(this)
     };
 
     // Add the dynamic properties such as one-time names:
@@ -169,14 +201,18 @@ Runtime.prototype._create_runtime_sandbox = function (source) {
 
     vm.createContext(sandbox);
 
+    let src = this.source;
+
     return function () {
-        return vm.runInContext(rewrite_code.source(), sandbox, { "timeout": 2000 });
+        return vm.runInContext(src, sandbox, { "timeout": 2000 });
     }.bind(context);
-}
+};
 
 
 
-Runtime.prototype._make_runnable = function () {
+Runtime.prototype._make_runnable = function (mode) {
+
+    mode = mode || "run";
 
     let events  = this.events,
         epoch   = this.context.epoch,

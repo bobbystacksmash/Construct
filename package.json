@@ -53,6 +53,7 @@
         "npm": "^6.2.0",
         "sprintf-js": "^1.1.1",
         "spyfs": "^1.0.2",
+        "stack-trace": "0.0.10",
         "text-table": "^0.2.0",
         "toml": "^2.3.3",
         "unionfs": "^3.0.2",

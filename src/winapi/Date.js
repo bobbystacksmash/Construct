@@ -116,5 +116,5 @@ module.exports = function create(context) {
     return function dt (dtstr) {
         var date = new JS_Date(context, dtstr);
         return proxify(context, date);
-    }
+    };
 };
