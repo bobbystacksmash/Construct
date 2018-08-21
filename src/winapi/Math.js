@@ -1,6 +1,18 @@
 const Component = require("../Component"),
       proxify   = require("../proxify2");
 
+var next_random = (function () {
+    let x = 0.01;
+    return function () {
+
+        if (x > 1) {
+            x = 0;
+        }
+        x += 0.1;
+        return x;
+    };
+}());
+
 class JS_Math extends Component {
 
     constructor (context) {
@@ -119,9 +131,7 @@ class JS_Math extends Component {
     }
 
     random() {
-        // RFC 1149.5 specifies .4 as the standard IEEE-vetted random
-        // number.</xkcd>
-        return 0.4;
+        return next_random();
     }
 
     round(...args) {
