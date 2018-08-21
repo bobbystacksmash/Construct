@@ -30,60 +30,67 @@
  *
  */
 
-const winevts           = require("../events");
-const Proxify           = require("../proxify");
+const Component = require("../Component"),
+      proxify   = require("../proxify2");
 
-var ee;
+class JS_WshNetwork extends Component {
 
-function mock_MISSING_METHOD (name) {
-    let msg = `[WshNetwork.${name}] - METHOD NOT YET IMPLEMENTED.`;
-    alert(msg)
-    console.log(msg);
+    constructor (context) {
+        super(context, "WshNetwork");
+        this.context = context;
+    }
+
+    get computername () {
+        // TODO
+        return "COMPUTER_NAME";
+    }
+
+    get userdomain () {
+        // TODO
+        return "USER_DOMAIN";
+    }
+
+    get username () {
+        // TODO
+        return "USERNAME";
+    }
+
+    // Methods
+
+    addwindowsprinterconnection () {
+        // todo
+    }
+
+    AddPrinterConnection () {
+        // todo
+    }
+
+    EnumNetworkDrives () {
+        // todo
+    }
+
+    EnumPrinterConnections () {
+        // todo
+    }
+
+    MapNetworkDrive () {
+        // todo
+    }
+
+    RemoveNetworkDrive () {
+        // todo
+    }
+
+    RemovePrinterConnection () {
+        // todo
+    }
+
+    SetDefaultPrinter () {
+        // todo
+    }
 }
 
-
-/*
- * ======================================
- * WshNetwork.AddWindowsPrinterConnection
- * ======================================
- *
- * https://msdn.microsoft.com/en-us/library/zsdh7hkb(v=vs.84).aspx
- *
- * Using this method is similar to using the Printer option on Control Panel to
- * add a printer connection. Unlike the AddPrinterConnection method, this method
- * allows you to create a printer connection without directing it to a specific
- * port, such as LPT1. If the connection fails, an error is thrown. In Windows
- * 9x/Me, the printer driver must already be installed on the machine for the
- * AddWindowsPrinterConnection method to work. If the driver is not installed,
- * Windows returns an error message.
- *
- */
-function mock_AddWindowsPrinterconnection (strPrinterPath, strDriverName, strPort) {
-
-    ee.winapi(winevts.WINAPI.WScript.WshNetwork.AddWindowsPrinterConnection, {
-        args: {
-            strPrinterPath: strPrinterPath,
-            strDriverName:  strDriverName
-        }
-    });
-}
-
-
-function create(opts) {
-
-    ee = opts.emitter || { emit: () => {}, on: () => {} };
-
-    let mock_WshNetwork_API = {
-    };
-
-    let overrides = {
-        get: (target, key) => {
-            return mock_WshNetwork_API[key]
-        }
-    };
-
-    var proxify = new Proxify({ emitter: ee });
-    return proxify(mock_WshNetwork_API, overrides, "WshNetwork");
-}
-
-module.exports = create;
+module.exports = function create(context) {
+    let wnet = new JS_WshNetwork(context);
+    return proxify(context, wnet);
+};

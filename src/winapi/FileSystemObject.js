@@ -15,8 +15,6 @@ class JS_FileSystemObject extends Component {
 	super(context, "FileSystemObject");
         this.context = context;
 
-        this.__name__ = "FileSystemObject";
-
         // Shortcuts...
         this.ee  = this.context.emitter;
         this.vfs = this.context.vfs;
