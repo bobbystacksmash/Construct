@@ -42,6 +42,17 @@ module.exports = function(source, options) {
                 referenced_globals.push(var_name);
             }
         }
+        else if (node.type === "FunctionDeclaration" && node.params.length) {
+            //
+            // Handles cases such as:
+            //   function foo (bar) { ...
+            //                 ^^^
+            node.params.forEach(param => {
+                if (globals.some(g => g.name === param.name)) {
+                    referenced_globals.push(param.name);
+                }
+            });
+        }
     });
 
     referenced_globals = referenced_globals.map(g => `var ${g};`);

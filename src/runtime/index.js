@@ -96,14 +96,22 @@ Runtime.prototype._capture_fnio = function (name, type, value) {
 // ##############################
 // # Capture Function Call Args #
 // ##############################
-Runtime.prototype._capture_fnargs = function (arg) {
+Runtime.prototype._capture_fnargs = function (callee, loc, arg) {
+
+    if (arg === undefined || arg === null || arg === "") return arg;
+    if (Object.keys(arg).length === 0) return arg;
 
     try {
         let ast = acorn.parse(arg);
-        this.context.emitter.emit("runtime.capture.callexprarg", arg);
+        this.context.emitter.emit("runtime.capture.callexprarg", {
+            callee: callee,
+            arg: arg
+        });
     }
     catch (e) {
     }
+
+    return arg;
 };
 
 // ################################
@@ -147,15 +155,6 @@ Runtime.prototype._create_runtime_sandbox = function (source) {
     let context = this.context,
         self = this;
 
-    function __capture__ (input) {
-
-
-
-        console.log("HELLO WORLD");
-
-        return input;
-    }
-
     // Instrument the code...
     const rewrite_code = new CodeRewriter(source);
     rewrite_code
@@ -176,16 +175,12 @@ Runtime.prototype._create_runtime_sandbox = function (source) {
     // Add the dynamic properties such as one-time names:
     sandbox["collect_coverage_info"] = this._capture_coverage_info;
     sandbox["capture_fnio"]          = (...args) => this._capture_fnio(...args);
-    sandbox["capture_eval"]          = (...args) => this._capture_eval(...args);
     sandbox["Function"]              = function (...args) {
         return  self._capture_function_constructor(...args);
     };
     vm.createContext(sandbox);
 
     let src = rewrite_code.source();
-
-    console.log(src);
-
     return function () {
         return vm.runInContext(src, sandbox, { "timeout": 2000 });
     }.bind(context);
@@ -248,8 +243,9 @@ Runtime.prototype._make_runnable = function (mode) {
         events.push(tag_event(event));
     });
 
-    ee.on("runtime.capture.fncallexpr", function (event) {
-        console.log("CALLED!!!!!!");
+    ee.on("runtime.capture.callexprarg", function (event) {
+        event.meta = "runtime.capture.callexprarg";
+        events.push(event);
     });
 
     ee.on("runtime.capture.eval", function (event) {

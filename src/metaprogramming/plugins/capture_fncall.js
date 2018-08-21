@@ -1,5 +1,5 @@
 const falafel      = require("falafel"),
-      beautify     = require('js-beautify').js_beautify;
+      beautify     = require('js-beautify');
 
 function capture_fncall_args (source, options) {
 
@@ -7,12 +7,23 @@ function capture_fncall_args (source, options) {
     const defaults = { fn_name: "___CAPTURE___", beautify: true };
     options = Object.assign(defaults, options);
 
-    let ins_source = falafel(source, function (node) {
+    let ins_source = falafel(source, { locations: true }, function (node) {
 
         if (node.type === "CallExpression" && node.arguments.length > 0) {
+
+            let callee      = node.callee,
+                callee_name = "[unknown]";
+
+            if (callee && callee.type === "MemberExpression") {
+                callee_name = callee.property.name;
+            }
+            else {
+                callee_name = callee.name;
+            }
+
             node.arguments.forEach(arg => {
                 const argsrc = arg.source();
-                arg.update(`${options.fn_name}(${argsrc})`);
+                arg.update(`${options.fn_name}("${callee_name}", ${JSON.stringify(node.loc)}, ${argsrc})`);
             });
         }
     });
