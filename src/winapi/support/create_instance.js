@@ -3,6 +3,7 @@ const JScript_WshShell           = require("../WshShell");
 const JScript_ShellApplication   = require("../ShellApplication");
 const JScript_ADODBStream        = require("../ADODBStream");
 const JScript_FileSystemObject   = require("../FileSystemObject");
+const JScript_WshNetwork         = require("../WshNetwork");
 
 function create_instance (context, type) {
 
@@ -20,6 +21,11 @@ function create_instance (context, type) {
     case "wscript.shell":
 	let wsh = new JScript_WshShell(context);
 	instance = wsh;
+        break;
+
+    case "wscript.network":
+        let wnet = new JScript_WshNetwork(context);
+        instance = wnet;
         break;
 
     case "WbemScripting.SWbemLocator":
