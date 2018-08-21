@@ -1,57 +1,20 @@
-const assert = require("chai").assert;
-const TextStream = require("../../src/winapi/TextStream");
-const VirtualFileSystem = require("../../src/runtime/virtfs");
+const assert = require("chai").assert,
+      TextStream = require("../../src/winapi/TextStream"),
+      VirtualFileSystem = require("../../src/runtime/virtfs"),
+      make_context = require("../testlib");
+
 
 // The TextStream most commonly represents a text file, however it can
 // also represent any input/output stream, such as stdin or stdout.
 
-var context = null;
-
 const new_vfs = () => new VirtualFileSystem({ register: () => {} });
+var context;
 
 const CAN_READ     = true,
       CANNOT_READ  = false,
       CAN_WRITE    = 1,
       CAN_APPEND   = 2,
       CANNOT_WRITE = 0;
-
-function make_ctx (opts) {
-
-    opts = opts || {};
-
-    opts.exceptions  = opts.exceptions  || {};
-    opts.environment = opts.environment || {};
-    opts.config      = opts.config      || {};
-
-    var default_env = {
-        path: "C:\\Users\\Construct"
-    };
-
-    var default_cfg = {
-        "autovivify": true
-    };
-
-    let env   = Object.assign({}, default_env, opts.environment),
-        cfg   = Object.assign({}, default_cfg, opts.config),
-        epoch = opts.epoch || 1234567890;
-
-    let context = {
-        epoch: epoch,
-        ENVIRONMENT: env,
-        CONFIG: cfg,
-        emitter: { emit: () => {} },
-        get_env: (e) => env[e],
-        get_cfg: (c) => cfg[c]
-    };
-
-    let vfs = new VirtualFileSystem(context);
-    context.vfs = vfs;
-
-    vfs.AddFolder(default_env.path);
-
-    return Object.assign({}, context, opts);
-}
-
 
 describe("TextStream", () => {
 
@@ -62,7 +25,7 @@ describe("TextStream", () => {
     //
 
     beforeEach(() => {
-        context = make_ctx();
+        context = make_context();
     });
 
     describe("Properties", () => {

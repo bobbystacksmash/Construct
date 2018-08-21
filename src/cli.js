@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 
-const program = require("commander");
-const table   = require("text-table");
-const hexy    = require("hexy");
-const colors  = require("colors/safe");
-const wrap    = require("word-wrap");
+const program        = require("commander");
+const table          = require("text-table");
+const hexy           = require("hexy");
+const colors         = require("colors/safe");
+const wrap           = require("word-wrap");
+const moment         = require("moment");
+const path           = require("path");
+const HookCollection = require("./hooks");
 
 const Construct = require("../index");
 
@@ -43,6 +46,10 @@ function parse_show_tags (val) {
     });
 }
 
+function parse_date (dt) {
+    return new Date(moment(dt, "YYYY-MM-DD hh:mm:ss"));
+}
+
 let file_to_analyse = null;
 
 program
@@ -63,14 +70,26 @@ program
     )
 
     .option(
-        "-I, --IOCs",
-        "Display IOCs for all filtered events",
-        false
+        "-d, --date <datestr>",
+        "Sets the sandbox clock for all dates within the virtualised environment.",
+        parse_date,
+        new Date().toString()
     )
 
     .option(
-        "-r, --write-runnable [FILE]",
-        "Writes a ready-to-run version of the analysis file to FILE.",
+        "-r, --output-reporter <REPORTER>",
+        "Uses the given REPORTER to produce output.",
+        "dumpevents"
+    )
+
+    .option(
+        "-d, --debug",
+        "Prints debug information to STDOUT."
+    )
+
+    .option(
+        "--list-reporters",
+        "Lists all available output reporters."
     )
 
     .parse(process.argv);
@@ -81,28 +100,63 @@ if (file_to_analyse === null) {
     return;
 }
 
-const cstruct = new Construct();
-cstruct.load(file_to_analyse);
+
+let construct = new Construct({
+    config: "./construct.cfg"
+});
+
+construct.load_reporters("./reporters");
+construct.load(file_to_analyse);
+const res = construct.run();
+
+if (res === false) {
+    process.exit();
+}
+
+if (program.debug) {
+    process.exit();
+}
+
+// =================
+// R E P O R T E R S
+// =================
+let output_reporter = undefined;
+
+if (program.listReporters) {
+
+    const reporters = construct.get_reporters();
+
+    if (Object.keys(reporters).length === 0) {
+        console.log("No reporters found.");
+        process.exit();
+    }
+
+    const info = Object.keys(reporters).map(reporter => {
+        reporter = reporters[reporter].meta;
+        return [reporter.name, reporter.title, reporter.description];
+    });
+
+    console.log(table(info));
+    process.exit();
+}
+
+if (program.outputReporter) {
+
+    let reporter = construct.get_reporters()[program.outputReporter.toLowerCase()];
+
+    if (!reporter) {
+        console.log(`Error: Unable to locate output reporter "${program.outputReporter}".`);
+        console.log(`       Run Construct with "--list-reporters" to see available reporters.`);
+        process.exit();
+    }
+
+    output_reporter = program.outputReporter.toLowerCase();
+}
 
 if (program.writeRunnable) {
     process.exit();
 }
 
+const events = construct.events();
 
-cstruct.run();
-
-const events = cstruct.events(e => {
-    return e.tags.some(t => {
-        return program.filter.some(s => s === "all" || s === t);
-    });
-});
-
-
-if (program.IOCs) {
-    cstruct.IOCs(events);
-}
-else {
-    const cov = cstruct.coverage("x");
-    console.log(JSON.stringify(cov));
-
-}
+//construct.apply_reporter(output_reporter, events);

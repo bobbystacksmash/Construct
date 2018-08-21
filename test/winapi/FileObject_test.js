@@ -1,62 +1,8 @@
 const assert            = require("chai").assert;
 const File              = require("../../src/winapi/FileObject.js");
 const VirtualFileSystem = require("../../src/runtime/virtfs");
-const win32path         = require("path").win32;
 
-function make_ctx (opts) {
-
-    opts = opts || {};
-
-    opts.exceptions  = opts.exceptions  || {};
-    opts.environment = opts.environment || {};
-    opts.config      = opts.config      || {};
-
-    var default_env = {
-        path: "C:\\Users\\Construct"
-    };
-
-    var default_cfg = {
-        "autovivify": true
-    };
-
-    var default_assoc = {
-        "txt": "Text Document",
-        "jpg": "JPEG image"
-    };
-
-    let env   = Object.assign({}, default_env, opts.environment),
-        cfg   = Object.assign({}, default_cfg, opts.config),
-        assoc = Object.assign({}, default_assoc, opts.associations),
-        epoch = opts.epoch || 1234567890;
-
-    function get_file_assoc (f) {
-
-        const extname = win32path
-                  .extname(win32path.basename(f))
-                  .toLowerCase()
-                  .replace(".", "");
-
-        if (assoc.hasOwnProperty(extname)) {
-            return assoc[extname];
-        }
-
-        return `${extname} File`;
-    }
-
-    let context = {
-        epoch: epoch,
-        ENVIRONMENT: env,
-        CONFIG: cfg,
-        emitter: { emit: () => {} },
-        get_env: (e) => env[e],
-        get_cfg: (c) => cfg[c],
-        get_file_association: (f) => get_file_assoc(f)
-    };
-
-    let vfs = new VirtualFileSystem(context);
-    context.vfs = vfs;
-    return Object.assign({}, context, opts);
-}
+const make_ctx          = require("../testlib");
 
 describe("FileObject", () => {
 

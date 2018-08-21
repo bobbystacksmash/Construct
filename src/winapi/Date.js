@@ -1,24 +1,25 @@
 
-const Component = require("../Component");
+const Component = require("../Component"),
+      proxify   = require("../proxify2");
 
 class JS_Date extends Component {
 
-    constructor (context) {
+    constructor (context, dtstr) {
 	super(context, "Date");
-	this.date = new Date(this.context.epoch);
+	this.date = new Date(this.context.epoch, dtstr);
 	this.ee   = this.context.emitter;
     }
 
-    
+
     skew (ms) {
 	this.context.epoch += ms;
     }
 
-    
-    getDate() {
+
+    getdate () {
 
 	let dt = this.date.getDate();
-	
+
 	this.ee.emit("@Date::getDate", {
 	    fn: "getDate",
 	    v: dt
@@ -28,10 +29,10 @@ class JS_Date extends Component {
     }
 
 
-    getMonth() {
+    getmonth () {
 
 	let dt = this.date.getMonth();
-    
+
 	this.ee.emit("@Date::getMonth", {
 	    fn: "getMonth",
 	    v: dt
@@ -41,7 +42,7 @@ class JS_Date extends Component {
     }
 
 
-    getYear() {
+    getyear () {
 
 	let dt = this.date.getYear() + 1900;
 
@@ -54,7 +55,7 @@ class JS_Date extends Component {
     }
 
 
-    getHours() {
+    gethours () {
 
 	let dt = this.date.getHours();
 
@@ -66,7 +67,7 @@ class JS_Date extends Component {
 	return dt;
     }
 
-    getMinutes() {
+    getminutes () {
 
 	let dt = this.date.getMinutes();
 
@@ -79,7 +80,7 @@ class JS_Date extends Component {
     }
 
 
-    getSeconds() {
+    getseconds () {
 
 	let dt = this.date.getSeconds();
 
@@ -92,7 +93,7 @@ class JS_Date extends Component {
     }
 
 
-    getTime() {
+    gettime () {
 
 	let dt = this.date.getTime();
 
@@ -103,16 +104,17 @@ class JS_Date extends Component {
 
 	return dt;
     }
+
+    tostring () {
+        return this.date.toString();
+    }
 }
 
 
 module.exports = function create(context) {
 
-    let dt = class Date extends JS_Date {
-        constructor (d) {
-            super(context, d);
-        }
+    return function dt (dtstr) {
+        var date = new JS_Date(context, dtstr);
+        return proxify(context, date);
     };
-
-    return dt;
 };

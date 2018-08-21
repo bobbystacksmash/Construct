@@ -152,7 +152,14 @@ class VirtualRegistry {
         case "HKEY_CLASSES_ROOT":
             break;
         default:
-            throw new Error("Invalid root: " + root);
+            this.context.exceptions.throw_native_vreg_invalid_root(
+                "VirtualRegistry",
+                `Top-level registry root key ('${root}') is not defined.`,
+                `At its top level, the virtual registry defines routes for ` +
+                    `HKLM, HKCU, HKCR, and HKEY_USERS.  The vreg was unable to ` +
+                    `successfully resolve the root ('${root}') of the current path: ` +
+                    `'${fullpath}'.`
+            );
         }
 
         // There are two types of paths we may be given:
@@ -165,7 +172,8 @@ class VirtualRegistry {
         //
         let value_label  = norm_path.pop(),
             is_root_path = norm_path.length === 0,
-            error        = null;
+            error        = null,
+            self         = this;
 
         function walk (path, key) {
 
@@ -179,13 +187,18 @@ class VirtualRegistry {
                     subkey_obj = key.set_subkey(subkey_label);
                 }
                 else {
-                    error = `Cannot find subkey '${orig_path[subkey_label]}' in path '${fullpath}'`;
-                    return;
+                    self.context.exceptions.throw_native_vreg_subkey_not_exists(
+                        "VirtualRegistry",
+                        `Cannot find subkey '${orig_path[subkey_label]}' in path '${fullpath}'.`,
+                        `When attempting to walk the supplied registry path, the key ` +
+                            `'${subkey_label}' could not be found.  Consider adding this path ` +
+                            `to your Construct config file.`
+                    );
                 }
             }
 
             return walk(path, subkey_obj);
-        };
+        }
 
         const key = walk(norm_path, this.reg[root]);
 
@@ -210,11 +223,6 @@ class VirtualRegistry {
     //
     read (path) {
         let resolved = this.resolve_key(path);
-
-        if (resolved.error) {
-            throw new Error(resolved.error);
-        }
-
         return resolved.get_value();
     }
 
@@ -250,10 +258,21 @@ class VirtualRegistry {
 
         if (resolved.error) {
             throw new Error(`Unable to remove registry key: ${resolved.path}`);
+            this.context.exceptions.throw_native_vreg_delete_path_failed(
+                `VirtualRegistry`,
+                `Unable to delete registry path: '${resolved.path}'.`,
+                `The registry path cannot be deleted: '${resolved.path}'.`
+            );
         }
 
         if (resolved.is_root_path) {
-            throw new Error("Cannot delete root keys");
+            this.context.exceptions.throw_native_vreg_cannot_delete_root_key(
+                `VirtualRegistry`,
+                `Deleting of top-level (root) keys is not permitted.`,
+                `Code attempted to delete a top-level registry key using path ` +
+                    `'${path}'.  The top-level (root) keys (such as HKLM, HKCU) cannot ` +
+                    `be deleted.`
+            );
         }
 
         if (resolved.value_label === "") {

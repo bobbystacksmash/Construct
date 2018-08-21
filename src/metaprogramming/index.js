@@ -14,7 +14,7 @@ const path           = require("path");
 function RewriteSyntax (source, options) {
     options = options || {};
 
-    const plugins_path = path.join(process.cwd(), "lib", "metaprogramming", "plugins");
+    const plugins_path = path.join(process.cwd(), "src", "metaprogramming", "plugins");
 
     this.plugins = this.load_plugins(plugins_path);
     this._source = source;

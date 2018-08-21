@@ -3,109 +3,39 @@ const VirtualRegistry   = require("./virtreg");
 const EventEmitter2     = require("eventemitter2").EventEmitter2;
 const ExceptionHandler = require("../ExceptionHandler");
 const JScript_Date          = require("../winapi/Date");
+const JScript_Math          = require("../winapi/Math");
 const JScript_WScript       = require("../winapi/WScript");
 const JScript_ActiveXObject = require("../winapi/ActiveXObject");
 const JScript_TextStream    = require("../winapi/TextStream");
 const win32path = require("path").win32;
+const path = require("path");
+const fs   = require("fs");
 
 class HostContext {
 
     constructor(opts) {
 
-	opts = opts || {};
-
-	this.user_agent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows " +
-	    "NT 6.1; Trident/7.0; SLCC2; .NET CLR 2.0.50727; " +
-	    ".NET CLR 3.5.30729; .NET CLR 3.0.30729; " +
-	    "Media Center PC 6.0; .NET4.0C)";
-
-	this.DEBUG = true;
-
-	this.hooks = {
-	    network:  [],
-            registry: { read: [], write: [], delete: [] }
-	};
-
-	// TODO
-	// This is hacky. Need to fix it.
-	this.output_behaviour = "repl";
-
         this.output_buf = [];
+        this.hooks = opts.hooks || [];
+        this.instances = [];
 
-        this.CONFIG = {
-            "autovivify": true
+        // Configuration
+        // =============
+        this.environment  = opts.config.environment;
+        this.current_user = this.environment.whoami   || "john";
+        this.hostname     = this.environment.hostname || "CVM-ABC-123";
+        this.config       = opts.config;
+        this.DEBUG        = opts.config.general.debug || false;
+
+        this.default_nethook_response = {
+            body: "CONSTRUCT-BODY",
+            status: 200,
+            headers: {
+                "Content-Length": "CONSTRUCT-BODY".length
+            }
         };
 
-	this.ENVIRONMENT = {
-            path: "C:\\Users\\Construct",
-	    UserLevel: "SYSTEM",
-	    Variables: {
-		SYSTEM: {
-		    // TODO -- These need to be set via a config option.
-		    ALLUSERSPROFILE: "C:\\\\ProgramData",
-		    APPDATA:"C:\\Users\\User\\AppData\\Roaming",
-		    CommonProgramFiles:"C:\\Program Files\\Common Files",
-		    COMPUTERNAME:"USR11WIN7",
-		    ComSpec: "C:\\Windows\\system32\\cmd.exe",
-		    FP_NO_HOST_CHECK:"NO",
-		    HOMEDRIVE:"C:",
-		    HOMEPATH:"\\Users\\User",
-		    LOCALAPPDATA:"C:\\Users\\User\\AppData\\Local",
-		    LOGONSERVER:"\\\\USR11WIN7",
-		    NUMBER_OF_PROCESSORS:"1",
-		    OS:"Windows_NT",
-		    Path:"C:\\Python27\\;C:\\Python27\\Scripts;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\" +
-			"System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\",
-		    PATHEXT:".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC",
-		    PROCESSOR_ARCHITECTURE:"x86",
-		    PROCESSOR_IDENTIFIER:"x86 Family 6 Model 158 Stepping 9, GenuineIntel",
-		    PROCESSOR_LEVEL:"6",
-		    PROCESSOR_REVISION:"9e09",
-		    ProgramData:"C:\\ProgramData",
-		    ProgramFiles:"C:\\Program Files",
-		    PROMPT:"$P$G",
-		    PSModulePath:"C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules\\",
-		    PUBLIC:"C:\\Users\\Public",
-		    SESSIONNAME:"Console",
-		    SystemDrive:"C:",
-		    SystemRoot:"C:\\Windows",
-		    TEMP:"C:\\Users\\User\\AppData\\Local\\Temp",
-		    TMP:"C:\\Users\\User\\AppData\\Local\\Temp",
-		    USERDOMAIN:"IE11WIN7",
-		    USERNAME:"User",
-		    USERPROFILE:"C:\\Users\\User",
-		    windir:"C:\\Windows"
-		},
-		USER: {}
-	    },
-	    CurrentDirectory: "C:\\Windows\\Temp",
-	    Services: [],
-	    MRU: [], // Most-recently used list; maybe move this to vfs?
-	    Arguments: [],
-	    BuildVersion: 1,
-	    FullName: "C:\\Windows\\System32\\cscript.exe",
-	    Name: "Windows Script Host",
-	    Path: "C:\\Users\\Construct", // FIXME - this should REALLY be configurable.
-	    ScriptFullName: "Full path of the currently running script",
-	    ScriptName: "the .js file",
-	    StdErr: null,
-	    StdIn: null,
-	    StdOut: null,
-	    Version: 2,
-            FileAssociations: {
-                "txt": "Text Document",
-                "jpg": "JPEG image",
-                "js":  "JScript Script File"
-            }
-
-	    // TODO:
-	    // - processes
-	    // - env vars
-	    // - hostname
-	    // - ip addr?
-	};
-
-	this.make_uid = function* () { var i = 0; while (true) yield i++; };
+	this.make_uid = (function () { var i = 0; return () => i++; }());
 
 	// All components (ActiveXObject, WScript.Shell, ...) are
 	// expected to register with the `HostContext' when
@@ -113,8 +43,7 @@ class HostContext {
 	// components, such as those used by Construct behind the
 	// scenes.
 	this.component_register = [];
-
-	this.components = {};
+	this.global_objects         = {};
 
 	//
 	// The emitter is how all events in Construct are passed
@@ -163,20 +92,81 @@ class HostContext {
             IS_WRITEABLE
         );
 
-	this._setup_components();
+	this._setup_global_objects();
+
+        // Create the files specified in the config...
+        this._create_filesystem(opts.config.environment.filesystem);
+        this._create_registry(opts.config.environment.registry);
+
+        this._prepare_nethooks(opts.config.network);
     }
 
-    _setup_components () {
+    _prepare_nethooks (netcfg) {
 
-	this.components["VirtualFileSystem"] = new VirtualFileSystem(this);
-	this.register("VirtualFileSystem", this.components["VirtualfileSystem"]);
-	this.vfs = this.components["VirtualFileSystem"];
+        let responses = [];
 
-        this.components["VirtualRegistry"] = new VirtualRegistry(this);
-        this.register("VirtualRegistry", this.components["VirtualRegistry"]);
-        this.vreg = this.components["VirtualRegistry"];
+        Object.keys(netcfg.response).forEach(rkey => {
+            let res  = Object.assign(this.default_nethook_response, netcfg.response[rkey]),
+                body = res.body;
 
-	// The exception-thrower is an guard against VM code throwing
+            // NETWORK ADDRESS (URL)
+            // =====================
+            var reurl = res.url;
+            if (res.url.startsWith("/") && res.url.endsWith("/")) {
+                try {
+                    reurl = res.url.replace(/^\//, "").replace(/\/$/, "");
+                    reurl = new RegExp(reurl, "ig");
+                }
+                catch (e) {
+                    console.log(`Error compiling network response regexp URL: '${reurl}':`);
+                    console.log(e.message);
+                    process.exit();
+                }
+            }
+            res.match_url = (url) => {
+                if (reurl instanceof RegExp) {
+                    return reurl.test(url);
+                }
+                else {
+                    return url.toLowerCase().includes(reurl);
+                }
+            };
+
+            // BODY
+            // ====
+            if (res.body.startsWith("@")) {
+
+                let bodypath = path.resolve(res.body.replace(/^@/, ""));
+                try {
+                    body = fs.readFileSync(bodypath).toString();
+                }
+                catch (e) {
+                    console.log(`Error loading file '${bodypath}':`);
+                    console.log(e.message);
+                    process.exit();
+                }
+            }
+
+            res.body = body;
+            res.headers["Content-Length"] = Buffer.from(body).length;
+            responses.push(res);
+        });
+
+        this.nethooks = responses;
+    }
+
+
+    _setup_global_objects () {
+
+	this.global_objects["VirtualFileSystem"] = new VirtualFileSystem(this);
+	this.register("VirtualFileSystem", this.global_objects["VirtualfileSystem"]);
+	this.vfs = this.global_objects["VirtualFileSystem"];
+
+        this.global_objects["VirtualRegistry"] = new VirtualRegistry(this);
+        this.register("VirtualRegistry", this.global_objects["VirtualRegistry"]);
+        this.vreg = this.global_objects["VirtualRegistry"];
+
+	// The exception-thrower guards against VM code throwing
 	// exceptions without providing sufficient documentation that
 	// will help when investigating a sample.  It's accessable
 	// from all components, and ensures we get exceptions with
@@ -186,29 +176,104 @@ class HostContext {
 	//   * a summary of WHY the exception was thrown,
 	//   * and a detailed description to give context.
 	//
-	this.components["Exceptions"] = new ExceptionHandler(this);
-	this.register("Exceptions", this.components["Exceptions"]);
-	this.exceptions = this.components["Exceptions"];
+	this.global_objects["Exceptions"] = new ExceptionHandler(this);
+	this.register("Exceptions", this.global_objects["Exceptions"]);
+	this.exceptions = this.global_objects["Exceptions"];
 
 	// =============
 	// ActiveXObject
 	// =============
-	this.components["ActiveXObject"] = new JScript_ActiveXObject(this);
-	this.register("ActiveXObject", this.components["ActiveXObject"]);
+	this.global_objects["ActiveXObject"] = new JScript_ActiveXObject(this);
+	this.register("ActiveXObject", this.global_objects["ActiveXObject"]);
 
 	// =======
 	// D A T E
 	// =======
 	//
 	// From JScript, this component is used just as it is in node:
-	this.components["Date"] = new JScript_Date(this);
-	this.register("Date", this.components["Date"]);
+	this.global_objects["Date"] = new JScript_Date(this);
+	this.register("Date", this.global_objects["Date"]);
+
+        // ====
+        // Math
+        // ====
+        this.global_objects["Math"] = new JScript_Math(this);
+        this.register("Math", this.global_objects["Math"]);
 
 	// =======
 	// WScript
 	// =======
-	this.components["WScript"] = new JScript_WScript(this);
-	this.register("WScript", this.components["WScript"]);
+	this.global_objects["WScript"] = new JScript_WScript(this);
+	this.register("WScript", this.global_objects["WScript"]);
+    }
+
+    _create_filesystem (filesystem) {
+
+        const vfs  = this.global_objects["VirtualFileSystem"];
+
+        if (filesystem.hasOwnProperty("folders")) {
+            filesystem.folders.forEach(dir => {
+                vfs.AddFolder(dir);
+            });
+        }
+
+        if (filesystem.hasOwnProperty("files")) {
+            Object.keys(filesystem.files).forEach(fp => {
+
+                const value = filesystem.files[fp];
+
+                // The value signals what kind of file to create.
+                // There are three options:
+                //
+                //  1. If value is FALSE, this means create a blank
+                //     file.
+                //
+                //  2. If value starts with an '@' symbol, it means
+                //     "load the file from local disk".
+                //
+                //  3. If the file doesn't start with an '@' symbol,
+                //     the string is the file contents.
+                //
+                var contents = "";
+                if (typeof value === "string") {
+                    if (value.startsWith("@")) {
+                        let file_to_read = path.resolve(value.replace(/^@/, ""));
+                        contents = fs.readFileSync(file_to_read).toString();
+                    }
+                    else {
+                        contents = value;
+                    }
+                }
+
+                vfs.AddFile(fp, contents);
+            });
+        }
+    }
+
+    _create_registry (registry) {
+
+        const vreg = this.global_objects["VirtualRegistry"];
+        Object.keys(registry).forEach(regpath => {
+            vreg.write(regpath, registry[regpath]);
+        });
+    }
+
+
+    get_hook (obj) {
+        return this.hooks.match(obj);
+    }
+
+
+    get_nethook (req) {
+        let nethook = this.nethooks.find(nh => {
+            return nh.match_url(req.address);
+        });
+
+        if (!nethook) {
+            nethook = this.default_nethook_response;
+        }
+
+        return nethook;
     }
 
 
@@ -234,22 +299,25 @@ class HostContext {
                   .toLowerCase()
                   .replace(".", "");
 
-        if (this.ENVIRONMENT.FileAssociations.hasOwnProperty(extname)) {
-            return this.ENVIRONMENT.FileAssociations[extname];
+        if (this.environment.fileassociations.hasOwnProperty(extname)) {
+            return this.environment.FileAssociations[extname];
         }
 
         return `${extname} File`;
     }
 
     get_env (var_name) {
-        if (! this.ENVIRONMENT.hasOwnProperty(var_name)) return undefined;
-        return this.ENVIRONMENT[var_name];
+        if (! this.environment.hasOwnProperty(var_name)) return undefined;
+        return this.environment[var_name];
+    }
+
+    set_env (key, value) {
+        this.environment[key] = value;
     }
 
     skew_time_ahead_by (ms) {
 	this.epoch += ms;
     }
-
 
     register (friendly_name, instance, parent) {
 	if (parent === null || parent === undefined) parent = this;
@@ -260,108 +328,32 @@ class HostContext {
 	    parent:        parent._id
 	};
 
-	this.emitter.emit("$DEBUG::component-registered", component_register_entry);
-
 	// Return the index of the registered component.
 	return (this.component_register.push(component_register_entry) - 1);
     }
 
+    add_instance (instance) {
+        let existing = this.instances.some(ins => instance.__id__ === ins.__id__);
 
-    add_registry_hook (description, method, matcher, callback) {
+        if (!existing) {
+            this.instances.push(instance);
+        }
+    }
 
-        // Method can be:
-        //
-        //  - read
-        //  - write
-        //  - delete
+    get_instance_by_id (id) {
+        let instance = this.instances.find(ins => ins.__id__ === id);
 
-        function match (regpath) {
-
-            if (matcher instanceof RegExp) {
-                return matcher.test(regpath);
-            }
-            else if (matcher instanceof Function) {
-                return matcher(regpath);
-            }
-            else if (typeof matcher === "string") {
-                return matcher.toLowerCase() === regpath.toLowerCase();
-            }
-
+        if (instance) {
+            return instance;
+        }
+        else {
             return false;
-        };
-
-        this.hooks.registry[method].push({
-            match: match,
-            desc: description,
-            handle: callback
-        });
+        }
     }
 
-
-    add_network_hook(description, method, addr, response_handler) {
-
-	if (! this.hooks.network.hasOwnProperty(method)) {
-	    this.hooks.network[method] = [];
-	}
-
-	this.hooks.network[method].push({
-	    match: (a) => (addr instanceof RegExp) ? addr.test(a) : a.includes(addr),
-	    desc: description,
-	    handle: response_handler
-	});
+    get_global_object(name) {
+	return this.global_objects[name];
     }
-
-
-    get_registry_hook (method, path) {
-        const reghook = this.hooks.registry[method].find(hook => hook.match(path));
-        return reghook;
-    }
-
-
-    get_network_hook(method, addr) {
-
-	//
-	// Default hook
-	// ============
-	//
-	// We return the default hook if no user-supplied hook can be found.
-	//
-	let default_body = `<!DOCTYPE html><html><head></head><body>Construct.</body></html>`,
-	    default_nethook = {
-		match: () => true,
-		desc:  "Construct's default nethook response handler.",
-		handle: (req, ee) => {
-		    return {
-			status: 200, // TODO: Fetch this value from the config.
-			headers: {
-			    "content-length": default_body.length
-			},
-			body: default_body
-		    };
-		}
-	};
-
-	method = method.toUpperCase();
-
-	if (!this.hooks.network.hasOwnProperty(method)) {
-	    return default_nethook;
-	}
-
-
-	let hook = this.hooks.network[method].find((hook) => hook.match(addr));
-
-	if (!hook) {
-	    return default_nethook;
-	}
-
-	return hook;
-    }
-
-
-    get_component(name) {
-	return this.components[name];
-    }
-
 
     write_to_output_buf (...args) {
         this.output_buf.push(args.join(" "));

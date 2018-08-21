@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "test": "node_modules/.bin/mocha --reporter dot -w ./test/winapi/WshShortcut_test.js",
+        "test": "node_modules/.bin/mocha --reporter dot -w ./test/winapi/FileSystemObject_test.js",
         "test_runtime": "node_modules/.bin/mocha --reporter dot -w ./test/runtime/**/*_test.js",
         "test_winapi": "node_modules/.bin/mocha --reporter dot -w ./test/winapi/**/*_test.js",
         "testall": "node_modules/.bin/mocha --reporter dot -w ./test/**/*_test.js",
@@ -49,12 +49,16 @@
         "memfs": "^2.9.0",
         "minimist": "^1.2.0",
         "mkdirp": "^0.5.1",
+        "moment": "^2.22.2",
         "npm": "^6.2.0",
         "sprintf-js": "^1.1.1",
         "spyfs": "^1.0.2",
+        "stack-trace": "0.0.10",
         "text-table": "^0.2.0",
+        "toml": "^2.3.3",
         "unionfs": "^3.0.2",
         "url-parse": "^1.2.0",
+        "uuid": "^3.3.2",
         "word-wrap": "^1.2.3"
     }
 }

@@ -10,26 +10,29 @@ class JS_ActiveXObject extends Component {
 
     constructor (context, type, location) {
 
-	/*console.log("========================");
-	console.log(`new ActiveXObject: ${type}`);
-	console.log("========================");*/
+	super(context, `ActiveXObject`);
 
-	super(context, `ActiveXObject(${type})`);
-        this.__name__ = "ActiveXObject";
-	this.ee = this.context.emitter;
+        const apiobj = {
+            target:  "ActiveXObject",
+            id:      this.__id__,
+            hooked:  false,
+            type:    "constructor",
+            prop:    "new",
+            args:    [type, location],
+            return:  `instanceOf(${type})`
+        };
+        context.emitter.emit(`ActiveXObject.new.${type}`, apiobj);
 
-        return create_instance(context, type);
+        const instance = create_instance(context, type);
+        return instance;
     };
 };
 
 
 module.exports = function create (context) {
 
-    let activex = class ActiveXObject extends JS_ActiveXObject {
-	constructor (type, location) {
-	    super(context, type, location);
-	}
+    return function ActiveXObject (type, location) {
+        const activex = new JS_ActiveXObject(context, type, location);
+        return activex;
     };
-
-    return proxify(context, activex);
 };

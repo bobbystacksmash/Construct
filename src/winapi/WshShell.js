@@ -286,22 +286,7 @@ class JS_WshShell extends Component {
     }
 
     regread (key) {
-
-        let regread_hook = this.context.get_registry_hook(
-            "read",
-            key
-        );
-
-        if (regread_hook) {
-            return regread_hook.handle(key);
-        }
-
-        //try {
-            return this.context.vreg.read(key);
-    /*}
-        catch (e) {
-
-        }*/
+        return this.context.vreg.read(key);
     }
 
     regwrite (key, value) {

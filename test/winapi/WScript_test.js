@@ -1,23 +1,12 @@
-const assert = require("chai").assert;
-const WScript = require("../../src/winapi/WScript");
+const assert       = require("chai").assert;
+const WScript      = require("../../src/winapi/WScript"),
+      make_context = require("../testlib");
 
-let context = {
-    epoch: 1,
-    ENVIRONMENT: { Arguments: { "foo": "bar" } },
-    emitter: { emit: () => {} },
-    exceptions: {},
-    vfs: {}
-};
-
-function get_wscript (opts) {
-
-    opts = opts || {};
-
-    let ctx = Object.assign(context, opts);
-    return new WScript(ctx);
-}
+var ctx = null;
 
 describe("WScript", () => {
+
+    beforeEach(() => ctx = make_context());
 
     describe("Properties", () => {
 
@@ -26,8 +15,8 @@ describe("WScript", () => {
         describe(".Arguments", () => {
 
             it("should return the script arguments", (done) => {
-                let wsh = new WScript(context);
-                assert.deepEqual(wsh.arguments, context.ENVIRONMENT.Arguments);
+                let wsh = new WScript(ctx);
+                assert.deepEqual(wsh.arguments, ctx.ENVIRONMENT.Arguments);
                 done();
             });
         });

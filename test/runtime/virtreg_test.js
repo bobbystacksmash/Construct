@@ -105,7 +105,13 @@ describe("Virtual Registry", () => {
 
         it("should throw 'invalid root' when trying to write an unknown root", () => {
 
-            const vreg = make_vreg();
+            const vreg = make_vreg({
+                exceptions: {
+                    throw_native_vreg_invalid_root: () => {
+                        throw new Error("Invalid root: HKAM_BLAH");
+                    }
+                }
+            });
 
             assert.throws(
                 () => vreg.write("HKAM_BLAH\\foo\\bar", "baz"),
@@ -144,14 +150,16 @@ describe("Virtual Registry", () => {
 
         it("should not create paths by default", () => {
 
-            const vreg  = make_vreg(),
-                  path  = "HKLM\\System\\foo\\";
+            const vreg  = make_vreg({
+                exceptions: {
+                    throw_native_vreg_subkey_not_exists: () => {
+                        throw new Error("Cannot find subkey");
+                    }
+                }
+            });
 
-            const result = vreg.resolve_key(path);
-
-            assert.equal(result.error, `Cannot find subkey 'System' in path '${path}'`);
-            assert.equal(result.path, path);
-            assert.equal(result.value_label, "");
+            const path = "HKLM\\System\\foo\\";
+            assert.throws(() => vreg.resolve_key(path), "Cannot find subkey");
         });
 
         it("should return a resolved key object without a value label", () => {
@@ -165,15 +173,6 @@ describe("Virtual Registry", () => {
             assert.equal(keyobj.key.name, "foo");
             assert.equal(keyobj.path, "HKLM\\System\\foo\\");
             assert.equal(keyobj.value_label, "");
-        });
-
-        it("should return an error field if resolution fails", () => {
-
-            const vreg = make_vreg();
-            assert.doesNotThrow(() => vreg.resolve_key("HKLM\\System\\missing\\foo"));
-
-            let result = vreg.resolve_key("HKLM\\System\\missing\\foo");
-            assert.equal(result.error, "Cannot find subkey 'System' in path 'HKLM\\System\\missing\\foo'");
         });
     });
 
@@ -195,18 +194,30 @@ describe("Virtual Registry", () => {
         });
 
         it("should throw 'invalid root' when trying to read an unknown root", () => {
-            const vreg = make_vreg();
+            const vreg = make_vreg({
+                exceptions: {
+                    throw_native_vreg_invalid_root: () => {
+                        throw new Error("Invalid root: FOOBAR");
+                    }
+                }
+            });
             assert.throws(() => vreg.read("FOOBAR\\baz"), "Invalid root: FOOBAR");
         });
 
         it("should throw when unable to open an non-existant registry key", () => {
 
-            const vreg = make_vreg(),
-                  path = "HKEY_LOCAL_MACHINE\\aa\\bb\\cc";
+            const vreg = make_vreg({
+                exceptions: {
+                    throw_native_vreg_subkey_not_exists: () => {
+                        throw new Error("Cannot find subkey");
+                    }
+                }
+            });
+            const path = "HKEY_LOCAL_MACHINE\\aa\\bb\\cc";
 
             assert.throws(
                 () => vreg.read(path),
-                `Cannot find subkey 'aa' in path '${path}'`
+                `Cannot find subkey`
             );
         });
     });
@@ -246,7 +257,13 @@ describe("Virtual Registry", () => {
 
         it("should throw 'invalid root' if trying to delete root key", () => {
 
-            const vreg = make_vreg();
+            const vreg = make_vreg({
+                exceptions: {
+                    throw_native_vreg_cannot_delete_root_key: () => {
+                        throw new Error("Cannot delete root keys");
+                    }
+                }
+            });
 
             vreg.write("HKLM\\foo\\bar\\default", "!default");
             vreg.write("HKLM\\foo\\bar\\hello",   "!world");
@@ -257,19 +274,32 @@ describe("Virtual Registry", () => {
 
         it("should throw when trying to delete an unknown value", () => {
 
-            const vreg = make_vreg();
+            const vreg = make_vreg({
+                exceptions: {
+                    throw_native_vreg_subkey_not_exists: () => {
+                        throw new Error("Cannot delete registry key");
+                    }
+                }
+            });
             assert.throws(
                 () => vreg.delete("HKLM\\foo\\bar\\baz"),
-                "Unable to remove registry key: HKLM\\foo\\bar\\baz"
+                "Cannot delete registry key"
             );
         });
 
         it("should throw when trying to delete an unknown subkey", () => {
 
-            const vreg = make_vreg();
+            const vreg = make_vreg({
+                exceptions: {
+                    throw_native_vreg_subkey_not_exists: () => {
+                        throw new Error("Cannot delete unknown key");
+                    }
+                }
+            });
+
             assert.throws(
                 () => vreg.delete("HKLM\\foo\\bar\\baz\\"),
-                "Unable to remove registry key: HKLM\\foo\\bar\\baz\\"
+                "Cannot delete unknown key"
             );
         });
     });

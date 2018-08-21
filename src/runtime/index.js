@@ -4,25 +4,42 @@ const istanbul       = require("istanbul");
 const EventEmitter2  = require("eventemitter2").EventEmitter2;
 const urlparse       = require("url-parse");
 const vm             = require("vm");
-const glob           = require("glob");
 const path           = require("path");
-const CodeRewriter   = require("../../lib/metaprogramming");
+const CodeRewriter   = require("../metaprogramming");
+const HookCollection = require("../hooks");
+const falafel        = require("falafel");
+const beautifier     = require("js-beautify");
 
+const emitter = new EventEmitter2({ wildcard: true }),
+      make_id = function () { let x = 1; return () => x++;};
 
 function Runtime (options) {
-    options = options || {};
 
     this.events = [];
 
+    options = options || {};
+
+    this.config = options.config;
+
+    // Load hooks
+    this.hooks = [];
+    if (this.config.hasOwnProperty("hooks")) {
+        if (this.config.hooks.hasOwnProperty("location")) {
+            this.hooks = new HookCollection(path.normalize(this.config.hooks.location));
+        }
+    }
+
     this.context = new HostContext({
-        emitter : new EventEmitter2({ wildcard: true }),
-        epoch   : this.epoch
+        emitter: emitter,
+        config:  options.config,
+        hooks:   this.hooks
     });
 
-    this.load_plugins("./plugins");
+    this.fnio = [];
+    this.expanders = [];
 
     return this;
-}
+};
 
 
 Runtime.prototype.load = function(path_to_file, options) {
@@ -32,7 +49,7 @@ Runtime.prototype.load = function(path_to_file, options) {
     this.file_path = path_to_file;
 
     try {
-        this.source_code = fs.readFileSync(path_to_file).toString();
+        this.source = fs.readFileSync(path_to_file).toString();
     }
     catch (e) {
         throw e;
@@ -43,82 +60,164 @@ Runtime.prototype.load = function(path_to_file, options) {
     // original code, rather than the instrumented version, this is to
     // cater for the case where a self-referencing JScript program is
     // attempting to read code from an exact line offset.
-    const filename = path.basename(path_to_file);
-    this.context.vfs.AddFile(`C:\\Users\\Construct\\${filename}`, this.source_code);
+    const filename = path.basename(path_to_file),
+          script_path = `C:\\Users\\Construct\\${filename}`;
+
+    this.context.vfs.AddFile(script_path, this.source_code);
+    this.context.set_env("ScriptFullName", script_path);
 
     return this._make_runnable();
 };
 
-
-Runtime.prototype.load_plugins = function (path_to_plugins_dir) {
-
-    let plugins_load_path    = path_to_plugins_dir.replace(/\/*$/, ""),
-	plugins_glob_pathpat = `${plugins_load_path}/**/index.js`,
-	found_plugins_files  = glob.sync(plugins_glob_pathpat);
-
-    /*console.log(`Plugin loader will attempt to read plugins from "${path_to_plugins_dir}".`);
-    console.log(`Plugin loader found ${found_plugins_files.length}`,
-		`${found_plugins_files.length === 1 ? "plugin" : "plugins"}.`);*/
-
-    function network_hook (description, method, addr, response_fn) {
-	this.context.add_network_hook(description, method, addr, response_fn);
-    };
-
-    function registry_hook (description, method, matcher, callback) {
-        this.context.add_registry_hook(description, method, matcher, callback);
-    }
-
-    const hooks = {
-	network:  network_hook.bind(this),
-        registry: registry_hook.bind(this)
-    };
-
-    // Loop-over all of the
-    found_plugins_files.forEach((plugin_file) => {
-
-	let this_plugin = require(path.resolve(plugin_file)),
-	    plugin_dir  = path.basename(path.parse(plugin_file).dir);
-
-	let plugin_info = {};
-
-	plugin_info.description = this_plugin.description || "No description.",
-	plugin_info.author      = this_plugin.author      || "Unknown author.",
-	plugin_info.version     = this_plugin.version     || "0.0.0";
-
-	if (!this_plugin.onload || ! this_plugin.onload instanceof Function) {
-	    console.log(`Plugin loader failed to load ${plugin_dir} plugin ("${plugin_info.description}")`,
-			`plugin does not export an 'onload' function.`);
-	    return;
-	}
-
-	try {
-	    this_plugin.onload.call(this.context, hooks);
-	}
-	catch (e) {
-	    console.log(`Plugin loader failed to load ${plugin_dir}: ${e.message}`);
-	    return;
-	}
-
-	//
-	// Success! Plugin has been registered.
-	//
-	/*console.log(`Plugin loader loaded "${plugin_dir}" (${plugin_info.version})`,
-		    `-- "${plugin_info.description}"`);*/
-
-    }, this);
+// #########################
+// # Capture Coverage Info #
+// #########################
+Runtime.prototype._capture_coverage_info = function (coverage_obj) {
+    console.log(Object.keys(coverage_obj));
+    this.coverage = coverage_obj;
 };
 
-Runtime.prototype.rewrite_source = function () {
+// ########################
+// # Capture Function I/O #
+// ########################
+Runtime.prototype._capture_fnio = function (name, type, value) {
 
+    const obj = {
+        name:  name,
+        type:  type,
+        value: value
+    };
+
+    this.context.emitter.emit("runtime.capture.fnio", obj);
+    return value;
 }
 
+// ################
+// # Capture Eval #
+// ################
+Runtime.prototype._capture_eval = function (evalarg) {
 
-Runtime.prototype._make_runnable = function () {
+    this.context.emitter.emit("runtime.capture.eval", {
+        code: evalarg,
+        decoded: {
+            uri: decodeURI(evalarg)
+        }
+    });
 
-    let events            = this.events,
-        epoch             = this.context.epoch,
-        ee                = this.context.emitter,
-        context           = this.context;
+    return evalarg;
+};
+
+// ################################
+// # Capture Function Constructor #
+// ################################
+Runtime.prototype._capture_function_constructor = function (...args) {
+
+    emitter.emit("runtime.capture.function_constructor", {
+        function: [...args]
+    });
+
+    // TODO:
+    // turn ...args in to a function str -> pass to sandbox.
+    let source  = "";
+
+    if (arguments.length === 1) {
+        // The Function constructor says that the LAST `arguments'
+        // param is the function body, and all params which precede it
+        // are the function parameters.
+
+        source = `function SANDBOX () { ${arguments[0]} }`;
+
+    }
+    else {
+
+        // All params (except the last) are named fn parameters, which
+        // we create here:
+        let params_list = Array.prototype.slice.call(arguments),
+            fn_body     = params_list.pop(),
+            fn_params   = params_list.join(",");
+
+        source = `function SANDBOX (${fn_params}) { ${fn_body} }`;
+    }
+
+    return this._create_runtime_sandbox(source);
+};
+
+
+Runtime.prototype._eval_handler = function (code) {
+
+    const StackTrace = require("stack-trace");
+    var trace  = StackTrace.get()[1],
+        column = trace.getColumnNumber() - 1,
+        line   = trace.getLineNumber();
+
+    // Walk the SRC until we find the call site of this eval
+    // call.
+    var updated = falafel(this.source, { locations: true }, function (node) {
+
+        let node_line   = node.loc.start.line,
+            node_column = node.loc.start.column;
+
+        if (node_line === line && node_column === column) {
+            node.update(`${code},stop()`);
+        }
+    });
+
+    console.log(updated);
+
+    this.expanders.push(updated);
+};
+
+
+
+Runtime.prototype._create_runtime_sandbox = function (source) {
+
+    let context = this.context,
+        self = this;
+
+    // Instrument the code...
+    /*const rewrite_code = new CodeRewriter(source);
+    rewrite_code
+        .using("capture fnio", { fn_name: "capture_fnio" }) // TODO - weak name.
+        .using("capture eval", { fn_name: "capture_eval" }) // TODO - weak name.
+        .using("hoist globals")
+        //.using("coverage", { filepath: this.file_path, oncomplete: "collect_coverage_info" }) // TODO - config on/off
+        .using("beautify");*/
+
+    // All of the constructable JScript types are set here.
+
+    var sandbox = {
+        Date          : context.get_global_object("Date"),
+        Math          : context.get_global_object("Math"),
+        WScript       : context.get_global_object("WScript"),
+        ActiveXObject : context.get_global_object("ActiveXObject"),
+        eval          : this._eval_handler.bind(this)
+    };
+
+    // Add the dynamic properties such as one-time names:
+    sandbox["collect_coverage_info"] = this._capture_coverage_info;
+    sandbox["capture_fnio"]          = (...args) => this._capture_fnio(...args);
+    sandbox["capture_eval"]          = (...args) => this._capture_eval(...args);
+    sandbox["Function"]              = function (...args) { return  self._capture_function_constructor(...args); };
+
+    vm.createContext(sandbox);
+
+    let src = this.source;
+
+    return function () {
+        return vm.runInContext(src, sandbox, { "timeout": 2000 });
+    }.bind(context);
+};
+
+
+
+Runtime.prototype._make_runnable = function (mode) {
+
+    mode = mode || "run";
+
+    let events  = this.events,
+        epoch   = this.context.epoch,
+        ee      = this.context.emitter,
+        context = this.context;
 
     // ############
     // # Coverage #
@@ -146,9 +245,10 @@ Runtime.prototype._make_runnable = function () {
                   { re: /^xmlhttprequest/i, tag: "net" },
                   { re: /^adodbstream\.savetofile/i, tag: "filesystem" },
                   { re: /^shell\.application.shellexecute/i, tag: "exec" },
+                  { re: /^activexobject.constructor/i, tag: "constructor" },
+                  { re: /^adodbstream\.savetofile/i, tag: "filesystem" },
 
-                  // TODO: keep updating this list, or consider moving
-                  // it to a config file.
+                  { re: /./, tag: "generic" }
               ];
 
         tags.forEach(tag => {
@@ -160,120 +260,55 @@ Runtime.prototype._make_runnable = function () {
         return event;
     }
 
-    ee.on("**", function (event) {
-
-        if (event.target === undefined) {
-            return;
-        }
-
-        // We tag events as they come in so we can make better sense
-        // of them later.
+    ee.on("runtime.capture.fnio", function (event) {
+        event.meta = "runtime.capture.fnio";
         events.push(tag_event(event));
     });
 
-    function collect_coverage_info(coverage_obj) {
-        self.coverage = coverage_obj;
-    };
+    ee.on("runtime.capture.eval", function (event) {
+        event.meta = "runtime.capture.eval";
+        events.push(event);
+    });
 
-    // ################
-    // # Capture Eval #
-    // ################
-    function capture_eval (evalarg) {
-        ee.emit("capture eval", evalarg);
-        return evalarg;
-    }
+    ee.on("runtime.capture.function_constructor", function (event) {
+        event.meta = "runtime.capture.function_constructor";
+        events.push(event);
+    });
 
-    // Instrument the code...
-    const rewrite_code = new CodeRewriter(this.source_code);
-    rewrite_code
-        .using("capture eval", { fn_name: "capture_eval" })
-        .using("hoist globals")
-        .using("coverage", { filepath: this.file_path, oncomplete: "collect_coverage_info" })
-        .using("beautify");
+    ee.on("runtime.api.*", function (event) {
+        event.meta = "runtime.api.call";
+        events.push(event);
+    });
 
-    // All of the constructable JScript types are set here.
-    var sandbox = {
-        Date          : context.get_component("Date"),
-        WScript       : context.get_component("WScript"),
-        ActiveXObject : context.get_component("ActiveXObject"),
-        console       : console
-    };
+    ee.on("runtime.exception.api", function (event) {
+        event.meta = "runtime.exception.api";
+        console.log("ERR", event);
+        events.push(event);
+    });
 
-    // Add the dynamic properties such as one-time names:
-    sandbox["collect_coverage_info"] = collect_coverage_info;
-    sandbox["capture_eval"]          = capture_eval;
+    ee.on("runtime.exception.native", function (event) {
+        event.meta = "runtime.exception.native";
+        events.push(event);
+    });
 
-    vm.createContext(sandbox);
+    let ready_to_run_env = this._create_runtime_sandbox(this.source);
 
     return function (done) {
+
         try {
-            vm.runInContext(rewrite_code.source(), sandbox, { "timeout": 2000 });
-            done(null, { "success": true });
+            ready_to_run_env();
+            return done(null, { success: true });
         }
         catch (e) {
-
-	    if (e.message === "Script execution timed out.") {
-	        // TODO...
+            if (e.message === "Script execution timed out.") {
+                return done(null, { "success": true, "timeout_reached": true });
 	    }
-	    else {
-//	        console.log(e);
-	    }
-
-            done(e);
+            return done(e);
         }
     };
+
+    return this._create_runtime_sandbox(this.source);
 };
 
-
-Runtime.prototype._filter_interesting_events  = function () {
-
-    // Collect high-severity events
-    let high_severity_events = this.events
-        .filter((e) => {
-            switch (e.event) {
-                case "WINAPI.ActiveXObject.new.WScript.Shell":
-                case "WINAPI.XMLHttpRequest.open":
-                case "WINAPI.ADODB.SaveToFile":
-                case "WINAPI.ADODB.Write":
-                    return true;
-                default:
-                    return false;
-            }
-        })
-        .map((e) => {
-            return {
-                esrc: e.event,
-                summary: "Summary for why this event is bad...",
-                link_to_docs: "http://msdn.com/link/to/docs"
-            };
-        });
-
-    // Collect URLs
-    let url_based_events = this.events
-        .filter((e) => /(?:^WINAPI\.XMLHttpRequest\.send)$/.test(e.event))
-        .map((e)    => {
-
-            let url    = urlparse(e.args.url),
-                domain = url.host,
-                safeish_domain = url.host.replace(/\./g, "[.]");
-
-            return {
-                url:         e.args.url,
-                safe_url:    e.args.safeish_url,
-                domain:      url.host,
-                safe_domain: safeish_domain,
-                esrc:        e.event
-            };
-        });
-
-    return {
-        severity: {
-            high:   high_severity_events,
-            medium: [],
-            low:    []
-        },
-        url: url_based_events
-    };
-};
 
 module.exports = Runtime;

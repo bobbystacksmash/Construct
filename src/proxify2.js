@@ -1,57 +1,144 @@
-module.exports = function proxify(context, instance) {
+function try_run_hook (context, apiobj, default_action) {
 
-    return new Proxy(instance, {
-	get (target, prop_key, receiver) {
+    let hook   = context.get_hook(apiobj),
+        result = undefined;
 
-	    let actual_propkey = prop_key.toLowerCase();
+    if (hook) {
+        apiobj.hooked = true;
+        var value = hook(context, apiobj, default_action);
+        return value;
+    }
+    else if (typeof default_action === "function") {
+        return default_action();
+    }
+    else {
+        return default_action;
+    }
+}
 
-	    const original_method = target[actual_propkey];
+function make_emitter_message (target, property, args, type, retval, hooked) {
 
-	    if (typeof original_method === "function") {
-		return function (...args) {
+    if (retval && retval.__name__) {
+        // The return value is an instance.  Instead of returning the
+        // *whole* instance, return some meta info about the instance
+        // so we can still track it later, without causing a cicular
+        // reference issue.
+        retval = {
+            target: retval.__name__,
+            id:     retval.__id__
+        };
+    }
 
-                    const name_of_target = target.__name__ || "Unknown",
-                          emit_as        = `${name_of_target}.get.${actual_propkey}`;
+    if (hooked === undefined || hooked === null) {
+        hooked = false;
+    }
+    else if (hooked !== false) {
+        hooked = true;
+    }
 
-                    try {
-		        var result = instance[actual_propkey](...args);
-                    }
-                    catch (e) {
-                        throw e;
-                    }
+    return {
+        target:  target.__name__.replace(".", ""),
+        id:      target.__id__,
+        hooked:  hooked,
+        prop:    property,
+        args:    args,
+        type:    type,
+        return:  (retval === undefined) ? null : retval
+    };
+}
 
-                    context.emitter.emit(emit_as, {
-                        target: name_of_target,
-                        type: "get",
-                        prop:   actual_propkey,
-                        args:   [...args],
-                        return:  result
-                    });
+let proxified_objects_cache = {};
 
-                    return result;
-		};
-	    }
+module.exports = function (context, jscript_class) {
 
-	    return original_method;
-	},
+    const proxyobj = {
+        get (target, orig_property) {
 
-        set (target, prop_key, value) {
+            const property = orig_property.toLowerCase(),
+                  objprop  = target[property],
+                  apiobj   = {
+                      name: target.__name__.replace(".", "").toLowerCase(),
+                      property: property,
+                      original_property: orig_property,
+                      id:   target.__id__,
+                      args: null
+                  };
 
-            const actual_propkey = prop_key.toLowerCase(),
-                  name_of_target = target.__name__ || "Unknown",
-                  emit_as        = `${name_of_target}.get.${prop_key}`;
+            if (/^__(?:name|id)__$/i.test(property)) {
+                return objprop;
+            }
 
-            const returned_value = Reflect.set(target, prop_key.toLowerCase(), value);
+            if (context.DEBUG) {
+                console.log("PROXYDBG>",`${target.__name__}.${property}`);
+            }
 
-            context.emitter.emit(emit_as, {
-                target: name_of_target,
-                type: "set",
-                prop:   actual_propkey,
-                args:   [value],
-                return: returned_value
-            });
+            if (typeof objprop === "function") {
+                return function (...args) {
 
-            return returned_value;
+                    apiobj.args = [...args];
+                    apiobj.type = "method";
+                    const retval = try_run_hook(context, apiobj, () => jscript_class[property](...args));
+
+                    context.emitter.emit(
+                        `runtime.api.method`,
+                        make_emitter_message(target, property, [...args], apiobj.type, retval, apiobj.hooked)
+                    );
+
+                    return retval;
+                };
+            }
+            else {
+
+                const retval = try_run_hook(context, apiobj, objprop);
+                apiobj.type = "getter";
+
+                if (/^__(?:name|id)__$/.test(property) === false) {
+                    context.emitter.emit(
+                        "runtime.api.getter",
+                        make_emitter_message(target, property, null, apiobj.type, retval, apiobj.hooked)
+                    );
+                }
+
+                return retval;
+            }
+        },
+
+        set (target, orig_property, value) {
+
+            const property = orig_property.toLowerCase(),
+                  apiobj   = {
+                      name: target.__name__,
+                      property: property,
+                      original_property: orig_property,
+                      id: target.__id__,
+                      type: "setter"
+                  };
+
+            if (/^__(?:name|id)__$/i.test(property)) {
+                return Reflect.set(target, property, value);
+            }
+
+            const retval = try_run_hook(context, apiobj, () => Reflect.set(target, property, value));
+            context.emitter.emit(
+                "runtime.api.setter",
+                make_emitter_message(target, property, value, apiobj.type, retval, apiobj.hooked)
+            );
+
+            return retval;
         }
-    });
+    };
+
+    // All JScript objects have an `__id__' property which is unique
+    // for each instance of each object.  We don't want to try and
+    // proxify something which is already wrapped in a proxy, so we
+    // check the ID in our cache, and either return the proxified
+    // instance, or create a new one (adding it to the cache).
+    let instance = context.get_instance_by_id(jscript_class.__id__);
+
+    if (!instance) {
+        instance = new Proxy(jscript_class, proxyobj);
+        context.add_instance(instance);
+    }
+
+    return instance;
 };
