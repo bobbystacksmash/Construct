@@ -158,5 +158,4 @@ if (program.writeRunnable) {
 }
 
 const events = construct.events();
-
-//construct.apply_reporter(output_reporter, events);
+construct.apply_reporter(output_reporter, events);
