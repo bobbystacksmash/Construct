@@ -9,6 +9,7 @@ const CodeRewriter   = require("../metaprogramming");
 const HookCollection = require("../hooks");
 const falafel        = require("falafel");
 const beautifier     = require("js-beautify");
+const acorn = require("acorn");
 
 const emitter = new EventEmitter2({ wildcard: true }),
       make_id = function () { let x = 1; return () => x++;};
@@ -92,19 +93,17 @@ Runtime.prototype._capture_fnio = function (name, type, value) {
     return value;
 }
 
-// ################
-// # Capture Eval #
-// ################
-Runtime.prototype._capture_eval = function (evalarg) {
+// ##############################
+// # Capture Function Call Args #
+// ##############################
+Runtime.prototype._capture_fnargs = function (arg) {
 
-    this.context.emitter.emit("runtime.capture.eval", {
-        code: evalarg,
-        decoded: {
-            uri: decodeURI(evalarg)
-        }
-    });
-
-    return evalarg;
+    try {
+        let ast = acorn.parse(arg);
+        this.context.emitter.emit("runtime.capture.callexprarg", arg);
+    }
+    catch (e) {
+    }
 };
 
 // ################################
@@ -113,7 +112,7 @@ Runtime.prototype._capture_eval = function (evalarg) {
 Runtime.prototype._capture_function_constructor = function (...args) {
 
     emitter.emit("runtime.capture.function_constructor", {
-        function: [...args]
+        function: [...pargs]
     });
 
     // TODO:
@@ -143,65 +142,49 @@ Runtime.prototype._capture_function_constructor = function (...args) {
 };
 
 
-Runtime.prototype._eval_handler = function (code) {
-
-    const StackTrace = require("stack-trace");
-    var trace  = StackTrace.get()[1],
-        column = trace.getColumnNumber() - 1,
-        line   = trace.getLineNumber();
-
-    // Walk the SRC until we find the call site of this eval
-    // call.
-    var updated = falafel(this.source, { locations: true }, function (node) {
-
-        let node_line   = node.loc.start.line,
-            node_column = node.loc.start.column;
-
-        if (node_line === line && node_column === column) {
-            node.update(`${code},stop()`);
-        }
-    });
-
-    console.log(updated);
-
-    this.expanders.push(updated);
-};
-
-
-
 Runtime.prototype._create_runtime_sandbox = function (source) {
 
     let context = this.context,
         self = this;
 
+    function __capture__ (input) {
+
+
+
+        console.log("HELLO WORLD");
+
+        return input;
+    }
+
     // Instrument the code...
-    /*const rewrite_code = new CodeRewriter(source);
+    const rewrite_code = new CodeRewriter(source);
     rewrite_code
-        .using("capture fnio", { fn_name: "capture_fnio" }) // TODO - weak name.
-        .using("capture eval", { fn_name: "capture_eval" }) // TODO - weak name.
-        .using("hoist globals")
-        //.using("coverage", { filepath: this.file_path, oncomplete: "collect_coverage_info" }) // TODO - config on/off
-        .using("beautify");*/
+        .using("capture fncall", { fn_name: "___capture___" })
+        .using("hoist globals") // TODO <---
+        .using("beautify");
 
     // All of the constructable JScript types are set here.
 
     var sandbox = {
+        ___capture___ : this._capture_fnargs.bind(this),
         Date          : context.get_global_object("Date"),
         Math          : context.get_global_object("Math"),
         WScript       : context.get_global_object("WScript"),
-        ActiveXObject : context.get_global_object("ActiveXObject"),
-        eval          : this._eval_handler.bind(this)
+        ActiveXObject : context.get_global_object("ActiveXObject")
     };
 
     // Add the dynamic properties such as one-time names:
     sandbox["collect_coverage_info"] = this._capture_coverage_info;
     sandbox["capture_fnio"]          = (...args) => this._capture_fnio(...args);
     sandbox["capture_eval"]          = (...args) => this._capture_eval(...args);
-    sandbox["Function"]              = function (...args) { return  self._capture_function_constructor(...args); };
-
+    sandbox["Function"]              = function (...args) {
+        return  self._capture_function_constructor(...args);
+    };
     vm.createContext(sandbox);
 
-    let src = this.source;
+    let src = rewrite_code.source();
+
+    console.log(src);
 
     return function () {
         return vm.runInContext(src, sandbox, { "timeout": 2000 });
@@ -263,6 +246,10 @@ Runtime.prototype._make_runnable = function (mode) {
     ee.on("runtime.capture.fnio", function (event) {
         event.meta = "runtime.capture.fnio";
         events.push(tag_event(event));
+    });
+
+    ee.on("runtime.capture.fncallexpr", function (event) {
+        console.log("CALLED!!!!!!");
     });
 
     ee.on("runtime.capture.eval", function (event) {
