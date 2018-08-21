@@ -303,4 +303,59 @@ describe("Virtual Registry", () => {
             );
         });
     });
+
+    describe("Check default hives", () => {
+
+        it("should have a HKEY_LOCAL_MACHINE hive", () => {
+            const vreg = make_vreg();
+
+            let k1 = "HKEY_LOCAL_MACHINE\\foo\\bar",
+                k2 = "HKEY_LOCAL_MACHINE\\fox\\bax";
+
+            assert.doesNotThrow(() => vreg.write(k1, "baz"));
+            assert.doesNotThrow(() => vreg.write(k2, "bad"));
+
+            assert.equal(vreg.read(k1), "baz");
+            assert.equal(vreg.read(k2), "bad");
+        });
+
+        it("should have a HKEY_CURRENT_USER hive", () => {
+            const vreg = make_vreg();
+
+            let k1 = "HKEY_CURRENT_USER\\foo\\bar",
+                k2 = "HKCU\\fox\\bax";
+
+            assert.doesNotThrow(() => vreg.write(k1, "baz"));
+            assert.doesNotThrow(() => vreg.write(k2, "bad"));
+
+            assert.equal(vreg.read(k1), "baz");
+            assert.equal(vreg.read(k2), "bad");
+        });
+
+        it("should have a HKEY_CLASSES_ROOT hive", () => {
+            const vreg = make_vreg();
+
+            let k1 = "HKEY_CLASSES_ROOT\\foo\\bar",
+                k2 = "HKCR\\fox\\bax";
+
+            assert.doesNotThrow(() => vreg.write(k1, "baz"));
+            assert.doesNotThrow(() => vreg.write(k2, "bad"));
+
+            assert.equal(vreg.read(k1), "baz");
+            assert.equal(vreg.read(k2), "bad");
+        });
+
+        it("should have a HKEY_USERS hive", () => {
+            const vreg = make_vreg();
+
+            let k1 = "HKEY_USERS\\foo\\bar",
+                k2 = "HKU\\fox\\bax";
+
+            assert.doesNotThrow(() => vreg.write(k1, "baz"));
+            assert.doesNotThrow(() => vreg.write(k2, "bad"));
+
+            assert.equal(vreg.read(k1), "baz");
+            assert.equal(vreg.read(k2), "bad");
+        });
+    });
 });

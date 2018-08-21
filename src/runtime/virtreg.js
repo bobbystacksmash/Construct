@@ -113,9 +113,10 @@ class VirtualRegistry {
         this.context = context;
 
         this.reg = {
-            HKEY_CURRENT_USER:  new KeyNode("HKEY_CURRENT_USER", null),
+            HKEY_CURRENT_USER:  new KeyNode("HKEY_CURRENT_USER",  null),
             HKEY_LOCAL_MACHINE: new KeyNode("HKEY_LOCAL_MACHINE", null),
-            HKEY_CLASSES_ROOT:  new KeyNode("HKEY_CLASSES_ROOT", null)
+            HKEY_CLASSES_ROOT:  new KeyNode("HKEY_CLASSES_ROOT",  null),
+            HKEY_USERS:         new KeyNode("HKEY_USERS",         null)
         };
     }
 
@@ -147,9 +148,15 @@ class VirtualRegistry {
         case "HKCR":
             root = "HKEY_CLASSES_ROOT";
             break;
+
+        case "HKU":
+            root = "HKEY_USERS";
+            break;
+
         case "HKEY_LOCAL_MACHINE":
         case "HKEY_CURRENT_USER":
         case "HKEY_CLASSES_ROOT":
+        case "HKEY_USERS":
             break;
         default:
             this.context.exceptions.throw_native_vreg_invalid_root(
