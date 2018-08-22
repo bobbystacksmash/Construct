@@ -16,7 +16,8 @@ const emitter = new EventEmitter2({ wildcard: true }),
 
 function Runtime (options) {
 
-    this.events = [];
+    this.events       = [];
+    this.cover_report = null;
 
     options = options || {};
 
@@ -114,13 +115,26 @@ Runtime.prototype._capture_fnargs = function (callee, loc, arg) {
     return arg;
 };
 
+// ###############################
+// # Capture the coverage object #
+// ###############################
+Runtime.prototype._capture_coverage_report = function (coverage_var) {
+    var instrumenter = new istanbul.Instrumenter(),
+        cover_utils  = istanbul.utils,
+        collector    = new istanbul.Collector();
+
+    collector.add(coverage_var);
+
+    this.coverage_report = collector.getFinalCoverage();
+};
+
 // ################################
 // # Capture Function Constructor #
 // ################################
 Runtime.prototype._capture_function_constructor = function (...args) {
 
     emitter.emit("runtime.capture.function_constructor", {
-        function: [...pargs]
+        function: [...args]
     });
 
     // TODO:
@@ -160,24 +174,26 @@ Runtime.prototype._create_runtime_sandbox = function (source) {
     rewrite_code
         .using("capture fncall", { fn_name: "___capture___" })
         .using("hoist globals") // TODO <---
+        .using("coverage", { oncomplete: "___send_coverage" })
         .using("beautify");
 
     // All of the constructable JScript types are set here.
-
     var sandbox = {
         ___capture___ : this._capture_fnargs.bind(this),
         Date          : context.get_global_object("Date"),
         Math          : context.get_global_object("Math"),
         WScript       : context.get_global_object("WScript"),
-        ActiveXObject : context.get_global_object("ActiveXObject")
+        ActiveXObject : context.get_global_object("ActiveXObject"),
+        console: console
     };
 
     // Add the dynamic properties such as one-time names:
-    sandbox["collect_coverage_info"] = this._capture_coverage_info;
-    sandbox["capture_fnio"]          = (...args) => this._capture_fnio(...args);
-    sandbox["Function"]              = function (...args) {
+    sandbox["capture_fnio"] = (...args) => this._capture_fnio(...args);
+    sandbox["___send_coverage"] = this._capture_coverage_report.bind(this);
+
+    /*sandbox["Function"]              = function (...args) {
         return  self._capture_function_constructor(...args);
-    };
+    };*/
     vm.createContext(sandbox);
 
     let src = rewrite_code.source();
@@ -238,10 +254,10 @@ Runtime.prototype._make_runnable = function (mode) {
         return event;
     }
 
-    ee.on("runtime.capture.fnio", function (event) {
+    /*ee.on("runtime.capture.fnio", function (event) {
         event.meta = "runtime.capture.fnio";
         events.push(tag_event(event));
-    });
+     });*/
 
     ee.on("runtime.capture.callexprarg", function (event) {
         event.meta = "runtime.capture.callexprarg";
