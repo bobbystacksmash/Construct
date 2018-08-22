@@ -329,7 +329,7 @@ class XMLHttpRequestBase extends Component {
 
         this.response = this.context.get_nethook(this.request);
 
-        this.ee.emit(`${this.__name__}.send`, {
+        this.ee.emit("runtime.api.method", {
             target: this.__name__,
             id:     this.__id__,
             type: "internal",
