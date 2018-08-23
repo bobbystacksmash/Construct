@@ -59,7 +59,7 @@ class HostContext {
 	// to change time drastically without hard-coding a date value
 	// anywhere.  In the absence of an `opts.epoch' value, we
 	// fall-back to using the system's time.
-	this.epoch = opts.epoch || new Date().getTime();
+	this.epoch = opts.config.environment.epoch || new Date().getTime();
 
         // We need to create the Standard{In,Out,Err} streams, which
         // are just differently configured instances of a TextStream
