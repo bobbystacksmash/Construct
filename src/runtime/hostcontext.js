@@ -248,6 +248,34 @@ class HostContext {
                 vfs.AddFile(fp, contents);
             });
         }
+
+        if (filesystem.hasOwnProperty("root") && filesystem.root.startsWith("@")) {
+
+            const fakeroot = filesystem.root.replace(/^@/g, ""),
+                  winpath  = require("path").win32;
+
+            let walk = (host_dir, vm_dir) => {
+
+                let items = fs.readdirSync(host_dir);
+
+                items.forEach(item => {
+
+                    let host_fs_path = path.resolve(path.join(host_dir, item)),
+                        vm_fs_path   = winpath.join(vm_dir, item),
+                        stat         = fs.statSync(host_fs_path);
+
+                    if (stat.isDirectory()) {
+                        vfs.AddFolder(vm_fs_path);
+                        walk(host_fs_path, vm_fs_path);
+                    }
+                    else if (stat.isFile()) {
+                        vfs.AddFile(vm_fs_path, fs.readFileSync(host_fs_path));
+                    }
+                });
+            };
+
+            walk(fakeroot, "C:");
+        }
     }
 
     _create_registry (registry) {
