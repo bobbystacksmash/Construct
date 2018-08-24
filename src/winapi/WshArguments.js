@@ -130,7 +130,7 @@ class JS_WshArguments extends Component {
     }
 
     count () {
-
+        return this.argobj.named.length + this.argobj.unnamed.length;
     }
 
     showusage () {

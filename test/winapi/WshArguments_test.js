@@ -220,4 +220,22 @@ describe("WshArguments", () => {
             assert.equal(new WshArguments(ctx, [{foo: "bar"}]).unnamed.count, 0);
         });
     });
+
+    describe(".Count()", () => {
+
+        it("should return the correct number of supplied arguments", () => {
+
+            const args = new WshArguments(ctx, [
+                "one", "two",
+                { three: "x", four: "x" },
+                "five"
+            ]);
+
+            assert.equal(args.count(), 5);
+        });
+
+        it("should return zero when there are no arguments", () => {
+            assert.equal(new WshArguments(ctx).count(), 0);
+        });
+    });
 });
