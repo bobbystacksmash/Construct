@@ -5,12 +5,13 @@
  *
  */
 
-const Runtime        = require("./src/runtime"),
-      istanbul       = require("istanbul"),
-      toml           = require("toml"),
-      fs             = require("fs"),
-      glob           = require("glob"),
-      path           = require("path");
+const Runtime  = require("./src/runtime"),
+      coverage = require("./src/coverage"),
+      istanbul = require("istanbul"),
+      toml     = require("toml"),
+      glob     = require("glob"),
+      path     = require("path"),
+      fs       = require("fs");
 
 class Construct {
 
@@ -73,12 +74,12 @@ class Construct {
         }
     }
 
-    load (path_to_file) {
+    load (path_to_file, options) {
 
         this.file = path_to_file;
 
         try {
-            this._runnable = this.runtime.load(path_to_file);
+            this._runnable = this.runtime.load(path_to_file, options);
         }
         catch (e) {
             throw e;
@@ -149,20 +150,11 @@ class Construct {
         return this.runtime.events.filter(filter_fn);
     }
 
-    coverage (type) {
-
-        type = type || "summary";
-
-        const collector = new istanbul.Collector();
-        collector.add(this.runtime.coverage);
-
-        if (type === "summary") {
-            return istanbul.utils.summarizeFileCoverage(
-                collector.fileCoverageFor(collector.files()[0])
-            );
-        }
-
-        return this.runtime.coverage;
+    coverage () {
+        coverage.generate_coverage_report(
+            this.runtime.coverage_report,
+            this.runtime.source.beautified
+        );
     }
 }
 

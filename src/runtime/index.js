@@ -9,7 +9,8 @@ const CodeRewriter   = require("../metaprogramming");
 const HookCollection = require("../hooks");
 const falafel        = require("falafel");
 const beautifier     = require("js-beautify");
-const acorn = require("acorn");
+const acorn          = require("acorn");
+const uuid           = require("uuid");
 
 const emitter = new EventEmitter2({ wildcard: true }),
       make_id = function () { let x = 1; return () => x++;};
@@ -39,6 +40,7 @@ function Runtime (options) {
 
     this.fnio = [];
     this.expanders = [];
+    this.collect_coverage = false;
 
     return this;
 };
@@ -46,16 +48,58 @@ function Runtime (options) {
 
 Runtime.prototype.load = function(path_to_file, options) {
 
-    options = options || {};
+    options = options || { coverage: false };
+
+    if (options.coverage) {
+        this.collect_coverage = true;
+    }
 
     this.file_path = path_to_file;
 
     try {
-        this.source = fs.readFileSync(path_to_file).toString();
+        var src = fs.readFileSync(path_to_file).toString();
     }
     catch (e) {
         throw e;
     }
+
+    let generate_identifier = () => {
+        return ["__construct", uuid().replace(/-/g, "_"), new Date().getTime()].join("_");
+    };
+
+    // Generate unique function names to inject into the source so we
+    // can pass data across the sandbox.
+    //
+    // [ COVERAGE ]
+    //
+    // We need two identifiers for this:
+    //
+    //   1. Holds coverage information.
+    //   2. Called on-completion of the script, passing #1 back across
+    //      the sandbox.
+    //
+    const cov = {
+        variable:   generate_identifier(),
+        oncomplete: generate_identifier(),
+        filepath:   path.resolve(path_to_file)
+    };
+
+    const beautified     = new CodeRewriter(src).using("beautify").source(),
+          beautified_cov = new CodeRewriter(beautified).using("coverage", cov).source();
+
+    // Create different versions of the source:
+    const capture_fncall  = new CodeRewriter(beautified).using("capture fncall").source(),
+          hoisted_globals = new CodeRewriter(beautified).using("hoist globals").source();
+
+    this.source = {
+        path: path.resolve(path_to_file),
+        original:            src,
+        beautified:          beautified,
+        beautified_coverage: beautified_cov,
+        capture_fncall:      capture_fncall,
+        hoisted_globals:     hoisted_globals,
+        coverage_info:       cov
+    };
 
     // We write the input file to the filesystem so the code is able
     // to read itself should it need to.  The code written is the
@@ -65,18 +109,10 @@ Runtime.prototype.load = function(path_to_file, options) {
     const filename = path.basename(path_to_file),
           script_path = `C:\\Users\\Construct\\${filename}`;
 
-    this.context.vfs.AddFile(script_path, this.source_code);
+    this.context.vfs.AddFile(script_path, this.source.original);
     this.context.set_env("ScriptFullName", script_path);
 
     return this._make_runnable();
-};
-
-// #########################
-// # Capture Coverage Info #
-// #########################
-Runtime.prototype._capture_coverage_info = function (coverage_obj) {
-    console.log(Object.keys(coverage_obj));
-    this.coverage = coverage_obj;
 };
 
 // ########################
@@ -164,63 +200,57 @@ Runtime.prototype._capture_function_constructor = function (...args) {
 };
 
 
-Runtime.prototype._create_runtime_sandbox = function (source) {
+Runtime.prototype._create_runtime_sandbox = function (options) {
+
+    options = options || {};
+
+    const default_opts = { coverage: false };
+    options = Object.assign(default_opts, options);
 
     let context = this.context,
         self = this;
 
-    // Instrument the code...
-    const rewrite_code = new CodeRewriter(source);
-    rewrite_code
-        .using("capture fncall", { fn_name: "___capture___" })
-        .using("hoist globals") // TODO <---
-        .using("coverage", { oncomplete: "___send_coverage" })
-        .using("beautify");
-
     // All of the constructable JScript types are set here.
     var sandbox = {
-        ___capture___ : this._capture_fnargs.bind(this),
+        // WINAPI
+        // ======
         Date          : context.get_global_object("Date"),
         Math          : context.get_global_object("Math"),
         WScript       : context.get_global_object("WScript"),
-        ActiveXObject : context.get_global_object("ActiveXObject"),
-        console: console
+        ActiveXObject : context.get_global_object("ActiveXObject")
     };
 
-    // Add the dynamic properties such as one-time names:
-    sandbox["capture_fnio"] = (...args) => this._capture_fnio(...args);
-    sandbox["___send_coverage"] = this._capture_coverage_report.bind(this);
+    const cov_oncomplete = this.source.coverage_info.oncomplete;
 
-    /*sandbox["Function"]              = function (...args) {
-        return  self._capture_function_constructor(...args);
-    };*/
+    console.log("------------>", cov_oncomplete);
+    console.log(this.source.beautified_coverage);
+
+    sandbox[cov_oncomplete] = this._capture_coverage_report.bind(this);
+    sandbox["capture_fnio"] = (...args) => this._capture_fnio(...args);
+
+    let source = this.source.hoisted_globals;
+
+    if (this.collect_coverage) {
+        // For a coverage run we only want to run the the
+        // beautified/covered version of the code.
+        source = this.source.beautified_coverage;
+    }
+
     vm.createContext(sandbox);
 
-    let src = rewrite_code.source();
     return function () {
-        return vm.runInContext(src, sandbox, { "timeout": 2000 });
+        return vm.runInContext(source, sandbox, { "timeout": 2000 });
     }.bind(context);
 };
 
 
-
-Runtime.prototype._make_runnable = function (mode) {
-
-    mode = mode || "run";
+Runtime.prototype._make_runnable = function () {
 
     let events  = this.events,
         epoch   = this.context.epoch,
         ee      = this.context.emitter,
-        context = this.context;
-
-    // ############
-    // # Coverage #
-    // ############
-    var instrumenter = new istanbul.Instrumenter(),
-        cover_utils  = istanbul.utils,
-        collector    = new istanbul.Collector();
-
-    var self = this;
+        context = this.context,
+        self    = this;
 
     function tag_event (event) {
 
@@ -290,10 +320,9 @@ Runtime.prototype._make_runnable = function (mode) {
         events.push(event);
     });
 
-    let ready_to_run_env = this._create_runtime_sandbox(this.source);
+    let ready_to_run_env = this._create_runtime_sandbox();
 
     return function (done) {
-
         try {
             ready_to_run_env();
             return done(null, { success: true });
@@ -305,9 +334,6 @@ Runtime.prototype._make_runnable = function (mode) {
             return done(e);
         }
     };
-
-    return this._create_runtime_sandbox(this.source);
 };
-
 
 module.exports = Runtime;

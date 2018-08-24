@@ -70,6 +70,11 @@ program
     )
 
     .option(
+        "-c, --coverage [FILENAME]",
+        "Write a HTML coverage report to CWD.  FILENAME will be generated if omitted."
+    )
+
+    .option(
         "-d, --date <datestr>",
         "Sets the sandbox clock for all dates within the virtualised environment.",
         parse_date,
@@ -106,7 +111,7 @@ let construct = new Construct({
 });
 
 construct.load_reporters("./reporters");
-construct.load(file_to_analyse);
+construct.load(file_to_analyse, { coverage: program.coverage });
 const res = construct.run();
 
 if (res === false) {
@@ -114,6 +119,14 @@ if (res === false) {
 }
 
 if (program.debug) {
+    process.exit();
+}
+
+// ===============
+// C O V E R A G E
+// ===============
+if (program.coverage) {
+    construct.coverage();
     process.exit();
 }
 
