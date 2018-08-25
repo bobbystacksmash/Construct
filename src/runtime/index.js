@@ -222,9 +222,6 @@ Runtime.prototype._create_runtime_sandbox = function (options) {
 
     const cov_oncomplete = this.source.coverage_info.oncomplete;
 
-    console.log("------------>", cov_oncomplete);
-    console.log(this.source.beautified_coverage);
-
     sandbox[cov_oncomplete] = this._capture_coverage_report.bind(this);
     sandbox["capture_fnio"] = (...args) => this._capture_fnio(...args);
 
