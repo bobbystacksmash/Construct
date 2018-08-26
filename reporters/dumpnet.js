@@ -1,7 +1,6 @@
 module.exports = {
 
     meta: {
-        title: "Dump Network Indicators",
         name: "dumpnet",
         description: "Extracts and dumps various network indicators."
     },

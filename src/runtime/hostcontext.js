@@ -252,8 +252,17 @@ class HostContext {
 
     _create_registry (registry) {
 
-        const vreg = this.global_objects["VirtualRegistry"];
+        const vreg = this.global_objects["VirtualRegistry"],
+              vfs  = this.global_objects["VirtualFileSystem"];
+
         Object.keys(registry).forEach(regpath => {
+
+            if (regpath.startsWith("!")) {
+                // A leading '!' means "create this folder.
+                regpath = regpath.replace(/^!/, "");
+                vfs.AddFolder(registry[regpath]);
+            }
+
             vreg.write(regpath, registry[regpath]);
         });
     }

@@ -36,12 +36,23 @@ function make_emitter_message (target, property, args, type, retval, hooked) {
         hooked = true;
     }
 
+    if (Array.isArray(args) === false) {
+        args = [args];
+    }
+
+    let typed_args = args.map(arg => {
+        return {
+            type:  typeof arg,
+            value: arg
+        };
+    });
+
     return {
         target:  target.__name__.replace(".", ""),
         id:      target.__id__,
         hooked:  hooked,
         prop:    property,
-        args:    args,
+        args:    typed_args,
         type:    type,
         return:  (retval === undefined) ? null : retval
     };

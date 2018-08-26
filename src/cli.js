@@ -82,7 +82,7 @@ program
     )
 
     .option(
-        "-r, --output-reporter <REPORTER>",
+        "-r, --reporter <REPORTER>",
         "Uses the given REPORTER to produce output.",
         "dumpevents"
     )
@@ -99,42 +99,21 @@ program
 
     .parse(process.argv);
 
-if (file_to_analyse === null) {
-    console.log("Usage: construct FILE [OPTION]...");
-    console.log("Try: 'construct --help' for more information.");
-    return;
-}
 
+if (program.debug) {
+    console.log("DEBUG!");
+    process.exit();
+}
 
 let construct = new Construct({
     config: "./construct.cfg"
 });
-
 construct.load_reporters("./reporters");
-construct.load(file_to_analyse, { coverage: program.coverage });
-const res = construct.run();
-
-if (res === false) {
-    process.exit();
-}
-
-if (program.debug) {
-    process.exit();
-}
-
-// ===============
-// C O V E R A G E
-// ===============
-if (program.coverage) {
-    construct.coverage();
-    process.exit();
-}
 
 // =================
 // R E P O R T E R S
 // =================
 let output_reporter = undefined;
-
 if (program.listReporters) {
 
     const reporters = construct.get_reporters();
@@ -146,10 +125,32 @@ if (program.listReporters) {
 
     const info = Object.keys(reporters).map(reporter => {
         reporter = reporters[reporter].meta;
-        return [reporter.name, reporter.title, reporter.description];
+        return [reporter.name, reporter.description];
     });
 
     console.log(table(info));
+    process.exit();
+}
+
+if (file_to_analyse === null) {
+    console.log("Usage: construct FILE [OPTION]...");
+    console.log("Try: 'construct --help' for more information.");
+    return;
+}
+
+
+construct.load(file_to_analyse, { coverage: program.coverage });
+const res = construct.run();
+
+if (res === false) {
+    process.exit();
+}
+
+// ===============
+// C O V E R A G E
+// ===============
+if (program.coverage) {
+    construct.coverage();
     process.exit();
 }
 
