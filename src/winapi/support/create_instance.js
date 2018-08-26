@@ -62,6 +62,19 @@ function create_instance (context, type) {
 	break;
     }
 
+    context.emitter.emit(
+        `runtime.api.method`,
+        {
+            target: type.replace(".", ""),
+            id: instance.__id__,
+            hooked: false,
+            prop: null,
+            args: [],
+            type: "constructor",
+            return: { target: instance.__name__, id: instance.__id__ }
+        }
+    );
+
     return instance;
 }
 
