@@ -1,6 +1,7 @@
-const istanbul = require("istanbul");
+const istanbul = require("istanbul"),
+      path     = require("path")
 
-function generate_coverage_report (covobj, source, output_filename) {
+function generate_coverage_report (covobj, source, src_file_path) {
 
     const Report    = istanbul.Report,
           report    = Report.create("html"),
@@ -8,7 +9,11 @@ function generate_coverage_report (covobj, source, output_filename) {
 
     collector.add(covobj);
     report.on("done", function () {
-        console.log("Report created.");
+
+        let report_path = path.join(process.cwd(), "html-report", "index.html");
+
+        console.log(`Coverage report created for ${src_file_path}.`);
+        console.log(`HTML report written to: file://${report_path}`);
     });
 
     report.writeReport(collector, true);

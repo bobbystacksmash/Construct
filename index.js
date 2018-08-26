@@ -153,7 +153,8 @@ class Construct {
     coverage () {
         coverage.generate_coverage_report(
             this.runtime.coverage_report,
-            this.runtime.source.beautified
+            this.runtime.source.beautified,
+            this.runtime.file_path
         );
     }
 }
