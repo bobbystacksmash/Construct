@@ -5,15 +5,13 @@ const HTTPStatus = require("http-status");
 
 class XMLHttpRequestBase extends Component {
 
-    constructor (context, tag) {
+    constructor (context, tag, type) {
 
-	super(context, tag);
+	super(context, type);
 
 	this.ee  = this.context.emitter;
-	this.tag = tag;
+	this.tag = type;
 	this.event_id = `@${tag}`;
-
-        this.__name__ = "XMLHttpRequest";
 
 	this.request  = {};
 	this.response = {};
@@ -67,7 +65,6 @@ class XMLHttpRequestBase extends Component {
 	];
 
 	let cmd_actual = parts_of_cmd.join(" ");
-	this.ee.emit("-curl", cmd_actual);
     }
 
 
@@ -85,7 +82,6 @@ class XMLHttpRequestBase extends Component {
     // attribute changes.
     //
     set onreadystatechange (fn) {
-	this.ee.emit(`${this.event_id}.onreadystatechange`, fn);
 	this.ready_state_change_handler = fn.bind(this);
     }
 
@@ -99,7 +95,6 @@ class XMLHttpRequestBase extends Component {
     // request.
     //
     set ontimeout (fn) {
-	this.ee.emit(`${this.event_id}.ontimeout`, fn);
 	fn.call(this);
     }
 
@@ -114,9 +109,6 @@ class XMLHttpRequestBase extends Component {
     // TODO: Need to update construct so that plugins can decide
     // whether or not they "timeout".
     set timeout (timeout_ms) {
-
-	this.ee.emit(`${this.event_id}.timeout`, timeout_ms);
-
 	// TODO: add something here so that we can communicate with a
 	// nethook to invoke a timeout.
     }
@@ -130,7 +122,6 @@ class XMLHttpRequestBase extends Component {
     // request.
     //
     set withcredentials (yes_no) {
-	this.ee.emit(`${this.event_id}.withCredentials`, yes_no);
     }
 
 
@@ -143,7 +134,6 @@ class XMLHttpRequestBase extends Component {
     // value specifying the type of data contained in the response.
     //
     set responseType (type) {
-	this.ee.emit(`${this.event_id}.responseType`, type);
     }
 
     //
@@ -167,7 +157,6 @@ class XMLHttpRequestBase extends Component {
     // | 4     | DONE             | The operation is complete.                                      |
     //
     get readystate () {
-	this.ee.emit(`${this.event_id}.readystate`, this.ready_state_num);
 	return this.ready_state_num;
     }
 
@@ -182,12 +171,10 @@ class XMLHttpRequestBase extends Component {
     // been sent.
     //
     get responsetext () {
-	// Event is emitted from `_response_body'.
-	return this._response_body("responsetext");
+	return Buffer.from(this._response_body("responsetext"));
     }
     get responsebody () {
-	// Event is emitted from `_response_body'.
-	return this._response_body("responsebody");
+	return Buffer.from(this._response_body("responsebody"));
     }
 
 
@@ -199,8 +186,7 @@ class XMLHttpRequestBase extends Component {
     // Retrieves the response body as an XML DOM object.
     //
     get responsexml () {
-	// TODO: This isn't implemented.
-	this.ee.emit(`${this.event_id}.responseXML`, "NOT IMPLEMENTED");
+
     }
 
 
@@ -212,7 +198,6 @@ class XMLHttpRequestBase extends Component {
     // Retrieves the HTTP status code of the request.
     //
     get status () {
-	this.ee.emit(`${this.event_id}.status`, this.response.status);
 	return this.response.status;
     }
 
@@ -226,7 +211,6 @@ class XMLHttpRequestBase extends Component {
     //
     get statustext () {
 	let friendly_status = HTTPStatus[this.response.status];
-	this.ee.emit(`${this.event_id}.statusText`, friendly_status);
 	return friendly_status;
     }
 
@@ -244,7 +228,7 @@ class XMLHttpRequestBase extends Component {
     // Cancels the current HTTP request.
     //
     abort () {
-	this.ee.emit(`${this.event_id}::Abort`, this.request);
+
     }
 
 
@@ -263,7 +247,6 @@ class XMLHttpRequestBase extends Component {
 		.map((hdr) => `${hdr}: ${res_headers[hdr]}`)
 		.join(`\r\n`);
 
-	this.ee.emit(`${this.event_id}.GetAllResponseHeaders()`, all_response_headers);
 	return all_response_headers;
     }
 
@@ -288,8 +271,6 @@ class XMLHttpRequestBase extends Component {
 		    `exception being thrown.  You can learn more about the XMLHttpRequest object `  +
 		    `here: https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/getResponseHeader.`
 	    );
-
-	    this.ee.emit(`${this.event_id}.GetResponseHeader(${header})`, arguments);
 	}
 
 	var header_value = "";
@@ -298,7 +279,6 @@ class XMLHttpRequestBase extends Component {
 	    header_value = this.response.headers[header.toLowerCase()];
 	}
 
-	this.ee.emit(`${this.event_id}.GetResponseHeader(${header}) -> ${header_value}`, header_value);
 	return header_value;
     }
 
@@ -313,14 +293,11 @@ class XMLHttpRequestBase extends Component {
     open (method, url, asyn, user, password) {
 
 	this.request.method        = method;
-	this.request.address       = url;
-	this.request.address_parts = urlparser(url);
+	this.request.address       = encodeURI(url);
 	this.request.asyn          = asyn;
 	this.request.user          = user;
 	this.request.password      = password;
 	this.request.sent          = false;
-
-	this.ee.emit(`${this.event_id}::Open`, this.request);
 
 	this._set_ready_state(1);
     }
@@ -335,7 +312,6 @@ class XMLHttpRequestBase extends Component {
     //
     overridemimetype (mime) {
 	this.request.headers["Content-Type"] = mime;
-	this.ee.emit(`${this.event_id}::overrideMimeType`, mime);
     }
 
 
@@ -351,18 +327,20 @@ class XMLHttpRequestBase extends Component {
 	if (!body) body = null;
 	this.request.body = body;
 
-	let nethook = this.context.get_network_hook(
-	    this.request.method.toUpperCase(),
-	    this.request.address
-	);
+        this.response = this.context.get_nethook(this.request);
 
-	let response  = nethook.handle(this.request, this.ee);
-	this.response = Object.assign(this.response, response);
-
-	this.ee.emit(`${this.event_id}::Send`, {
-	    request  : this.request,
-	    response : this.response
-	});
+        this.ee.emit("runtime.api.call", {
+            target: this.__name__,
+            id:     this.__id__,
+            type: "internal",
+            hooked: false,
+            prop: "send",
+            args: [body],
+            data: {
+                request:  this.request,
+                response: this.response
+            }
+        });
 
 	this._set_ready_state(2);
 	this._set_ready_state(3);
@@ -389,8 +367,6 @@ class XMLHttpRequestBase extends Component {
     //
     setrequestheader (header, val) {
 
-	this.ee.emit(`${this.event_id}::SetRequestHeader`, { header: header, value: val });
-
 	// Does the current set of request headers contain this one?
 	let existing_hdr_idx = this.request.headers.findIndex(
 	    h => h.toLowerCase().startsWith(header.toLowerCase())
@@ -399,12 +375,6 @@ class XMLHttpRequestBase extends Component {
 	let hdr = `${header}: ${val}`;
 
 	if (existing_hdr_idx > -1) {
-	    this.ee.emit(`${this.event_id}::SetRequestHeader!hdr_overwritten`, {
-		old: this.request.headers[existing_hdr_idx],
-		new: hdr,
-		idx: existing_hdr_idx,
-		headers_old: this.request.headers
-	    });
 	    this.request.headers[existing_hdr_idx] = hdr;
 	}
 	else {
@@ -413,7 +383,7 @@ class XMLHttpRequestBase extends Component {
     }
 }
 
-module.exports = function (context, type) {
-    let xhr = new XMLHttpRequestBase(context, type);
+module.exports = function (context, tag, type) {
+    let xhr = new XMLHttpRequestBase(context, tag, type);
     return proxify(context, xhr);
 };

@@ -30,7 +30,6 @@ class JS_WshArguments extends Component {
 
     constructor (context, args) {
 	super(context, "WshArguments");
-
         args = args || [];
         let named   = {},
             unnamed = [];

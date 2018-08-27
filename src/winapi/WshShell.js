@@ -2,35 +2,13 @@ const proxify           = require("../proxify2");
 const Component         = require("../Component");
 const JS_WshEnvironment = require("./WshEnvironment");
 const JS_WshShortcut    = require("./WshShortcut");
-
+//const JS_WshSpecialFolders = require("./WshSpecialFolders");
 
 class JS_WshShell extends Component {
 
     constructor (context) {
         super(context, "WshShell");
-
-        this.__name__ = "WshShell";
-
         this.ee = this.context.emitter;
-
-        this.special_folders = [
-            "AllUsersDesktop",
-            "AllUsersStartMenu",
-            "AllUsersPrograms",
-            "AllUsersStartup",
-            "Desktop",
-            "Favorites",
-            "Fonts",
-            "MyDocuments",
-            "NetHood",
-            "PrintHood",
-            "Programs",
-            "Recent",
-            "SendTo",
-            "StartMenu",
-            "Startup",
-            "Templates"
-        ];
     }
 
     //
@@ -50,13 +28,11 @@ class JS_WshShell extends Component {
     //
     get currentdirectory () {
         let cwd = this.context.ENVIRONMENT.CurrentDirectory;
-        this.ee.emit("@WshShell.CurrentDirectory [GET]", cwd);
         return cwd;
     }
 
     set currentdirectory (new_cwd) {
         let old_cwd = this.context.ENVIRONMENT.CurrentDirectory;
-        this.ee.emit("@WshShell.CurrentDirectory [SET]", { new_cwd: new_cwd, old_cwd: old_cwd });
         this.context.ENVIRONMENT.CurrentDirectory = new_cwd;
     }
 
@@ -117,16 +93,28 @@ class JS_WshShell extends Component {
     //   strDesktop = WshShell.SpecialFolders("Desktop");
     //   var oShellLink = WshShell.CreateShortcut(strDesktop + "\\Shortcut Script.lnk");
     //
-    specialfolders () {
+    specialfolders (dirname) {
 
-        let folders = this.special_folders,
-            emitter = this.ee;
-        return {
-            item: function (n) {
-                emitter.emit("@WshShell.SpecialFolders::item", folders[n]);
-                return folders[n];
-            }
+        const special_folders = {
+            "AllUsersDesktop": "FIXME",
+            "AllUsersStartMenu": "FIXME",
+            "AllUsersPrograms": "FIXME",
+            "AllUsersStartup": "FIXME",
+            "Desktop": "FIXME",
+            "Favorites": "FIXME",
+            "Fonts": "FIXME",
+            "MyDocuments": "FIXME",
+            "NetHood": "FIXME",
+            "PrintHood": "FIXME",
+            "Programs": "FIXME",
+            "Recent": "FIXME",
+            "SendTo": "FIXME",
+            "StartMenu": "FIXME",
+            "Startup": "FIXME",
+            "templates": "C:\\Users\\Construct\\AppData\\Roaming\\Microsoft\\Windows\\Templates"
         };
+
+        return special_folders[dirname];
     }
 
     // =======
@@ -298,22 +286,7 @@ class JS_WshShell extends Component {
     }
 
     regread (key) {
-
-        let regread_hook = this.context.get_registry_hook(
-            "read",
-            key
-        );
-
-        if (regread_hook) {
-            return regread_hook.handle(key);
-        }
-
-        //try {
-            return this.context.vreg.read(key);
-    /*}
-        catch (e) {
-
-        }*/
+        return this.context.vreg.read(key);
     }
 
     regwrite (key, value) {

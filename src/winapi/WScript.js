@@ -38,8 +38,6 @@ class JS_WScript extends Component {
 	super(context, "WScript");
         this.context = context;
 	this.ee = this.context.emitter;
-
-        this.__name__ = "WScript";
     }
 
     //
@@ -139,7 +137,6 @@ class JS_WScript extends Component {
     // ScriptFullName    https://msdn.microsoft.com/en-us/library/cc5ywscw(v=vs.84).aspx
     get scriptfullname () {
 	let script_full_name = this.context.ENVIRONMENT.ScriptFullName;
-	this.ee.emit("@WScript::ScriptFullName", script_full_name);
 	return script_full_name;
     }
 

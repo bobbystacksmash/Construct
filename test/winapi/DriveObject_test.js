@@ -1,42 +1,11 @@
 const assert            = require("chai").assert;
 const Drive            = require("../../src/winapi/DriveObject");
 const VirtualFileSystem = require("../../src/runtime/virtfs");
-
-function make_ctx (opts) {
-
-    opts = opts || {};
-
-    opts.exceptions  = opts.exceptions  || {};
-    opts.environment = opts.environment || {};
-    opts.config      = opts.config      || {};
-
-    var default_env = {
-        path: "C:\\Users\\Construct"
-    };
-
-    var default_cfg = {
-        "autovivify": true
-    };
-
-    let env   = Object.assign({}, default_env, opts.environment),
-        cfg   = Object.assign({}, default_cfg, opts.config),
-        epoch = opts.epoch || 1234567890;
-
-    let context = {
-        epoch: epoch,
-        ENVIRONMENT: env,
-        CONFIG: cfg,
-        emitter: { emit: () => {} },
-        get_env: (e) => env[e],
-        get_cfg: (c) => cfg[c]
-    };
-
-    let vfs = new VirtualFileSystem(context);
-    context.vfs = vfs;
-    return Object.assign({}, context, opts);
-}
+const make_ctx          = require("../testlib");
 
 describe("DriveObject", () => {
+
+
 
     describe(".AvailableSpace", () => {
         it("should return freespace as an integer", () => {

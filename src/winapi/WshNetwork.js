@@ -17,8 +17,8 @@
  *
  */
 
-const Component        = require("../Component");
-const proxify          = require("../proxify2");
+const Component = require("../Component"),
+      proxify   = require("../proxify2");
 
 class WshNetwork extends Component {
 

@@ -8,6 +8,7 @@ class JS_WshShortcut extends Component {
 
         this.context = this.context;
 	this.ee      = this.context.emitter;
+        this.__name__ = "WshShortcut";
 
         this.backing_path = backing_path;
 

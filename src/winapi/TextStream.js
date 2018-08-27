@@ -50,6 +50,8 @@ class JS_TextStream extends Component {
 
         super(context, "TextStream");
 
+        this.__name__ = "TextStream";
+
         this.ee  = this.context.emitter;
         this.vfs = this.context.vfs;
         this.backing_stream = backing_stream_spec;

@@ -8,7 +8,7 @@ class Component {
 	if (!tag || tag === "") {
 	    throw new Error("Component creation failed - no 'tag' value defined.");
 	}
-	
+
 	if (! context.epoch) {
 	    throw new Error("Component creation failed - no epoch defined.");
 	}
@@ -19,14 +19,15 @@ class Component {
 
 	this.context = context;
 
-	this.context.emitter.emit(`@${tag}::new`, arguments);
+        this.__name__ = tag;
+        this.__id__   = context.make_uid();
     }
 
     get emitter () {
 	return this._emitter;
     }
 
-    
+
     get epoch () {
 	return this._epoch;
     }

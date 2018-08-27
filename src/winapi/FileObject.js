@@ -31,7 +31,7 @@ class JS_FileObject extends Component {
 
             this.context.exceptions.throw_file_not_found(
                 "FileObject",
-                "The backing file is not available.",
+                `The backing file (${this._path}) is not available.`,
                 "The file which backed this object instance is " +
                     "no longer present on the filesystem (it may " +
                     "have been deleted).  The original backing file was: " +

@@ -35,7 +35,6 @@ class JS_ADODBStream extends Component {
         super(context, "ADODBStream");
         this.ee  = this.context.emitter;
         this.vfs = this.context.vfs;
-
         this.stream = new TextStream(context);
     }
 
@@ -333,8 +332,6 @@ class JS_ADODBStream extends Component {
     }
 
     open () {
-
-        this.ee.emit("@ADODBStream::Open", arguments);
 
         try {
             this.stream.open();
@@ -704,8 +701,6 @@ class JS_ADODBStream extends Component {
     }
 
     savetofile (path, opt) {
-
-        this.ee.emit("@ADODBStream::SaveToFile", arguments);
 
         try {
             this.stream.save_to_file(path, opt);

@@ -1,118 +1,175 @@
 
-const Component = require("../Component");
+const Component = require("../Component"),
+      proxify   = require("../proxify2");
 
-class JS_Date extends Component {
+function make_emittable (obj) {
 
-    constructor (context) {
-	super(context, "Date");
-	this.date = new Date(this.context.epoch);
-	this.ee   = this.context.emitter;
-    }
+    //id, prop, args, type, retval) {
 
-    
-    skew (ms) {
-	this.context.epoch += ms;
-    }
+    return {
+        target: "Date",
+        id: obj.id,
+        hooked: false,
+        prop: obj.prop,
+        args: obj.args,
+        type: obj.type,
+        return: obj.retval
+    };
+};
 
-    
-    getDate() {
-
-	let dt = this.date.getDate();
-	
-	this.ee.emit("@Date::getDate", {
-	    fn: "getDate",
-	    v: dt
-	});
-
-	return dt;
-    }
-
-
-    getMonth() {
-
-	let dt = this.date.getMonth();
-    
-	this.ee.emit("@Date::getMonth", {
-	    fn: "getMonth",
-	    v: dt
-	});
-
-	return dt;
-    }
-
-
-    getYear() {
-
-	let dt = this.date.getYear() + 1900;
-
-	this.ee.emit("@Date::getYear", {
-	    fn: "getYear",
-	    v: dt
-	});
-
-	return dt;
-    }
-
-
-    getHours() {
-
-	let dt = this.date.getHours();
-
-	this.ee.emit("@Date::getHours", {
-	    fn: "getHours",
-	    v: dt
-	});
-
-	return dt;
-    }
-
-    getMinutes() {
-
-	let dt = this.date.getMinutes();
-
-	this.ee.emit("@Date::getMinutes", {
-	    fn: "getMinutes",
-	    v: dt
-	});
-
-	return dt;
-    }
-
-
-    getSeconds() {
-
-	let dt = this.date.getSeconds();
-
-	this.ee.emit("@Date::getSeconds", {
-	    fn: "getSeconds",
-	    v: dt
-	});
-
-	return dt;
-    }
-
-
-    getTime() {
-
-	let dt = this.date.getTime();
-
-	this.ee.emit("@Date::getTime", {
-	    fn: "getTime",
-	    v: dt
-	});
-
-	return dt;
-    }
-}
-
+const DATE = Date;
 
 module.exports = function create(context) {
 
-    let dt = class Date extends JS_Date {
-        constructor (d) {
-            super(context, d);
+    let component = new Component(context, "Date");
+
+    function JS_Date(...args) {
+
+        let component = new Component(context, "Date"),
+            instance  = null;
+
+        if (arguments.length === 0) {
+            instance = new Date(context.epoch);
         }
+        else {
+            instance = new DATE(...args);
+        }
+
+        context.emitter.emit(
+            "runtime.api.method",
+            make_emittable({
+                id: component.__id__,
+                prop: "new",
+                args: [...args],
+                type: "method",
+                retval: instance.getTime()
+            })
+        );
+
+        return new Proxy(instance, {
+            get (target, property) {
+                const objprop = target[property];
+
+                if (typeof objprop === "function") {
+                    return function (...args) {
+                        const retval = target[property](...args);
+                        context.emitter.emit(
+                            "runtime.api.method",
+                            make_emittable({
+                                id: component.__id__,
+                                prop: property,
+                                args: [...args],
+                                type: "method",
+                                retval: retval
+                            })
+                        );
+                        return retval;
+                    };
+                }
+                else {
+                    context.emitter.emit(
+                        "runtime.api.getter",
+                        make_emittable({
+                            id: component.__id__,
+                            prop: property,
+                            args: null,
+                            type: "getter",
+                            retval: objprop
+                        })
+                    );
+                    return objprop;
+                }
+            },
+
+            set (target, property, value) {
+                const retval = Reflect.set(target, property, value);
+                context.emitter.emit(
+                    "runtime.api.setter",
+                    make_emittable({
+                        id: component.__id__,
+                        prop: property,
+                        args: value,
+                        type: "setter",
+                        retval: retval
+                    })
+                );
+
+                return retval;
+            }
+        });
+    }
+
+    // #################
+    // # M E T H O D S #
+    // #################
+
+    JS_Date.parse = function (...args) {
+
+        let retval = DATE.parse(...args);
+        context.emitter.emit(
+            "runtime.api.method",
+            make_emittable({
+                id: component.__id__,
+                prop: "parse",
+                args: [...args],
+                type: "method",
+                retval: retval
+            })
+        );
+
+        return retval;
     };
 
-    return dt;
+    JS_Date.now = function (...args) {
+
+        let retval = new DATE(context.epoch).getTime();
+
+        context.emitter.emit(
+            "runtime.api.method",
+            make_emittable({
+                id: component.__id__,
+                prop: "now",
+                args: [...args],
+                type: "method",
+                retval: retval
+            })
+        );
+
+        return retval;
+    };
+
+    JS_Date.UTC = function (...args) {
+
+        let retval = DATE.UTC(context.epoch);
+
+        context.emitter.emit(
+            "runtime.api.method",
+            make_emittable({
+                id: component.__id__,
+                prop: "UTC",
+                args: [...args],
+                type: "method",
+                retval: retval
+            })
+        );
+
+        return retval;
+    };
+
+    function emitter_method_call_helper (prop, args, retval) {
+        console.log("CALLED");
+
+        context.emitter.emit(
+            "runtime.api.method",
+            make_emittable({
+                id: component.__id__,
+                prop: prop,
+                args: args,
+                type: method,
+                retval: retval
+            })
+        );
+    }
+
+    return JS_Date;
 };
