@@ -1,4 +1,4 @@
-const Component     = require("../Component"),
+const Component     = require("../Component");
 
 class JS_WshEnvironment extends Component {
 
