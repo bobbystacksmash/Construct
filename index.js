@@ -124,15 +124,8 @@ class Construct {
 
     run () {
         return this._runnable(function (err, results) {
-
             if (err) {
-                // When `err' is set it means that an unhandled
-                // exception was thrown during code execution.
-                console.log("TODO: fix the error handling for a crashed runnable!");
-                console.log(err.message);
-                console.log(err);
-                console.log("\n\n");
-                console.log("Consider updating the Construct config file to fix this issue.");
+                this.context.emitter.emit("runtime.exception", err);
                 return false;
             }
 

@@ -79,9 +79,7 @@ module.exports = function (context, jscript_class) {
                 return objprop;
             }
 
-            if (context.DEBUG) {
-                console.log("PROXYDBG>",`${target.__name__}.${property}`);
-            }
+            context.emitter.emit("debug.getprop", apiobj);
 
             if (typeof objprop === "function") {
                 return function (...args) {
@@ -128,6 +126,8 @@ module.exports = function (context, jscript_class) {
             if (/^__(?:name|id)__$/i.test(property)) {
                 return Reflect.set(target, property, value);
             }
+
+            context.emitter.emit("debug.getprop", apiobj);
 
             const retval = try_run_hook(context, apiobj, () => Reflect.set(target, property, value));
             context.emitter.emit(

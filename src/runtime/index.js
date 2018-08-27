@@ -11,13 +11,25 @@ const falafel        = require("falafel");
 const beautifier     = require("js-beautify");
 const acorn          = require("acorn");
 const uuid           = require("uuid");
+const stack_trace    = require("stack-trace");
 
+// Emitter is not defined as a `this.` property because it may be
+// passed to sandbox code which may not resolve `this' correctly.
 const emitter = new EventEmitter2({ wildcard: true }),
       make_id = function () { let x = 1; return () => x++;};
 
 function Runtime (options) {
 
-    this.events       = [];
+    this.events  = [];
+    this.onevent = function () {};
+
+    var self = this;
+    const evtpush = this.events.push;
+    this.events.push = function (event) {
+        emitter.emit("onevent", event);
+        evtpush.call(self.events, event);
+    };
+
     this.cover_report = null;
 
     options = options || {};
@@ -98,7 +110,9 @@ Runtime.prototype.load = function(path_to_file, options) {
         beautified_coverage: beautified_cov,
         capture_fncall:      capture_fncall,
         hoisted_globals:     hoisted_globals,
-        coverage_info:       cov
+        coverage_info:       cov,
+        live: null // <-- the 'live' key is the version of the code
+                   // running in the sandbox.
     };
 
     // We write the input file to the filesystem so the code is able
@@ -225,19 +239,23 @@ Runtime.prototype._create_runtime_sandbox = function (options) {
     sandbox[cov_oncomplete] = this._capture_coverage_report.bind(this);
     sandbox["capture_fnio"] = (...args) => this._capture_fnio(...args);
 
-    let source = this.source.hoisted_globals;
+    this.source.live = this.source.hoisted_globals;
 
     if (this.collect_coverage) {
         // For a coverage run we only want to run the the
         // beautified/covered version of the code.
-        source = this.source.beautified_coverage;
+        this.source.live = this.source.beautified_coverage;
     }
 
     vm.createContext(sandbox);
 
     return function () {
-        return vm.runInContext(source, sandbox, { "timeout": 2000 });
+        return vm.runInContext(self.source.live, sandbox, { "timeout": 2000 });
     }.bind(context);
+};
+
+Runtime.prototype.add_event_listener = function (fn) {
+    this.onevent = fn;
 };
 
 
@@ -306,10 +324,50 @@ Runtime.prototype._make_runnable = function () {
         events.push(event);
     });
 
-    ee.on("runtime.exception.api", function (event) {
-        event.meta = "runtime.exception.api";
-        console.log("ERR", event);
-        events.push(event);
+    ee.on("runtime.exception", function (err) {
+
+        const stack  = stack_trace.parse(err),
+              errevt = {
+                  //stack: stack,
+                  last_prop: null,
+                  sandbox_stacktrace: []
+              };
+
+        // When errors are thrown within the v8 sandbox the first
+        // object's .fileName property says that it's the evalmachine.
+        if (stack.length) {
+
+            // The only important parts of the exception are those
+            // thrown within the evalmachine, so let's grab them.
+            let sbox_trace = stack.reduce((errs, err) => {
+                if (err.fileName.startsWith("evalmachine.")) {
+                    errs.push(err);
+                }
+                return errs;
+            }, []);
+
+            if (sbox_trace.length) {
+
+                let srcloc = self.source.live.split(/\r?\n/g);
+                sbox_trace.forEach((err) => {
+                    err.offendingLine = srcloc[err.lineNumber - 1];
+                });
+            }
+
+            errevt.sandbox_stacktrace = sbox_trace;
+
+            // It's likely that one of the last attempted API methods
+            // is what caused the failure.  Let's fetch the last one
+            // as information to our user.
+            let last_requested_prop = events.filter(evt => evt.meta === "debug.getprop");
+
+            if (last_requested_prop.length) {
+                errevt.last_prop = last_requested_prop.pop();
+            }
+        }
+
+        errevt.meta = "runtime.exception";
+        events.push(errevt);
     });
 
     ee.on("runtime.exception.native", function (event) {
@@ -317,11 +375,27 @@ Runtime.prototype._make_runnable = function () {
         events.push(event);
     });
 
+    ee.on("debug.getprop", function (event) {
+        event.meta = "debug.getprop";
+        events.push(event);
+    });
+
+    ee.on("finished", function (event) {
+        event.meta = "finished";
+        events.push(event);
+    });
+
+    ee.on("onevent", function (event) {
+        self.onevent(event);
+    });
+
+
     let ready_to_run_env = this._create_runtime_sandbox();
 
     return function (done) {
         try {
             ready_to_run_env();
+            ee.emit("finished", { success: true });
             return done(null, { success: true });
         }
         catch (e) {
