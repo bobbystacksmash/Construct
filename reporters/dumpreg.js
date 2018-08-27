@@ -1,3 +1,6 @@
+
+let events = [];
+
 module.exports = {
 
     meta: {
@@ -6,23 +9,20 @@ module.exports = {
         description: "Extracts and dumps various registry indicators."
     },
 
-    report: (events) => {
+    report: (event) => {
 
-        const reg_events = events.reduce((collector, event) => {
+        if (event.meta === "finished") {
+            console.log(JSON.stringify(events));
+        }
 
-            if (event.meta && event.meta === "runtime.api.call") {
+        if (event.meta && event.meta === "runtime.api.call") {
 
-                if (/wshshell/i.test(event.target) && /regread/i.test(event.prop)) {
-                    collector.push(event);
-                }
-                else if (/wshshell/i.test(event.target) && /regwrite/i.test(event.prop)) {
-                    collector.push(event);
-                }
+            if (/wshshell/i.test(event.target) && /regread/i.test(event.prop)) {
+                events.push(event);
             }
-
-            return collector;
-        }, []);
-
-        console.log(JSON.stringify(reg_events));
+            else if (/wshshell/i.test(event.target) && /regwrite/i.test(event.prop)) {
+                event.push(event);
+            }
+        }
     }
 };

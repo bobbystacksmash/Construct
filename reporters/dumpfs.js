@@ -1,3 +1,5 @@
+let events = [];
+
 module.exports = {
 
     meta: {
@@ -6,20 +8,16 @@ module.exports = {
         description: "Extracts and dumps various filesystem indicators."
     },
 
-    report: (events) => {
+    report: (event) => {
 
-        const fs_events = events.reduce((collector, event) => {
+        if (event.meta === "finished") {
+            console.log(JSON.stringify(events));
+        }
+        else if (event.meta && event.meta === "runtime.api.call") {
 
-            if (event.meta && event.meta === "runtime.api.call") {
-
-                if (/^(?:filesystemobject|file|folder)/i.test(event.target)) {
-                    collector.push(event);
-                }
+            if (/^(?:filesystemobject|file|folder)/i.test(event.target)) {
+                events.push(event);
             }
-
-            return collector;
-        }, []);
-
-        console.log(JSON.stringify(fs_events));
+        }
     }
 };

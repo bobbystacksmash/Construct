@@ -111,7 +111,7 @@ class Construct {
         return this.reporters;
     }
 
-    apply_reporter (reporter, events) {
+    /*apply_reporter (reporter, events) {
 
         reporter = reporter.toLowerCase();
 
@@ -120,7 +120,7 @@ class Construct {
         }
 
         return false;
-    }
+    }*/
 
     run () {
         return this._runnable(function (err, results) {
@@ -148,6 +148,20 @@ class Construct {
         }
 
         return this.runtime.events.filter(filter_fn);
+    }
+
+    onevent (handler) {
+
+        if (typeof handler === "string") {
+
+            let reporter = this.get_reporters()[handler];
+            if (!reporter) {
+                throw new Error("ERR: Unknown reporter", handler);
+            }
+            handler = reporter.report;
+        }
+
+        this.runtime.add_event_listener(handler);
     }
 
     coverage () {

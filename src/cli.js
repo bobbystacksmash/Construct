@@ -113,7 +113,6 @@ construct.load_reporters("./reporters");
 // =================
 // R E P O R T E R S
 // =================
-let output_reporter = undefined;
 if (program.listReporters) {
 
     const reporters = construct.get_reporters();
@@ -130,6 +129,10 @@ if (program.listReporters) {
 
     console.log(table(info));
     process.exit();
+}
+
+if (program.reporter) {
+    construct.onevent(program.reporter);
 }
 
 if (file_to_analyse === null) {
@@ -153,23 +156,3 @@ if (program.coverage) {
     construct.coverage();
     process.exit();
 }
-
-if (program.outputReporter) {
-
-    let reporter = construct.get_reporters()[program.outputReporter.toLowerCase()];
-
-    if (!reporter) {
-        console.log(`Error: Unable to locate output reporter "${program.outputReporter}".`);
-        console.log(`       Run Construct with "--list-reporters" to see available reporters.`);
-        process.exit();
-    }
-
-    output_reporter = program.outputReporter.toLowerCase();
-}
-
-if (program.writeRunnable) {
-    process.exit();
-}
-
-const events = construct.events();
-construct.apply_reporter(output_reporter, events);

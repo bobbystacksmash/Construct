@@ -259,11 +259,10 @@ class HostContext {
 
             if (regpath.startsWith("!")) {
                 // A leading '!' means "create this folder.
-                regpath = regpath.replace(/^!/, "");
-                vfs.AddFolder(registry[regpath]);
+                vfs.AddFolder(registry[regpath.replace(/^!/, "")]);
             }
 
-            vreg.write(regpath, registry[regpath]);
+            vreg.write(regpath.replace(/^!/, ""), registry[regpath]);
         });
     }
 
