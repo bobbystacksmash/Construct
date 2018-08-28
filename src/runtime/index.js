@@ -328,7 +328,8 @@ Runtime.prototype._make_runnable = function () {
 
         const stack  = stack_trace.parse(err),
               errevt = {
-                  //stack: stack,
+                  stack: stack,
+                  message: err.message,
                   last_prop: null,
                   sandbox_stacktrace: []
               };
@@ -350,7 +351,7 @@ Runtime.prototype._make_runnable = function () {
 
                 let srcloc = self.source.live.split(/\r?\n/g);
                 sbox_trace.forEach((err) => {
-                    err.offendingLine = srcloc[err.lineNumber - 1];
+                    err.offendingLine = srcloc[err.lineNumber - 1].replace(/^\s*|\s*$/g, "");
                 });
             }
 
@@ -400,6 +401,7 @@ Runtime.prototype._make_runnable = function () {
         }
         catch (e) {
             if (e.message === "Script execution timed out.") {
+                ee.emit("finished", { success: true, "timeout_reached": true });
                 return done(null, { "success": true, "timeout_reached": true });
 	    }
             return done(e);

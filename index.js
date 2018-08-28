@@ -111,21 +111,11 @@ class Construct {
         return this.reporters;
     }
 
-    /*apply_reporter (reporter, events) {
-
-        reporter = reporter.toLowerCase();
-
-        if (this.reporters.hasOwnProperty(reporter)) {
-            return this.reporters[reporter].report(events);
-        }
-
-        return false;
-    }*/
-
     run () {
         return this._runnable(function (err, results) {
             if (err) {
                 this.context.emitter.emit("runtime.exception", err);
+                this.context.emitter.emit("finished", {});
                 return false;
             }
 
