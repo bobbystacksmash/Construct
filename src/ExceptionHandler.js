@@ -349,6 +349,16 @@ class ExceptionHandler extends Component {
         );
     }
 
+    throw_cannot_remove_environment_var (source, summary, details) {
+        this._throw_winapi_exception(
+            "Error",
+            "Unable to remove environment variable \"\".",
+            -2147024809,
+            "Unable to remove environment variable \"\".",
+            source, summary, details
+        );
+    }
+
     // ###########################################
     // # C O N S T R U C T   A P I   E R R O R S #
     // ###########################################

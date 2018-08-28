@@ -1,4 +1,5 @@
-const Component = require("../Component");
+const Component = require("../Component"),
+      proxify   = require("../proxify2");
 
 class JS_WshEnvironment extends Component {
 
@@ -18,24 +19,83 @@ class JS_WshEnvironment extends Component {
             );
         }
 
-        this._vars = this.context.config.environment.variables[env.toLowerCase()];
+        this._vars = Object.assign(
+            {},
+            this.context.config.environment.variables[env.toLowerCase()]
+        );
     }
 
     count () {
-        return Object.keys(this._vars).length;
+        if (this._vars) {
+            return Object.keys(this._vars).length;
+        }
+        else {
+            return 0;
+        }
     }
 
     item (name) {
 
+        if (name === undefined) return "";
+
+        if (typeof name !== "string") {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "WshEnvironment",
+                "Invalid argument to 'Item()'.",
+                "The 'Item()' method only accepts strings.  The value passed to it " +
+                    "which caused this exception was: " + typeof name + ", which is invalid."
+            );
+        }
+
+        name = name.toLowerCase();
+
+        if (this._vars.hasOwnProperty(name.toLowerCase())) {
+            return this._vars[name];
+        }
+
+        return "";
     }
 
-    length () {
-
+    get length () {
+        if (this._vars) {
+            return Object.keys(this._vars).length;
+        }
+        else {
+            return 0;
+        }
     }
 
-    remove () {
+    set length (_) {
+        this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            "WshEnvironment",
+            "Cannot assign a value to the .length property.",
+            "The .Length property does not support being assigned-to."
+        );
+    }
 
+    remove (name) {
+
+        if (name === "") {
+            this.context.exceptions.throw_cannot_remove_environment_var(
+                "WshEnvironment",
+                "Cannot remove env var: \"\".",
+                "The empty environment variable (\"\") cannot be removed."
+            );
+        }
+        else if (typeof name === "boolean") {
+            return;
+        }
+
+        name = name.toLowerCase();
+
+        if (this._vars.hasOwnProperty(name)) {
+            delete this._vars[name];
+        }
     }
 }
 
-module.exports = JS_WshEnvironment;
+
+module.exports = function create(context, type) {
+    let env = new JS_WshEnvironment(context, type);
+    return proxify(context, env);
+};
