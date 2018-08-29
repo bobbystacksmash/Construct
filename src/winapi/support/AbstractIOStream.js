@@ -86,8 +86,11 @@ class AbstractIOStream {
             case "stderr":
                 // todo
                 break;
-            }
 
+            case "generic":
+                this.stream.load_into_stream(filespec.contents);
+                break;
+            }
         }
 
         // When loading a file, the position marker is set back to

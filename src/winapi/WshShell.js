@@ -2,21 +2,20 @@ const proxify              = require("../proxify2"),
       Component            = require("../Component"),
       JS_WshEnvironment    = require("./WshEnvironment"),
       JS_WshShortcut       = require("./WshShortcut"),
-      JS_WshSpecialFolders = require("./WshSpecialFolders");
+      JS_WshSpecialFolders = require("./WshSpecialFolders"),
+      JS_WshScriptExec     = require("./WshScriptExec");
 
 class JS_WshShell extends Component {
 
     constructor (context) {
         super(context, "WshShell");
-        this.ee = this.context.emitter;
+        this.context = context;
     }
 
     //
     // PROPERTIES
     // ==========
     //
-
-
     // MSDN: https://msdn.microsoft.com/en-gb/library/0ea7b5xe(v=vs.84).aspx
     //
     // SYNOPSIS
@@ -60,14 +59,25 @@ class JS_WshShell extends Component {
     // process.
     //
     get currentdirectory () {
-        let cwd = this.context.ENVIRONMENT.CurrentDirectory;
-        return cwd;
+        return this.context.config.environment.path;
     }
 
     set currentdirectory (new_cwd) {
-        let old_cwd = this.context.ENVIRONMENT.CurrentDirectory;
-        this.context.ENVIRONMENT.CurrentDirectory = new_cwd;
+
+        if (typeof new_cwd !== "string" || this.context.vfs.FolderExists(new_cwd) === false) {
+            this.context.exceptions.throw_winapi_exception(
+                "WshShell",
+                `Unable to set the working directory to: ${new_cwd}.`,
+                `The folder ${new_cwd} does not exist.`
+            );
+        }
+
+        this.context.config.environment.path = new_cwd;
     }
+
+    // =======
+    // METHODS
+    // =======
 
     //
     // Environment
@@ -95,14 +105,9 @@ class JS_WshShell extends Component {
     //   WScript.Echo(WshSysEnv("NUMBER_OF_PROCESSORS"));
     //
     environment (type) {
-        this.ee.emit("@WshShell.Environment", { env_type: type, args: arguments });
         return new JS_WshEnvironment(this.context, type);
     }
 
-
-    // =======
-    // METHODS
-    // =======
     //
     //
     // AppActivate
@@ -138,7 +143,6 @@ class JS_WshShell extends Component {
     //   WshShell.AppActivate("Calculator");
     //
     appactivate(title) {
-        this.ee.emit("@WshShell.AppActivate", arguments);
         return true;
     }
 
@@ -211,8 +215,9 @@ class JS_WshShell extends Component {
     //     script.  The command line should appear exactly as it
     //     would if you type it at the command prompt.
     //
-    exec () {
-
+    exec (command) {
+        let exechook = this.context.get_exechook(command);
+        return new JS_WshScriptExec(this.context, exechook);
     }
 
     //

@@ -11,7 +11,6 @@ class XMLHttpRequestBase extends Component {
 
 	this.ee  = this.context.emitter;
 	this.tag = type;
-	this.event_id = `@${tag}`;
 
 	this.request  = {};
 	this.response = {};
@@ -45,26 +44,6 @@ class XMLHttpRequestBase extends Component {
 
     _response_body (type) {
 	return (this.response.body) ? this.response.body : null;
-    }
-
-
-    _make_curl_request () {
-
-	let data = `''`;
-	if (/^POST$/i.test(this.request.method)) {
-	    data = JSON.stringify(this.request.body);
-	}
-
-	let headers = this.request.headers.map((h) => `-H '${h}'`).join(" ");
-	let parts_of_cmd = [
-	    `curl`,
-	    `--request ${this.request.method}`,
-	    `--data ${data}`,
-	    headers,
-	    this.route.uri
-	];
-
-	let cmd_actual = parts_of_cmd.join(" ");
     }
 
 
