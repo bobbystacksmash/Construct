@@ -39,27 +39,76 @@ class JS_WshSpecialFolders extends Component {
         return this.special_folders.length;
     }
 
+    set length (_) {
+        this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            "WshSpecialFolders",
+            "Cannot assign a value to the .length property.",
+            "Cannot assign a value to the .length property."
+        );
+    }
+
     count () {
+
+        if (arguments.length > 0) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "WshSpecialFolders",
+                "The .Count() method accepts zero arguments.",
+                "The .Count() method accepts zero arguments."
+            );
+        }
+
         return this.special_folders.length;
     }
 
     item (id) {
 
+        if (arguments.length === 0) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "WshSpecialFolders",
+                "Exception thrown when no args are passed to .item method.",
+                "Exception thrown when no args are passed to .item method."
+            );
+        }
+
+        let num_spec_dirs = this.special_folders.length;
+
         // An `id' can be either an integer or a string.
         if (typeof id === "number") {
-            // TODO: what if the index is too large?
+
+
+
+            if (id < 0 || id >= num_spec_dirs) {
+                this.context.exceptions.throw_subscript_out_of_range(
+                    "WshSpecialFolders",
+                    `Item by index (${id}) is out of range.`,
+                    `The requested item cannot be indexed because the supplied ` +
+                        `index (${id}) is outside the range of indexes supported ` +
+                        `by this collection (min: 0, max: ${num_spec_dirs - 1}.`
+                );
+            }
+
             return this.special_folders[id].path;
         }
         else if (typeof id === "string") {
 
             id = id.toLowerCase();
             let specdir = this.special_folders.find(sdir => sdir.name.toLowerCase() === id);
-            if (specdir) {
-                return specdir.path;
-            }
+            return (specdir) ? specdir.path : "";
+        }
+        else if (id == false || id == null) {
+            return this.special_folders[0].path;
+        }
+        else if (id === true) {
+            this.context.exceptions.throw_subscript_out_of_range(
+                "WshSpecialFolders",
+                `Item by index 'true' evaluates to -1 (out of range for this collection).`,
+                `The argument to .item is the boolean TRUE, which JScript converts to -1, ` +
+                    `which is outside the range of indexes supported by this collection ` +
+                    `(min: 0, max: ${num_spec_dirs - 1}.`
+            );
         }
         else {
-            // throw?
+            return this.special_folders[0].path;
         }
     }
 }
