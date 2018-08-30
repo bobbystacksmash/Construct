@@ -63,33 +63,19 @@ program
     })
 
     .option(
-        "-f, --filter <tag>",
-        "Display events tagged with <tag>.",
-        parse_show_tags,
-        ["all"]
+        "-c, --coverage",
+        "Write a HTML coverage report to './html-report'."
     )
 
     .option(
-        "-c, --coverage [FILENAME]",
-        "Write a HTML coverage report to CWD.  FILENAME will be generated if omitted."
+        "-D, --debug",
+        "Prints debug information to STDOUT."
     )
 
     .option(
         "-d, --date <datestr>",
-        "Sets the sandbox clock for all dates within the virtualised environment.",
-        parse_date,
-        new Date().toString()
-    )
-
-    .option(
-        "-r, --reporter <REPORTER>",
-        "Uses the given REPORTER to produce output.",
-        "dumpevents"
-    )
-
-    .option(
-        "-d, --debug",
-        "Prints debug information to STDOUT."
+        "Sets the sandbox clock within the virtualised environment.",
+        parse_date
     )
 
     .option(
@@ -97,6 +83,11 @@ program
         "Lists all available output reporters."
     )
 
+    .option(
+        "-r, --reporter <REPORTER>",
+        "Uses the given REPORTER to produce output.",
+        "dumpevents"
+    )
     .parse(process.argv);
 
 
