@@ -1,11 +1,13 @@
-const Stream       = require("./Stream");
-const iconv = require("iconv-lite");
+const Stream = require("./Stream");
+const iconv  = require("iconv-lite");
 
 class TextStream extends Stream {
 
     constructor (context) {
 
         super(context);
+
+        this.__name__ = "TextStream";
 
         this.has_encoding_bytes = false;
 
@@ -324,6 +326,10 @@ class TextStream extends Stream {
         }
 
         dest_stream.put(stream_contents);
+    }
+
+    load_into_stream (stream_contents) {
+        this.buffer = Buffer.from(stream_contents);
     }
 
     load_from_file (path, decode_contents) {

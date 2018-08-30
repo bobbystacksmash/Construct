@@ -35,6 +35,13 @@ class HostContext {
             }
         };
 
+        this.default_exechook = {
+            cmd: "",
+            stdout: "",
+            stdin: "",
+            stderr: ""
+        };
+
 	this.make_uid = (function () { var i = 0; return () => i++; }());
 
 	// All components (ActiveXObject, WScript.Shell, ...) are
@@ -99,6 +106,52 @@ class HostContext {
         this._create_registry(opts.config.environment.registry);
 
         this._prepare_nethooks(opts.config.network);
+        this._prepare_exechooks(opts.config.exec);
+    }
+
+    _prepare_exechooks (exec_cfg) {
+
+        let exechooks = [];
+
+        Object.keys(exec_cfg).forEach(ekey => {
+
+            let ehook  = Object.assign(this.default_exechook, exec_cfg[ekey]),
+                stdout = ehook.stdout,
+                stdin  = ehook.stdin,
+                stderr = ehook.stderr;
+
+            // Match on command
+            var cmd = ehook.cmd;
+            if (cmd.startsWith("/") && cmd.endsWith("/")) {
+                try {
+                    cmd = cmd.replace(/^\//, "").replace(/\/$/, "");
+                    cmd = new RegExp(cmd, "g");
+                }
+                catch (e) {
+                    console.log(`Error parsing exec hook ${ekey} - cmd: '${ehook.cmd}'.`);
+                    console.log(e.message);
+                    process.exit();
+                }
+            }
+
+            ehook.matches = (exec_command) => {
+                try {
+                    if (cmd instanceof RegExp) {
+                        return cmd.test(exec_command);
+                    }
+                    else {
+                        return cmd.toLowerCase() === exec_command.toLowerCase();
+                    }
+                }
+                catch (_) {
+                    return false;
+                }
+            };
+
+            exechooks.push(ehook);
+        });
+
+        this.exechooks = exechooks;
     }
 
     _prepare_nethooks (netcfg) {
@@ -280,9 +333,17 @@ class HostContext {
 
     _create_registry (registry) {
 
-        const vreg = this.global_objects["VirtualRegistry"];
+        const vreg = this.global_objects["VirtualRegistry"],
+              vfs  = this.global_objects["VirtualFileSystem"];
+
         Object.keys(registry).forEach(regpath => {
-            vreg.write(regpath, registry[regpath]);
+
+            if (regpath.startsWith("!")) {
+                // A leading '!' means "create this folder.
+                vfs.AddFolder(registry[regpath.replace(/^!/, "")]);
+            }
+
+            vreg.write(regpath.replace(/^!/, ""), registry[regpath]);
         });
     }
 
@@ -302,6 +363,17 @@ class HostContext {
         }
 
         return nethook;
+    }
+
+    get_exechook (cmd) {
+
+        let exechook = this.exechooks.find(eh => eh.matches(cmd));
+
+        if (!exechook) {
+            exechook = this.default_exechook;
+        }
+
+        return exechook;
     }
 
 

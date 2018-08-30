@@ -1,28 +1,26 @@
+let events = [];
+
 module.exports = {
 
     meta: {
-        title: "Dump Network Indicators",
         name: "dumpnet",
         description: "Extracts and dumps various network indicators."
     },
 
-    report: (events) => {
+    report: (event) => {
 
-        const net_events = events.reduce((collector, event) => {
-            if (event.meta && event.meta === "runtime.api.call") {
-                if (/xmlhttp/i.test(event.target)) {
+        if (event.meta === "finished") {
+            console.log(JSON.stringify(events));
+        }
+        else if (event.meta && event.meta === "runtime.api.call") {
+            if (/xmlhttp/i.test(event.target)) {
 
-                    if (event.prop === "open") {
-                        event.args[1] = encodeURI(event.args[1]);
-                    }
-
-                    collector.push(event);
+                if (event.prop === "open") {
+                    event.args[1] = encodeURI(event.args[1]);
                 }
+
+                events.push(event);
             }
-
-            return collector;
-        }, []);
-
-        console.log(JSON.stringify(net_events));
+        }
     }
 };

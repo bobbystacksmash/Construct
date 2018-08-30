@@ -36,12 +36,23 @@ function make_emitter_message (target, property, args, type, retval, hooked) {
         hooked = true;
     }
 
+    if (Array.isArray(args) === false) {
+        args = [args];
+    }
+
+    let typed_args = args.map(arg => {
+        return {
+            type:  typeof arg,
+            value: arg
+        };
+    });
+
     return {
         target:  target.__name__.replace(".", ""),
         id:      target.__id__,
         hooked:  hooked,
         prop:    property,
-        args:    args,
+        args:    typed_args,
         type:    type,
         return:  (retval === undefined) ? null : retval
     };
@@ -68,9 +79,7 @@ module.exports = function (context, jscript_class) {
                 return objprop;
             }
 
-            if (context.DEBUG) {
-                console.log("PROXYDBG>",`${target.__name__}.${property}`);
-            }
+            context.emitter.emit("debug.getprop", apiobj);
 
             if (typeof objprop === "function") {
                 return function (...args) {
@@ -117,6 +126,8 @@ module.exports = function (context, jscript_class) {
             if (/^__(?:name|id)__$/i.test(property)) {
                 return Reflect.set(target, property, value);
             }
+
+            context.emitter.emit("debug.getprop", apiobj);
 
             const retval = try_run_hook(context, apiobj, () => Reflect.set(target, property, value));
             context.emitter.emit(

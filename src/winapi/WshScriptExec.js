@@ -18,29 +18,64 @@
  *   - Terminate https://msdn.microsoft.com/en-us/yk84ffsf(v=vs.84)
  */
 
-const proxify2   = require("../proxify2");
-const TextStream = require("./TextStream");
+const proxify           = require("../proxify2"),
+      Component         = require("../Component"),
+      SupportTextStream = require("./support/TextStream"),
+      TextStream        = require("./TextStream");
 
-module.exports = function WshScriptExec (opts) {
+class JS_WshScriptExec extends Component {
 
-    let ee = opts.emitter;
+    constructor (context, execobj) {
+        super(context, "WshScriptExec");
+        this.context = context;
 
-    this.__name__ = "WshScriptExec";
+        execobj = execobj || {};
+        const default_execobj = {
+            stdin: "",
+            stdout: "",
+            stderr: ""
+        };
 
-    let stdout = new TextStream({ emitter: ee, buffer: "stdout buf" });
-    let stdin  = new TextStream({ emitter: ee, buffer: "stdin  buf" });
-    let stderr = new TextStream({ emitter: ee, buffer: "stderr buf" });
+        execobj = Object.assign(default_execobj, execobj);
 
-    let WshScriptExec = {
-        ExitCode: 0,
-        ProcessID: 1337,
-        Status: 1, // Wsh Finished
-        StdErr: stderr,
-        StdIn: stdin,
-        StdOut: stdout,
+        /*this._stdout = new SupportTextStream(context);
+         this.stdout.load_into_stream(execobj.stdout);*/
 
-        Terminate: () => {}
-    };
+        this._stdin = new TextStream(
+            context,
+            { stream: "generic", contents: execobj.stdin }
+        );
 
-    return proxify2(WshScriptExec, "WshScriptExec", opts);
+        this._stdout = new TextStream(
+            context,
+            { stream: "generic", contents: execobj.stdout }
+        );
+
+        this._stderr = new TextStream(
+            context,
+            { stream: "generic", contents: execobj.stderr }
+        );
+    }
+
+    get status () {
+        // TODO
+    }
+
+    get stderr () {
+        return this._stderr;
+    }
+
+    get stdin () {
+        return this._stdin;
+    }
+
+    get stdout () {
+        return this._stdout;
+    }
+
+}
+
+module.exports = function (context, execobj) {
+    var wsh_script_exec = new JS_WshScriptExec(context, execobj);
+    return proxify(context, wsh_script_exec);
 };

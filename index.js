@@ -5,12 +5,13 @@
  *
  */
 
-const Runtime        = require("./src/runtime"),
-      istanbul       = require("istanbul"),
-      toml           = require("toml"),
-      fs             = require("fs"),
-      glob           = require("glob"),
-      path           = require("path");
+const Runtime  = require("./src/runtime"),
+      coverage = require("./src/coverage"),
+      istanbul = require("istanbul"),
+      toml     = require("toml"),
+      glob     = require("glob"),
+      path     = require("path"),
+      fs       = require("fs");
 
 class Construct {
 
@@ -73,12 +74,12 @@ class Construct {
         }
     }
 
-    load (path_to_file) {
+    load (path_to_file, options) {
 
         this.file = path_to_file;
 
         try {
-            this._runnable = this.runtime.load(path_to_file);
+            this._runnable = this.runtime.load(path_to_file, options);
         }
         catch (e) {
             throw e;
@@ -110,28 +111,11 @@ class Construct {
         return this.reporters;
     }
 
-    apply_reporter (reporter, events) {
-
-        reporter = reporter.toLowerCase();
-
-        if (this.reporters.hasOwnProperty(reporter)) {
-            return this.reporters[reporter].report(events);
-        }
-
-        return false;
-    }
-
     run () {
         return this._runnable(function (err, results) {
-
             if (err) {
-                // When `err' is set it means that an unhandled
-                // exception was thrown during code execution.
-                console.log("TODO: fix the error handling for a crashed runnable!");
-                console.log(err.message);
-                //console.log(err);
-                console.log("\n\n");
-                console.log("Consider updating the Construct config file to fix this issue.");
+                this.context.emitter.emit("runtime.exception", err);
+                this.context.emitter.emit("finished", {});
                 return false;
             }
 
@@ -149,20 +133,26 @@ class Construct {
         return this.runtime.events.filter(filter_fn);
     }
 
-    coverage (type) {
+    onevent (handler) {
 
-        type = type || "summary";
+        if (typeof handler === "string") {
 
-        const collector = new istanbul.Collector();
-        collector.add(this.runtime.coverage);
-
-        if (type === "summary") {
-            return istanbul.utils.summarizeFileCoverage(
-                collector.fileCoverageFor(collector.files()[0])
-            );
+            let reporter = this.get_reporters()[handler];
+            if (!reporter) {
+                throw new Error("ERR: Unknown reporter", handler);
+            }
+            handler = reporter.report;
         }
 
-        return this.runtime.coverage;
+        this.runtime.add_event_listener(handler);
+    }
+
+    coverage () {
+        coverage.generate_coverage_report(
+            this.runtime.coverage_report,
+            this.runtime.source.beautified,
+            this.runtime.file_path
+        );
     }
 }
 

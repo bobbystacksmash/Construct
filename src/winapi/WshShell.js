@@ -1,70 +1,21 @@
-const proxify           = require("../proxify2");
-const Component         = require("../Component");
-const JS_WshEnvironment = require("./WshEnvironment");
-const JS_WshShortcut    = require("./WshShortcut");
-//const JS_WshSpecialFolders = require("./WshSpecialFolders");
+const proxify              = require("../proxify2"),
+      Component            = require("../Component"),
+      JS_WshEnvironment    = require("./WshEnvironment"),
+      JS_WshShortcut       = require("./WshShortcut"),
+      JS_WshSpecialFolders = require("./WshSpecialFolders"),
+      JS_WshScriptExec     = require("./WshScriptExec");
 
 class JS_WshShell extends Component {
 
     constructor (context) {
         super(context, "WshShell");
-        this.ee = this.context.emitter;
+        this.context = context;
     }
 
     //
     // PROPERTIES
     // ==========
     //
-
-    // MSDN: https://msdn.microsoft.com/en-us/subscriptions/3cc5edzd(v=vs.84).aspx
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // Retrieves or changes the current active directory. The
-    // CurrentDirectory returns a string that contains the fully
-    // qualified path of the current working directory of the active
-    // process.
-    //
-    get currentdirectory () {
-        let cwd = this.context.ENVIRONMENT.CurrentDirectory;
-        return cwd;
-    }
-
-    set currentdirectory (new_cwd) {
-        let old_cwd = this.context.ENVIRONMENT.CurrentDirectory;
-        this.context.ENVIRONMENT.CurrentDirectory = new_cwd;
-    }
-
-    //
-    // Environment
-    // ~~~~~~~~~~~
-    //
-    // MSDN: https://msdn.microsoft.com/fr-fr/library/fd7hxfdd(v=vs.84).aspx
-    //
-    // SYNOPSIS
-    // ========
-    //
-    // Returns the WshEnvironment object (a collection of environment
-    // variables).
-    //
-    // ARGUMENTS
-    // =========
-    //
-    //   - `type' [optional]
-    //      Specifies the location of the environment variable.
-    //
-    // USAGE
-    // =====
-    //
-    //   var WshShell = WScript.CreateObject("WScript.Shell");
-    //   var WshSysEnv = WshShell.Environment("SYSTEM");
-    //   WScript.Echo(WshSysEnv("NUMBER_OF_PROCESSORS"));
-    //
-    environment (type) {
-        this.ee.emit("@WshShell.Environment", { env_type: type, args: arguments });
-        return new JS_WshEnvironment(this.context, type);
-    }
     // MSDN: https://msdn.microsoft.com/en-gb/library/0ea7b5xe(v=vs.84).aspx
     //
     // SYNOPSIS
@@ -93,33 +44,70 @@ class JS_WshShell extends Component {
     //   strDesktop = WshShell.SpecialFolders("Desktop");
     //   var oShellLink = WshShell.CreateShortcut(strDesktop + "\\Shortcut Script.lnk");
     //
-    specialfolders (dirname) {
+    get specialfolders () {
+        return new JS_WshSpecialFolders(this.context);
+    }
 
-        const special_folders = {
-            "AllUsersDesktop": "FIXME",
-            "AllUsersStartMenu": "FIXME",
-            "AllUsersPrograms": "FIXME",
-            "AllUsersStartup": "FIXME",
-            "Desktop": "FIXME",
-            "Favorites": "FIXME",
-            "Fonts": "FIXME",
-            "MyDocuments": "FIXME",
-            "NetHood": "FIXME",
-            "PrintHood": "FIXME",
-            "Programs": "FIXME",
-            "Recent": "FIXME",
-            "SendTo": "FIXME",
-            "StartMenu": "FIXME",
-            "Startup": "FIXME",
-            "templates": "C:\\Users\\Construct\\AppData\\Roaming\\Microsoft\\Windows\\Templates"
-        };
+    // MSDN: https://msdn.microsoft.com/en-us/subscriptions/3cc5edzd(v=vs.84).aspx
+    //
+    // SYNOPSIS
+    // ========
+    //
+    // Retrieves or changes the current active directory. The
+    // CurrentDirectory returns a string that contains the fully
+    // qualified path of the current working directory of the active
+    // process.
+    //
+    get currentdirectory () {
+        return this.context.config.environment.path;
+    }
 
-        return special_folders[dirname];
+    set currentdirectory (new_cwd) {
+
+        if (typeof new_cwd !== "string" || this.context.vfs.FolderExists(new_cwd) === false) {
+            this.context.exceptions.throw_winapi_exception(
+                "WshShell",
+                `Unable to set the working directory to: ${new_cwd}.`,
+                `The folder ${new_cwd} does not exist.`
+            );
+        }
+
+        this.context.config.environment.path = new_cwd;
     }
 
     // =======
     // METHODS
     // =======
+
+    //
+    // Environment
+    // ~~~~~~~~~~~
+    //
+    // MSDN: https://msdn.microsoft.com/fr-fr/library/fd7hxfdd(v=vs.84).aspx
+    //
+    // SYNOPSIS
+    // ========
+    //
+    // Returns the WshEnvironment object (a collection of environment
+    // variables).
+    //
+    // ARGUMENTS
+    // =========
+    //
+    //   - `type' [optional]
+    //      Specifies the location of the environment variable.
+    //
+    // USAGE
+    // =====
+    //
+    //   var WshShell = WScript.CreateObject("WScript.Shell");
+    //   var WshSysEnv = WshShell.Environment("SYSTEM");
+    //   WScript.Echo(WshSysEnv("NUMBER_OF_PROCESSORS"));
+    //
+    environment (type) {
+        return new JS_WshEnvironment(this.context, type);
+    }
+
     //
     //
     // AppActivate
@@ -155,7 +143,6 @@ class JS_WshShell extends Component {
     //   WshShell.AppActivate("Calculator");
     //
     appactivate(title) {
-        this.ee.emit("@WshShell.AppActivate", arguments);
         return true;
     }
 
@@ -228,11 +215,9 @@ class JS_WshShell extends Component {
     //     script.  The command line should appear exactly as it
     //     would if you type it at the command prompt.
     //
-    // RETURNS
-    // =======
-    //   I assume the exit status?
-    //
-    exec () {
+    exec (command) {
+        let exechook = this.context.get_exechook(command);
+        return new JS_WshScriptExec(this.context, exechook);
     }
 
     //

@@ -70,6 +70,11 @@ program
     )
 
     .option(
+        "-c, --coverage [FILENAME]",
+        "Write a HTML coverage report to CWD.  FILENAME will be generated if omitted."
+    )
+
+    .option(
         "-d, --date <datestr>",
         "Sets the sandbox clock for all dates within the virtualised environment.",
         parse_date,
@@ -77,7 +82,7 @@ program
     )
 
     .option(
-        "-r, --output-reporter <REPORTER>",
+        "-r, --reporter <REPORTER>",
         "Uses the given REPORTER to produce output.",
         "dumpevents"
     )
@@ -94,34 +99,20 @@ program
 
     .parse(process.argv);
 
-if (file_to_analyse === null) {
-    console.log("Usage: construct FILE [OPTION]...");
-    console.log("Try: 'construct --help' for more information.");
-    return;
-}
 
+if (program.debug) {
+    console.log("DEBUG!");
+    process.exit();
+}
 
 let construct = new Construct({
     config: "./construct.cfg"
 });
-
 construct.load_reporters("./reporters");
-construct.load(file_to_analyse);
-const res = construct.run();
-
-if (res === false) {
-    process.exit();
-}
-
-if (program.debug) {
-    process.exit();
-}
 
 // =================
 // R E P O R T E R S
 // =================
-let output_reporter = undefined;
-
 if (program.listReporters) {
 
     const reporters = construct.get_reporters();
@@ -133,29 +124,43 @@ if (program.listReporters) {
 
     const info = Object.keys(reporters).map(reporter => {
         reporter = reporters[reporter].meta;
-        return [reporter.name, reporter.title, reporter.description];
+        return [reporter.name, reporter.description];
     });
 
     console.log(table(info));
     process.exit();
 }
 
-if (program.outputReporter) {
+if (program.reporter) {
 
-    let reporter = construct.get_reporters()[program.outputReporter.toLowerCase()];
-
-    if (!reporter) {
-        console.log(`Error: Unable to locate output reporter "${program.outputReporter}".`);
-        console.log(`       Run Construct with "--list-reporters" to see available reporters.`);
+    try {
+        construct.onevent(program.reporter);
+    }
+    catch (e) {
+        console.log(`Error: Unable to find reporter '${program.reporter}'.`);
+        console.log(`Use the '--list-reporters' option to view available reporters.`);
         process.exit();
     }
-
-    output_reporter = program.outputReporter.toLowerCase();
 }
 
-if (program.writeRunnable) {
+if (file_to_analyse === null) {
+    console.log("Usage: construct FILE [OPTION]...");
+    console.log("Try: 'construct --help' for more information.");
+    return;
+}
+
+
+construct.load(file_to_analyse, { coverage: program.coverage });
+const res = construct.run();
+
+if (res === false) {
     process.exit();
 }
 
-const events = construct.events();
-construct.apply_reporter(output_reporter, events);
+// ===============
+// C O V E R A G E
+// ===============
+if (program.coverage) {
+    construct.coverage();
+    process.exit();
+}

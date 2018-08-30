@@ -9,14 +9,27 @@ const CodeRewriter   = require("../metaprogramming");
 const HookCollection = require("../hooks");
 const falafel        = require("falafel");
 const beautifier     = require("js-beautify");
-const acorn = require("acorn");
+const acorn          = require("acorn");
+const uuid           = require("uuid");
+const stack_trace    = require("stack-trace");
 
+// Emitter is not defined as a `this.` property because it may be
+// passed to sandbox code which may not resolve `this' correctly.
 const emitter = new EventEmitter2({ wildcard: true }),
       make_id = function () { let x = 1; return () => x++;};
 
 function Runtime (options) {
 
-    this.events       = [];
+    this.events  = [];
+    this.onevent = function () {};
+
+    var self = this;
+    const evtpush = this.events.push;
+    this.events.push = function (event) {
+        emitter.emit("onevent", event);
+        evtpush.call(self.events, event);
+    };
+
     this.cover_report = null;
 
     options = options || {};
@@ -39,6 +52,7 @@ function Runtime (options) {
 
     this.fnio = [];
     this.expanders = [];
+    this.collect_coverage = false;
 
     return this;
 };
@@ -46,16 +60,60 @@ function Runtime (options) {
 
 Runtime.prototype.load = function(path_to_file, options) {
 
-    options = options || {};
+    options = options || { coverage: false };
+
+    if (options.coverage) {
+        this.collect_coverage = true;
+    }
 
     this.file_path = path_to_file;
 
     try {
-        this.source = fs.readFileSync(path_to_file).toString();
+        var src = fs.readFileSync(path_to_file).toString();
     }
     catch (e) {
         throw e;
     }
+
+    let generate_identifier = () => {
+        return ["__construct", uuid().replace(/-/g, "_"), new Date().getTime()].join("_");
+    };
+
+    // Generate unique function names to inject into the source so we
+    // can pass data across the sandbox.
+    //
+    // [ COVERAGE ]
+    //
+    // We need two identifiers for this:
+    //
+    //   1. Holds coverage information.
+    //   2. Called on-completion of the script, passing #1 back across
+    //      the sandbox.
+    //
+    const cov = {
+        variable:   generate_identifier(),
+        oncomplete: generate_identifier(),
+        filepath:   path.resolve(path_to_file)
+    };
+
+    const beautified     = new CodeRewriter(src).using("beautify").source(),
+          beautified_cov = new CodeRewriter(beautified).using("coverage", cov).source();
+
+    // Create different versions of the source:
+    const capture_fncall  = new CodeRewriter(beautified).using("capture fncall").source(),
+          hoisted_globals = new CodeRewriter(beautified).using("hoist globals").source();
+
+    this.source = {
+        path: path.resolve(path_to_file),
+        original:            src,
+        beautified:          beautified,
+        beautified_coverage: beautified_cov,
+        capture_fncall:      capture_fncall,
+        hoisted_globals:     hoisted_globals,
+        coverage_info:       cov,
+        live: null // <-- the 'live' key is the version of the code
+                   // running in the sandbox.
+    };
 
     // We write the input file to the filesystem so the code is able
     // to read itself should it need to.  The code written is the
@@ -65,18 +123,10 @@ Runtime.prototype.load = function(path_to_file, options) {
     const filename = path.basename(path_to_file),
           script_path = `C:\\Users\\Construct\\${filename}`;
 
-    this.context.vfs.AddFile(script_path, this.source_code);
+    this.context.vfs.AddFile(script_path, this.source.original);
     this.context.set_env("ScriptFullName", script_path);
 
     return this._make_runnable();
-};
-
-// #########################
-// # Capture Coverage Info #
-// #########################
-Runtime.prototype._capture_coverage_info = function (coverage_obj) {
-    console.log(Object.keys(coverage_obj));
-    this.coverage = coverage_obj;
 };
 
 // ########################
@@ -164,63 +214,58 @@ Runtime.prototype._capture_function_constructor = function (...args) {
 };
 
 
-Runtime.prototype._create_runtime_sandbox = function (source) {
+Runtime.prototype._create_runtime_sandbox = function (options) {
+
+    options = options || {};
+
+    const default_opts = { coverage: false };
+    options = Object.assign(default_opts, options);
 
     let context = this.context,
         self = this;
 
-    // Instrument the code...
-    const rewrite_code = new CodeRewriter(source);
-    rewrite_code
-        .using("capture fncall", { fn_name: "___capture___" })
-        .using("hoist globals") // TODO <---
-        .using("coverage", { oncomplete: "___send_coverage" })
-        .using("beautify");
-
     // All of the constructable JScript types are set here.
     var sandbox = {
-        ___capture___ : this._capture_fnargs.bind(this),
+        // WINAPI
+        // ======
         Date          : context.get_global_object("Date"),
         Math          : context.get_global_object("Math"),
         WScript       : context.get_global_object("WScript"),
-        ActiveXObject : context.get_global_object("ActiveXObject"),
-        console: console
+        ActiveXObject : context.get_global_object("ActiveXObject")
     };
 
-    // Add the dynamic properties such as one-time names:
-    sandbox["capture_fnio"] = (...args) => this._capture_fnio(...args);
-    sandbox["___send_coverage"] = this._capture_coverage_report.bind(this);
+    const cov_oncomplete = this.source.coverage_info.oncomplete;
 
-    /*sandbox["Function"]              = function (...args) {
-        return  self._capture_function_constructor(...args);
-    };*/
+    sandbox[cov_oncomplete] = this._capture_coverage_report.bind(this);
+    sandbox["capture_fnio"] = (...args) => this._capture_fnio(...args);
+
+    this.source.live = this.source.hoisted_globals;
+
+    if (this.collect_coverage) {
+        // For a coverage run we only want to run the the
+        // beautified/covered version of the code.
+        this.source.live = this.source.beautified_coverage;
+    }
+
     vm.createContext(sandbox);
 
-    let src = rewrite_code.source();
     return function () {
-        return vm.runInContext(src, sandbox, { "timeout": 2000 });
+        return vm.runInContext(self.source.live, sandbox, { "timeout": 2000 });
     }.bind(context);
 };
 
+Runtime.prototype.add_event_listener = function (fn) {
+    this.onevent = fn;
+};
 
 
-Runtime.prototype._make_runnable = function (mode) {
-
-    mode = mode || "run";
+Runtime.prototype._make_runnable = function () {
 
     let events  = this.events,
         epoch   = this.context.epoch,
         ee      = this.context.emitter,
-        context = this.context;
-
-    // ############
-    // # Coverage #
-    // ############
-    var instrumenter = new istanbul.Instrumenter(),
-        cover_utils  = istanbul.utils,
-        collector    = new istanbul.Collector();
-
-    var self = this;
+        context = this.context,
+        self    = this;
 
     function tag_event (event) {
 
@@ -279,10 +324,51 @@ Runtime.prototype._make_runnable = function (mode) {
         events.push(event);
     });
 
-    ee.on("runtime.exception.api", function (event) {
-        event.meta = "runtime.exception.api";
-        console.log("ERR", event);
-        events.push(event);
+    ee.on("runtime.exception", function (err) {
+
+        const stack  = stack_trace.parse(err),
+              errevt = {
+                  stack: stack,
+                  message: err.message,
+                  last_prop: null,
+                  sandbox_stacktrace: []
+              };
+
+        // When errors are thrown within the v8 sandbox the first
+        // object's .fileName property says that it's the evalmachine.
+        if (stack.length) {
+
+            // The only important parts of the exception are those
+            // thrown within the evalmachine, so let's grab them.
+            let sbox_trace = stack.reduce((errs, err) => {
+                if (err.fileName.startsWith("evalmachine.")) {
+                    errs.push(err);
+                }
+                return errs;
+            }, []);
+
+            if (sbox_trace.length) {
+
+                let srcloc = self.source.live.split(/\r?\n/g);
+                sbox_trace.forEach((err) => {
+                    err.offendingLine = srcloc[err.lineNumber - 1].replace(/^\s*|\s*$/g, "");
+                });
+            }
+
+            errevt.sandbox_stacktrace = sbox_trace;
+
+            // It's likely that one of the last attempted API methods
+            // is what caused the failure.  Let's fetch the last one
+            // as information to our user.
+            let last_requested_prop = events.filter(evt => evt.meta === "debug.getprop");
+
+            if (last_requested_prop.length) {
+                errevt.last_prop = last_requested_prop.pop();
+            }
+        }
+
+        errevt.meta = "runtime.exception";
+        events.push(errevt);
     });
 
     ee.on("runtime.exception.native", function (event) {
@@ -290,24 +376,37 @@ Runtime.prototype._make_runnable = function (mode) {
         events.push(event);
     });
 
-    let ready_to_run_env = this._create_runtime_sandbox(this.source);
+    ee.on("debug.getprop", function (event) {
+        event.meta = "debug.getprop";
+        events.push(event);
+    });
+
+    ee.on("finished", function (event) {
+        event.meta = "finished";
+        events.push(event);
+    });
+
+    ee.on("onevent", function (event) {
+        self.onevent(event);
+    });
+
+
+    let ready_to_run_env = this._create_runtime_sandbox();
 
     return function (done) {
-
         try {
             ready_to_run_env();
+            ee.emit("finished", { success: true });
             return done(null, { success: true });
         }
         catch (e) {
             if (e.message === "Script execution timed out.") {
+                ee.emit("finished", { success: true, "timeout_reached": true });
                 return done(null, { "success": true, "timeout_reached": true });
 	    }
             return done(e);
         }
     };
-
-    return this._create_runtime_sandbox(this.source);
 };
-
 
 module.exports = Runtime;

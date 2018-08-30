@@ -1,14 +1,15 @@
 {
     "name": "construct",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "description": "",
     "main": "index.js",
     "scripts": {
-        "test": "node_modules/.bin/mocha --reporter dot -w ./test/runtime/virtreg_test.js",
+        "test": "node_modules/.bin/mocha --reporter dot -w ./test/winapi/WshSpecialFolders_test.js",
         "test_runtime": "node_modules/.bin/mocha --reporter dot -w ./test/runtime/**/*_test.js",
         "test_winapi": "node_modules/.bin/mocha --reporter dot -w ./test/winapi/**/*_test.js",
         "testall": "node_modules/.bin/mocha --reporter dot -w ./test/**/*_test.js",
         "comspec": "node tools/comspec/cmd",
+        "code": "node src/index.js",
         "debug": "node --inspect --inspect-brk src/index.js "
     },
     "bin": {

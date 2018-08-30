@@ -135,6 +135,18 @@ class ExceptionHandler extends Component {
         );
     }
 
+    throw_subscript_out_of_range (source, summary, details) {
+        this._throw(
+            "RangeError",
+            "Subscript out of range",
+            -2146828279,
+            "Subscript out of range",
+            source,
+            summary,
+            details
+        );
+    }
+
     throw_device_unavailable (source, summary, details) {
         this._throw_winapi_exception(
             "Error",
@@ -333,6 +345,16 @@ class ExceptionHandler extends Component {
             "Permission denied",
             -2146828218,
             "Permission denied",
+            source, summary, details
+        );
+    }
+
+    throw_cannot_remove_environment_var (source, summary, details) {
+        this._throw_winapi_exception(
+            "Error",
+            "Unable to remove environment variable \"\".",
+            -2147024809,
+            "Unable to remove environment variable \"\".",
             source, summary, details
         );
     }
