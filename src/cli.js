@@ -132,7 +132,15 @@ if (program.listReporters) {
 }
 
 if (program.reporter) {
-    construct.onevent(program.reporter);
+
+    try {
+        construct.onevent(program.reporter);
+    }
+    catch (e) {
+        console.log(`Error: Unable to find reporter '${program.reporter}'.`);
+        console.log(`Use the '--list-reporters' option to view available reporters.`);
+        process.exit();
+    }
 }
 
 if (file_to_analyse === null) {
