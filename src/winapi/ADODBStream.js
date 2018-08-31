@@ -180,6 +180,10 @@ class JS_ADODBStream extends Component {
     }
     set type(stream_type) {
 
+        if (typeof stream_type === "string") {
+            stream_type = parseInt(stream_type, 10);
+        }
+
         if (this.stream.stream_is_open && this.stream.position !== 0) {
             this.context.exceptions.throw_operation_not_permitted_in_context(
                 "ADODB.Stream",

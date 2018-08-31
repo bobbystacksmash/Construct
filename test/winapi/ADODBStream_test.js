@@ -2348,6 +2348,25 @@ describe("ADODBStream", () => {
             done();
         });
 
+        it("should allow stream-types (1 and 2) to be set as strings", () => {
+
+            let ctx = {};
+            Object.assign(ctx, context, {
+                exceptions: {
+                    throw_args_wrong_type_or_out_of_range_or_conflicted: () => {
+                        throw new Error("invalid type");
+                    }
+                }
+            });
+
+            assert.doesNotThrow(() => new ADODBStream(ctx).type = "1");
+            assert.doesNotThrow(() => new ADODBStream(ctx).type = "2");
+
+            assert.throws(() => new ADODBStream(ctx).type = "0",   "invalid type");
+            assert.throws(() => new ADODBStream(ctx).type = "3",   "invalid type");
+            assert.throws(() => new ADODBStream(ctx).type = "100", "invalid type");
+        });
+
         it("should throw if trying to change types without position at 0", (done) => {
 
             function assert_correct_throw_msg () {
