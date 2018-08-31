@@ -1,4 +1,0 @@
-[network.response.example]
-url    = "/http://bad.site/path/to/file.js/"
-status = 200
-body   = "BODYBODYBODYBODY"
