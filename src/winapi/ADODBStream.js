@@ -51,11 +51,9 @@ class JS_ADODBStream extends Component {
     }
 
     get mode () {
-        this.ee.emit("@ADODBStream.Mode [GET]");
         return this.stream.mode;
     }
     set mode (mode) {
-        this.ee.emit("@ADODBStream.Mode [SET]", arguments);
         if (this.stream.is_open) {
             this.context.exceptions.throw_operation_not_allowed_when_object_is_open(
                 "ADODB.Stream",
@@ -79,7 +77,6 @@ class JS_ADODBStream extends Component {
     }
 
     get charset () {
-        this.ee.emit("@ADODBStream.Charset [GET]");
 
         if (this._is_binary_stream()) {
             this.context.exceptions.throw_operation_not_permitted_in_context(
@@ -95,7 +92,6 @@ class JS_ADODBStream extends Component {
         return this.stream.charset;
     }
     set charset (new_charset) {
-        this.ee.emit("@ADODBStream.Charset [SET]", new_charset);
 
         if (this._is_binary_stream()) {
             this.context.exceptions.throw_operation_not_permitted_in_context(
@@ -135,11 +131,9 @@ class JS_ADODBStream extends Component {
     }
 
     get lineseparator () {
-        this.ee.emit("@ADODBStream.LineSeparator [GET]", this.stream.separator);
         return this.stream.separator;
     }
     set lineseparator (line_sep_opt) {
-        this.ee.emit("@ADODBStream.LineSeparator [SET]", arguments);
 
         if (this._is_binary_stream()) {
 
@@ -169,11 +163,9 @@ class JS_ADODBStream extends Component {
     }
 
     get eos () {
-        this.ee.emit("@ADODBStream.EOS [GET]", this.stream.EOS);
         return this.stream.EOS;
     }
     set eos (_) {
-        this.ee.emit("@ADODBStream.EOS [SET]", arguments);
         this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
             "ADODB.Stream",
             "Cannot set EOS using a property.",
@@ -184,11 +176,9 @@ class JS_ADODBStream extends Component {
     }
 
     get type () {
-        this.ee.emit("@ADODBStream.Type [GET]", this.stream.type);
         return this.stream.type;
     }
     set type(stream_type) {
-        this.ee.emit("@ADODBStream.Type [SET]", arguments);
 
         if (this.stream.stream_is_open && this.stream.position !== 0) {
             this.context.exceptions.throw_operation_not_permitted_in_context(
@@ -241,11 +231,9 @@ class JS_ADODBStream extends Component {
     }
 
     get state () {
-        this.ee.emit("@ADODBStream.State [GET]", this.stream.state);
         return this.stream.state;
     }
     set state (_) {
-        this.ee.emit("@ADODBStream.State [SET]", arguments);
         this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
             "ADODB.Stream",
             "State is read only.",
@@ -255,12 +243,9 @@ class JS_ADODBStream extends Component {
     }
 
     get size () {
-        this.ee.emit("@ADODBStream.Size [GET]", this.stream.size);
         return this.stream.size;
     }
     set size (_) {
-
-        this.ee.emit("@ADODBStream.Size [SET]", arguments);
 
         this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
             "ADODB.Stream",
@@ -271,8 +256,6 @@ class JS_ADODBStream extends Component {
     }
 
     get position () {
-
-        this.ee.emit("@ADODBStream.Position [GET]", arguments);
 
         try {
             return this.stream.position;
@@ -293,8 +276,6 @@ class JS_ADODBStream extends Component {
         }
     }
     set position (p) {
-
-        this.ee.emit("@ADODBStream.Position [SET]", arguments);
 
         try {
             this.stream.position = p;
@@ -350,8 +331,6 @@ class JS_ADODBStream extends Component {
 
     close () {
 
-        this.ee.emit("@ADODBStream::Close", arguments);
-
         try {
             this.stream.close();
         }
@@ -369,8 +348,6 @@ class JS_ADODBStream extends Component {
     }
 
     read (num_bytes) {
-
-        this.ee.emit("@ADODBStream::Read", arguments);
 
         // Windows checks things in the following order:
         //
@@ -432,8 +409,6 @@ class JS_ADODBStream extends Component {
 
     readtext (n_chars) {
 
-        this.ee.emit("@ADODBStream::ReadText", arguments);
-
         // ReadText appears to function in a slightly different way to
         // #Read.  It's checking order is:
         //
@@ -483,8 +458,6 @@ class JS_ADODBStream extends Component {
     }
 
     writetext (text, option) {
-
-        this.ee.emit("@ADODBStream::WriteText", arguments);
 
         if (this._is_binary_stream()) {
 
@@ -542,8 +515,6 @@ class JS_ADODBStream extends Component {
 
     write (binary_data) {
 
-        this.ee.emit("@ADODBStream::Write", arguments);
-
         if (this._is_text_stream()) {
             this.context.exceptions.throw_args_wrong_type_or_out_of_range_or_conflicted(
                 "ADODB.Stream",
@@ -587,8 +558,6 @@ class JS_ADODBStream extends Component {
 
     flush () {
 
-        this.ee.emit("@ADODBStream::Flush", arguments);
-
         // Windows handles #Flush in the following sequence:
         //
         //  1. checks whether the number of args > 0 -> throws if TRUE
@@ -613,8 +582,6 @@ class JS_ADODBStream extends Component {
     }
 
     copyto (dst_stream, num_chars) {
-
-        this.ee.emit("@ADODBStream::CopyTo", arguments);
 
         // When the `dst_stream' is closed, Windows (7) raises:
         //
@@ -651,8 +618,6 @@ class JS_ADODBStream extends Component {
 
     skipline () {
 
-        this.ee.emit("@ADODBStream::SkipLine", arguments);
-
         if (this._is_binary_stream()) {
             this.context.exceptions.throw_operation_not_permitted_in_context(
                 "ADODB.Stream",
@@ -673,8 +638,6 @@ class JS_ADODBStream extends Component {
     }
 
     seteos () {
-
-        this.ee.emit("@ADODBStream::SetEOS", arguments);
 
         // Order of checking:
         //
@@ -748,8 +711,6 @@ class JS_ADODBStream extends Component {
 
     loadfromfile (file) {
 
-        this.ee.emit("@ADODBStream::LoadFromFile", arguments);
-
         try {
             this.stream.load_from_file(file);
         }
@@ -779,8 +740,6 @@ class JS_ADODBStream extends Component {
     }
 
     cancel () {
-
-        this.ee.emit("@ADODBStream::Cancel", arguments);
 
         try {
             this.stream.cancel();
