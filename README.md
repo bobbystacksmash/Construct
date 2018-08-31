@@ -12,8 +12,10 @@ This project was designed to simplify the analysis of highly obfuscated and
 deliberately hard-to-follow malicious JScript code.  Favouring configuration
 over code, Construct attempts to help both technical and non-technical analysts
 quickly and confidently gather Indicators Of Compromise (IOCs) from malicious
-JScript programs.  Construct is currently in **alpha**.  Please help improve
-the project by reporting any issues you find, or submitting patches.
+JScript programs.
+
+_Construct is currently in **alpha**.  Please help improve
+the project by reporting any issues you find, or submitting patches._
 
 ### How it works
 
