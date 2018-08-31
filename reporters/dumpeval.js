@@ -1,3 +1,5 @@
+let events = [];
+
 module.exports = {
 
     meta: {
@@ -6,17 +8,14 @@ module.exports = {
         description: "Dumps code which was dynamically evaluated at runtime."
     },
 
-    report: (events) => {
+    report: (event) => {
 
-        const eval_events = events.reduce((collector, event) => {
-
-            if (event.meta && event.meta.startsWith("runtime.capture")) {
-                collector.push(event);
-            }
-
-            return collector;
-        }, []);
-
-        console.log(JSON.stringify(eval_events));
+        if (event.meta === "finished") {
+            console.log(JSON.stringify(events));
+            return;
+        }
+        else if (event.meta && event.meta.startsWith("runtime.capture")) {
+            events.push(event);
+        }
     }
 };
