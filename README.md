@@ -24,7 +24,6 @@ _output reporters_, including:
  * `dumpfs`      - dumps all filesystem activity,
  * `dumpreg`     - dumps all registry reads/writes,
  * `dumpexec`    - dumps all shell execution commands,
- * `dumpfnio`    - dumps all function inputs and outputs,
  * `dumpevents`  - dumps all events gathered during execution,
  * `dumpuris`    - dumps all URIs passed to `XMLHttpRequest` instances,
  * `deobfuscate` - displays the JScript program with all obfuscation removed.
@@ -34,7 +33,7 @@ Construct also tracks code-coverage information and is able to produce an
 interactive HTML report showing exactly which statements within the JScript
 program were executed.
 
-Finally, Construct boasts a visualised filesystem, registry, and network
+Finally, Construct boasts a virtualised filesystem, registry, and network
 stack, meaning each time Construct runs it's as if the analysed code is running
 for the first time on a clean Windows system.  Analysts can set the emulated
 environment's date and time, as well as being assured each call to
