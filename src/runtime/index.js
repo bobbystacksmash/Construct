@@ -341,7 +341,8 @@ Runtime.prototype._make_runnable = function () {
             // The only important parts of the exception are those
             // thrown within the evalmachine, so let's grab them.
             let sbox_trace = stack.reduce((errs, err) => {
-                if (err.fileName.startsWith("evalmachine.")) {
+
+                if (err && err.hasOwnProperty("fileName") && /^evalmachine\./i.test(err.fileName)) {
                     errs.push(err);
                 }
                 return errs;
