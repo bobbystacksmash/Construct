@@ -1,5 +1,7 @@
 # Construct
 
+![](https://img.shields.io/badge/version-alpha-%23ff69b4.svg)
+
 ## About
 
 Construct is a cross-platform, Windows Script Host (WSH) emulator, written from
