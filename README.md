@@ -53,7 +53,7 @@ configuration file it is possible to:
    Windows CMD shell or similar (useful for mocking `wmic` or `powershell`
    one-liners).
 
- * ... any much more.
+ * ... and much more.
 
 ## Installing
 
