@@ -65,6 +65,10 @@ module.exports = function (context, jscript_class) {
     const proxyobj = {
         get (target, orig_property) {
 
+            if (typeof orig_property === "symbol") {
+                return target[orig_property];
+            }
+
             const property = orig_property.toLowerCase(),
                   objprop  = target[property],
                   apiobj   = {
@@ -127,6 +131,7 @@ module.exports = function (context, jscript_class) {
                 return Reflect.set(target, property, value);
             }
 
+            //context.emitter.emit("debug.getprop", Object.assign({}, apiobj, { args: [value] }));
             context.emitter.emit("debug.getprop", apiobj);
 
             const retval = try_run_hook(context, apiobj, () => Reflect.set(target, property, value));

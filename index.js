@@ -82,7 +82,10 @@ class Construct {
             this._runnable = this.runtime.load(path_to_file, options);
         }
         catch (e) {
-            throw e;
+            console.log(`Error parsing file '${path_to_file}':`);
+            console.log(`Check that the file contains valid JScript code (only).`);
+            console.log(e.message);
+            process.exit(1);
         }
     }
 
