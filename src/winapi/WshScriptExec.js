@@ -20,7 +20,6 @@
 
 const proxify           = require("../proxify2"),
       Component         = require("../Component"),
-      SupportTextStream = require("./support/TextStream"),
       TextStream        = require("./TextStream");
 
 class JS_WshScriptExec extends Component {
@@ -31,34 +30,53 @@ class JS_WshScriptExec extends Component {
 
         execobj = execobj || {};
         const default_execobj = {
-            stdin: "",
-            stdout: "",
-            stderr: ""
+            stdin: "<STDIN>",
+            stdout: "<STDOUT>",
+            stderr: "<STDERR>"
         };
 
         execobj = Object.assign(default_execobj, execobj);
 
-        /*this._stdout = new SupportTextStream(context);
-         this.stdout.load_into_stream(execobj.stdout);*/
+        this._status = {
+            running  : 0,
+            finished : 1
+        };
+
+        const allow_reads   = true,
+              forbid_writes = 0;
 
         this._stdin = new TextStream(
             context,
-            { stream: "generic", contents: execobj.stdin }
+            { stream: "generic", contents: execobj.stdin },
+            true,
+            forbid_writes
         );
 
         this._stdout = new TextStream(
             context,
-            { stream: "generic", contents: execobj.stdout }
+            { stream: "generic", contents: execobj.stdout },
+            allow_reads,
+            forbid_writes
         );
 
         this._stderr = new TextStream(
             context,
-            { stream: "generic", contents: execobj.stderr }
+            { stream: "generic", contents: execobj.stderr },
+            allow_reads,
+            forbid_writes
         );
     }
 
     get status () {
-        // TODO
+        return this._status.finished;
+    }
+
+    set status (_) {
+        this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            "WshScriptExec",
+            "Cannot assign to .status property.",
+            "Cannot assign to .status property."
+        );
     }
 
     get stderr () {
@@ -73,6 +91,18 @@ class JS_WshScriptExec extends Component {
         return this._stdout;
     }
 
+    terminate () {
+
+        if (arguments.length !== 0) {
+            this.context.exceptions.throw_object_not_a_collection(
+                "WshScriptExec",
+                "The .terminate() method must be called with zero parameters.",
+                "The .terminate() method must be called with zero parameters."
+            );
+        }
+
+        return undefined;
+    }
 }
 
 module.exports = function (context, execobj) {

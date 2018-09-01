@@ -184,6 +184,16 @@ class ExceptionHandler extends Component {
     }
 
 
+    throw_object_not_a_collection (source, summary, details) {
+        this._throw_winapi_exception(
+            "TypeError",
+            "Object not a collection",
+            -2146827837,
+            "Object not a collection",
+            source, summary, details
+        );
+    }
+
     throw_operation_not_permitted_in_context (source, summary, details) {
         this._throw_winapi_exception(
             "Error",
