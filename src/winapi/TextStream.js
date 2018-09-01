@@ -341,12 +341,6 @@ class JS_TextStream extends Component {
 
         try {
             this.stream.Write(msg);
-
-            //if (this.persist) {
-            //    console.log(this.stream);
-            //    this.stream.save_to_file(this.backing_stream, 2);
-            //}
-
         }
         catch (e) {
 
