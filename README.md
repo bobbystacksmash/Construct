@@ -15,7 +15,8 @@ quickly and confidently gather Indicators Of Compromise (IOCs) from malicious
 JScript programs.
 
 _Construct is currently in **alpha**.  Please help improve
-the project by reporting any issues you find, or submitting patches._
+the project by [reporting issues](https://github.com/bobbystacksmash/Construct/issues).
+Patches are most welcome._
 
 ### How it works
 
@@ -36,6 +37,8 @@ _output reporters_, including:
 Construct also tracks code-coverage information and is able to produce an
 interactive HTML report showing exactly which statements within the JScript
 program were executed.
+
+![Coverage Reports](https://raw.githubusercontent.com/wiki/bobbystacksmash/Construct/images/general/coverage-report.png)
 
 Finally, Construct boasts a virtualised filesystem, registry, and network
 stack, meaning each time Construct runs it's as if the analysed code is running
