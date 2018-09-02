@@ -4,11 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "test": "node_modules/.bin/mocha --reporter dot -w ./test/winapi/WshShell_test.js",
-        "test_runtime": "node_modules/.bin/mocha --reporter dot -w ./test/runtime/**/*_test.js",
-        "test_winapi": "node_modules/.bin/mocha --reporter dot -w ./test/winapi/**/*_test.js",
-        "testall": "node_modules/.bin/mocha --reporter dot -w ./test/**/*_test.js",
-        "comspec": "node tools/comspec/cmd",
+        "test": "node_modules/.bin/mocha --reporter dot -w ./test/**/*_test.js",
         "code": "node src/index.js",
         "debug": "node --inspect --inspect-brk src/index.js "
     },
