@@ -1,5 +1,6 @@
 # Construct
 
+[![Build Status](https://travis-ci.org/bobbystacksmash/Construct.svg?branch=master)](https://travis-ci.org/bobbystacksmash/Construct)
 ![](https://img.shields.io/badge/version-alpha-%23ff69b4.svg)
 
 ## About
