@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "test": "node_modules/.bin/mocha --reporter dot -w ./test/**/*_test.js",
+        "test": "node_modules/.bin/mocha --reporter spec -w ./test/**/*_test.js",
         "code": "node src/index.js",
         "debug": "node --inspect --inspect-brk src/index.js "
     },
