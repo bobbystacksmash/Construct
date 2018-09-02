@@ -15,7 +15,8 @@ quickly and confidently gather Indicators Of Compromise (IOCs) from malicious
 JScript programs.
 
 _Construct is currently in **alpha**.  Please help improve
-the project by reporting any issues you find, or submitting patches._
+the project by [reporting issues](https://github.com/bobbystacksmash/Construct/issues).
+Patches are most welcome._
 
 ### How it works
 
