@@ -37,6 +37,8 @@ Construct also tracks code-coverage information and is able to produce an
 interactive HTML report showing exactly which statements within the JScript
 program were executed.
 
+![Coverage Reports](https://raw.githubusercontent.com/wiki/bobbystacksmash/Construct/images/general/coverage-report.png)
+
 Finally, Construct boasts a virtualised filesystem, registry, and network
 stack, meaning each time Construct runs it's as if the analysed code is running
 for the first time on a clean Windows system.  Analysts can set the emulated
