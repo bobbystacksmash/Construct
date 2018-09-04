@@ -245,11 +245,33 @@ class JS_WshShell extends Component {
     //
     expandenvironmentstrings (str) {
 
-        this.ee.emit("@WshShell.ExpandEnvironmentStrings", arguments);
+        const env_vars = Object.assign(
+            {},
+            this.context.config.environment.variables.system,
+            this.context.config.environment.variables.user
+        );
 
-        // Environment variables are enclosed between '%' characters.
-        // Fetch a list of all of these params from our input `str':
-        /// TODO...
+        return (function expand (str) {
+
+            const env_var_re = /%[^%]+%/g;
+            let match = env_var_re.exec(str);
+
+            while (match !== null) {
+
+                let orig_val   = match[0],
+                    identifier = match[0].toLowerCase().replace(/%/g, "");
+
+                let matching_evar = Object.keys(env_vars).find(ev => ev.toLowerCase() === identifier);
+                if (matching_evar) {
+                    let value = env_vars[matching_evar];
+                    str = str.replace(new RegExp(orig_val, "g"), value);
+                    str = expand(str);
+                }
+
+                match = env_var_re.exec(str);
+            }
+            return str;
+        }(str));
     }
 
     logevent(type, message, target) {
