@@ -1,7 +1,6 @@
 const assert            = require("chai").assert;
 const File              = require("../../src/winapi/FileObject.js");
 const VirtualFileSystem = require("../../src/runtime/virtfs");
-
 const make_ctx          = require("../testlib");
 
 describe("FileObject", () => {
@@ -751,7 +750,7 @@ describe("FileObject", () => {
             ctx.vfs.AddFile("C:\\foo.txt", "testing");
 
             const file = new File(ctx, "C:\\foo.txt"),
-                  ts   = new file.OpenAsTextStream();
+                  ts   = file.OpenAsTextStream();
 
             assert.throws(() => ts.Write("hello"), "bad file mode");
         });
