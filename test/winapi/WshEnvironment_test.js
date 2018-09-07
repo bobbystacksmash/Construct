@@ -50,6 +50,12 @@ describe("WshEnvironment", () => {
             assert.throws(() => new WshEnvironment(ctx, "xxx"),  "Unknown env");
             assert.throws(() => new WshEnvironment(ctx, "proc"), "Unknown env");
         });
+
+        it("should allow case-insensitive access to properties", () => {
+            const wshenv = new WshEnvironment(ctx, "system");
+            assert.equal(wshenv.COUNT(), 3);
+            assert.equal(wshenv.CoUNt(), 3);
+        });
     });
 
     describe("#Count", () => {
@@ -110,7 +116,7 @@ describe("WshEnvironment", () => {
             assert.equal(
                 new WshEnvironment(ctx, "system").count(),
                 new WshEnvironment(ctx, "system").length
-            );
+             );
         });
 
         it("should throw an 'invalid property assignment' if .length is assigned to", () => {
