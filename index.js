@@ -49,8 +49,8 @@ class Construct {
 
         try {
             var cfg    = fs.readFileSync(cfg_path).toString(),
-                whoami = parsed.general.whoami,
-                parsed = toml.parse(cfg);
+                parsed = toml.parse(cfg),
+                whoami = parsed.general.whoami;
 
             cfg = cfg.replace(/\$WHOAMI/g, whoami);
             parsed = toml.parse(cfg);
