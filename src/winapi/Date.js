@@ -1,4 +1,3 @@
-
 const Component = require("../Component"),
       proxify   = require("../proxify2");
 
@@ -165,7 +164,7 @@ module.exports = function create(context) {
                 id: component.__id__,
                 prop: prop,
                 args: args,
-                type: method,
+                type: "method",
                 retval: retval
             })
         );
