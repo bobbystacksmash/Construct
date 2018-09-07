@@ -26,6 +26,7 @@ class JS_WshEnvironment extends Component {
     }
 
     count () {
+
         if (this._vars) {
             return Object.keys(this._vars).length;
         }
@@ -96,6 +97,33 @@ class JS_WshEnvironment extends Component {
 
 
 module.exports = function create(context, type) {
-    let env = new JS_WshEnvironment(context, type);
-    return proxify(context, env);
+
+    const default_env = new JS_WshEnvironment(context, (type) ? type : "SYSTEM");
+
+    var wrapper = (function(props) {
+
+        function WshEnvWrapper (type) {
+            return proxify(context, new JS_WshEnvironment(context, type));
+        };
+
+        for (var prop in props) {
+            WshEnvWrapper[prop] = props[prop];
+        }
+
+        Object.defineProperty(WshEnvWrapper, "length", {
+            get: function ()  { return default_env.length; },
+            set: function (x) { return default_env.length = x; }
+        });
+
+        return WshEnvWrapper;
+    }({
+        count:  (...args) => default_env.count(...args),
+        remove: (...args) => default_env.remove(...args),
+        item:   (...args) => default_env.item(...args),
+
+        __name__: "WshEnvironment",
+        __id__:   default_env.__id__
+    }));
+
+    return proxify(context, wrapper);
 };

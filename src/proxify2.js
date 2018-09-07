@@ -1,21 +1,3 @@
-function try_run_hook (context, apiobj, default_action) {
-
-    let hook   = context.get_hook(apiobj),
-        result = undefined;
-
-    if (hook) {
-        apiobj.hooked = true;
-        var value = hook(context, apiobj, default_action);
-        return value;
-    }
-    else if (typeof default_action === "function") {
-        return default_action();
-    }
-    else {
-        return default_action;
-    }
-}
-
 function make_emitter_message (target, property, args, type, retval, hooked) {
 
     if (retval && retval.__name__) {
@@ -63,83 +45,33 @@ let proxified_objects_cache = {};
 module.exports = function (context, jscript_class) {
 
     const proxyobj = {
-        get (target, orig_property) {
+        get (target, property, receiver) {
 
-            if (typeof orig_property === "symbol") {
-                return target[orig_property];
+            if (typeof property === "symbol") {
+                return target[property];
             }
 
-            const property = orig_property.toLowerCase(),
-                  objprop  = target[property],
-                  apiobj   = {
-                      name: target.__name__.replace(".", "").toLowerCase(),
-                      property: property,
-                      original_property: orig_property,
-                      id:   target.__id__,
-                      args: null
-                  };
+            let lc_property = property.toLowerCase();
+            const target_value = Reflect.get(target, lc_property, receiver);
 
-            if (/^__(?:name|id)__$/i.test(property)) {
-                return objprop;
-            }
-
-            context.emitter.emit("debug.getprop", apiobj);
-
-            if (typeof objprop === "function") {
-                return function (...args) {
-
-                    apiobj.args = [...args];
-                    apiobj.type = "method";
-                    const retval = try_run_hook(context, apiobj, () => jscript_class[property](...args));
-
-                    context.emitter.emit(
-                        `runtime.api.method`,
-                        make_emitter_message(target, property, [...args], apiobj.type, retval, apiobj.hooked)
-                    );
-
-                    return retval;
-                };
+            if (typeof target_value === "function") {
+                if (target_value.__name__ === "WshEnvironment") {
+                    return target_value;
+                }
+                else {
+                    return function (...args) {
+                        return target_value.apply(this, args);
+                    };
+                }
             }
             else {
-
-                const retval = try_run_hook(context, apiobj, objprop);
-                apiobj.type = "getter";
-
-                if (/^__(?:name|id)__$/.test(property) === false) {
-                    context.emitter.emit(
-                        "runtime.api.getter",
-                        make_emitter_message(target, property, null, apiobj.type, retval, apiobj.hooked)
-                    );
-                }
-
-                return retval;
+                return target_value;
             }
         },
+        set (target, property, value) {
 
-        set (target, orig_property, value) {
-
-            const property = orig_property.toLowerCase(),
-                  apiobj   = {
-                      name: target.__name__,
-                      property: property,
-                      original_property: orig_property,
-                      id: target.__id__,
-                      type: "setter"
-                  };
-
-            if (/^__(?:name|id)__$/i.test(property)) {
-                return Reflect.set(target, property, value);
-            }
-
-            //context.emitter.emit("debug.getprop", Object.assign({}, apiobj, { args: [value] }));
-            context.emitter.emit("debug.getprop", apiobj);
-
-            const retval = try_run_hook(context, apiobj, () => Reflect.set(target, property, value));
-            context.emitter.emit(
-                "runtime.api.setter",
-                make_emitter_message(target, property, value, apiobj.type, retval, apiobj.hooked)
-            );
-
+            let lc_property = property.toLowerCase();
+            const retval = Reflect.set(target, lc_property, value);
             return retval;
         }
     };
