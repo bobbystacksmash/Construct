@@ -59,7 +59,7 @@ class JS_WshShell extends Component {
     // process.
     //
     get currentdirectory () {
-        return this.context.config.environment.path;
+        return this.context.config.environment.cwd;
     }
 
     set currentdirectory (new_cwd) {
@@ -72,7 +72,7 @@ class JS_WshShell extends Component {
             );
         }
 
-        this.context.config.environment.path = new_cwd;
+        this.context.config.environment.cwd = new_cwd;
     }
 
     // =======
@@ -104,8 +104,8 @@ class JS_WshShell extends Component {
     //   var WshSysEnv = WshShell.Environment("SYSTEM");
     //   WScript.Echo(WshSysEnv("NUMBER_OF_PROCESSORS"));
     //
-    environment (type) {
-        return new JS_WshEnvironment(this.context, type);
+    get environment () {
+        return JS_WshEnvironment(this.context, "SYSTEM");
     }
 
     //
