@@ -15,7 +15,7 @@ module.exports = {
         else if (event.meta && event.meta === "runtime.api.call") {
             if (/xmlhttp/i.test(event.target)) {
 
-                if (event.prop === "open") {
+                if (event.property.normalised === "open") {
                     event.args[1] = encodeURI(event.args[1]);
                 }
 

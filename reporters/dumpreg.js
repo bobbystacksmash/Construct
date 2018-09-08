@@ -17,10 +17,10 @@ module.exports = {
 
         if (event.meta && event.meta === "runtime.api.call") {
 
-            if (/wshshell/i.test(event.target) && /regread/i.test(event.prop)) {
+            if (/wshshell/i.test(event.target) && /regread/i.test(event.property.normalised)) {
                 events.push(event);
             }
-            else if (/wshshell/i.test(event.target) && /regwrite/i.test(event.prop)) {
+            else if (/wshshell/i.test(event.target) && /regwrite/i.test(event.property.normalised)) {
                 event.push(event);
             }
         }
