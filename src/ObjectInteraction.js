@@ -77,7 +77,7 @@ class ObjectInteraction {
     // method.
     set retval (retval) {
 
-        if (retval && typeof retval === "Object") {
+        if (retval && typeof retval === "object") {
             retval = {
                 target : retval.__name__,
                 id     : retval.__id__
