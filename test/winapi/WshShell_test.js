@@ -5,10 +5,14 @@ const assert   = require("chai").assert,
 const CONFIG = {
     environment: {
         whoami: "SomeUser",
-        path: "C:\\Users\\Testing",
+        cwd: "C:\\Users\\Testing",
         variables: {
             system: {
                 foo: "bar"
+            },
+            process: {
+                baz: "test",
+                hello: "world"
             }
         }
     }
@@ -32,25 +36,41 @@ describe("WshShell", () => {
         it("should support creating a WshShell instance", () => {
             assert.doesNotThrow(() => new WshShell(ctx));
         });
+
     });
 
-    describe("Properties", () => {
+    describe(".Environment", () => {
 
-        describe(".SpecialFolders", () => {
-            it("should return a WshSpecialFolders instance when accessing this property", () => {
-                assert.doesNotThrow(() => new WshShell(ctx).specialfolders);
-                assert.isString(new WshShell(ctx).SPECIALFOLDERS.item(0));
-            });
+        // This property has odd behaviour, acting as both a function
+        // and a property.  Two examples, both return a valid count:
+        //
+        //   - wsh.environment.count();
+        //   - wsh.environment("PROCESS").count();
+        //
+        it("should return an WshEnvironment via the prop", () => {
+
+            const wsh = new WshShell(ctx);
+
+            assert.doesNotThrow(() => wsh.environment.count());
+            // TODO: figure out what value is used here when we just
+            // grab WSHEnvironment.
+
+            /*assert.doesNotThrow(() => wsh.environment("PROCESS").count());
+            assert.equal(wsh.environment("PROCESS").count(), 2);*/
         });
+
+    });
+
+    /*describe("Properties", () => {
 
         describe(".CurrentDirectory", () => {
 
             it("should return the current directory path", () => {
-                assert.equal(new WshShell(ctx).CurrentDirectory, CONFIG.environment.path);
+                assert.equal(new WshShell(ctx).CurrentDirectory, CONFIG.environment.cwd);
             });
 
             it("should allow the CWD to be changed by assignment", () => {
-                assert.equal(new WshShell(ctx).CurrentDirectory, CONFIG.environment.path);
+                assert.equal(new WshShell(ctx).CurrentDirectory, CONFIG.environment.cwd);
                 const new_cwd = "C:\\New\\CWD";
                 ctx.vfs.AddFolder(new_cwd);
                 assert.doesNotThrow(() => new WshShell(ctx).CurrentDirectory = new_cwd);
@@ -68,7 +88,7 @@ describe("WshShell", () => {
                     }
                 });
 
-                assert.equal(new WshShell(ctx).CurrentDirectory, CONFIG.environment.path);
+                assert.equal(new WshShell(ctx).CurrentDirectory, CONFIG.environment.cwd);
                 const not_exists = "C:\\not\\exists";
                 assert.isFalse(ctx.vfs.Exists(not_exists));
                 assert.throws(() => new WshShell(ctx).CurrentDirectory = not_exists, "cannot set CWD");
@@ -76,6 +96,10 @@ describe("WshShell", () => {
                 assert.throws(() => new WshShell(ctx).CurrentDirectory = "",         "cannot set CWD");
                 assert.throws(() => new WshShell(ctx).CurrentDirectory = false,      "cannot set CWD");
             });
+        });
+
+        describe(".Environment", () => {
+
         });
     });
 
@@ -111,7 +135,5 @@ describe("WshShell", () => {
                 assert.doesNotThrow(() => new WshShell(ctx).Environment("USER"));
             });
         });
-    });
-
-
+    });*/
 });
