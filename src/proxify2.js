@@ -1,77 +1,65 @@
-function make_emitter_message (target, property, args, type, retval, hooked) {
-
-    if (retval && retval.__name__) {
-        // The return value is an instance.  Instead of returning the
-        // *whole* instance, return some meta info about the instance
-        // so we can still track it later, without causing a cicular
-        // reference issue.
-        retval = {
-            target: retval.__name__,
-            id:     retval.__id__
-        };
-    }
-
-    if (hooked === undefined || hooked === null) {
-        hooked = false;
-    }
-    else if (hooked !== false) {
-        hooked = true;
-    }
-
-    if (Array.isArray(args) === false) {
-        args = [args];
-    }
-
-    let typed_args = args.map(arg => {
-        return {
-            type:  typeof arg,
-            value: arg
-        };
-    });
-
-    return {
-        target:  target.__name__.replace(".", ""),
-        id:      target.__id__,
-        hooked:  hooked,
-        prop:    property,
-        args:    typed_args,
-        type:    type,
-        return:  (retval === undefined) ? null : retval
-    };
-}
-
-let proxified_objects_cache = {};
+const ObjectInteraction = require("./ObjectInteraction");
 
 module.exports = function (context, jscript_class) {
 
     const proxyobj = {
         get (target, property, receiver) {
 
-            if (typeof property === "symbol") {
+            if (typeof property === "symbol" || (/^__(?:name|id)__$/i.test(property))) {
                 return target[property];
             }
+            else if (!target.hasOwnProperty("__name__") || !target.hasOwnProperty("__id__")) {
+                return Reflect.get(target, property, receiver);
+            }
 
-            let lc_property = property.toLowerCase();
-            const target_value = Reflect.get(target, lc_property, receiver);
+            const lc_property  = property.toLowerCase(),
+                  target_value = Reflect.get(target, lc_property, receiver);
+
+            let apicall = new ObjectInteraction({
+                target: target,
+                property: property
+            });
 
             if (typeof target_value === "function") {
+
                 if (target_value.__name__ === "WshEnvironment") {
                     return target_value;
                 }
                 else {
                     return function (...args) {
-                        return target_value.apply(this, args);
+
+                        const retval   = jscript_class[lc_property](...args);
+                        apicall.type   = ObjectInteraction.TYPE_METHOD;
+                        apicall.args   = [...args];
+                        apicall.retval = retval;
+                        context.emitter.emit(`runtime.api.method`, apicall.event());
+
+                        return retval;
                     };
                 }
             }
             else {
+                apicall.type   = ObjectInteraction.TYPE_GETTER;
+                apicall.retval = target_value;
+                context.emitter.emit(`runtime.api.getter`, apicall.event());
+
                 return target_value;
             }
         },
         set (target, property, value) {
 
+            let apicall = new ObjectInteraction({
+                target:   target,
+                property: property,
+                args:     value
+            });
+
             let lc_property = property.toLowerCase();
             const retval = Reflect.set(target, lc_property, value);
+
+            apicall.retval = retval;
+            context.emitter.emit(`runtime.api.setter`, apicall.event());
+
             return retval;
         }
     };
@@ -86,6 +74,9 @@ module.exports = function (context, jscript_class) {
     if (!instance) {
         instance = new Proxy(jscript_class, proxyobj);
         context.add_instance(instance);
+    }
+    else {
+        console.log("ALREADY AN INSTANCE", jscript_class.__name__);
     }
 
     return instance;
