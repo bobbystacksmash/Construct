@@ -5,7 +5,7 @@ const EventEmitter2  = require("eventemitter2").EventEmitter2;
 const urlparse       = require("url-parse");
 const vm             = require("vm");
 const path           = require("path");
-const CodeRewriter   = require("../metaprogramming");
+const CodeRewriter   = require("../lib/metaprogramming");
 const HookCollection = require("../hooks");
 const falafel        = require("falafel");
 const beautifier     = require("js-beautify");
@@ -284,6 +284,7 @@ Runtime.prototype._make_runnable = function () {
                   { re: /^xmlhttprequest/i, tag: "net" },
                   { re: /^adodbstream\.savetofile/i, tag: "filesystem" },
                   { re: /^shell\.application.shellexecute/i, tag: "exec" },
+                  { re: /^wscript\.createobject/i, tag: "constructor" },
                   { re: /^activexobject.constructor/i, tag: "constructor" },
                   { re: /^adodbstream\.savetofile/i, tag: "filesystem" },
 
@@ -352,7 +353,7 @@ Runtime.prototype._make_runnable = function () {
 
                 let srcloc = self.source.live.split(/\r?\n/g);
                 sbox_trace.forEach((err) => {
-                    err.offendingLine = srcloc[err.lineNumber - 1].replace(/^\s*|\s*$/g, "");
+                    err.offendingLine = srcloc[err.lineNumber - 1];
                 });
             }
 
