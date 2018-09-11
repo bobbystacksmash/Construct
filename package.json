@@ -39,6 +39,7 @@
         "install": "^0.10.4",
         "is-relative": "^1.0.0",
         "istanbul": "^0.4.5",
+        "jison": "^0.4.18",
         "js-beautify": "^1.7.4",
         "linkfs": "^2.1.0",
         "lodash": "^4.17.10",
