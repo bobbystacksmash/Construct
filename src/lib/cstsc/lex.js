@@ -3,7 +3,7 @@ const JisonLex = require("jison-lex"),
 
 const file_to_read = process.argv[2];
 
-var grammar = fs.readFileSync("./test.l").toString(),
+var grammar = fs.readFileSync("./cc.l").toString(),
     file    = fs.readFileSync(file_to_read).toString(),
     lexer   = new JisonLex(grammar);
 
