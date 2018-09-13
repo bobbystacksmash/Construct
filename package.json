@@ -17,6 +17,7 @@
     "devDependencies": {
         "chai": "^4.1.2",
         "expect": "^21.2.1",
+        "gulp": "^3.9.1",
         "mocha": "^4.0.1",
         "mocha-cli": "^1.0.1",
         "nodemon": "^1.18.3"
@@ -40,6 +41,7 @@
         "is-relative": "^1.0.0",
         "istanbul": "^0.4.5",
         "jison": "^0.4.18",
+        "jison-lex": "^0.3.4",
         "js-beautify": "^1.7.4",
         "linkfs": "^2.1.0",
         "lodash": "^4.17.10",
@@ -48,14 +50,14 @@
         "minimist": "^1.2.0",
         "mkdirp": "^0.5.1",
         "moment": "^2.22.2",
-        "npm": "^6.2.0",
+        "npm": "^6.4.1",
         "sprintf-js": "^1.1.1",
         "spyfs": "^1.0.2",
         "stack-trace": "0.0.10",
         "text-table": "^0.2.0",
         "toml": "^2.3.3",
         "unionfs": "^3.0.2",
-        "url-parse": "^1.2.0",
+        "url-parse": "^1.4.3",
         "uuid": "^3.3.2",
         "word-wrap": "^1.2.3"
     }
