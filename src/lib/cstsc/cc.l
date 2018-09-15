@@ -3,6 +3,8 @@ WHITESPACE           [ \t]
 
 %%
 
+\/\*\@cc_on            return 'CC_COMMENT_START_AND_CC_ON';
+
 \/\*                 return 'COMMENT_START';
 \*\/                 return 'COMMENT_END';
 
@@ -30,10 +32,10 @@ WHITESPACE           [ \t]
 \@_jscript_version   return 'CC_VAR_JSCRIPT_VERSION';
 <<EOF>>              return 'EOF';
 
-{WHITESPACE}+        ; /*return 'WHITESPACE';*/
+{WHITESPACE}+        return 'WHITESPACE';
 [\r\n]+              ;
 {UNKNOWN}+           {
-                         console.log(this.matched);
+                         return '??';
                      }
 return 'UNKNOWN';
 
