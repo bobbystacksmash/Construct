@@ -1,43 +1,29 @@
+%x CC
+
 UNKNOWN              .
 WHITESPACE           [ \t]
 
 %%
 
-\/\*\@cc_on            return 'CC_COMMENT_START_AND_CC_ON';
 
-\/\*                 return 'COMMENT_START';
-\*\/                 return 'COMMENT_END';
+<INITIAL>\/\*\@cc_on        { this.begin("CC"); return 'CC_ON';  }
+<CC>\@\*\/                  { this.popState();  return 'CC_OFF'; }
 
-\@cc_on              return 'CC_ON';
-\@if                 return 'CC_IF';
-\@elif               return 'CC_ELIF';
-\@else               return 'CC_ELSE';
+<CC>\@_win32             return 'CC_VAR_WIN32';
+<CC>\@_win16             return 'CC_VAR_WIN16';
+<CC>\@_mac               return 'CC_VAR_MAC';
+<CC>\@_alpha             return 'CC_VAR_PROC_DEC_ALPHA';
+<CC>\@_x86               return 'CC_VAR_PROC_INTEL';
+<CC>\@_mc60x0            return 'CC_VAR_PROC_MOTO6800';
+<CC>\@_PowerPC           return 'CC_VAR_PROC_PPC';
+<CC>\@_jscript           return 'CC_VAR_JSCRIPT';
+<CC>\@_jscript_build     return 'CC_VAR_JSCRIPT_BUILD';
+<CC>\@_jscript_version   return 'CC_VAR_JSCRIPT_VERSION';
 
 
-\(                   return 'LEFT_PAREN';
-\)                   return 'RIGHT_PAREN';
-
-[|]{2}               return 'LOGICAL_OR';
-
-// VARIABLES
-\@_win32             return 'CC_VAR_WIN32';
-\@_win16             return 'CC_VAR_WIN16';
-\@_mac               return 'CC_VAR_MAC';
-\@_alpha             return 'CC_VAR_PROC_DEC_ALPHA';
-\@_x86               return 'CC_VAR_PROC_INTEL';
-\@_mc60x0            return 'CC_VAR_PROC_MOTO6800';
-\@_PowerPC           return 'CC_VAR_PROC_PPC';
-\@_jscript           return 'CC_VAR_JSCRIPT';
-\@_jscript_build     return 'CC_VAR_JSCRIPT_BUILD';
-\@_jscript_version   return 'CC_VAR_JSCRIPT_VERSION';
-<<EOF>>              return 'EOF';
-
-{WHITESPACE}+        return 'WHITESPACE';
-[\r\n]+              ;
-{UNKNOWN}+           {
-                         return '??';
-                     }
-return 'UNKNOWN';
-
+<*><<EOF>>                 return 'EOF';
+<*>{WHITESPACE}+           ;
+<*>[\r\n]+                 ;
+<*>{UNKNOWN}               ;
 
 %%
