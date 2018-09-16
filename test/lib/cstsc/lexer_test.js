@@ -32,28 +32,28 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         lexer = new JisonLex(LEXER_GRAMMAR);
     });
 
-    describe("String detection", () => {
+    xdescribe("String detection", () => {
 
         describe("Double-quoted strings", () => {
 
             it("should detect double-quote strings", () => {
                 assert.deepEqual(
                     util.tokens_array(`"hello world"`),
-                    ["DQUOTE_STRING_START", "DQUOTE_STRING_END", "EOF"]
+                    ["DQUOTE_STRING_BEGIN", "DQUOTE_STRING_END", "EOF"]
                 );
             });
 
             it("should detect escaped double quotes in double-quoted strings", () => {
                 assert.deepEqual(
                     util.tokens_array(`"hello \\"world!\\""`),
-                    ["DQUOTE_STRING_START", "DQUOTE_STRING_END", "EOF"]
+                    ["DQUOTE_STRING_BEGIN", "DQUOTE_STRING_END", "EOF"]
                 );
             });
 
             it("should allow single quotes within double-quoted strings", () => {
                 assert.deepEqual(
                     util.tokens_array(`"Hello, 'world'"`),
-                    ["DQUOTE_STRING_START", "DQUOTE_STRING_END", "EOF"]
+                    ["DQUOTE_STRING_BEGIN", "DQUOTE_STRING_END", "EOF"]
                 );
             });
         });
@@ -63,46 +63,70 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             it("should detect single-quote strings", () => {
                 assert.deepEqual(
                     util.tokens_array(`'hello world'`),
-                    ["SQUOTE_STRING_START", "SQUOTE_STRING_END", "EOF"]
+                    ["SQUOTE_STRING_BEGIN", "SQUOTE_STRING_END", "EOF"]
                 );
             });
 
             it("should detect escaped single-quotes in single-quoted strings", () => {
                 assert.deepEqual(
                     util.tokens_array(`'hello \\'world\\''`),
-                    ["SQUOTE_STRING_START", "SQUOTE_STRING_END", "EOF"]
+                    ["SQUOTE_STRING_BEGIN", "SQUOTE_STRING_END", "EOF"]
                 );
             });
             it("should allow double quotes within single-quoted strings", () => {
                 assert.deepEqual(
                     util.tokens_array(`'Hello, "world"'`),
-                    ["SQUOTE_STRING_START", "SQUOTE_STRING_END", "EOF"]
+                    ["SQUOTE_STRING_BEGIN", "SQUOTE_STRING_END", "EOF"]
                 );
             });
         });
 
     });
 
-    xdescribe("Comment Detection", () => {
-
-        describe("Multi-line comments", () => {
-
-
-
-        });
+    describe("Comment Detection", () => {
 
         describe("Single-line comments", () => {
 
+            it("should detect a single-line comment", () => {
+                assert.deepEqual(
+                    util.tokens_array("// hello world"),
+                    ["SLINE_COMMENT_BEGIN", "EOF"]
+                );
+            });
+
+            it("should continue the comment up until the end of the line", () => {
+                assert.deepEqual(
+                    util.tokens_array(`// hello world this is a test`),
+                    ["SLINE_COMMENT_BEGIN", "EOF"]
+                );
+            });
+        });
+
+        describe("Multi-line comments", () => {
+
+            it("should detect a mutli line comment", () => {
+                assert.deepEqual(
+                    util.tokens_array(`/* hello world */`),
+                    ["MLINE_COMMENT_BEGIN", "MLINE_COMMENT_END", "EOF"]
+                );
+            });
+
+            it("should ignore strings and single-line comments inside an mline comment", () => {
+                assert.deepEqual(
+                    util.tokens_array(`/* "hello world" // testing 'foobar' */`),
+                    ["MLINE_COMMENT_BEGIN", "MLINE_COMMENT_END", "EOF"]
+                );
+            });
         });
     });
 
-    describe("Enabling Conditional Compilation (CC)", () => {
+    xdescribe("Enabling Conditional Compilation (CC)", () => {
 
         xit("should not detect CC when in a multi-line comment with a space", () => {
 
             assert.deepEqual(
                 util.tokens_array("/* @cc_on @if(1) WScript.Echo('HELLO'); @end @*/"),
-                ["MLINE_COMMENT_START", "MLINE_COMMENT_END", "EOF"]
+                ["MLINE_COMMENT_BEGIN", "MLINE_COMMENT_END", "EOF"]
             );
         });
 
