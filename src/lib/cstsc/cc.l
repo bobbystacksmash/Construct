@@ -1,4 +1,4 @@
-%x CC
+%x CC MLC
 
 UNKNOWN              .
 WHITESPACE           [ \t]
@@ -7,7 +7,13 @@ WHITESPACE           [ \t]
 
 
 <INITIAL>\/\*\@cc_on        { this.begin("CC"); return 'CC_ON';  }
+<INITIAL>@cc_on             { this.begin("CC"); return 'CC_ON';  }
+
 <CC>\@\*\/                  { this.popState();  return 'CC_OFF'; }
+
+
+<INITIAL>\/\*([\r\n\s\t])?  { this.begin("MLC"); return 'MLINE_COMMENT_START'; }
+<MLC,INITIAL>\*\/           { this.popState(); return 'MLINE_COMMENT_END'; }
 
 <CC>\@_win32             return 'CC_VAR_WIN32';
 <CC>\@_win16             return 'CC_VAR_WIN16';

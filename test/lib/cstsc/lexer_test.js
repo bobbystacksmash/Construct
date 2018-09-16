@@ -20,7 +20,6 @@ const util = {
         while (token !== 'EOF') {
             token = thislex.lex();
             tokens.push(token);
-            console.log(token);
         }
 
         return tokens;
@@ -33,14 +32,28 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         lexer = new JisonLex(LEXER_GRAMMAR);
     });
 
-    describe("Detecting CC_ON", () => {
+    describe("Enabling Conditional Compilation (CC)", () => {
+
+        it("should not detect CC when in a multi-line comment with a space", () => {
+
+            assert.deepEqual(
+                util.tokens_array("/* @cc_on @if(1) WScript.Echo('HELLO'); @end @*/"),
+                ["MLINE_COMMENT_START", "MLINE_COMMENT_END", "EOF"]
+            );
+        });
 
         it("should enable CC when using the special CC comment syntax", () => {
 
             assert.deepEqual(
-                util.tokens_array("/*@cc_on WScript.Echo('Hello'); OFF @*/"),
+                util.tokens_array("/*@cc_on @*/"),
                 ["CC_ON", "CC_OFF", "EOF"]
+            );
+        });
 
+        it("should enable CC when no comments are used", () => {
+            assert.deepEqual(
+                util.tokens_array("@cc_on WScript.Echo('Hello');"),
+                ["CC_ON", "EOF"]
             );
         });
     });
