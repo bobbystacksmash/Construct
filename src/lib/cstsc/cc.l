@@ -1,30 +1,19 @@
-%x CC MLC
+%x CCB CCON MLC SLC DQS SQS
 
 UNKNOWN              .
 WHITESPACE           [ \t]
 
 %%
 
+<INITIAL>\"                { this.begin("DQS"); return 'DQUOTE_STRING_START' };
+<DQS>[\\]"\""              ;
+<DQS>\"                    { this.popState(); return 'DQUOTE_STRING_END' };
+<DQS>.                     ;
 
-<INITIAL>\/\*\@cc_on        { this.begin("CC"); return 'CC_ON';  }
-<INITIAL>@cc_on             { this.begin("CC"); return 'CC_ON';  }
-
-<CC>\@\*\/                  { this.popState();  return 'CC_OFF'; }
-
-
-<INITIAL>\/\*([\r\n\s\t])?  { this.begin("MLC"); return 'MLINE_COMMENT_START'; }
-<MLC,INITIAL>\*\/           { this.popState(); return 'MLINE_COMMENT_END'; }
-
-<CC>\@_win32             return 'CC_VAR_WIN32';
-<CC>\@_win16             return 'CC_VAR_WIN16';
-<CC>\@_mac               return 'CC_VAR_MAC';
-<CC>\@_alpha             return 'CC_VAR_PROC_DEC_ALPHA';
-<CC>\@_x86               return 'CC_VAR_PROC_INTEL';
-<CC>\@_mc60x0            return 'CC_VAR_PROC_MOTO6800';
-<CC>\@_PowerPC           return 'CC_VAR_PROC_PPC';
-<CC>\@_jscript           return 'CC_VAR_JSCRIPT';
-<CC>\@_jscript_build     return 'CC_VAR_JSCRIPT_BUILD';
-<CC>\@_jscript_version   return 'CC_VAR_JSCRIPT_VERSION';
+<INITIAL>"'"               { this.begin("SQS"); return 'SQUOTE_STRING_START' };
+<SQS>[\\]"'"               ;
+<SQS>\'                    { this.popState(); return 'SQUOTE_STRING_END' };
+<SQS>.                     ;
 
 
 <*><<EOF>>                 return 'EOF';

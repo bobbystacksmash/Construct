@@ -32,9 +32,73 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         lexer = new JisonLex(LEXER_GRAMMAR);
     });
 
+    describe("String detection", () => {
+
+        describe("Double-quoted strings", () => {
+
+            it("should detect double-quote strings", () => {
+                assert.deepEqual(
+                    util.tokens_array(`"hello world"`),
+                    ["DQUOTE_STRING_START", "DQUOTE_STRING_END", "EOF"]
+                );
+            });
+
+            it("should detect escaped double quotes in double-quoted strings", () => {
+                assert.deepEqual(
+                    util.tokens_array(`"hello \\"world!\\""`),
+                    ["DQUOTE_STRING_START", "DQUOTE_STRING_END", "EOF"]
+                );
+            });
+
+            it("should allow single quotes within double-quoted strings", () => {
+                assert.deepEqual(
+                    util.tokens_array(`"Hello, 'world'"`),
+                    ["DQUOTE_STRING_START", "DQUOTE_STRING_END", "EOF"]
+                );
+            });
+        });
+
+        describe("Single-quoted strings", () => {
+
+            it("should detect single-quote strings", () => {
+                assert.deepEqual(
+                    util.tokens_array(`'hello world'`),
+                    ["SQUOTE_STRING_START", "SQUOTE_STRING_END", "EOF"]
+                );
+            });
+
+            it("should detect escaped single-quotes in single-quoted strings", () => {
+                assert.deepEqual(
+                    util.tokens_array(`'hello \\'world\\''`),
+                    ["SQUOTE_STRING_START", "SQUOTE_STRING_END", "EOF"]
+                );
+            });
+            it("should allow double quotes within single-quoted strings", () => {
+                assert.deepEqual(
+                    util.tokens_array(`'Hello, "world"'`),
+                    ["SQUOTE_STRING_START", "SQUOTE_STRING_END", "EOF"]
+                );
+            });
+        });
+
+    });
+
+    xdescribe("Comment Detection", () => {
+
+        describe("Multi-line comments", () => {
+
+
+
+        });
+
+        describe("Single-line comments", () => {
+
+        });
+    });
+
     describe("Enabling Conditional Compilation (CC)", () => {
 
-        it("should not detect CC when in a multi-line comment with a space", () => {
+        xit("should not detect CC when in a multi-line comment with a space", () => {
 
             assert.deepEqual(
                 util.tokens_array("/* @cc_on @if(1) WScript.Echo('HELLO'); @end @*/"),
@@ -42,7 +106,7 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             );
         });
 
-        it("should enable CC when using the special CC comment syntax", () => {
+        xit("should enable CC when using the special CC comment syntax", () => {
 
             assert.deepEqual(
                 util.tokens_array("/*@cc_on @*/"),
@@ -50,10 +114,31 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             );
         });
 
-        it("should enable CC when no comments are used", () => {
+        xit("should enable CC when no comments are used", () => {
             assert.deepEqual(
                 util.tokens_array("@cc_on WScript.Echo('Hello');"),
                 ["CC_ON", "EOF"]
+            );
+        });
+    });
+
+    xdescribe("Conditionals", () => {
+
+        it("should detect an @if statement when inside a @cc_on block", () => {
+
+            const code = `
+            /*@cc_on
+            WScript.Write("CC enabled");
+              /*@if (@_jscript_version >= 5)
+                WScript.Echo("JScript version >= 5.");
+              @else @*/
+                WScript.Echo("No JScript");
+              /*@end
+            @*/`;
+
+            assert.deepEqual(
+                util.tokens_array(code),
+                ["abc"]
             );
         });
     });
