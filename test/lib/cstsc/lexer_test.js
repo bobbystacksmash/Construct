@@ -100,6 +100,20 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                     ["SLINE_COMMENT_BEGIN", "EOF"]
                 );
             });
+
+            it("should stop the single line comment after a newline", () => {
+                assert.deepEqual(
+                    util.tokens_array([`// hello world`, `/* testing */`].join("\n")),
+                    ["SLINE_COMMENT_BEGIN", "SLINE_COMMENT_END", "MLINE_COMMENT_BEGIN", "MLINE_COMMENT_END", "EOF"]
+                );
+            });
+
+            it("should ignore the contents of the single line comment", () => {
+                assert.deepEqual(
+                    util.tokens_array(`// "test" /* test */`),
+                    ["SLINE_COMMENT_BEGIN", "EOF"]
+                );
+            });
         });
 
         describe("Multi-line comments", () => {

@@ -29,7 +29,8 @@ WHITESPACE           [ \t]
 //
 // Single-Line Comments
 //
-<INITIAL>[/]{2}            { this.begin("SLC"); return 'SLINE_COMMENT_BEGIN' }
+<INITIAL>[/]{2}           { this.begin("SLC"); return 'SLINE_COMMENT_BEGIN' }
+<SLC>\n                   { this.popState(); return 'SLINE_COMMENT_END' }
 //
 // Multi-Line Comments
 //
