@@ -1,4 +1,4 @@
-%x CCB CCON MLC SLC DQS SQS
+%x CCC CCON MLC SLC DQS SQS
 
 UNKNOWN              .
 WHITESPACE           [ \t]
@@ -26,6 +26,14 @@ WHITESPACE           [ \t]
 // ===============
 // C O M M E N T S
 // ===============
+//
+// Conditional-Compilation Comments
+//
+// NEEDS THOUGHT.
+//
+<INITIAL>\/\*\@cc_on      { this.begin("CCON"); this.begin("CCC"); return 'CC_COMMENT_BEGIN' }
+
+
 //
 // Single-Line Comments
 //

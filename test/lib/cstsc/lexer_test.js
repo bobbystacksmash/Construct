@@ -32,7 +32,7 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         lexer = new JisonLex(LEXER_GRAMMAR);
     });
 
-    xdescribe("String detection", () => {
+    describe("String detection", () => {
 
         describe("Double-quoted strings", () => {
 
@@ -85,6 +85,16 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
 
     describe("Comment Detection", () => {
 
+        describe("Conditional-compilation comments", () => {
+
+            it("should detect a CC comment begin and end block", () => {
+                assert.deepEqual(
+                    util.tokens_array(`/*@cc_on CC comment block @*/`),
+                    ["CC_COMMENT_BEGIN", "CC_COMMENT_END", "EOF"]
+                );
+            });
+        });
+
         describe("Single-line comments", () => {
 
             it("should detect a single-line comment", () => {
@@ -134,7 +144,7 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         });
     });
 
-    xdescribe("Enabling Conditional Compilation (CC)", () => {
+    describe("Enabling Conditional Compilation (CC)", () => {
 
         xit("should not detect CC when in a multi-line comment with a space", () => {
 
