@@ -32,28 +32,28 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         lexer = new JisonLex(LEXER_GRAMMAR);
     });
 
-    describe("String detection", () => {
+    xdescribe("String detection", () => {
 
         describe("Double-quoted strings", () => {
 
             it("should detect double-quote strings", () => {
                 assert.deepEqual(
                     util.tokens_array(`"hello world"`),
-                    ["DQUOTE_STRING_BEGIN", "DQUOTE_STRING_END", "EOF"]
+                    ["OPEN_DQUOTE_STRING", "CLOSE_DQUOTE_STRING", "EOF"]
                 );
             });
 
             it("should detect escaped double quotes in double-quoted strings", () => {
                 assert.deepEqual(
                     util.tokens_array(`"hello \\"world!\\""`),
-                    ["DQUOTE_STRING_BEGIN", "DQUOTE_STRING_END", "EOF"]
+                    ["OPEN_DQUOTE_STRING", "CLOSE_DQUOTE_STRING", "EOF"]
                 );
             });
 
             it("should allow single quotes within double-quoted strings", () => {
                 assert.deepEqual(
                     util.tokens_array(`"Hello, 'world'"`),
-                    ["DQUOTE_STRING_BEGIN", "DQUOTE_STRING_END", "EOF"]
+                    ["OPEN_DQUOTE_STRING", "CLOSE_DQUOTE_STRING", "EOF"]
                 );
             });
         });
@@ -63,34 +63,34 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             it("should detect single-quote strings", () => {
                 assert.deepEqual(
                     util.tokens_array(`'hello world'`),
-                    ["SQUOTE_STRING_BEGIN", "SQUOTE_STRING_END", "EOF"]
+                    ["OPEN_SQUOTE_STRING", "CLOSE_SQUOTE_STRING", "EOF"]
                 );
             });
 
             it("should detect escaped single-quotes in single-quoted strings", () => {
                 assert.deepEqual(
                     util.tokens_array(`'hello \\'world\\''`),
-                    ["SQUOTE_STRING_BEGIN", "SQUOTE_STRING_END", "EOF"]
+                    ["OPEN_SQUOTE_STRING", "CLOSE_SQUOTE_STRING", "EOF"]
                 );
             });
             it("should allow double quotes within single-quoted strings", () => {
                 assert.deepEqual(
                     util.tokens_array(`'Hello, "world"'`),
-                    ["SQUOTE_STRING_BEGIN", "SQUOTE_STRING_END", "EOF"]
+                    ["OPEN_SQUOTE_STRING", "CLOSE_SQUOTE_STRING", "EOF"]
                 );
             });
         });
 
     });
 
-    describe("Comment Detection", () => {
+    xdescribe("Comment Detection", () => {
 
         describe("Conditional-compilation comments", () => {
 
             it("should detect a CC comment begin and end block", () => {
                 assert.deepEqual(
                     util.tokens_array(`/*@cc_on CC comment block @*/`),
-                    ["CC_COMMENT_BEGIN", "CC_COMMENT_END", "EOF"]
+                    ["OPEN_CC_COMMENT", "CLOSE_CC_COMMENT", "EOF"]
                 );
             });
         });
@@ -100,28 +100,34 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             it("should detect a single-line comment", () => {
                 assert.deepEqual(
                     util.tokens_array("// hello world"),
-                    ["SLINE_COMMENT_BEGIN", "EOF"]
+                    ["OPEN_SLINE_COMMENT", "EOF"]
                 );
             });
 
             it("should continue the comment up until the end of the line", () => {
                 assert.deepEqual(
                     util.tokens_array(`// hello world this is a test`),
-                    ["SLINE_COMMENT_BEGIN", "EOF"]
+                    ["OPEN_SLINE_COMMENT", "EOF"]
                 );
             });
 
             it("should stop the single line comment after a newline", () => {
                 assert.deepEqual(
                     util.tokens_array([`// hello world`, `/* testing */`].join("\n")),
-                    ["SLINE_COMMENT_BEGIN", "SLINE_COMMENT_END", "MLINE_COMMENT_BEGIN", "MLINE_COMMENT_END", "EOF"]
+                    [
+                        "OPEN_SLINE_COMMENT",
+                        "END_SLINE_COMMENT",
+                        "MLINE_COMMENT_BEGIN",
+                        "END_MLINE_COMMENT",
+                        "EOF"
+                    ]
                 );
             });
 
             it("should ignore the contents of the single line comment", () => {
                 assert.deepEqual(
                     util.tokens_array(`// "test" /* test */`),
-                    ["SLINE_COMMENT_BEGIN", "EOF"]
+                    ["OPEN_SLINE_COMMENT", "EOF"]
                 );
             });
         });
@@ -131,14 +137,14 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             it("should detect a mutli line comment", () => {
                 assert.deepEqual(
                     util.tokens_array(`/* hello world */`),
-                    ["MLINE_COMMENT_BEGIN", "MLINE_COMMENT_END", "EOF"]
+                    ["MLINE_COMMENT_BEGIN", "END_MLINE_COMMENT", "EOF"]
                 );
             });
 
             it("should ignore strings and single-line comments inside an mline comment", () => {
                 assert.deepEqual(
                     util.tokens_array(`/* "hello world" // testing 'foobar' */`),
-                    ["MLINE_COMMENT_BEGIN", "MLINE_COMMENT_END", "EOF"]
+                    ["MLINE_COMMENT_BEGIN", "END_MLINE_COMMENT", "EOF"]
                 );
             });
         });
@@ -146,31 +152,26 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
 
     describe("Enabling Conditional Compilation (CC)", () => {
 
-        xit("should not detect CC when in a multi-line comment with a space", () => {
-
+        it("should enable CC", () => {
             assert.deepEqual(
-                util.tokens_array("/* @cc_on @if(1) WScript.Echo('HELLO'); @end @*/"),
-                ["MLINE_COMMENT_BEGIN", "MLINE_COMMENT_END", "EOF"]
+                util.tokens_array(`@cc_on`),
+                ["CC_ON_STANDALONE", "EOF"]
             );
         });
 
-        xit("should enable CC when using the special CC comment syntax", () => {
-
+        it("should enable CC when in a CC comment", () => {
             assert.deepEqual(
-                util.tokens_array("/*@cc_on @*/"),
-                ["CC_ON", "CC_OFF", "EOF"]
+                util.tokens_array(`/*@cc_on @*/`),
+                ["OPEN_CC_COMMENT_CC_ON", "CLOSE_CC_COMMENT", "EOF"]
             );
         });
 
-        xit("should enable CC when no comments are used", () => {
-            assert.deepEqual(
-                util.tokens_array("@cc_on WScript.Echo('Hello');"),
-                ["CC_ON", "EOF"]
-            );
+        it("should enable CC using only the @if statement", () => {
+
         });
     });
 
-    xdescribe("Conditionals", () => {
+    describe("Conditionals", () => {
 
         it("should detect an @if statement when inside a @cc_on block", () => {
 
@@ -186,7 +187,14 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
 
             assert.deepEqual(
                 util.tokens_array(code),
-                ["abc"]
+                [
+                    "OPEN_CC_COMMENT_CC_ON",
+                    "OPEN_COMMENT_CC_IF",
+                    "CC_IF_ELSE_BEGIN",
+                    "CC_IF_END",
+                    "CLOSE_CC_COMMENT",
+                    "EOF"
+                ]
             );
         });
     });
