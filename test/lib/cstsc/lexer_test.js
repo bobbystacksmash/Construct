@@ -166,19 +166,57 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             );
         });
 
-        it("should enable CC when in a CC comment", () => {
+        it("should enable CC when using a literal CC @if", () => {
+            assert.deepEqual(
+                util.tokens_array(`@if (true) WScript.Echo("Hello"); @end`),
+                ["OPEN_CC_IF", "CLOSE_CC_IF", "EOF"]
+            );
+        });
+
+        it("should enable CC when using a literal @cc_on and @if", () => {
+            assert.deepEqual(
+                util.tokens_array(`@cc_on @if (true) WScript.Echo("Hello"); @end`),
+                ["CC_ON_STANDALONE", "OPEN_CC_IF", "CLOSE_CC_IF", "EOF"]
+            );
+        });
+
+        it("should not notice the /*@if when no preceding @cc_on is detected", () => {
+            assert.deepEqual(
+                util.tokens_array(`/*@if (true) WScript.Echo("Hello"); @end @*/`),
+                ["OPEN_MLINE_COMMENT", "CLOSE_MLINE_COMMENT", "EOF"]
+            );
+        });
+
+        it("should not notice a /*@set when no preceding @cc_on is detected", () => {
+            assert.deepEqual(
+                util.tokens_array(`/*@set @foo = 12; @*/`),
+                ["OPEN_MLINE_COMMENT", "CLOSE_MLINE_COMMENT", "EOF"]
+            );
+        });
+
+        it("should notice /*@if when a preceding literal @cc_on was detected", () => {
+            assert.deepEqual(
+                util.tokens_array(`@cc_on /*@if (true) WScript.Echo("Hello") @end @*/`),
+                ["CC_ON_STANDALONE", "OPEN_COMMENT_CC_IF", "CLOSE_CC_IF", "CLOSE_CC_COMMENT", "EOF"]
+            );
+        });
+
+        xit("should enable CC when in a CC comment", () => {
             assert.deepEqual(
                 util.tokens_array(`/*@cc_on @*/`),
                 ["OPEN_CC_COMMENT_CC_ON", "CLOSE_CC_COMMENT", "EOF"]
             );
         });
 
-        it("should enable CC using only the @if statement", () => {
-
+        xit("should enable CC using a CC literal @if", () => {
+            assert.deepEqual(
+                util.tokens_array(`@if (true) WScript.Echo("Hello"); @end`),
+                ["OPEN_CC_IF", "CLOSE_CC_IF", "EOF"]
+            );
         });
     });
 
-    describe("Variables", () => {
+    xdescribe("Variables", () => {
 
         describe("@set", () => {
 
