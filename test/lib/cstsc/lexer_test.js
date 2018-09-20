@@ -159,6 +159,13 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             );
         });
 
+        it("should enable CC when in a comment", () => {
+            assert.deepEqual(
+                util.tokens_array(`/*@cc_on @*/`),
+                ["OPEN_CC_COMMENT_CC_ON", "CLOSE_CC_COMMENT", "EOF"]
+            );
+        });
+
         it("should only report the first @cc_on standalone token", () => {
             assert.deepEqual(
                 util.tokens_array("@cc_on @cc_on @cc_on"),
@@ -169,14 +176,14 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         it("should enable CC when using a literal CC @if", () => {
             assert.deepEqual(
                 util.tokens_array(`@if (true) WScript.Echo("Hello"); @end`),
-                ["OPEN_CC_IF", "CLOSE_CC_IF", "EOF"]
+                ["BEGIN_CC_IF", "CLOSE_CC_IF", "EOF"]
             );
         });
 
         it("should enable CC when using a literal @cc_on and @if", () => {
             assert.deepEqual(
                 util.tokens_array(`@cc_on @if (true) WScript.Echo("Hello"); @end`),
-                ["CC_ON_STANDALONE", "OPEN_CC_IF", "CLOSE_CC_IF", "EOF"]
+                ["CC_ON_STANDALONE", "BEGIN_CC_IF", "CLOSE_CC_IF", "EOF"]
             );
         });
 
@@ -200,23 +207,9 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                 ["CC_ON_STANDALONE", "OPEN_COMMENT_CC_IF", "CLOSE_CC_IF", "CLOSE_CC_COMMENT", "EOF"]
             );
         });
-
-        xit("should enable CC when in a CC comment", () => {
-            assert.deepEqual(
-                util.tokens_array(`/*@cc_on @*/`),
-                ["OPEN_CC_COMMENT_CC_ON", "CLOSE_CC_COMMENT", "EOF"]
-            );
-        });
-
-        xit("should enable CC using a CC literal @if", () => {
-            assert.deepEqual(
-                util.tokens_array(`@if (true) WScript.Echo("Hello"); @end`),
-                ["OPEN_CC_IF", "CLOSE_CC_IF", "EOF"]
-            );
-        });
     });
 
-    xdescribe("Variables", () => {
+    describe("Variables", () => {
 
         describe("@set", () => {
 
@@ -251,11 +244,21 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
     });
 
     describe("Conditionals", () => {
-
-        it("should not detect an @if before @cc_on has been used", () => {
+        it("should detect @if, @else, and @end", () => {
             assert.deepEqual(
-                util.tokens_array(`@if (true) WScript.Echo("Hello!"); @end`),
-                ["OPEN_CC_IF", "CLOSE_CC_IF", "EOF"]
+                util.tokens_array(`@if (true)
+                                     WScript.Echo("Hello!");
+                                   @end`),
+                ["BEGIN_CC_IF", "CLOSE_CC_IF", "EOF"]
+            );
+
+            assert.deepEqual(
+                util.tokens_array(`@if (true)
+                                     WScript.Echo("Hello!");
+                                   @else
+                                     WScript.Echo("World!");
+                                   @end`),
+                ["BEGIN_CC_IF", "BEGIN_CC_IF_ELSE", "CLOSE_CC_IF", "EOF"]
             );
         });
     });
