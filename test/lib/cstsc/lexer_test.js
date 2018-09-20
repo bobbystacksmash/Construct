@@ -116,9 +116,9 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                     util.tokens_array([`// hello world`, `/* testing */`].join("\n")),
                     [
                         "OPEN_SLINE_COMMENT",
-                        "END_SLINE_COMMENT",
+                        "CLOSE_SLINE_COMMENT",
                         "MLINE_COMMENT_BEGIN",
-                        "END_MLINE_COMMENT",
+                        "CLOSE_MLINE_COMMENT",
                         "EOF"
                     ]
                 );
@@ -137,14 +137,14 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             it("should detect a mutli line comment", () => {
                 assert.deepEqual(
                     util.tokens_array(`/* hello world */`),
-                    ["MLINE_COMMENT_BEGIN", "END_MLINE_COMMENT", "EOF"]
+                    ["MLINE_COMMENT_BEGIN", "CLOSE_MLINE_COMMENT", "EOF"]
                 );
             });
 
             it("should ignore strings and single-line comments inside an mline comment", () => {
                 assert.deepEqual(
                     util.tokens_array(`/* "hello world" // testing 'foobar' */`),
-                    ["MLINE_COMMENT_BEGIN", "END_MLINE_COMMENT", "EOF"]
+                    ["MLINE_COMMENT_BEGIN", "CLOSE_MLINE_COMMENT", "EOF"]
                 );
             });
         });
@@ -155,6 +155,13 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         it("should enable CC", () => {
             assert.deepEqual(
                 util.tokens_array(`@cc_on`),
+                ["CC_ON_STANDALONE", "EOF"]
+            );
+        });
+
+        it("should only report the first @cc_on standalone token", () => {
+            assert.deepEqual(
+                util.tokens_array("@cc_on @cc_on @cc_on"),
                 ["CC_ON_STANDALONE", "EOF"]
             );
         });
@@ -171,30 +178,46 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         });
     });
 
+    describe("Variables", () => {
+
+        describe("@set", () => {
+
+            it("should detect the @set statement", () => {
+                assert.deepEqual(
+                    util.tokens_array(`@set @foo = 12;`),
+                    ["OPEN_CC_SET", "CC_VAR_NAME", "EOF"]
+                );
+            });
+
+            it("shouldn't enable @set when it appears within a string", () => {
+                assert.deepEqual(
+                    util.tokens_array(`"@set @foo = 12;"`),
+                    ["OPEN_DQUOTE_STRING", "CLOSE_DQUOTE_STRING", "EOF"]
+                );
+            });
+
+            it("shouldn't enable @set when it appears within a multi-line comment", () => {
+                assert.deepEqual(
+                    util.tokens_array(`/* @set @foo = 12; */`),
+                    ["OPEN_MLINE_COMMENT", "CLOSE_MLINE_COMMENT", "EOF"]
+                );
+            });
+
+            it("shouldn't enable @set when it appears within a single-line comment", () => {
+                assert.deepEqual(
+                    util.tokens_array(`// @set @foo = 12;`),
+                    ["OPEN_SLINE_COMMENT", "EOF"]
+                );
+            });
+        });
+    });
+
     describe("Conditionals", () => {
 
-        it("should detect an @if statement when inside a @cc_on block", () => {
-
-            const code = `
-            /*@cc_on
-            WScript.Write("CC enabled");
-              /*@if (@_jscript_version >= 5)
-                WScript.Echo("JScript version >= 5.");
-              @else @*/
-                WScript.Echo("No JScript");
-              /*@end
-            @*/`;
-
+        it("should not detect an @if before @cc_on has been used", () => {
             assert.deepEqual(
-                util.tokens_array(code),
-                [
-                    "OPEN_CC_COMMENT_CC_ON",
-                    "OPEN_COMMENT_CC_IF",
-                    "CC_IF_ELSE_BEGIN",
-                    "CC_IF_END",
-                    "CLOSE_CC_COMMENT",
-                    "EOF"
-                ]
+                util.tokens_array(`@if (true) WScript.Echo("Hello!"); @end`),
+                ["OPEN_CC_IF", "CLOSE_CC_IF", "EOF"]
             );
         });
     });
