@@ -155,7 +155,7 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         it("should enable CC", () => {
             assert.deepEqual(
                 util.tokens_array(`@cc_on`),
-                ["CC_ON_STANDALONE", "EOF"]
+                ["CC_ON_LITERAL", "EOF"]
             );
         });
 
@@ -169,7 +169,7 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         it("should only report the first @cc_on standalone token", () => {
             assert.deepEqual(
                 util.tokens_array("@cc_on @cc_on @cc_on"),
-                ["CC_ON_STANDALONE", "EOF"]
+                ["CC_ON_LITERAL", "EOF"]
             );
         });
 
@@ -183,7 +183,7 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         it("should enable CC when using a literal @cc_on and @if", () => {
             assert.deepEqual(
                 util.tokens_array(`@cc_on @if (true) WScript.Echo("Hello"); @end`),
-                ["CC_ON_STANDALONE", "BEGIN_CC_IF", "CLOSE_CC_IF", "EOF"]
+                ["CC_ON_LITERAL", "BEGIN_CC_IF", "CLOSE_CC_IF", "EOF"]
             );
         });
 
@@ -204,7 +204,7 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         it("should notice /*@if when a preceding literal @cc_on was detected", () => {
             assert.deepEqual(
                 util.tokens_array(`@cc_on /*@if (true) WScript.Echo("Hello") @end @*/`),
-                ["CC_ON_STANDALONE", "OPEN_COMMENT_CC_IF", "CLOSE_CC_IF", "CLOSE_CC_COMMENT", "EOF"]
+                ["CC_ON_LITERAL", "OPEN_COMMENT_CC_IF", "CLOSE_CC_IF", "CLOSE_CC_COMMENT", "EOF"]
             );
         });
     });
@@ -239,6 +239,68 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                     util.tokens_array(`// @set @foo = 12;`),
                     ["OPEN_SLINE_COMMENT", "EOF"]
                 );
+            });
+        });
+
+        describe("Predefined variables", () => {
+
+            const predef_vars = {
+                "@_win32":           "CC_PREDEF_VAR_WIN32",
+                "@_win16":           "CC_PREDEF_VAR_WIN16",
+                "@_mac":             "CC_PREDEF_VAR_MAC",
+                "@_alpha":           "CC_PREDEF_VAR_ALPHA",
+                "@_x86":             "CC_PREDEF_VAR_X86",
+                "@_mc68x0":          "CC_PREDEF_VAR_MC68X0",
+                "@_PowerPC":         "CC_PREDEF_VAR_POWERPC",
+                "@_jscript":         "CC_PREDEF_VAR_JSCRIPT",
+                "@_jscript_build":   "CC_PREDEF_VAR_JSCRIPT_BUILD",
+                "@_jscript_version": "CC_PREDEF_VAR_JSCRIPT_VERSION"
+            };
+
+            it("should correctly detect literal predefined variables when CC is on", () => {
+                Object.keys(predef_vars).forEach(v => {
+                    assert.deepEqual(
+                        util.tokens_array(`@cc_on ${v}`),
+                        ["CC_ON_LITERAL", predef_vars[v], "EOF"]
+                    );
+                });
+            });
+
+            it("should ignore CC literals when CC is not enabled", () => {
+                Object.keys(predef_vars).forEach(v => {
+                    assert.deepEqual(
+                        util.tokens_array(`${v}`),
+                        ["EOF"]
+                    );
+                });
+            });
+
+            it("should detect CC vars inside a CC comment when CC is enabled", () => {
+                Object.keys(predef_vars).forEach(v => {
+                    assert.deepEqual(
+                        util.tokens_array(`@cc_on /*@ WScript.Echo(${v}) @*/`),
+                        ["CC_ON_LITERAL", predef_vars[v], "EOF"]
+                    );
+                });
+            });
+
+            it("should not detect CC vars inside a CC comment when CC is not enabled", () => {
+                Object.keys(predef_vars).forEach(v => {
+                    assert.deepEqual(
+                        util.tokens_array(`/*@ WScript.Echo(${v}) @*/`),
+                        ["OPEN_MLINE_COMMENT", "CLOSE_MLINE_COMMENT", "EOF"]
+                    );
+                });
+            });
+
+
+            it("should not detect CC vars inside a CC-on comment", () => {
+                Object.keys(predef_vars).forEach(v => {
+                    assert.deepEqual(
+                        util.tokens_array(`/*@cc_on WScript.Echo(${v}) @*/`),
+                        ["OPEN_CC_COMMENT_CC_ON", predef_vars[v], "CLOSE_CC_COMMENT", "EOF"]
+                    );
+                });
             });
         });
     });
