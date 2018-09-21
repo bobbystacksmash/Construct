@@ -294,7 +294,7 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             });
 
 
-            it("should not detect CC vars inside a CC-on comment", () => {
+            it("should detect CC vars inside a CC-on comment", () => {
                 Object.keys(predef_vars).forEach(v => {
                     assert.deepEqual(
                         util.tokens_array(`/*@cc_on WScript.Echo(${v}) @*/`),
