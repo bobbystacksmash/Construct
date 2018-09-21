@@ -1,10 +1,5 @@
-*.swp
-*.swo
 MALWARE/
 node_modules/
-*.js~
-*.*#
-.#.*
 f.js
 g.js
 *.tern-port
