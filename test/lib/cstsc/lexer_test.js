@@ -293,7 +293,6 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                 });
             });
 
-
             it("should detect CC vars inside a CC-on comment", () => {
                 Object.keys(predef_vars).forEach(v => {
                     assert.deepEqual(
