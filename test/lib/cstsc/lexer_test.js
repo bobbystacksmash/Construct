@@ -19,7 +19,13 @@ const util = {
 
         while (token !== 'EOF') {
             token = thislex.lex();
-            tokens.push(token);
+
+            if (typeof token === "object") {
+                tokens.push(token.name);
+            }
+            else {
+                tokens.push(token);
+            }
         }
 
         return tokens;
@@ -321,6 +327,11 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                                    @end`),
                 ["BEGIN_CC_IF", "BEGIN_CC_IF_ELSE", "CLOSE_CC_IF", "EOF"]
             );
+        });
+
+        it("should detect the if EXPR block", () => {
+            // TODO
+            assert.equal(1, 2);
         });
     });
 });
