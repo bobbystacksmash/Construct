@@ -311,12 +311,13 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
     });
 
     describe("Conditionals", () => {
+
         it("should detect @if, @else, and @end", () => {
             assert.deepEqual(
                 util.tokens_array(`@if (true)
                                      WScript.Echo("Hello!");
                                    @end`),
-                ["BEGIN_CC_IF", "CLOSE_CC_IF", "EOF"]
+                ["BEGIN_CC_IF", "TODO", "CLOSE_CC_IF", "EOF"]
             );
 
             assert.deepEqual(
