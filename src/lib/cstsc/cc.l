@@ -1,4 +1,4 @@
-%x CCMNT CCON CCIF CCSET MLC SLC DQS SQS
+%x CCMNT CCON CCIF CCIF_TEST CCIF_GROUP CCSET MLC SLC DQS SQS
 
 %{
 function handle_token(state, name) {
@@ -13,9 +13,18 @@ function handle_token(state, name) {
 }
 %}
 
-UNKNOWN              .
-WHITESPACE           [ \t]
-JS_VAR_NAME          \@[A-Za-z0-9_][A-Za-z0-9_]*
+Unknown              .
+Whitespace           [ \t]
+VariableName         \@[A-Za-z0-9_][A-Za-z0-9_]*
+
+LParen               "("
+RParen               ")"
+
+CcIfStatement        "@if"\s*\(
+CcIfElse             "@else"
+CcEndIf              "@end"
+
+
 
 %%
 
@@ -29,6 +38,7 @@ JS_VAR_NAME          \@[A-Za-z0-9_][A-Za-z0-9_]*
 <DQS>[\\]"\""                    ;
 <DQS>\"                          { this.popState(); return handle_token(this, 'CLOSE_DQUOTE_STRING'); };
 <DQS>.                           ;
+
 //
 // Single-quoted strings.
 //
@@ -47,18 +57,27 @@ JS_VAR_NAME          \@[A-Za-z0-9_][A-Za-z0-9_]*
 
 // Conditionals
 <CCON,CCMNT>\/\*\@if             { this.begin("CCMNT"); this.begin("CCIF"); return handle_token(this, 'OPEN_COMMENT_CC_IF'); }
-<INITIAL,CCON>@if                { this.begin("CCON"); this.begin("CCIF"); return handle_token(this, 'BEGIN_CC_IF'); }
+
+<INITIAL,CCON>{CCIf}             {
+                                   this.begin("CCON");
+                                   this.begin("CCIF");
+                                   this.begin("CCIF_TEST");
+                                   return handle_token(this, 'BEGIN_CC_IF');
+                                 }
+<CCIF_TEST>{LParen}              this.begin("CCIF_GROUP");
+<CCIF_GROUP>{RParen}             this.popState();
+<CCIF_TEST>{RParen}              { this.popState(); this.popState(); return "END_CC_IF"; }
 
 
-<INITIAL,CCON,CCMNT>\@if         { this.begin("CCIF"); return handle_token(this, 'BEGIN_CC_IF'); }
-<CCIF>\@else                     { return handle_token(this, 'BEGIN_CC_IF_ELSE'); }
-<CCIF>\@end                      { this.popState(); return handle_token(this, 'CLOSE_CC_IF'); }
+<INITIAL,CCON,CCMNT>\@if         { this.begin("CCIF"); this.begin("CCIF_TEST"); return handle_token(this, 'BEGIN_CC_IF'); }
+<INITIAL>{CcIfElse}              handle_token(this, 'BEGIN_CC_IF_ELSE');
+<INITIAL>{CcEndIf}               { this.popState(); return handle_token(this, 'CLOSE_CC_IF'); }
 
 <CCMNT>\/\*\@                    { this.begin("CCMNT");  return handle_token(this, 'OPEN_CC_COMMENT'); }
 <CCMNT>\@\*\/                    { this.popState();    return handle_token(this, 'CLOSE_CC_COMMENT'); }
 
 <INITIAL,CCON,CCMNT>\@set        { this.begin("CCSET"); return handle_token(this, 'OPEN_CC_SET'); }
-<CCSET>{JS_VAR_NAME}             { this.popState(); return handle_token(this, 'CC_VAR_NAME'); }
+<CCSET>{VariableName}            { this.popState(); return handle_token(this, 'CC_VAR_NAME'); }
 //
 // Predefined Variables
 //
@@ -91,8 +110,8 @@ JS_VAR_NAME          \@[A-Za-z0-9_][A-Za-z0-9_]*
 
 
 <*><<EOF>>                       return 'EOF';
-<*>{WHITESPACE}+                 ;
+<*>{Whitespace}+                 ;
 <*>[\r\n]+                       ;
-<*>{UNKNOWN}                     ;
+<*>{Unknown}                     ;
 
 %%

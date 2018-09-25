@@ -2,7 +2,8 @@ const assert   = require("chai").assert,
       JisonLex = require("jison-lex"),
       fs       = require("fs");
 
-const LEXER_SRCFILE = "src/lib/cstsc/cc.l",
+const /*LEXER_SRCFILE = "src/lib/cstsc/cc.l",*/
+      LEXER_SRCFILE = "src/lib/cstsc/jscript.l",
       LEXER_GRAMMAR = fs.readFileSync(LEXER_SRCFILE, "utf-8");
 
 var lexer;
@@ -45,21 +46,21 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             it("should detect double-quote strings", () => {
                 assert.deepEqual(
                     util.tokens_array(`"hello world"`),
-                    ["OPEN_DQUOTE_STRING", "CLOSE_DQUOTE_STRING", "EOF"]
+                    ["DoubleQuotedStringBegin", "DoubleQuotedStringEnd", "EOF"]
                 );
             });
 
             it("should detect escaped double quotes in double-quoted strings", () => {
                 assert.deepEqual(
                     util.tokens_array(`"hello \\"world!\\""`),
-                    ["OPEN_DQUOTE_STRING", "CLOSE_DQUOTE_STRING", "EOF"]
+                    ["DoubleQuotedStringBegin", "DoubleQuotedStringEnd", "EOF"]
                 );
             });
 
             it("should allow single quotes within double-quoted strings", () => {
                 assert.deepEqual(
                     util.tokens_array(`"Hello, 'world'"`),
-                    ["OPEN_DQUOTE_STRING", "CLOSE_DQUOTE_STRING", "EOF"]
+                    ["DoubleQuotedStringBegin", "DoubleQuotedStringEnd", "EOF"]
                 );
             });
         });
@@ -89,14 +90,14 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
 
     });
 
-    xdescribe("Comment Detection", () => {
+    describe("Comment Detection", () => {
 
         describe("Conditional-compilation comments", () => {
 
             it("should detect a CC comment begin and end block", () => {
                 assert.deepEqual(
                     util.tokens_array(`/*@cc_on CC comment block @*/`),
-                    ["OPEN_CC_COMMENT", "CLOSE_CC_COMMENT", "EOF"]
+                    ["OPEN_CC_COMMENT_CC_ON", "CLOSE_CC_COMMENT", "EOF"]
                 );
             });
         });
@@ -106,14 +107,14 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             it("should detect a single-line comment", () => {
                 assert.deepEqual(
                     util.tokens_array("// hello world"),
-                    ["OPEN_SLINE_COMMENT", "EOF"]
+                    ["SingleLineCommentBegin", "EOF"]
                 );
             });
 
             it("should continue the comment up until the end of the line", () => {
                 assert.deepEqual(
                     util.tokens_array(`// hello world this is a test`),
-                    ["OPEN_SLINE_COMMENT", "EOF"]
+                    ["SingleLineCommentBegin", "EOF"]
                 );
             });
 
@@ -121,10 +122,10 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                 assert.deepEqual(
                     util.tokens_array([`// hello world`, `/* testing */`].join("\n")),
                     [
-                        "OPEN_SLINE_COMMENT",
-                        "CLOSE_SLINE_COMMENT",
-                        "MLINE_COMMENT_BEGIN",
-                        "CLOSE_MLINE_COMMENT",
+                        "SingleLineCommentBegin",
+                        "SingleLineCommentEnd",
+                        "MultiLineCommentBegin",
+                        "MultiLineCommentEnd",
                         "EOF"
                     ]
                 );
@@ -133,30 +134,37 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             it("should ignore the contents of the single line comment", () => {
                 assert.deepEqual(
                     util.tokens_array(`// "test" /* test */`),
-                    ["OPEN_SLINE_COMMENT", "EOF"]
+                    ["SingleLineCommentBegin", "EOF"]
                 );
             });
         });
 
         describe("Multi-line comments", () => {
 
+            it("should ignore all tokens found within the multi-line comment", () => {
+                assert.deepEqual(
+                    util.tokens_array(`/* "hello world" */`),
+                    ["MultiLineCommentBegin", "MultiLineCommentEnd", "EOF"]
+                );
+            });
+
             it("should detect a mutli line comment", () => {
                 assert.deepEqual(
                     util.tokens_array(`/* hello world */`),
-                    ["MLINE_COMMENT_BEGIN", "CLOSE_MLINE_COMMENT", "EOF"]
+                    ["MultiLineCommentBegin", "MultiLineCommentEnd", "EOF"]
                 );
             });
 
             it("should ignore strings and single-line comments inside an mline comment", () => {
                 assert.deepEqual(
                     util.tokens_array(`/* "hello world" // testing 'foobar' */`),
-                    ["MLINE_COMMENT_BEGIN", "CLOSE_MLINE_COMMENT", "EOF"]
+                    ["MultiLineCommentBegin", "MultiLineCommentEnd", "EOF"]
                 );
             });
         });
     });
 
-    describe("Enabling Conditional Compilation (CC)", () => {
+    xdescribe("Enabling Conditional Compilation (CC)", () => {
 
         it("should enable CC", () => {
             assert.deepEqual(
@@ -180,42 +188,63 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         });
 
         it("should enable CC when using a literal CC @if", () => {
+            const code = `@if (true) WScript.Echo("Hello"); @end`;
             assert.deepEqual(
-                util.tokens_array(`@if (true) WScript.Echo("Hello"); @end`),
-                ["BEGIN_CC_IF", "CLOSE_CC_IF", "EOF"]
+                util.tokens_array(code),
+                [
+                    "CCIfStatementBegin",
+                    "CCIfStatementEnd",
+                    "DoubleQuotedStringBegin",
+                    "DoubleQuotedStringEnd",
+                    "CCEndIf",
+                    "EOF"
+                ]
             );
         });
 
         it("should enable CC when using a literal @cc_on and @if", () => {
             assert.deepEqual(
                 util.tokens_array(`@cc_on @if (true) WScript.Echo("Hello"); @end`),
-                ["CC_ON_LITERAL", "BEGIN_CC_IF", "CLOSE_CC_IF", "EOF"]
+                [
+                    "CC_ON_LITERAL",
+                    "CCIfStatementBegin",
+                    "CCIfStatementEnd",
+                    "DoubleQuotedStringBegin",
+                    "DoubleQuotedStringEnd",
+                    "EOF"
+                ]
             );
         });
 
         it("should not notice the /*@if when no preceding @cc_on is detected", () => {
             assert.deepEqual(
                 util.tokens_array(`/*@if (true) WScript.Echo("Hello"); @end @*/`),
-                ["OPEN_MLINE_COMMENT", "CLOSE_MLINE_COMMENT", "EOF"]
+                ["OPEN_MLINE_COMMENT", "MultiLineCommentEnd", "EOF"]
             );
         });
 
-        it("should not notice a /*@set when no preceding @cc_on is detected", () => {
+        xit("should not notice a /*@set when no preceding @cc_on is detected", () => {
             assert.deepEqual(
                 util.tokens_array(`/*@set @foo = 12; @*/`),
-                ["OPEN_MLINE_COMMENT", "CLOSE_MLINE_COMMENT", "EOF"]
+                ["OPEN_MLINE_COMMENT", "MultiLineCommentEnd", "EOF"]
             );
         });
 
-        it("should notice /*@if when a preceding literal @cc_on was detected", () => {
+        xit("should notice /*@if when a preceding literal @cc_on was detected", () => {
             assert.deepEqual(
                 util.tokens_array(`@cc_on /*@if (true) WScript.Echo("Hello") @end @*/`),
-                ["CC_ON_LITERAL", "OPEN_COMMENT_CC_IF", "CLOSE_CC_IF", "CLOSE_CC_COMMENT", "EOF"]
+                [
+                    "CC_ON_LITERAL",
+                    "OPEN_COMMENT_CC_IF",
+                    "CLOSE_CC_IF",
+                    "CLOSE_CC_COMMENT",
+                    "EOF"
+                ]
             );
         });
     });
 
-    describe("Variables", () => {
+    xdescribe("Variables", () => {
 
         describe("@set", () => {
 
@@ -229,21 +258,21 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             it("shouldn't enable @set when it appears within a string", () => {
                 assert.deepEqual(
                     util.tokens_array(`"@set @foo = 12;"`),
-                    ["OPEN_DQUOTE_STRING", "CLOSE_DQUOTE_STRING", "EOF"]
+                    ["DoubleQuotedStringBegin", "DoubleQuotedStringEnd", "EOF"]
                 );
             });
 
             it("shouldn't enable @set when it appears within a multi-line comment", () => {
                 assert.deepEqual(
                     util.tokens_array(`/* @set @foo = 12; */`),
-                    ["OPEN_MLINE_COMMENT", "CLOSE_MLINE_COMMENT", "EOF"]
+                    ["OPEN_MLINE_COMMENT", "MultiLineCommentEnd", "EOF"]
                 );
             });
 
             it("shouldn't enable @set when it appears within a single-line comment", () => {
                 assert.deepEqual(
                     util.tokens_array(`// @set @foo = 12;`),
-                    ["OPEN_SLINE_COMMENT", "EOF"]
+                    ["SingleLineCommentBegin", "EOF"]
                 );
             });
         });
@@ -294,7 +323,7 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                 Object.keys(predef_vars).forEach(v => {
                     assert.deepEqual(
                         util.tokens_array(`/*@ WScript.Echo(${v}) @*/`),
-                        ["OPEN_MLINE_COMMENT", "CLOSE_MLINE_COMMENT", "EOF"]
+                        ["OPEN_MLINE_COMMENT", "MultiLineCommentEnd", "EOF"]
                     );
                 });
             });
@@ -310,14 +339,21 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         });
     });
 
-    describe("Conditionals", () => {
+    xdescribe("Conditionals", () => {
 
         it("should detect @if, @else, and @end", () => {
             assert.deepEqual(
                 util.tokens_array(`@if (true)
                                      WScript.Echo("Hello!");
                                    @end`),
-                ["BEGIN_CC_IF", "TODO", "CLOSE_CC_IF", "EOF"]
+                [
+                    "CCIfStatementBegin",
+                    "CCIfStatementEnd",
+                    "DoubleQuotedStringBegin",
+                    "DoubleQuotedStringEnd",
+                    "CCEndIf",
+                    "EOF"
+                ]
             );
 
             assert.deepEqual(
@@ -326,13 +362,75 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                                    @else
                                      WScript.Echo("World!");
                                    @end`),
-                ["BEGIN_CC_IF", "BEGIN_CC_IF_ELSE", "CLOSE_CC_IF", "EOF"]
+                [
+                    "CCIfStatementBegin",
+                    "CCIfStatementEnd",
+                    "DoubleQuotedStringBegin",
+                    "DoubleQuotedStringEnd",
+                    "CCElse",
+                    "DoubleQuotedStringBegin",
+                    "DoubleQuotedStringEnd",
+                    "CCEndIf",
+                    "EOF"
+                ]
             );
         });
 
-        it("should detect the if EXPR block", () => {
-            // TODO
-            assert.equal(1, 2);
+        it("should detect the parts of a simple if statement", () => {
+            assert.deepEqual(
+                util.tokens_array(`@if (true) WScript.Echo("Hello!"); @end`),
+                ["CCIfStatementBegin", "CCIfStatementEnd", "DoubleQuotedStringBegin", "DoubleQuotedStringEnd", "CCEndIf", "EOF"]
+            );
+        });
+
+        it("should handle an @if with multiple groups", () => {
+            assert.deepEqual(
+                util.tokens_array(`@if ((true) && (false)) WScript.Echo("Hello!"); @end`),
+                ["CCIfStatementBegin", "CCIfStatementEnd", "DoubleQuotedStringBegin", "DoubleQuotedStringEnd", "CCEndIf", "EOF"]
+            );
+        });
+
+        it("should ignore comments in the test part of the @if", () => {
+            assert.deepEqual(
+                util.tokens_array(`@if (/* foo */ true /* bar */) WScript.Echo("Hello!"); @end`),
+                ["CCIfStatementBegin", "CCIfStatementEnd", "DoubleQuotedStringBegin", "DoubleQuotedStringEnd", "CCEndIf", "EOF"]
+            );
         });
     });
 });
+
+
+// TODO:
+//   if(test) / if  (test) are valid, if /*foo*/(...) is not.
+
+
+/*describe("XX", () => {
+    beforeEach(function () {
+        lexer = new JisonLex(LEXER_GRAMMAR);
+    });
+
+    describe("CC Literals", () => {
+        describe("@if", () => {
+            it("should ", () => {
+                assert.deepEqual(
+                    util.tokens_array(`@if (true) WScript.Echo("Hello!"); @end`),
+                    [
+                        "CCIfStatementBegin",
+                        "CCIfStatementEnd",
+                        "CCEndIf",
+                        "EOF"
+                    ]
+                );
+            });
+        });
+    });
+
+    xdescribe("Comments", () => {
+        it("should identify multi-line comments", () => {
+            assert.deepEqual(
+                util.tokens_array(`/* foobar /`),
+                ["MultiLineCommentBegin", "MultiLineCommentEnd", "EOF"]
+            );
+        });
+    });
+ });*/
