@@ -1,20 +1,23 @@
 const JisonLex = require("jison-lex"),
       fs       = require("fs");
 
-const grammar = fs.readFileSync("cc.l", "utf8"),
+const grammar = fs.readFileSync("jscript.l", "utf8"),
       lexer   = new JisonLex(grammar);
 
-lexer.setInput("@cc_on foo");
+lexer.setInput(`"foo" @cc_on`);
+
+// TODO in the morning:
+//
+//  Write the grammar/parser so we can transpile a `@if (...) [expr]
+//  @end` correctly.
 
 var tok = lexer.lex();
 
 while (true) {
-    tok = lexer.lex();
     console.log("TOKEN>", tok);
 
     if (tok === "EOF") {
         break;
     }
-
-    console.log(tok);
-}
+    tok = lexer.lex();
+ }
