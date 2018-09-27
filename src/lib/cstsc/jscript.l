@@ -2,7 +2,19 @@
 
 
 %{
+
 var paren_counter = 0;
+
+function token (state, name) {
+            let obj = {
+            name: name,
+            line: yylineno,
+            text: yytext,
+            len:  yyleng,
+                    loc:  yylloc
+                };
+    return obj;
+}
 %}
 
 Whitespace                 [ \t]
@@ -41,16 +53,17 @@ Ignore                     .
 //
 // CC Literals
 //
-<INITIAL>{CCOn}                        { return "CC_ON"; }
+<INITIAL>{CCOn}                        { return token(this, "CC_ON"); }
 
-<INITIAL>{CCIf}                        { this.begin("CCIF"); paren_counter++; return "CC_IF_OPEN"; }
+<INITIAL>{CCIf}                        { this.begin("CCIF"); paren_counter++; return token(this, "CC_IF_OPEN"); }
 <CCIF>{LParen}                         { paren_counter++; }
-<CCIF>{RParen}                         { if (paren_counter-- === 0) { this.popState(); return "CC_IF_CLOSE"; } }
+<CCIF>{RParen}                         { if (paren_counter-- === 0) { this.popState(); return token(this, "CC_IF_CLOSE"); } }
 
 
-<INITIAL>{CCEndIf}                     { return "CC_ENDIF"; }
-<INITIAL>{BooleanTrue}                 { return "BOOL_TRUE"; }
-<INITIAL>{BooleanFalse}                { return "BOOL_FALSE"; }
+<INITIAL>{CCEndIf}                     { return token(this, "CC_ENDIF"); }
+<INITIAL>{CCElse}                      { return token(this, "CC_ELSE"); }
+<INITIAL>{BooleanTrue}                 { /* Ignore */ }
+<INITIAL>{BooleanFalse}                { /* Ignore */ }
 
 
 //

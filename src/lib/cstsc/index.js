@@ -1,4 +1,5 @@
 const JisonLex = require("jison-lex"),
+      beautify = require("js-beautify"),
       fs       = require("fs");
 
 function find_and_replace (lines_of_code, token) {
@@ -14,33 +15,32 @@ function find_and_replace (lines_of_code, token) {
           loc_last_col  = token.loc.last_column,
           lineno        = token.line;
 
-
-    console.log("[ find / replace ]");
-
-
     let line      = lines_of_code[lineno],
         beginning = line.slice(0, loc_first_col),
         middle    = line.slice(loc_first_col, loc_last_col),
         end       = line.slice(loc_last_col);
 
-    console.log("TOKEN -->", token_name);
-
     switch (token_name) {
-    case "CC_ON_LITERAL":
+    case "CC_ON":
         middle = "";
         break;
 
-    case "BEGIN_CC_IF":
-        middle = "if";
+    case "CC_IF_OPEN":
+        middle = "if (";
         break;
 
-    case "CLOSE_CC_IF":
+    case "CC_IF_CLOSE":
+        middle = ") {";
+        break;
+
+    case "CC_ELSE":
+        middle = "} else {";
+        break;
+
+    case "CC_ENDIF":
         middle = "}";
         break;
     }
-    console.log("BEFORE >", line);
-    console.log("AFTER  >", [beginning, middle, end].join(""));
-    console.log("----");
 
     line = [beginning, middle, end].join("");
     lines_of_code[lineno] = line;
@@ -54,7 +54,7 @@ function transpile (code_in) {
     let tokens = [],
         token;
 
-    const grammar = fs.readFileSync("./cc.l").toString(),
+    const grammar = fs.readFileSync("./jscript.l").toString(),
           lexer   = new JisonLex(grammar);
 
     lexer.setInput(code_in);
@@ -74,6 +74,12 @@ function transpile (code_in) {
     tokens.forEach(token => {
         find_and_replace(lines_of_code, token);
     });
+
+    return beautify(lines_of_code.join("\n"));
 };
 
-transpile(`@cc_on @if (true) WScript.Echo("Hello!"); @end`);
+//let code = transpile(`@cc_on @if (true || "@cc_on" || false) WScript.Echo("Hello!"); @else WScript.Echo("World!"); @end`);
+
+module.exports = {
+    transpile: transpile
+};
