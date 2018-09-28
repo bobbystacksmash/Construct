@@ -54,7 +54,7 @@ function transpile (code_in) {
     let tokens = [],
         token;
 
-    const grammar = fs.readFileSync("./jscript.l").toString(),
+    const grammar = fs.readFileSync(require.resolve("./jscript.l")).toString(),
           lexer   = new JisonLex(grammar);
 
     lexer.setInput(code_in);
@@ -75,7 +75,9 @@ function transpile (code_in) {
         find_and_replace(lines_of_code, token);
     });
 
-    return beautify(lines_of_code.join("\n"));
+    return (lines_of_code.length === 1)
+        ? lines_of_code.pop()
+        : lines_of_code.join("\n");
 };
 
 //let code = transpile(`@cc_on @if (true || "@cc_on" || false) WScript.Echo("Hello!"); @else WScript.Echo("World!"); @end`);

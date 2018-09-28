@@ -1,10 +1,7 @@
-%x MLC CCON CCIF DQS
+%x MLC CCON CCIF DQS SQS
 
 
 %{
-
-var paren_counter = 0;
-
 function token (state, name) {
             let obj = {
             name: name,
@@ -26,6 +23,7 @@ MultiLineCommentEnd        [^@]\*\/
 SingleLineComment          "//".*
 
 DoubleQuote                \"
+SingleQuote                "'"
 
 LParen                     "("
 RParen                     ")"
@@ -47,17 +45,20 @@ Ignore                     .
 // Strings
 //
 <INITIAL>{DoubleQuote}           { this.begin("DQS"); }
-<DQS>[^\\]{DoubleQuote}          { this.popState(); }
-<DQS>{Ignore}                    { /* Ignore */ }
+<DQS>[^\\]{DoubleQuote}          { this.popState();   }
+<DQS>{Ignore}                    { /* Ignore */       }
+
+<INITIAL>{SingleQuote}           { this.begin("SQS"); }
+<SQS>[^\\]{SingleQuote}          { this.popState();   }
+<SQS>{Ignore}                    { /* Ignore */       }
 
 //
 // CC Literals
 //
-<INITIAL>{CCOn}                        { return token(this, "CC_ON"); }
-
-<INITIAL>{CCIf}                        { this.begin("CCIF"); paren_counter++; return token(this, "CC_IF_OPEN"); }
-<CCIF>{LParen}                         { paren_counter++; }
-<CCIF>{RParen}                         { if (paren_counter-- === 0) { this.popState(); return token(this, "CC_IF_CLOSE"); } }
+<INITIAL>{CCOn}                  { return token(this, "CC_ON"); }
+<INITIAL>{CCIf}                  { this.begin("CCIF"); yy.depth = 1; return token(this, "CC_IF_OPEN"); }
+<CCIF>{LParen}                   { yy.depth++; }
+<CCIF>{RParen}                   { yy.depth--; if (yy.depth === 0) { this.popState(); return token(this, "CC_IF_CLOSE"); } }
 
 
 <INITIAL>{CCEndIf}                     { return token(this, "CC_ENDIF"); }
@@ -70,7 +71,7 @@ Ignore                     .
 // Comments
 //
 <INITIAL,CCON>{SingleLineComment}           { /* Ignore single-line comments */ }
-<INITIAL,CCON>{MultiLineCommentBegin}       { this.begin("MLC"); return "MLINEC"}
+<INITIAL,CCON>{MultiLineCommentBegin}       { this.begin("MLC"); }
 <MLC>{MultiLineCommentEnd}             { this.popState();   }
 <MLC>{Ignore}+                         { /* Ignore */ }
 
