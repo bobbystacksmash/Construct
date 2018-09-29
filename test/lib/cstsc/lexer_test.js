@@ -57,7 +57,7 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
 
     describe("Conditional Compilation", () => {
 
-        xdescribe("Enabling CC", () => {
+        describe("Enabling CC", () => {
             it("should detect a literal '@cc_on' statement.", () => {
                 assert.deepEqual(
                     util.tokens(`@cc_on`), ["CC_ON", "EOF"]
@@ -93,7 +93,7 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                 const code = `@if ((true) || (false || (true || false))) WScript.Echo("Hello!"); @end`;
                 //                                                     ^
                 //                                column #41           |
-                //column ----------------------------------------------
+                //column ----------------------------------------------+
 
                 assert.deepEqual(
                     util.tokens(code),
@@ -105,14 +105,14 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                 assert.equal(cc_if_close_loc.last_column, 42);
             });
 
-            xit("should find the tokens for an @if statement", () => {
+            it("should find the tokens for an @if statement", () => {
                 assert.deepEqual(
                     util.tokens(`@if (true) WScript.Echo("Hello!"); @end`),
                     ["CC_IF_OPEN", "CC_IF_CLOSE", "CC_ENDIF", "EOF"]
                 );
             });
 
-            xit("should find the tokens for an @if/@else statement", () => {
+            it("should find the tokens for an @if/@else statement", () => {
                 assert.deepEqual(
                     util.tokens(`
                       @if (true)

@@ -45,8 +45,33 @@ describe("Construct's Source-To-Source Compiler", () => {
         it("should handle complex paren-groups within '@if (<--HERE>--)'", () => {
             assert.equal(
                 cstsc.transpile(`@if ((true || false) || ((2))) WScript.Echo("Hello!"); @end`),
-                ""
+                cstsc.transpile(`if ((true || false) || ((2))) { WScript.Echo("Hello!"); }`),
             );
         });
+
+        it("should ignore parens within double-quoted strings inside the @if-test", () => {
+            assert.equal(
+                cstsc.transpile(`@if ("()()()") WScript.Echo("Hello!"); @end`),
+                `if ("()()()") { WScript.Echo("Hello!"); }`
+            );
+        });
+
+        it("should ignore parens within single-quoted strings inside the @if-test", () => {
+            assert.equal(
+                cstsc.transpile(`@if (/* () () */ true) WScript.Echo("Hello!"); @end`),
+                cstsc.transpile(`if (/* () () */ true) { WScript.Echo("Hello!"); }`),
+            );
+        });
+
+        it("should ignore parens inside multi-line comments within the @if-test", () => {
+            assert.equal(
+                cstsc.transpile(`@if (/* () () */ true) WScript.Echo("Hello!"); @end`),
+                `if (/* () () */ true) { WScript.Echo("Hello!"); }`,
+            );
+        });
+    });
+
+    describe("Handling /*@ ... @*/ comments", () => {
+
     });
 });
