@@ -84,7 +84,25 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                 assert.deepEqual(util.tokens(`/* @cc_on */`), ["EOF"]);
             });
 
-            // TODO: add comment-based CCOn stuff.
+            it("should detect `/*@if (...` comments", () => {
+                assert.deepEqual(
+                    util.tokens(`@cc_on /*@if (true) WScript.Echo("Hello!"); @*/`),
+                    ["CC_ON", "CC_CMNT_IF_OPEN", "CC_IF_CLOSE", "EOF"]
+                );
+            });
+
+            describe("Enabling Conditional Compilation", () => {
+                //
+                // For details, see `Enabling Conditional Compilation':
+                //   https://github.com/bobbystacksmash/Construct/wiki/Construct-Source-To-Source-Compiler
+                //
+                it("should detect an '/*@if' only AFTER CC is enabled", () => {
+                    assert.deepEqual(
+                        util.tokens(`/*@cc_on @*/`),
+                        ["CC_CMNT_CC_ON", "CC_CMNT_END", "EOF"]
+                    );
+                });
+            });
         });
 
         describe("Branching with @if, @else, and @end", () => {

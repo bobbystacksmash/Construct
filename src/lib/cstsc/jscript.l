@@ -1,4 +1,4 @@
-%x MLC CCON CCIF DQS SQS
+%x MLC CCON CCCMT CCIF DQS SQS
 
 
 %{
@@ -31,8 +31,10 @@ RParen                     ")"
 BooleanTrue                "true"
 BooleanFalse               "false"
 
-CCCommentBegin             \/\*\@
-CCCommentEnd               \@\*\/
+CCCommentBegin             "/*@"
+CCCommentEnd               \s*"@*/"
+CCCommentBeginIf           \/\*"@if"\s*\(
+CCCommentBeginCCOn         \/\*"@cc_on"\s
 CCOn                       "@cc_on"
 CCIf                       "@if"\s*\(
 CCElse                     "@else"
@@ -53,18 +55,23 @@ Ignore                     .
 <SQS>{Ignore}                    { /* Ignore */       }
 
 //
-// CC Literals
+// CC
 //
-<INITIAL>{CCOn}                  { return token(this, "CC_ON"); }
-<INITIAL>{CCIf}                  { this.begin("CCIF"); yy.depth = 1; return token(this, "CC_IF_OPEN"); }
-<CCIF>{LParen}                   { yy.depth++; }
-<CCIF>{RParen}                   { yy.depth--; if (yy.depth === 0) { this.popState(); return token(this, "CC_IF_CLOSE"); } }
+<INITIAL>{CCOn}                    { this.begin("CCON"); return token(this, "CC_ON"); }
+<INITIAL,CCON>{CCCommentBeginCCOn} { this.begin("CCON"); this.begin("CCCMT"); return token(this, "CC_CMNT_CC_ON"); }
+<INITIAL>{CCIf}                    { this.begin("CCON"); this.begin("CCIF"); yy.depth = 1; return token(this, "CC_IF_OPEN"); }
+<CCON>{CCCommentBeginIf}           { this.begin("CCIF"); yy.depth = 1; return token(this, "CC_CMNT_IF_OPEN"); }
+<CCCMT>{CCCommentEnd}              { this.popState(); return token(this, "CC_CMNT_END"); }
 
 
-<INITIAL>{CCEndIf}                     { return token(this, "CC_ENDIF"); }
-<INITIAL>{CCElse}                      { return token(this, "CC_ELSE"); }
-<INITIAL>{BooleanTrue}                 { /* Ignore */ }
-<INITIAL>{BooleanFalse}                { /* Ignore */ }
+<CCIF>{LParen}                     { yy.depth++; }
+<CCIF>{RParen}                     { yy.depth--; if (yy.depth === 0) { this.popState(); return token(this, "CC_IF_CLOSE"); } }
+
+
+<CCON>{CCEndIf}                    { return token(this, "CC_ENDIF"); }
+<CCON>{CCElse}                     { return token(this, "CC_ELSE"); }
+<INITIAL>{BooleanTrue}             { /* Ignore */ }
+<INITIAL>{BooleanFalse}          { /* Ignore */ }
 
 
 //
