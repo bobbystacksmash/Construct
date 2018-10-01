@@ -2,7 +2,23 @@ const JisonLex = require("jison-lex"),
       beautify = require("js-beautify"),
       fs       = require("fs");
 
-function find_and_replace (lines_of_code, token) {
+function find_and_replace (lines_of_code, token, options) {
+
+    options = options || {};
+
+    const predef_vars_defaults = {
+        "CC_VAR_WIN32": true,
+        "CC_VAR_WIN16": NaN,
+        "CC_VAR_MAC": NaN,
+        "CC_VAR_ALPHA": NaN,
+        "CC_VAR_X86": true,
+        "CC_VAR_680": NaN,
+        "CC_VAR_PPC": NaN,
+        "CC_VAR_JSCRIPT": true,
+        "CC_VAR_JSCRIPT_BUILD": "19130",
+        "CC_VAR_JSCRIPT_VERSION": "5.8"
+
+    };
 
     switch (token.name) {
     case "OPEN_DQUOTE_STRING":
@@ -43,6 +59,19 @@ function find_and_replace (lines_of_code, token) {
 
     case "CC_ELSE":
         middle = "} else {";
+        break;
+
+    case "CC_VAR_WIN32":
+    case "CC_VAR_WIN16":
+    case "CC_VAR_MAC":
+    case "CC_VAR_ALPHA":
+    case "CC_VAR_X86":
+    case "CC_VAR_680":
+    case "CC_VAR_PPC":
+    case "CC_VAR_JSCRIPT":
+    case "CC_VAR_JSCRIPT_BUILD":
+    case "CC_VAR_JSCRIPT_VERSION":
+        middle = predef_vars_defaults[token_name];
         break;
 
     case "CC_ENDIF":
