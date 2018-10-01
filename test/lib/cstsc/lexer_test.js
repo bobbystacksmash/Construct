@@ -112,9 +112,24 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                 );
             });
 
+            it("should detect a /*@cc_on comment", () => {
+                assert.deepEqual(
+                    util.tokens(`/*@cc_on @*/`),
+                    ["CC_CMNT_CC_ON", "CC_CMNT_END", "EOF"]
+                );
+            });
+
+            it("should correctly detect an @if inside a CC comment", () => {
+                const code = `/*@cc_on @if (true) WScript.Echo("Hello!"); @end @*/`;
+                assert.deepEqual(
+                    util.tokens(code),
+                    ["CC_CMNT_CC_ON", "CC_IF_OPEN", "CC_IF_CLOSE", "CC_ENDIF", "CC_CMNT_END", "EOF"]
+                );
+            });
+
         });
 
-        describe("Branching with @if, @else, and @end", () => {
+        describe("Branching with @if, @elif, @else, and @end", () => {
 
             it("should paren-match correctly within an @if statement", () => {
                 const code = `@if ((true) || (false || (true || false))) WScript.Echo("Hello!"); @end`;
@@ -160,6 +175,13 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                 assert.deepEqual(
                     util.tokens(code),
                     ["CC_ON", "CC_CMNT_IF_OPEN", "CC_IF_CLOSE", "CC_ENDIF", "CC_CMNT_END", "EOF" ]
+                );
+            });
+
+            it("should handle an @if, @elif, and @end tokens", () => {
+                assert.deepEqual(
+                    util.tokens(`@if (true) Wscript.Echo("Hi!"); @elif (true) WScript.Echo("WRLD!"); @end`),
+                    ["CC_IF_OPEN", "CC_IF_CLOSE", "CC_ELIF_OPEN", "CC_ELIF_CLOSE", "CC_ENDIF", "EOF"]
                 );
             });
         });

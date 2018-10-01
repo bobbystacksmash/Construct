@@ -68,6 +68,13 @@ describe("Construct's Source-To-Source Compiler", () => {
                 `if (/* () () */ true) { WScript.Echo("Hello!"); }`,
             );
         });
+
+        it("should handle @if, @elif, @else, and @end tags in one conditional", () => {
+            assert.equal(
+                cstsc.transpile(`@if (true) return 1 @elif (true) return 2 @else return 3 @end`),
+                `if (true) { return 1 } else if (true) { return 2 } else { return 3 }`
+            );
+        });
     });
 
     describe("Handling /*@ ... @*/ comments", () => {
