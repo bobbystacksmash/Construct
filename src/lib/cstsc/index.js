@@ -22,6 +22,7 @@ function find_and_replace (lines_of_code, token) {
 
     switch (token_name) {
     case "CC_ON":
+    case "CC_CMNT_CC_ON":
     case "CC_CMNT_END":
         middle = "";
         break;
@@ -31,7 +32,12 @@ function find_and_replace (lines_of_code, token) {
         middle = "if (";
         break;
 
+    case "CC_ELIF_OPEN":
+        middle = "} else if (";
+        break;
+
     case "CC_IF_CLOSE":
+    case "CC_ELIF_CLOSE":
         middle = ") {";
         break;
 
@@ -81,8 +87,6 @@ function transpile (code_in) {
         ? lines_of_code.pop()
         : lines_of_code.join("\n");
 };
-
-//let code = transpile(`@cc_on @if (true || "@cc_on" || false) WScript.Echo("Hello!"); @else WScript.Echo("World!"); @end`);
 
 module.exports = {
     transpile: transpile

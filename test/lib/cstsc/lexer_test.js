@@ -186,4 +186,62 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             });
         });
     });
+
+    describe("CC Variables", () => {
+        describe("Predefined", () => {
+
+            let vars = {
+                "@_win32"           : "CC_VAR_WIN32",
+                "@_win16"           : "CC_VAR_WIN16",
+                "@_mac"             : "CC_VAR_MAC",
+                "@_alpha"           : "CC_VAR_ALPHA",
+                "@_x86"             : "CC_VAR_X86",
+                "@_mc680x0"         : "CC_VAR_680",
+                "@_PowerPC"         : "CC_VAR_PPC",
+                "@_jscript"         : "CC_VAR_JSCRIPT",
+                "@_jscript_build"   : "CC_VAR_JSCRIPT_BUILD",
+                "@_jscript_version" : "CC_VAR_JSCRIPT_VERSION"
+            };
+
+            it("should detect all predefined variables", () => {
+
+                // @if ({VAR})...
+                Object.keys(vars).forEach(v => assert.deepEqual(
+                    util.tokens(`@if (${v}) WScript.Echo("Hi!"); @end`),
+                    ["CC_IF_OPEN", vars[v], "CC_IF_CLOSE", "CC_ENDIF", "EOF"]
+                ));
+
+                // @elif ({VAR})...
+                Object.keys(vars).forEach(v => assert.deepEqual(
+                    util.tokens(`@if (true) WScript.Echo("Hi!"); @elif (${v}) WScript.Echo("WRLD!"); @end`),
+                    ["CC_IF_OPEN", "CC_IF_CLOSE", "CC_ELIF_OPEN", vars[v], "CC_ELIF_CLOSE", "CC_ENDIF", "EOF"]
+                ));
+
+                // literals
+                Object.keys(vars).forEach(v => assert.deepEqual(
+                    util.tokens(`${v}`), [vars[v], "EOF"]
+                ));
+            });
+
+            it("should ignore all predefined variables in comments", () => {
+                Object.keys(vars).forEach(v => assert.deepEqual(
+                    util.tokens(`/* ${v} */`), ["EOF"]
+                ));
+
+                Object.keys(vars).forEach(v => assert.deepEqual(
+                    util.tokens(`// ${v}`), ["EOF"]
+                ));
+            });
+
+            it("should ignore all predefined variables in strings", () => {
+                Object.keys(vars).forEach(v => assert.deepEqual(
+                    util.tokens(`"${v}"`), ["EOF"]
+                ));
+
+                Object.keys(vars).forEach(v => assert.deepEqual(
+                    util.tokens(`'${v}'`), ["EOF"]
+                ));
+            });
+        });
+    });
 });

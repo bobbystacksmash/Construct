@@ -31,6 +31,17 @@ RParen                     ")"
 BooleanTrue                "true"
 BooleanFalse               "false"
 
+VarWin32                   "@_win32"
+VarWin16                   "@_win16"
+VarMac                     "@_mac"
+VarAlpha                   "@_alpha"
+VarX86                     "@_x86"
+Var680                     "@_mc680x0"
+VarPPC                     "@_PowerPC"
+VarJScript                 "@_jscript"
+VarJScriptBuild            "@_jscript_build"
+VarJScriptVersion          "@_jscript_version"
+
 CCCommentBegin             "/*@"
 CCCommentEnd               "@*/"
 CCCommentBeginIf           \/\*"@if"\s*\(
@@ -75,7 +86,21 @@ Ignore                     .
 <CCON>{CCEndIf}                    { return token(this, "CC_ENDIF"); }
 <CCON>{CCElse}                     { return token(this, "CC_ELSE"); }
 <INITIAL>{BooleanTrue}             { /* Ignore */ }
-<INITIAL>{BooleanFalse}          { /* Ignore */ }
+<INITIAL>{BooleanFalse}            { /* Ignore */ }
+
+//
+// Variables
+//
+<INITIAL,CCON,CCIF,CCELIF>{VarWin32}                   { return token(this, "CC_VAR_WIN32");           }
+<INITIAL,CCON,CCIF,CCELIF>{VarWin16}                   { return token(this, "CC_VAR_WIN16");           }
+<INITIAL,CCON,CCIF,CCELIF>{VarMac}                     { return token(this, "CC_VAR_MAC");             }
+<INITIAL,CCON,CCIF,CCELIF>{VarAlpha}                   { return token(this, "CC_VAR_ALPHA");           }
+<INITIAL,CCON,CCIF,CCELIF>{VarX86}                     { return token(this, "CC_VAR_X86");             }
+<INITIAL,CCON,CCIF,CCELIF>{Var680}                     { return token(this, "CC_VAR_680");             }
+<INITIAL,CCON,CCIF,CCELIF>{VarPPC}                     { return token(this, "CC_VAR_PPC");             }
+<INITIAL,CCON,CCIF,CCELIF>{VarJScript}                 { return token(this, "CC_VAR_JSCRIPT");         }
+<INITIAL,CCON,CCIF,CCELIF>{VarJScriptBuild}            { return token(this, "CC_VAR_JSCRIPT_BUILD");   }
+<INITIAL,CCON,CCIF,CCELIF>{VarJScriptVersion}          { return token(this, "CC_VAR_JSCRIPT_VERSION"); }
 
 
 //
