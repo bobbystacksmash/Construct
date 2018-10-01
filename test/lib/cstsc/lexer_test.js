@@ -56,8 +56,12 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
     });
 
     describe("Conditional Compilation", () => {
+        //
+        // For details, see `Enabling Conditional Compilation':
+        //   https://github.com/bobbystacksmash/Construct/wiki/Construct-Source-To-Source-Compiler
+        //
+        describe("Enabling Conditional Compilation", () => {
 
-        describe("Enabling CC", () => {
             it("should detect a literal '@cc_on' statement.", () => {
                 assert.deepEqual(
                     util.tokens(`@cc_on`), ["CC_ON", "EOF"]
@@ -86,32 +90,34 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
 
             it("should detect `/*@if (...` comments", () => {
                 assert.deepEqual(
-                    util.tokens(`@cc_on /*@if (true) WScript.Echo("Hello!"); @*/`),
-                    ["CC_ON", "CC_CMNT_IF_OPEN", "CC_IF_CLOSE", "EOF"]
+                    util.tokens(`@cc_on /*@if (true) WScript.Echo("Hello!"); @end @*/`),
+                    ["CC_ON", "CC_CMNT_IF_OPEN", "CC_IF_CLOSE", "CC_ENDIF", "CC_CMNT_END", "EOF"]
                 );
             });
 
-            describe("Enabling Conditional Compilation", () => {
-                //
-                // For details, see `Enabling Conditional Compilation':
-                //   https://github.com/bobbystacksmash/Construct/wiki/Construct-Source-To-Source-Compiler
-                //
-                it("should detect an '/*@if' only AFTER CC is enabled", () => {
-                    assert.deepEqual(
-                        util.tokens(`/*@cc_on @*/`),
-                        ["CC_CMNT_CC_ON", "CC_CMNT_END", "EOF"]
-                    );
-                });
+            it("should detect an '/*@if' only AFTER CC is enabled", () => {
+                assert.deepEqual(
+                    util.tokens(`/*@cc_on @*/`),
+                    ["CC_CMNT_CC_ON", "CC_CMNT_END", "EOF"]
+                );
             });
+        });
+
+        describe("CC Comments", () => {
+
+            it("should detect beginning and ending CC comments", () => {
+                assert.deepEqual(
+                    util.tokens(`@cc_on /*@ foo bar @*/`),
+                    ["CC_ON", "CC_CMNT_END", "EOF"]
+                );
+            });
+
         });
 
         describe("Branching with @if, @else, and @end", () => {
 
             it("should paren-match correctly within an @if statement", () => {
                 const code = `@if ((true) || (false || (true || false))) WScript.Echo("Hello!"); @end`;
-                //                                                     ^
-                //                                column #41           |
-                //column ----------------------------------------------+
 
                 assert.deepEqual(
                     util.tokens(code),
@@ -139,6 +145,21 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                         WScript.Echo("world");
                       @end`),
                     ["CC_IF_OPEN", "CC_IF_CLOSE", "CC_ELSE", "CC_ENDIF", "EOF"]
+                );
+            });
+
+            it("should detect cc_on when used inside a CC comment", () => {
+                assert.deepEqual(
+                    util.tokens(`/*@cc_on @*/`),
+                    ["CC_CMNT_CC_ON", "CC_CMNT_END", "EOF"]
+                );
+            });
+
+            it("should detect beginning and ending CC comments whe CC is enabled", () => {
+                const code = `@cc_on /*@if (true) Wscript.Echo("Hello!"); @end @*/`;
+                assert.deepEqual(
+                    util.tokens(code),
+                    ["CC_ON", "CC_CMNT_IF_OPEN", "CC_IF_CLOSE", "CC_ENDIF", "CC_CMNT_END", "EOF" ]
                 );
             });
         });

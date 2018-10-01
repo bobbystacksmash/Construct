@@ -2,7 +2,6 @@
 const assert = require("chai").assert,
       cstsc  = require("../../../src/lib/cstsc");
 
-
 describe("Construct's Source-To-Source Compiler", () => {
 
     describe("Removing '@cc_on'", () => {
@@ -72,6 +71,19 @@ describe("Construct's Source-To-Source Compiler", () => {
     });
 
     describe("Handling /*@ ... @*/ comments", () => {
-        // TODO
+
+        it("should remove surrounding CC comments from an @if", () => {
+            const code = `@cc_on /*@if (true) WScript.Echo("Hello!"); @end @*/`,
+                  trans_code = cstsc.transpile(code).replace(/^\s*|\s*$/g, "");
+            assert.equal(trans_code, `if (true) { WScript.Echo("Hello!"); }`);
+        });
+
+        it("should handle a '/*@cc_on ...' opening with an @if", () => {
+            const code = `/*@cc_on @if (true) WScript.Echo("Hello!"); @end @*/`;
+            assert.equal(
+                cstsc.transpile(code).replace(/^\s*|\s*$/g, ""),
+                `if (true) { WScript.Echo("Hello!"); }`
+            );
+        });
     });
 });

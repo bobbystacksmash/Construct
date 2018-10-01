@@ -32,7 +32,7 @@ BooleanTrue                "true"
 BooleanFalse               "false"
 
 CCCommentBegin             "/*@"
-CCCommentEnd               \s*"@*/"
+CCCommentEnd               "@*/"
 CCCommentBeginIf           \/\*"@if"\s*\(
 CCCommentBeginCCOn         \/\*"@cc_on"\s
 CCOn                       "@cc_on"
@@ -59,9 +59,9 @@ Ignore                     .
 //
 <INITIAL>{CCOn}                    { this.begin("CCON"); return token(this, "CC_ON"); }
 <INITIAL,CCON>{CCCommentBeginCCOn} { this.begin("CCON"); this.begin("CCCMT"); return token(this, "CC_CMNT_CC_ON"); }
+<CCON,CCCMT>{CCCommentEnd}         { this.popState(); return token(this, "CC_CMNT_END"); }
 <INITIAL>{CCIf}                    { this.begin("CCON"); this.begin("CCIF"); yy.depth = 1; return token(this, "CC_IF_OPEN"); }
 <CCON>{CCCommentBeginIf}           { this.begin("CCIF"); yy.depth = 1; return token(this, "CC_CMNT_IF_OPEN"); }
-<CCCMT>{CCCommentEnd}              { this.popState(); return token(this, "CC_CMNT_END"); }
 
 
 <CCIF>{LParen}                     { yy.depth++; }

@@ -22,9 +22,11 @@ function find_and_replace (lines_of_code, token) {
 
     switch (token_name) {
     case "CC_ON":
+    case "CC_CMNT_END":
         middle = "";
         break;
 
+    case "CC_CMNT_IF_OPEN":
     case "CC_IF_OPEN":
         middle = "if (";
         break;
