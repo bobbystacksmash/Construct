@@ -7,6 +7,7 @@ function find_and_replace (lines_of_code, token, options) {
     options = options || {};
 
     const predef_vars_defaults = {
+        "CC_VAR_WIN64": true,
         "CC_VAR_WIN32": true,
         "CC_VAR_WIN16": NaN,
         "CC_VAR_MAC": NaN,
@@ -61,6 +62,7 @@ function find_and_replace (lines_of_code, token, options) {
         middle = "} else {";
         break;
 
+    case "CC_VAR_WIN64":
     case "CC_VAR_WIN32":
     case "CC_VAR_WIN16":
     case "CC_VAR_MAC":

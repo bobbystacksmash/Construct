@@ -108,7 +108,7 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             it("should detect beginning and ending CC comments", () => {
                 assert.deepEqual(
                     util.tokens(`@cc_on /*@ foo bar @*/`),
-                    ["CC_ON", "CC_CMNT_END", "EOF"]
+                    ["CC_ON", "CC_CMNT_OPEN", "CC_CMNT_END", "EOF"]
                 );
             });
 
@@ -127,6 +127,27 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                 );
             });
 
+            it("should correctly match when mixed with standard multi-line comments", () => {
+                const code = `/*@cc_on /* A */ @*//* B */`;
+                assert.deepEqual(
+                    util.tokens(code),
+                    ["CC_CMNT_CC_ON", "CC_CMNT_END", "EOF"]
+                );
+            });
+
+            it("should correctly identify CC comments", () => {
+                assert.deepEqual(
+                    util.tokens(`@cc_on /*@ @_win64 @*//* G */ @_jscript`),
+                    [
+                        "CC_ON",
+                        "CC_CMNT_OPEN",
+                        "CC_VAR_WIN64",
+                        "CC_CMNT_END",
+                        "CC_VAR_JSCRIPT",
+                        "EOF"
+                    ]
+                );
+            });
         });
 
         describe("Branching with @if, @elif, @else, and @end", () => {
@@ -182,6 +203,21 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                 assert.deepEqual(
                     util.tokens(`@if (true) Wscript.Echo("Hi!"); @elif (true) WScript.Echo("WRLD!"); @end`),
                     ["CC_IF_OPEN", "CC_IF_CLOSE", "CC_ELIF_OPEN", "CC_ELIF_CLOSE", "CC_ENDIF", "EOF"]
+                );
+            });
+
+            it("should correctly handle comments just after the @if-test group", () => {
+                assert.deepEqual(
+                    util.tokens(`@if (@_win32 || @_win64)/* B  */`),
+                    ["CC_IF_OPEN", "CC_VAR_WIN32", "CC_VAR_WIN64", "CC_IF_CLOSE", "EOF"]
+                );
+            });
+
+            it("should detect a closing CC comment when mixed with multi-line comments", () => {
+                const code = `/*@cc_on /* A */ @if (true)/* B */x = true; @*//* G */`;
+                assert.deepEqual(
+                    util.tokens(code),
+                    ["CC_CMNT_CC_ON", "CC_IF_OPEN", "CC_IF_CLOSE", "CC_CMNT_END", "EOF"]
                 );
             });
         });

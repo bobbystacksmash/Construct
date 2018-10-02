@@ -75,6 +75,13 @@ describe("Construct's Source-To-Source Compiler", () => {
                 `if (true) { return 1 } else if (true) { return 2 } else { return 3 }`
             );
         });
+
+        it("should correctly handle comments just after the @if-test group", () => {
+            assert.equal(
+                cstsc.transpile(`@if (@_win32 || @_win64)/* B  */`),
+                `if (true || true) {/* B  */`
+            );
+        });
     });
 
     describe("Handling /*@ ... @*/ comments", () => {
@@ -90,6 +97,14 @@ describe("Construct's Source-To-Source Compiler", () => {
             assert.equal(
                 cstsc.transpile(code).replace(/^\s*|\s*$/g, ""),
                 `if (true) { WScript.Echo("Hello!"); }`
+            );
+        });
+
+        it("should transpile mixed comments and not become confused with '@*//* ... */'", () => {
+            const code = `/*@cc_on /* A */ @if (@_win32)/* B */x = true; @*//* G */`;
+            assert.equal(
+                cstsc.transpile(code),
+                ` /* A */ if (true) {/* B */x = true; /* G */`
             );
         });
     });
