@@ -3,13 +3,15 @@
 
 %{
 function token (state, name) {
-            let obj = {
-            name: name,
-            line: yylineno,
-            text: yytext,
-            len:  yyleng,
-                    loc:  yylloc
-                };
+    let obj = {
+        name  : name,
+        match : state.match,
+        line  : yylineno,
+        text  : yytext,
+        len   : yyleng,
+        loc   : yylloc
+    };
+
     return obj;
 }
 %}
