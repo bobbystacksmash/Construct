@@ -1,4 +1,4 @@
-%x MLC CCON CCCMT CCIF CCELIF DQS SQS
+%x MLC CCON CCCMT CCIF CCELIF DQS SQS CCSET
 
 
 %{
@@ -42,6 +42,8 @@ VarPPC                     "@_PowerPC"
 VarJScript                 "@_jscript"
 VarJScriptBuild            "@_jscript_build"
 VarJScriptVersion          "@_jscript_version"
+VarUserDefined             \@[_A-Za-z][_0-9A-Za-z]*
+CCSet                      "@set"
 
 CCCommentBegin             "/*@"
 CCCommentEnd               "@*/"
@@ -93,6 +95,8 @@ Ignore                     .
 //
 // Variables
 //
+<INITIAL,CCCMT,CCON>{CCSet}                                  { this.begin("CCSET"); return token(this, "CC_SET"); }
+<CCSET>{VarUserDefined}                                      { return token(this, "CC_VAR_USERDEF");         }
 <INITIAL,CCCMT,CCON,CCIF,CCELIF>{VarWin64}                   { return token(this, "CC_VAR_WIN64");           }
 <INITIAL,CCCMT,CCON,CCIF,CCELIF>{VarWin32}                   { return token(this, "CC_VAR_WIN32");           }
 <INITIAL,CCCMT,CCON,CCIF,CCELIF>{VarWin16}                   { return token(this, "CC_VAR_WIN16");           }

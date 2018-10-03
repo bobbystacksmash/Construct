@@ -279,5 +279,14 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                 ));
             });
         });
+
+        describe("User Defined", () => {
+            it("should detect a user defined variable", () => {
+                assert.deepEqual(
+                    util.tokens(`@cc_on @set @foo = "Hi!"`),
+                    ["CC_ON", "CC_SET", "CC_VAR_USERDEF", "EOF"]
+                );
+            });
+        });
     });
 });
