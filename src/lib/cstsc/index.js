@@ -28,6 +28,7 @@ function find_and_replace (lines_of_code, token, options) {
     }
 
     const token_name    = token.name,
+          matched       = token.match,
           loc_first_col = token.loc.first_column,
           loc_last_col  = token.loc.last_column,
           lineno        = token.line;
@@ -42,6 +43,16 @@ function find_and_replace (lines_of_code, token, options) {
     case "CC_CMNT_CC_ON":
     case "CC_CMNT_END":
         middle = "";
+        break;
+
+    case "CC_SET":
+        middle = "var";
+        break;
+
+    case "CC_VAR_USERDEF":
+        // TODO: will there be an issue with semi-colon insertion?
+        let identifier = matched.replace(/^@/g, "");
+        middle = `CC_USERDEF_VAR_${identifier}`;
         break;
 
     case "CC_CMNT_IF_OPEN":

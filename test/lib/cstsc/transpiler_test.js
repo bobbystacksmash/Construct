@@ -27,6 +27,19 @@ describe("Construct's Source-To-Source Compiler", () => {
         });
     });
 
+    describe("Transpiling @set statements", () => {
+        it("should transpile a @set in to a var statement", () => {
+            assert.equal(cstsc.transpile(`@set @foo = "Hi!";`), `var CC_USERDEF_VAR_foo = "Hi!";`);
+        });
+
+        it("should transpile @set surrounded with multi-line comments", () => {
+            assert.equal(
+                cstsc.transpile(`@set /* A */ @bar /* B */ = /* C */"Hi!"`),
+                `var /* A */ CC_USERDEF_VAR_bar /* B */ = /* C */"Hi!"`
+            );
+        });
+    });
+
     describe("Transpiling @if statements", () => {
 
         it("should ignore an existing JS if", () => {

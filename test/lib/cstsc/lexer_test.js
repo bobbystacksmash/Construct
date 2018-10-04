@@ -280,11 +280,31 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             });
         });
 
-        describe("User Defined", () => {
-            it("should detect a user defined variable", () => {
+        describe("User Defined (@set)", () => {
+            it("should detect setting a user defined variable", () => {
                 assert.deepEqual(
                     util.tokens(`@cc_on @set @foo = "Hi!"`),
                     ["CC_ON", "CC_SET", "CC_VAR_USERDEF", "EOF"]
+                );
+
+                // Extra spaces
+                assert.deepEqual(
+                    util.tokens(`@cc_on @set     @foo      = "Hi!"`),
+                    ["CC_ON", "CC_SET", "CC_VAR_USERDEF", "EOF"]
+                );
+            });
+
+            it("should detect user defined vars which begin with an underscore", () => {
+                assert.deepEqual(
+                    util.tokens(`@cc_on @set @_foo = "Hi!"`),
+                    ["CC_ON", "CC_SET", "CC_VAR_USERDEF", "EOF"]
+                );
+            });
+
+            it("should NOT detect user defined vars which begin with a number", () => {
+                assert.deepEqual(
+                    util.tokens(`@cc_on @set @12_foo = "Hi!"`),
+                    ["CC_ON", "CC_SET", "EOF"]
                 );
             });
         });

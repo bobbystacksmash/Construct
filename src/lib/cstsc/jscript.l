@@ -44,7 +44,7 @@ VarPPC                     "@_PowerPC"
 VarJScript                 "@_jscript"
 VarJScriptBuild            "@_jscript_build"
 VarJScriptVersion          "@_jscript_version"
-VarUserDefined             \@[_A-Za-z][_0-9A-Za-z]*
+VarUserDefined             "@"[_A-Za-z][_0-9A-Za-z]*
 CCSet                      "@set"
 
 CCCommentBegin             "/*@"
