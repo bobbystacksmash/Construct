@@ -6,6 +6,7 @@
     "scripts": {
         "test": "grunt",
         "testlex": "node_modules/.bin/mocha --watch --recursive --reporter spec ./test/lib/cstsc/lexer_test.js",
+        "testtp":  "node_modules/.bin/mocha --watch --recursive --reporter spec ./test/lib/cstsc/transpiler_test.js",
         "code": "node src/index.js",
         "debug": "node --inspect --inspect-brk src/index.js "
     },
