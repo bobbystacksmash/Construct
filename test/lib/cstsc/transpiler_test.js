@@ -38,6 +38,27 @@ describe("Construct's Source-To-Source Compiler", () => {
                 `var /* A */ CC_USERDEF_VAR_bar /* B */ = /* C */"Hi!"`
             );
         });
+
+        describe("User-defined variable handling", () => {
+            it("should transpile user-defined variables in to JavaScript vars", () => {
+                assert.equal(
+                    cstsc.transpile(`@set @foo = "Hi!"; WScript.Echo(@foo, "@foo");`),
+                    `var CC_USERDEF_VAR_foo = "Hi!"; WScript.Echo(CC_USERDEF_VAR_foo, "@foo");`
+                );
+            });
+
+            it("should transpile user-defined variables used inside @if and @elifs", () => {
+                assert.equal(
+                    cstsc.transpile(`@set @foo = "Hi!"; @if (@foo) WScript.Echo("Yes!"); @end`),
+                    `var CC_USERDEF_VAR_foo = "Hi!"; if (CC_USERDEF_VAR_foo) { WScript.Echo("Yes!"); }`
+                );
+
+                assert.equal(
+                    cstsc.transpile(`@set @foo = "Hi!"; @if (false) A++; @elif (@foo) B++; @end`),
+                    `var CC_USERDEF_VAR_foo = "Hi!"; if (false) { A++; } else if (CC_USERDEF_VAR_foo) { B++; }`
+                );
+            });
+        });
     });
 
     describe("Transpiling @if statements", () => {

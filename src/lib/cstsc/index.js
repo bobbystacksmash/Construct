@@ -50,7 +50,7 @@ function find_and_replace (lines_of_code, token, options) {
         break;
 
     case "CC_VAR_USERDEF":
-        // TODO: will there be an issue with semi-colon insertion?
+    case "CC_VAR_USERDEF_REF":
         let identifier = matched.replace(/^@/g, "");
         middle = `CC_USERDEF_VAR_${identifier}`;
         break;
