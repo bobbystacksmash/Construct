@@ -24,6 +24,7 @@ function find_and_replace (lines_of_code, token, options) {
     switch (token.name) {
     case "OPEN_DQUOTE_STRING":
     case "CLOSE_DQUOTE_STRING":
+    case "NEWLINE":
         return lines_of_code;
     }
 
@@ -33,8 +34,10 @@ function find_and_replace (lines_of_code, token, options) {
           loc_last_col  = token.loc.last_column,
           lineno        = token.line;
 
-    let line      = lines_of_code[lineno],
-        beginning = line.slice(0, loc_first_col),
+    let line = lines_of_code[lineno];
+    if (!line) return lines_of_code;
+
+    let beginning = line.slice(0, loc_first_col),
         middle    = line.slice(loc_first_col, loc_last_col),
         end       = line.slice(loc_last_col);
 
@@ -140,14 +143,6 @@ function transpile (code_in) {
         ? lines_of_code.pop()
         : lines_of_code.join("\n");
 };
-
-
-// TODO: Why does this line cause a crash?
-const example_code = `
-    var foo = ['\n\r']
-`;
-
-console.log(transpile(example_code));
 
 module.exports = {
     transpile: transpile
