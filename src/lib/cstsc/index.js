@@ -21,6 +21,9 @@ function find_and_replace (lines_of_code, token, options) {
 
     };
 
+    // =================
+    // TOKEN IGNORE LIST
+    // =================
     switch (token.name) {
     case "OPEN_DQUOTE_STRING":
     case "CLOSE_DQUOTE_STRING":
