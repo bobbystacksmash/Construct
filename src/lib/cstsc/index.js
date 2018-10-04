@@ -44,10 +44,6 @@ function find_and_replace (lines_of_code, token, options) {
         middle    = line.slice(loc_first_col, loc_last_col),
         end       = line.slice(loc_last_col);
 
-    if (token_name !== "NEWLINE") {
-        console.log("TOKEN:", token_name);
-    }
-
     switch (token_name) {
     case "CC_ON":
     case "CC_CMNT_CC_ON":

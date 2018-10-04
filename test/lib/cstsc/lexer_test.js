@@ -75,6 +75,20 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         lexer = new JisonLex(LEXER_GRAMMAR);
     });
 
+    describe("General tokenisation", () => {
+        it("should handle empty strings", () => {
+            assert.deepEqual(
+                util.tokens(`@cc_on var foo = ""; @_jscript`),
+                ["CC_ON", "CC_VAR_JSCRIPT", "EOF"]
+            );
+
+            assert.deepEqual(
+                util.tokens(`@cc_on var foo = ''; @_jscript`),
+                ["CC_ON", "CC_VAR_JSCRIPT", "EOF"]
+            );
+        });
+    });
+
     describe("Conditional Compilation", () => {
         //
         // For details, see `Enabling Conditional Compilation':
@@ -170,7 +184,6 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
             });
 
             it("should detect /*@cc_on with preceding whitespace and newlines", () => {
-
                 assert.deepEqual(
                     util.tokens(NEWLINE_WHITESPACE_CODE_TEST_1),
                     ["CC_CMNT_CC_ON", "CC_CMNT_END", "EOF"]
@@ -209,6 +222,13 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                         WScript.Echo("world");
                       @end`),
                     ["CC_IF_OPEN", "CC_IF_CLOSE", "CC_ELSE", "CC_ENDIF", "EOF"]
+                );
+            });
+
+            it("should match an @endif between comments", () => {
+                assert.deepEqual(
+                    util.tokens(`/*@cc_on /* foo */ @if (true) WScript.Echo("Hi!"); /* bar */ @end/* baz */`),
+                    ["CC_CMNT_CC_ON", "CC_IF_OPEN", "CC_IF_CLOSE", "CC_ENDIF", "EOF"]
                 );
             });
 

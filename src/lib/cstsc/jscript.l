@@ -63,11 +63,11 @@ Ignore                     .
 // Strings
 //
 <INITIAL>{DoubleQuote}           { this.begin("DQS"); }
-<DQS>[^\\]{DoubleQuote}          { this.popState();   }
+<DQS>[^\\]{DoubleQuote}*         { this.popState();   }
 <DQS>{Ignore}                    { /* Ignore */       }
 
 <INITIAL>{SingleQuote}           { this.begin("SQS"); }
-<SQS>[^\\]{SingleQuote}          { this.popState();   }
+<SQS>[^\\]{SingleQuote}*         { this.popState();   }
 <SQS>{Ignore}                    { /* Ignore */       }
 
 //
