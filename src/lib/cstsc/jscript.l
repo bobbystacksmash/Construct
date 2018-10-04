@@ -97,8 +97,8 @@ Ignore                     .
 //
 // Variables
 //
-<INITIAL,CCCMT,CCON>{CCSet}                                  { this.begin("CCSET"); return token(this, "CC_SET"); }
-<CCSET>{VarUserDefined}                                      { return token(this, "CC_VAR_USERDEF");         }
+<INITIAL,CCCMT,CCON>{CCSet}                                  { this.begin("CCSET"); return token(this, "CC_SET");     }
+<CCSET>{VarUserDefined}                                      { this.popState(); return token(this, "CC_VAR_USERDEF"); }
 <INITIAL,CCCMT,CCON,CCIF,CCELIF>{VarWin64}                   { return token(this, "CC_VAR_WIN64");           }
 <INITIAL,CCCMT,CCON,CCIF,CCELIF>{VarWin32}                   { return token(this, "CC_VAR_WIN32");           }
 <INITIAL,CCCMT,CCON,CCIF,CCELIF>{VarWin16}                   { return token(this, "CC_VAR_WIN16");           }
@@ -110,6 +110,7 @@ Ignore                     .
 <INITIAL,CCCMT,CCON,CCIF,CCELIF>{VarJScript}                 { return token(this, "CC_VAR_JSCRIPT");         }
 <INITIAL,CCCMT,CCON,CCIF,CCELIF>{VarJScriptBuild}            { return token(this, "CC_VAR_JSCRIPT_BUILD");   }
 <INITIAL,CCCMT,CCON,CCIF,CCELIF>{VarJScriptVersion}          { return token(this, "CC_VAR_JSCRIPT_VERSION"); }
+<INITIAL,CCCMT,CCON,CCIF,CCELIF>{VarUserDefined}             { return token(this, "CC_VAR_USERDEF_REF");     }
 
 //
 // Comments

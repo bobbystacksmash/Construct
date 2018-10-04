@@ -281,6 +281,7 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
         });
 
         describe("User Defined (@set)", () => {
+
             it("should detect setting a user defined variable", () => {
                 assert.deepEqual(
                     util.tokens(`@cc_on @set @foo = "Hi!"`),
@@ -305,6 +306,64 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                 assert.deepEqual(
                     util.tokens(`@cc_on @set @12_foo = "Hi!"`),
                     ["CC_ON", "CC_SET", "EOF"]
+                );
+            });
+
+            //
+            // Once defined, check that the variable is detected in
+            // different contexts.
+            //
+            it("should detect a userdef var inside an @if-test", () => {
+                assert.deepEqual(
+                    util.tokens(`@set @foo = "Hi!"; @if (@foo) WScript.Echo("World"); @end`),
+                    [
+                        "CC_SET",
+                        "CC_VAR_USERDEF",
+                        "CC_IF_OPEN",
+                        "CC_VAR_USERDEF_REF",
+                        "CC_IF_CLOSE",
+                        "CC_ENDIF",
+                        "EOF"
+                    ]
+                );
+            });
+
+            it("should detect a userdef var inside /*@ .. @*/", () => {
+                assert.deepEqual(
+                    util.tokens(`@set @foo = "Hi!"; /*@ WScript.Echo(@foo); @*/`),
+                    [
+                        "CC_SET",
+                        "CC_VAR_USERDEF",
+                        "CC_CMNT_OPEN",
+                        "CC_VAR_USERDEF_REF",
+                        "CC_CMNT_END",
+                        "EOF"
+                    ]
+                );
+            });
+
+            it("should NOT detect a userdef var inside strings", () => {
+                assert.deepEqual(
+                    util.tokens(`@set @foo = "Hi!"; var x = "@foo";`),
+                    ["CC_SET", "CC_VAR_USERDEF", "EOF"]
+                );
+
+                assert.deepEqual(
+                    util.tokens(`@set @foo = "Hi!"; var x = '@foo';`),
+                    ["CC_SET", "CC_VAR_USERDEF", "EOF"]
+                );
+            });
+
+
+            it("should NOT detect a userdef var inside comments", () => {
+                assert.deepEqual(
+                    util.tokens(`@set @foo = "Hi!"; // @foo`),
+                    ["CC_SET", "CC_VAR_USERDEF", "EOF"]
+                );
+
+                assert.deepEqual(
+                    util.tokens(`@set @foo = "Hi!"; /* @foo */`),
+                    ["CC_SET", "CC_VAR_USERDEF", "EOF"]
                 );
             });
         });
