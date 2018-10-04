@@ -8,6 +8,16 @@ const /*LEXER_SRCFILE = "src/lib/cstsc/cc.l",*/
 
 var lexer;
 
+const NEWLINE_WHITESPACE_CODE_TEST_1 = `
+
+
+
+     /*@cc_on
+           WScript.Echo("Testing...");
+
+
+ @*/
+`;
 
 const util = {
 
@@ -38,7 +48,17 @@ const util = {
         while (token !== 'EOF') {
             token = thislex.lex();
             if (typeof token === "object") {
-                tokens.push(token.name);
+                // Ignore newlines in tests.  JScript Lex's design
+                // means it creates a new stack-frame each time it
+                // matches $something, where $something DOES NOT
+                // return a token.  Given we only return tokens for
+                // CC-specific fields, the stack depth was becoming a
+                // problem in files with thousands of lines without a
+                // single CC token, eventually reaching max stack
+                // depth.
+                if (token.name !== "NEWLINE") {
+                    tokens.push(token.name);
+                }
             }
             else {
                 tokens.push(token);
@@ -146,6 +166,14 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                         "CC_VAR_JSCRIPT",
                         "EOF"
                     ]
+                );
+            });
+
+            it("should detect /*@cc_on with preceding whitespace and newlines", () => {
+
+                assert.deepEqual(
+                    util.tokens(NEWLINE_WHITESPACE_CODE_TEST_1),
+                    ["CC_CMNT_CC_ON", "CC_CMNT_END", "EOF"]
                 );
             });
         });
