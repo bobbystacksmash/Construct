@@ -328,6 +328,24 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                 );
             });
 
+            it("should detect a userdef var inside an @elif-test", () => {
+                const code = `@set @foo = "Hi!"; @if (false) A++; @elif (@foo) B++; @end`;
+                assert.deepEqual(
+                    util.tokens(code),
+                    [
+                        "CC_SET",
+                        "CC_VAR_USERDEF",
+                        "CC_IF_OPEN",
+                        "CC_IF_CLOSE",
+                        "CC_ELIF_OPEN",
+                        "CC_VAR_USERDEF_REF",
+                        "CC_ELIF_CLOSE",
+                        "CC_ENDIF",
+                        "EOF"
+                    ]
+                );
+            });
+
             it("should detect a userdef var inside /*@ .. @*/", () => {
                 assert.deepEqual(
                     util.tokens(`@set @foo = "Hi!"; /*@ WScript.Echo(@foo); @*/`),
@@ -353,7 +371,6 @@ describe("CSTSC: Construct's Source-To-Source Compiler", () => {
                     ["CC_SET", "CC_VAR_USERDEF", "EOF"]
                 );
             });
-
 
             it("should NOT detect a userdef var inside comments", () => {
                 assert.deepEqual(
