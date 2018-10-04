@@ -38,6 +38,10 @@ function find_and_replace (lines_of_code, token, options) {
         middle    = line.slice(loc_first_col, loc_last_col),
         end       = line.slice(loc_last_col);
 
+    if (token_name !== "NEWLINE") {
+        console.log("TOKEN:", token_name);
+    }
+
     switch (token_name) {
     case "CC_ON":
     case "CC_CMNT_CC_ON":
@@ -90,6 +94,13 @@ function find_and_replace (lines_of_code, token, options) {
     case "CC_ENDIF":
         middle = "}";
         break;
+
+    case "NEWLINE":
+        end = "\n";
+        break;
+
+    default:
+        break;
     }
 
     line = [beginning, middle, end].join("");
@@ -129,6 +140,14 @@ function transpile (code_in) {
         ? lines_of_code.pop()
         : lines_of_code.join("\n");
 };
+
+
+// TODO: Why does this line cause a crash?
+const example_code = `
+    var foo = ['\n\r']
+`;
+
+console.log(transpile(example_code));
 
 module.exports = {
     transpile: transpile
