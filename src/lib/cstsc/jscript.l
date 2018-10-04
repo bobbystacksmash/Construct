@@ -17,9 +17,8 @@ function token (state, name) {
 %}
 
 Whitespace                 [ \t]
-NewLine                    [\r\n]
 Unknown                    .
-
+NewLine                    [\r\n]
 MultiLineCommentBegin      \/\*[^@]
 MultiLineCommentEnd        [^@]\*\/
 SingleLineComment          "//".*
@@ -120,9 +119,9 @@ Ignore                     .
 <MLC>{Ignore}                               { /* Ignore */ }
 <INITIAL,CCON>{SingleLineComment}           { /* Ignore single-line comments */ }
 
-<*>{Whitespace}+          { /* Ignore whitespace */ }
-<*>{NewLine}              { /* Ignore newlines   */ }
-<*>{Unknown}              { /* Ignore  unknown   */ }
-<*><<EOF>>                { return "EOF";           }
+<*>{Whitespace}+          { /* Ignore whitespace */        }
+<*>{NewLine}              { return token(this, "NEWLINE"); }
+<*>{Unknown}              { /* Ignore  unknown   */        }
+<*><<EOF>>                { return "EOF";                  }
 
 %%
