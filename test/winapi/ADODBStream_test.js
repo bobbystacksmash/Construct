@@ -1645,7 +1645,7 @@ describe("ADODBStream", () => {
 
         describe("in mixed mode", () => {
 
-            it("should maintain the correct size when being converted bin -> txt", (done) => {
+            it("should maintain the correct size when being converted bin -> txt", () => {
 
                 let vfs = new VirtualFileSystem({ register: () => {} }),
                     ctx = Object.assign({}, context, { vfs: vfs });
@@ -1664,13 +1664,15 @@ describe("ADODBStream", () => {
 
                 ado.type = TEXT_STREAM;
 
-                assert.equal(ado.size, 10);
+                assert.equal(ado.size, 4);
                 assert.equal(ado.position, 0);
 
                 ado.position = 0;
-                assert.equal(ado.ReadText(), "abcd");
 
-                done();
+                const text = ado.ReadText();
+                assert.equal(text.length, 2);
+                assert.equal(text.charCodeAt(0), 25185);
+                assert.equal(text.charCodeAt(1), 25699);
             });
         });
 

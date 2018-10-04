@@ -17,7 +17,7 @@ describe("BinaryStream", () => {
 
     describe("#open", () => {
 
-        it("should support specifiying a 'mode' property when opening the stream", (done) => {
+        it("should support specifiying a 'mode' property when opening the stream", () => {
 
             let bs = new BinaryStream();
             assert.equal(bs.mode, 0);
@@ -29,8 +29,6 @@ describe("BinaryStream", () => {
 
             assert.doesNotThrow(() => bs.open(2));
             assert.equal(bs.mode, 2);
-
-            done();
         });
 
 
@@ -513,10 +511,10 @@ describe("BinaryStream", () => {
             done();
         });
 
-        it("should return a copy as a text stream", (done) => {
+        it("should return a copy as a text stream", () => {
 
-            let vfs = new VirtualFileSystem({ register: () => {} });
-            let bs  = new BinaryStream({ vfs: vfs });
+            let vfs = new VirtualFileSystem({ register: () => {} }),
+                bs  = new BinaryStream({ vfs: vfs });
 
             vfs.AddFile("C:\\foo\\bar.txt", "abcd");
 
@@ -527,8 +525,6 @@ describe("BinaryStream", () => {
 
             assert.equal(ts.type, 2);
             assert.equal(ts.size, 4);
-
-            done();
         });
 
         it("should convert to a binary stream, copying across position", (done) => {

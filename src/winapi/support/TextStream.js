@@ -247,6 +247,9 @@ class TextStream extends Stream {
         if (data === undefined || data === []) {
             data = "";
         }
+        else if (Buffer.isBuffer(data)) {
+            // Leave a buffer as-is.
+        }
         else if (typeof data === "object") {
             data = data.toString();
         }
