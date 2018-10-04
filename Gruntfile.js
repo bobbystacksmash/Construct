@@ -29,7 +29,7 @@ module.exports = function (grunt) {
         }
     });
 
-    grunt.registerTask("build", ["lexer"]);
+    grunt.registerTask("build", ["mochaTest"]);
     grunt.registerTask('dev',     ['watch']);
     grunt.registerTask('default', ['build', 'mochaTest']);
 };
