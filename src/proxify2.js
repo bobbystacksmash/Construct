@@ -75,9 +75,6 @@ module.exports = function (context, jscript_class) {
         instance = new Proxy(jscript_class, proxyobj);
         context.add_instance(instance);
     }
-    else {
-        console.log("ALREADY AN INSTANCE", jscript_class.__name__);
-    }
 
     return instance;
 };
