@@ -12,9 +12,10 @@ const falafel        = require("falafel");
 const path           = require("path");
 
 function RewriteSyntax (source, options) {
+
     options = options || {};
 
-    const plugins_path = path.join(process.cwd(), "src", "metaprogramming", "plugins");
+    const plugins_path = path.join(__dirname, "plugins");
 
     this.plugins = this.load_plugins(plugins_path);
     this._source = source;
@@ -42,6 +43,7 @@ function RewriteSyntax (source, options) {
 //  |-------------------|-----------------|
 //  | Eval_capture.js   | "eval capture"  |
 //  | hoist_globals.js  | "hoist globals" |
+//  |-------------------|-----------------|
 //
 RewriteSyntax.prototype.load_plugins = function (load_plugins_path) {
 
