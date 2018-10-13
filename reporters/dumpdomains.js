@@ -8,12 +8,10 @@ module.exports = {
     },
 
     report: (event) => {
-
         // TODO: Update this to also try and pull URIs from exec commands, such
         // as PS IEX calls, etc.
-
         if (event.meta && event.meta === "runtime.api.call") {
-            if (/xmlhttp/i.test(event.target) && /^open$/i.test(event.prop)) {
+            if (/xmlhttp/i.test(event.target) && /^open$/i.test(event.property.normalised)) {
 
                 if (event.args && event.args.length >= 1) {
 

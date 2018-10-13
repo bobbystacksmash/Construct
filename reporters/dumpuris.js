@@ -14,7 +14,7 @@ module.exports = {
         }
         else if (event.meta && event.meta === "runtime.api.call") {
 
-            if (/xmlhttp/i.test(event.target) && /^open$/i.test(event.prop)) {
+            if (/xmlhttp/i.test(event.target) && /^open$/i.test(event.property.normalised)) {
 
                 let method = event.args[0].value.toLowerCase(),
                     uri    = event.args[1].value;
