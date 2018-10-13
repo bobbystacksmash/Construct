@@ -1,5 +1,5 @@
 const istanbul = require("istanbul"),
-      path     = require("path")
+      path     = require("path");
 
 function generate_coverage_report (covobj, source, src_file_path) {
 
