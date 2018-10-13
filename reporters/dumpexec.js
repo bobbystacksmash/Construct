@@ -12,11 +12,11 @@ module.exports = {
     report: (event) => {
 
         if (event.meta && event.meta === "runtime.api.call") {
-            if (/wshshell/i.test(event.target) && /^(?:run|exec)$/i.test(event.prop)) {
-                exec_events.push(event);
+            if (/wshshell/i.test(event.target) && /^(?:run|exec)$/i.test(event.property.normalised)) {
+                exec_events.push(event.args[0].value);
             }
-            else if (/ShellApplication/i.test(event.target) && /shellexecute/i.test(event.prop)) {
-                exec_events.push(event);
+            else if (/ShellApplication/i.test(event.target) && /shellexecute/i.test(event.property.normalised)) {
+                exec_events.push(event.args[0].value);
             }
         }
         else if (event.meta && event.meta === "finished") {
