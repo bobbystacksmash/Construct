@@ -31,12 +31,19 @@ describe("WshShell", () => {
         });
     });
 
-    describe("Construction", () => {
+    xdescribe("Construction", () => {
 
         it("should support creating a WshShell instance", () => {
             assert.doesNotThrow(() => new WshShell(ctx));
         });
 
+    });
+
+    xdescribe("SpecialFolders", () => {
+        describe("Property", () => {
+            // The `SpecialFolders' attribute acts as both a property and
+            // a method.
+        });
     });
 
     describe(".Environment", () => {
@@ -47,16 +54,13 @@ describe("WshShell", () => {
         //   - wsh.environment.count();
         //   - wsh.environment("PROCESS").count();
         //
-        it("should return an WshEnvironment via the prop", () => {
+        it("should support fetching .Environment via either prop or method", () => {
 
             const wsh = new WshShell(ctx);
 
             assert.doesNotThrow(() => wsh.environment.count());
-            // TODO: figure out what value is used here when we just
-            // grab WSHEnvironment.
-
-            /*assert.doesNotThrow(() => wsh.environment("PROCESS").count());
-            assert.equal(wsh.environment("PROCESS").count(), 2);*/
+            assert.doesNotThrow(() => wsh.environment("PROCESS").count());
+            assert.equal(wsh.environment("PROCESS").count(), 2);
         });
 
     });
