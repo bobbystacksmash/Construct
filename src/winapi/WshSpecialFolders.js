@@ -11,7 +11,7 @@ class JS_WshSpecialFolders extends Component {
 
         this.dirname = dirname;
 
-        const whoami = this.context.config.environment.whoami;
+        const whoami = this.context.config.general.whoami || "USR329";
 
         this.special_folders = [
             { name: "allusersdesktop", path: "C:\\Users\\Public\\Desktop" },
