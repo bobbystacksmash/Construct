@@ -3,7 +3,7 @@ const assert            = require("chai").assert,
       make_ctx          = require("../testlib");
 
 const CONFIG = {
-    environment: {
+    general: {
         whoami: "SomeUser"
     }
 };

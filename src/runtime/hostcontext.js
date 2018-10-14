@@ -22,8 +22,6 @@ class HostContext {
         // Configuration
         // =============
         this.environment  = opts.config.environment;
-        this.current_user = this.environment.whoami   || "john";
-        this.hostname     = this.environment.hostname || "CVM-ABC-123";
         this.config       = opts.config;
         this.DEBUG        = opts.config.general.debug || false;
 
