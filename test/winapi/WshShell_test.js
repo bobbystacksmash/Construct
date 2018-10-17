@@ -31,13 +31,24 @@ describe("WshShell", () => {
         });
     });
 
-    xdescribe("Construction", () => {
-
+    describe("Construction", () => {
         it("should support creating a WshShell instance", () => {
             assert.doesNotThrow(() => new WshShell(ctx));
         });
 
+        it("should report the correct __name__", () => {
+            assert.equal(new WshShell(ctx).__name__, "WshShell");
+        });
     });
+
+    describe("Properties", () => {
+
+        describe(".CurrentDirectory", () => {
+
+        });
+
+    });
+
 
     xdescribe("SpecialFolders", () => {
         describe("Property", () => {
@@ -46,7 +57,7 @@ describe("WshShell", () => {
         });
     });
 
-    describe(".Environment", () => {
+    xdescribe(".Environment", () => {
 
         // This property has odd behaviour, acting as both a function
         // and a property.  Two examples, both return a valid count:
@@ -62,10 +73,9 @@ describe("WshShell", () => {
             assert.doesNotThrow(() => wsh.environment("PROCESS").count());
             assert.equal(wsh.environment("PROCESS").count(), 2);
         });
-
     });
 
-    /*describe("Properties", () => {
+    xdescribe("Properties", () => {
 
         describe(".CurrentDirectory", () => {
 
@@ -81,7 +91,7 @@ describe("WshShell", () => {
                 assert.equal(new WshShell(ctx).CurrentDirectory, new_cwd);
             });
 
-            it("should throw if the new CWD path does not exists or is invalid", () => {
+            it("should throw if the new CWD path does not exist or is invalid", () => {
 
                 make_context({
                     config: CONFIG,
@@ -107,7 +117,7 @@ describe("WshShell", () => {
         });
     });
 
-    describe("Methods", () => {
+    xdescribe("Methods", () => {
 
         describe("#Environment", () => {
             it("should return a WshEnvironment instance", () => {
@@ -139,5 +149,5 @@ describe("WshShell", () => {
                 assert.doesNotThrow(() => new WshShell(ctx).Environment("USER"));
             });
         });
-    });*/
+    });
 });
