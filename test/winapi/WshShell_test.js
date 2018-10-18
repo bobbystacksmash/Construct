@@ -45,12 +45,75 @@ describe("WshShell", () => {
 
         describe(".CurrentDirectory", () => {
 
+            it("should GET the current directory and return the path as a string", () => {
+                assert.equal(new WshShell(ctx).currentdirectory, CONFIG.environment.cwd);
+            });
+
+            it("should SET the current directory, returning a string path to the new CWD", () => {
+                const wsh     = new WshShell(ctx),
+                      new_cwd = "C:\\Users";
+                var cwd;
+                assert.equal(wsh.currentdirectory, CONFIG.environment.cwd);
+                assert.doesNotThrow(() => cwd = wsh.currentdirectory = new_cwd);
+                assert.equal(cwd, new_cwd);
+            });
+
+            it("should throw if the new path does not exist", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_generic_winapi_exception: () => {
+                            throw new Error("CWD not exists");
+                        }
+                    }
+                });
+
+                const wsh = new WshShell(ctx),
+                      vfs = ctx.vfs;
+
+                const not_exists_path = "C:\\path\\not\\found";
+                assert.isFalse(vfs.Exists(not_exists_path));
+
+                assert.throws(() => {
+                    wsh.CurrentDirectory = not_exists_path;
+                }, "CWD not exists");
+            });
+
+            it("should throw if the new path is an invalid Win path", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_generic_winapi_exception: () => {
+                            throw new Error("Invalid CWD path");
+                        }
+                    }
+                });
+
+                // Testing this in a Win7 machine, there's no .message
+                // or .description set in the thrown exception - just
+                // these two props:
+                //
+                //   name Error
+                //   number -2147024773
+                //
+                assert.throws(
+                    () => new WshShell(ctx).currentdirectory = "|||||",
+                    "Invalid CWD path"
+                );
+            });
+
+            xit("should support setting CWD to a path which contains a shortpath", () => {
+                // add GET and SET tests
+                assert.isFalse(true);
+            });
         });
 
     });
 
 
-    xdescribe("SpecialFolders", () => {
+    /*xdescribe("SpecialFolders", () => {
         describe("Property", () => {
             // The `SpecialFolders' attribute acts as both a property and
             // a method.
@@ -96,7 +159,7 @@ describe("WshShell", () => {
                 make_context({
                     config: CONFIG,
                     exceptions: {
-                        throw_winapi_exception: () => {
+                        throw_generic_winapi_exception: () => {
                             throw new Error("cannot set CWD");
                         }
                     }
@@ -149,5 +212,5 @@ describe("WshShell", () => {
                 assert.doesNotThrow(() => new WshShell(ctx).Environment("USER"));
             });
         });
-    });
+    });*/
 });

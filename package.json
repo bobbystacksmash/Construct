@@ -5,7 +5,7 @@
     "main": "index.js",
     "scripts": {
         "test": "grunt",
-        "testdev":  "node_modules/.bin/mocha --watch --recursive --reporter spec ./test/winapi/WshShell_test.js",
+        "testdev": "node_modules/.bin/mocha --watch --recursive --reporter spec ./test/winapi/WshShell_test.js",
         "code": "node src/index.js",
         "debug": "node --inspect --inspect-brk src/index.js "
     },
@@ -17,6 +17,7 @@
     "license": "ISC",
     "devDependencies": {
         "chai": "^4.1.2",
+        "documentation": "^8.1.2",
         "expect": "^21.2.1",
         "grunt": "^1.0.3",
         "grunt-contrib-watch": "^1.1.0",

@@ -10,8 +10,50 @@ class JS_WshShell extends Component {
     constructor (context) {
         super(context, "WshShell");
         this.context = context;
+        this.vfs     = this.context.vfs;
     }
 
+    /**
+     * Gets the running script's current directory.
+     * @returns {string} The full-path to the script's CWD.
+     */
+    get currentdirectory () {
+        return this.context.config.environment.cwd;
+    }
+
+    /**
+     * Sets the running script's current directory.
+     * @param {string} new_cwd String path to the new working
+     * dir for this script.
+     * @returns {string} The full-path to the script's new CWD.
+     */
+    set currentdirectory (new_cwd) {
+
+        if (this.vfs.IsPathIllegal(new_cwd)) {
+            this.context.exceptions.throw_generic_winapi_exception(
+                "Error",
+                "", // message
+                -2147024773,
+                "", // description
+                `WshShell`,
+                `Invalid path specified.`,
+                `New path value given to wsh.currentdirectory is not a valid Win32 path.`,
+            );
+        }
+
+        if (typeof new_cwd !== "string" || this.context.vfs.FolderExists(new_cwd) === false) {
+            this.context.exceptions.throw_generic_winapi_exception(
+                "WshShell",
+                `Unable to set the working directory to: ${new_cwd}.`,
+                `The folder ${new_cwd} does not exist.`
+            );
+        }
+
+        this.context.config.environment.cwd = new_cwd;
+        return new_cwd;
+    }
+
+    /*
     //
     // PROPERTIES
     // ==========
@@ -65,7 +107,7 @@ class JS_WshShell extends Component {
     set currentdirectory (new_cwd) {
 
         if (typeof new_cwd !== "string" || this.context.vfs.FolderExists(new_cwd) === false) {
-            this.context.exceptions.throw_winapi_exception(
+            this.context.exceptions.throw_generic_winapi_exception(
                 "WshShell",
                 `Unable to set the working directory to: ${new_cwd}.`,
                 `The folder ${new_cwd} does not exist.`
@@ -307,6 +349,7 @@ class JS_WshShell extends Component {
     sendkeys (keystroke) {
 
     }
+*/
 }
 
 module.exports = function (context) {
