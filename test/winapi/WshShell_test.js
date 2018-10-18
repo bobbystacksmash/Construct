@@ -120,17 +120,31 @@ describe("WshShell", () => {
                 assert.equal(wsh.CurrentDirectory, shortpath);
             });
         });
-
     });
 
+    describe(".Environment", () => {
 
-    /*xdescribe("SpecialFolders", () => {
-        describe("Property", () => {
-            // The `SpecialFolders' attribute acts as both a property and
-            // a method.
+        // WshShell.Environment returns a WshEnvironment collection.
+        // See `WshEnvironment_test.js` for tests specific to this
+        // class.
+        //
+        // This property has odd behaviour, acting as both a function
+        // and a property.  Two examples, both return a valid count:
+        //
+        //   - wsh.environment.count();
+        //   - wsh.environment("PROCESS").count();
+        //
+        it("should support fetching .Environment via either prop or method", () => {
+
+            const wsh = new WshShell(ctx);
+
+            assert.doesNotThrow(() => wsh.environment.count());
+            assert.doesNotThrow(() => wsh.environment("PROCESS").count());
+            assert.equal(wsh.environment("PROCESS").count(), 2);
         });
     });
 
+    /*
     xdescribe(".Environment", () => {
 
         // This property has odd behaviour, acting as both a function

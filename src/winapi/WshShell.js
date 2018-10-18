@@ -53,6 +53,15 @@ class JS_WshShell extends Component {
         return new_cwd;
     }
 
+    /**
+     * Returns the current WshEnvironment collection.
+     * @returns {WshEnvironment} An environment collection.
+     */
+    get environment () {
+        return JS_WshEnvironment(this.context, "SYSTEM");
+    }
+
+
     /*
     //
     // PROPERTIES
