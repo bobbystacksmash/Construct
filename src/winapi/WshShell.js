@@ -61,6 +61,13 @@ class JS_WshShell extends Component {
         return JS_WshEnvironment(this.context, "SYSTEM");
     }
 
+    /**
+     * Returns a WshSpecialFolders collection.
+     * @return {WshSpecialFolders} A WshSpecialFolders collection.
+     */
+    get specialfolders () {
+        return new JS_WshSpecialFolders(this.context);
+    }
 
     /*
     //
