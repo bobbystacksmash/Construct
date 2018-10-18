@@ -104,9 +104,20 @@ describe("WshShell", () => {
                 );
             });
 
-            xit("should support setting CWD to a path which contains a shortpath", () => {
-                // add GET and SET tests
-                assert.isFalse(true);
+            it("should support setting CWD to a path which contains a shortpath", () => {
+
+                const vfs       = ctx.vfs,
+                      shortpath = "C:\\HELLOW~1";
+
+                vfs.AddFolder("C:\\HelloWorld");
+                assert.isTrue(vfs.Exists("C:\\HelloWorld"), "fullpath exists");
+                assert.isTrue(vfs.Exists(shortpath),        "shortpath exists");
+
+                const wsh = new WshShell(ctx);
+                var cwd = null;
+
+                assert.doesNotThrow(() => wsh.CurrentDirectory = shortpath);
+                assert.equal(wsh.CurrentDirectory, shortpath);
             });
         });
 
