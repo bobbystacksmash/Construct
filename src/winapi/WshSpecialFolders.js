@@ -4,12 +4,11 @@ const proxify   = require("../proxify2"),
 
 class JS_WshSpecialFolders extends Component {
 
-    constructor (context, dirname) {
+    constructor (context) {
 
         super(context, "WshSpecialFolders");
         this.ee = this.context.emitter;
 
-        this.dirname = dirname;
         const whoami = this.context.config.general.whoami || "PC-162";
 
         this.special_folders = [
@@ -112,7 +111,34 @@ class JS_WshSpecialFolders extends Component {
     }
 }
 
-module.exports = function (context, dirname) {
-    var wshdirs = new JS_WshSpecialFolders(context, dirname);
-    return proxify(context, wshdirs);
+module.exports = function (context) {
+
+    const default_specdirs = new JS_WshSpecialFolders(context);
+
+    var wrapper = (function (props) {
+
+        function WshSpecDirWrapper (type) {
+            return proxify(context, new JS_WshSpecialFolders(context));
+        }
+
+        for (let prop in props) {
+            WshSpecDirWrapper[prop] = props[prop];
+        }
+
+        // TODO: what is this?
+        Object.defineProperty(WshSpecDirWrapper, "length", {
+            get: function ()  { return default_specdirs.length;     },
+            set: function (x) { return default_specdirs.length = x; }
+        });
+
+        return WshSpecDirWrapper;
+    }({
+        count: (...args) => default_specdirs.count(...args),
+        item:  (...args) => default_specdirs.item(...args),
+
+        __name__: "WshSpecialFolders",
+        __id__: default_specdirs.__id__
+    }));
+
+    return proxify(context, wrapper);
 };

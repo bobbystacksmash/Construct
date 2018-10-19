@@ -149,8 +149,27 @@ describe("WshShell", () => {
         });
 
         describe(".SpecialFolders", () => {
-            it("should return a WshSpecialFolders collection", () => {
-                assert.equal(new WshShell(ctx).specialfolders.__name__, "WshSpecialFolders");
+
+            // WshShell.SpecialFolders returns a WshSpecialFolders
+            // collection.  See `WshSpecialFolders_test.js` for tests
+            // specific to this class.
+            //
+            // This property has odd behaviour, acting as both a function
+            // and a property.  Two examples, both return a valid count:
+            //
+            //   - wsh.specialfolders.count();
+            //   - wsh.specialfolders("PROCESS").count();
+            //
+            it("should support fetching .SpecialFolders via either prop or method", () => {
+
+                const wsh = new WshShell(ctx);
+
+                assert.doesNotThrow(() => wsh.SpecialFolders.count());
+                /*assert.doesNotThrow(() => wsh.SpecialFolders("PROCESS").count());
+                assert.equal(wsh.SpecialFolders("PROCESS").count(), 2);
+
+                assert.doesNotThrow(() => wsh.SpecialFolders("SYSTEM").count());
+                assert.equal(wsh.SpecialFolders("SYSTEM").count(), 1);*/
             });
         });
     });
