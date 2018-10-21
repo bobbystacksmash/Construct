@@ -69,6 +69,20 @@ class JS_WshShell extends Component {
         return new JS_WshSpecialFolders(this.context, "WshShell");
     }
 
+    /**
+     * Activates an application window.  Cosntruct treats it as a NOOP.
+     * @return {undefined}
+     */
+    appactivate (title) {
+        if (arguments.length === 0) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "WshShell",
+                "AppActivate requires a 'title' argument.",
+                "The AppActivate method requires the 'title' argument be present and defined."
+            );
+        }
+    }
+
     /*
     //
     // PROPERTIES

@@ -219,5 +219,29 @@ describe("WshShell", () => {
         });
     });
 
+    describe("Methods", () => {
 
+        describe("#AppActivate", () => {
+
+            it("should throw if too few params are given", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_wrong_argc_or_invalid_prop_assign: () => {
+                            throw new Error("no args");
+                        }
+                    }
+                });
+
+                const wsh = new WshShell(ctx);
+                assert.throws(() => wsh.AppActivate(), "no args");
+            });
+
+            /*it("should return a boolean if AppActivate was a success", () => {
+                // TODO figure out what we do here...
+                assert.isTrue(false);
+            });*/
+        });
+    });
 });
