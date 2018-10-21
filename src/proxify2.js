@@ -25,6 +25,9 @@ module.exports = function (context, jscript_class) {
                 if (target_value.__name__ === "WshEnvironment") {
                     return target_value;
                 }
+                else if (target_value.__name__ === "WshSpecialFolders") {
+                    return target_value;
+                }
                 else {
                     return function (...args) {
 

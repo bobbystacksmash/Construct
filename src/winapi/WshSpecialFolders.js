@@ -4,7 +4,7 @@ const proxify   = require("../proxify2"),
 
 class JS_WshSpecialFolders extends Component {
 
-    constructor (context) {
+    constructor (context, dirname) {
 
         super(context, "WshSpecialFolders");
         this.ee = this.context.emitter;
@@ -111,15 +111,34 @@ class JS_WshSpecialFolders extends Component {
     }
 }
 
-module.exports = function (context) {
+module.exports = function (context, caller) {
 
     const default_specdirs = new JS_WshSpecialFolders(context);
 
     var wrapper = (function (props) {
 
-        function WshSpecDirWrapper (type) {
-            return proxify(context, new JS_WshSpecialFolders(context));
-        }
+        function WshSpecDirWrapper (dir) {
+            // TODO: test `type' and either return the WshSpecDirs
+            // collection, or return the string path of the given
+            // type.
+
+            if (dir === undefined || dir === null || arguments.length === 0) {
+                context.exceptions.throw_unsupported_prop_or_method(
+                    caller || "WshSpecialFolders",
+                    "Cannot create SpecialFolders instance as a method without an argument.",
+                    "The .SpecialFolders object (created from WshShell) can either be called as " +
+                        "a property, or it must be called as a method with an argument."
+                );
+            }
+
+            if (dir || typeof dir === "number") {
+                const specdir = new JS_WshSpecialFolders(context);
+                return specdir.item(dir);
+            }
+            else {
+                return proxify(context, new JS_WshSpecialFolders(context));
+            }
+        };
 
         for (let prop in props) {
             WshSpecDirWrapper[prop] = props[prop];

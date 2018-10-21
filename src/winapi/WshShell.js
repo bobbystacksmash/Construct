@@ -66,7 +66,7 @@ class JS_WshShell extends Component {
      * @return {WshSpecialFolders} A WshSpecialFolders collection.
      */
     get specialfolders () {
-        return new JS_WshSpecialFolders(this.context);
+        return new JS_WshSpecialFolders(this.context, "WshShell");
     }
 
     /*

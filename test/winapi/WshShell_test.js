@@ -160,16 +160,61 @@ describe("WshShell", () => {
             //   - wsh.specialfolders.count();
             //   - wsh.specialfolders("PROCESS").count();
             //
+
+            it("should inherit the WshShell source type when throwing", (done) => {
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_unsupported_prop_or_method: (source, summary, desc) => {
+                            assert.equal(source, "WshShell");
+                            done();
+                        }
+                    }
+                });
+
+                new WshShell(ctx).SpecialFolders();
+            });
+
+            it("should throw if called as a method without any args", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_unsupported_prop_or_method: () => {
+                            throw new Error("no prop or method");
+                        }
+                    }
+                });
+
+                const wsh = new WshShell(ctx);
+                assert.throws(() => wsh.SpecialFolders(), "no prop or method");
+
+                assert.doesNotThrow(() => wsh.SpecialFolders);
+                assert.doesNotThrow(() => wsh.SpecialFolders.item("Desktop"));
+                assert.equal(wsh.SpecialFolders.item("Desktop"), "C:\\Users\\SomeUser\\Desktop");
+            });
+
             it("should support fetching .SpecialFolders via either prop or method", () => {
 
                 const wsh = new WshShell(ctx);
 
                 assert.doesNotThrow(() => wsh.SpecialFolders.count());
-                /*assert.doesNotThrow(() => wsh.SpecialFolders("PROCESS").count());
-                assert.equal(wsh.SpecialFolders("PROCESS").count(), 2);
 
-                assert.doesNotThrow(() => wsh.SpecialFolders("SYSTEM").count());
-                assert.equal(wsh.SpecialFolders("SYSTEM").count(), 1);*/
+                // PROPERTY
+                assert.doesNotThrow(() => wsh.SpecialFolders);
+                assert.equal(wsh.SpecialFolders.item(0), "C:\\Users\\Public\\Desktop");
+
+                // METHOD + ARG
+                assert.doesNotThrow(() => wsh.SpecialFolders("Desktop"));
+                assert.equal(wsh.SpecialFolders("Desktop"), "C:\\Users\\SomeUser\\Desktop");
+            });
+
+            it("should return the dirpath when called as a method", () => {
+
+                const wsh = new WshShell(ctx);
+
+                assert.equal(wsh.SpecialFolders("Desktop"), "C:\\Users\\SomeUser\\Desktop");
+                assert.equal(wsh.SpecialFolders(0), "C:\\Users\\Public\\Desktop");
             });
         });
     });
