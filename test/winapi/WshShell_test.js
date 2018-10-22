@@ -1,6 +1,7 @@
-const assert   = require("chai").assert,
-      WshShell = require("../../src/winapi/WshShell"),
-      make_ctx = require("../testlib");
+const assert      = require("chai").assert,
+      WshShell    = require("../../src/winapi/WshShell"),
+      WshShortcut = require("../../src/winapi/WshShortcut"),
+      make_ctx    = require("../testlib");
 
 const CONFIG = {
     general: {
@@ -241,6 +242,48 @@ describe("WshShell", () => {
             it("should return a boolean if AppActivate was a success", () => {
                 const wsh = new WshShell(ctx);
                 assert.isFalse(wsh.AppActivate("Emacs"));
+            });
+        });
+
+        describe("#CreateShortcut", () => {
+
+            it("should throw when the given pathspec doesn't end eith .lnk or .url", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_subscript_out_of_range: () => {
+                            throw new Error("path doesn't end with .lnk or .url");
+                        }
+                    }
+                });
+
+                assert.throws(
+                    () => new WshShell(ctx).CreateShortcut("./shortcutlnk"),
+                    "path doesn't end with .lnk or .url"
+                );
+            });
+
+            it("should return a WshShortcut instance", () => {
+
+                assert.isFalse(ctx.vfs.FileExists("C:\\shortcut.lnk"));
+                var sc = null;
+                assert.doesNotThrow(() => sc = (new WshShell(ctx)).CreateShortcut("C:\\shortcut.lnk"));
+                assert.equal(sc.__name__, "WshShortcut");
+            });
+
+            it("should return an existing WshShortcut instance if exists", () => {
+                assert.isFalse(ctx.vfs.FileExists("C:\\shortcut.lnk"));
+                var sc = new WshShortcut(ctx, "C:\\shortcut.lnk");
+                sc.TargetPath = "C:\\Windows";
+                sc.save();
+                assert.isTrue(ctx.vfs.FileExists("C:\\shortcut.lnk"));
+
+                sc = null;
+
+                const wsh = new WshShell(ctx);
+                assert.doesNotThrow(() => sc = wsh.CreateShortcut("C:\\shortcut.lnk"));
+                assert.equal(sc.targetpath, "C:\\Windows");
             });
         });
     });

@@ -71,6 +71,7 @@ class JS_WshShell extends Component {
 
     /**
      * Activates an application window.  Cosntruct treats it as a NOOP.
+     * @param {string} title The title of the application to activate.
      * @return {undefined}
      */
     appactivate (title) {
@@ -86,6 +87,34 @@ class JS_WshShell extends Component {
         // being used in malware, we can add code to support it
         // correctly.
         return false;
+    }
+
+    /**
+     * Returns a reference to a new or an existing `WshShortcut`
+     * object.
+     *
+     * @param {string} pathname The path to an existing or where to
+     * create a new shortcut.
+     *
+     * @return {WshShortcut}
+     */
+    createshortcut (pathname) {
+        // pathname == null
+        // pathname == undef
+        // pathname == ""
+        // typeof pathname !== string
+
+        if (/\.(?:lnk|url)$/i.test(pathname) === false) {
+            this.context.exceptions.throw_subscript_out_of_range(
+                "WshShell",
+                "Shortcut paths must end with either .lnk or .url.",
+                `The given shortcut path does not end with ".lnk" or ` +
+                    `".url".`
+            );
+        }
+
+        // Will load an existing shortcut if exists.
+        return new JS_WshShortcut(this.context, pathname);
     }
 
     /*
