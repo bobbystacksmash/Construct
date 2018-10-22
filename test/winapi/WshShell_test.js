@@ -262,6 +262,26 @@ describe("WshShell", () => {
                     () => new WshShell(ctx).CreateShortcut("./shortcutlnk"),
                     "path doesn't end with .lnk or .url"
                 );
+
+                assert.throws(
+                    () => new WshShell(ctx).CreateShortcut(""),
+                    "path doesn't end with .lnk or .url"
+                );
+
+                assert.throws(
+                    () => new WshShell(ctx).CreateShortcut(true),
+                    "path doesn't end with .lnk or .url"
+                );
+
+                assert.throws(
+                    () => new WshShell(ctx).CreateShortcut(false),
+                    "path doesn't end with .lnk or .url"
+                );
+
+                assert.throws(
+                    () => new WshShell(ctx).CreateShortcut(undefined),
+                    "path doesn't end with .lnk or .url"
+                );
             });
 
             it("should return a WshShortcut instance", () => {
