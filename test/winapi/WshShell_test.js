@@ -238,10 +238,10 @@ describe("WshShell", () => {
                 assert.throws(() => wsh.AppActivate(), "no args");
             });
 
-            /*it("should return a boolean if AppActivate was a success", () => {
-                // TODO figure out what we do here...
-                assert.isTrue(false);
-            });*/
+            it("should return a boolean if AppActivate was a success", () => {
+                const wsh = new WshShell(ctx);
+                assert.isFalse(wsh.AppActivate("Emacs"));
+            });
         });
     });
 });

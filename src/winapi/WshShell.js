@@ -81,6 +81,11 @@ class JS_WshShell extends Component {
                 "The AppActivate method requires the 'title' argument be present and defined."
             );
         }
+
+        // We always return FALSE for now.  If we see this method
+        // being used in malware, we can add code to support it
+        // correctly.
+        return false;
     }
 
     /*
