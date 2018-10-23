@@ -99,11 +99,6 @@ class JS_WshShell extends Component {
      * @return {WshShortcut}
      */
     createshortcut (pathname) {
-        // pathname == null
-        // pathname == undef
-        // pathname == ""
-        // typeof pathname !== string
-
         if (/\.(?:lnk|url)$/i.test(pathname) === false) {
             this.context.exceptions.throw_subscript_out_of_range(
                 "WshShell",
@@ -113,8 +108,29 @@ class JS_WshShell extends Component {
             );
         }
 
-        // Will load an existing shortcut if exists.
+        // Will load an existing shortcut if exists or create one if
+        // not.
+        //
+        // TODO: Add support for .url paths.
+        //
         return new JS_WshShortcut(this.context, pathname);
+    }
+
+    /**
+     * Runs a command and returns a WshScriptExec object.
+     *
+     * @param {string} cmd - The external application's launch
+     * string/command.
+     *
+     * @return {WshScriptExec}
+     */
+    exec (cmd) {
+        // Things to test
+        // --------------
+        //   * Expand environment vars
+        //   * WshScriptExec return obj
+        //   * Correctly connected std{err,out} streams.
+        return new JS_WshScriptExec(this.context);
     }
 
     /*

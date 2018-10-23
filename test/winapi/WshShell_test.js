@@ -306,5 +306,12 @@ describe("WshShell", () => {
                 assert.equal(sc.targetpath, "C:\\Windows");
             });
         });
+
+        describe("#Exec", () => {
+            it("should return a WshScriptExec instance when called", () => {
+                const wsh = new WshShell(ctx);
+                assert.equal(wsh.exec("cmd").__name__, "WshScriptExec");
+            });
+        });
     });
 });
