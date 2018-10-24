@@ -41,7 +41,7 @@ class JS_WshShell extends Component {
             );
         }
 
-        if (typeof new_cwd !== "string" || this.context.vfs.FolderExists(new_cwd) === false) {
+        if (typeof new_cwd !== "string" || ! this.context.vfs.FolderExists(new_cwd)) {
             this.context.exceptions.throw_generic_winapi_exception(
                 "WshShell",
                 `Unable to set the working directory to: ${new_cwd}.`,
@@ -79,7 +79,8 @@ class JS_WshShell extends Component {
             this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
                 "WshShell",
                 "AppActivate requires a 'title' argument.",
-                "The AppActivate method requires the 'title' argument be present and defined."
+                "The AppActivate method requires the 'title' argument be present " +
+		    "and defined."
             );
         }
 

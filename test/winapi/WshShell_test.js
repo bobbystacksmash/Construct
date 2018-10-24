@@ -48,11 +48,14 @@ describe("WshShell", () => {
 
         describe(".CurrentDirectory", () => {
 
-            it("should GET the current directory and return the path as a string", () => {
-                assert.equal(new WshShell(ctx).currentdirectory, CONFIG.environment.cwd);
+            it("should GET the CWD and return the path as a string", () => {
+                assert.equal(
+		    new WshShell(ctx).currentdirectory,
+		    CONFIG.environment.cwd
+		);
             });
 
-            it("should SET the current directory, returning a string path to the new CWD", () => {
+            it("should SET the CWD, returning a string path to the new CWD", () => {
                 const wsh     = new WshShell(ctx),
                       new_cwd = "C:\\Users";
                 var cwd;
@@ -107,7 +110,7 @@ describe("WshShell", () => {
                 );
             });
 
-            it("should support setting CWD to a path which contains a shortpath", () => {
+            it("should support setting CWD to a shortpath", () => {
 
                 const vfs       = ctx.vfs,
                       shortpath = "C:\\HELLOW~1";
@@ -136,7 +139,7 @@ describe("WshShell", () => {
             //   - wsh.environment.count();
             //   - wsh.environment("PROCESS").count();
             //
-            it("should support fetching .Environment via either prop or method", () => {
+            it("should support fetching .Environment via prop or method", () => {
 
                 const wsh = new WshShell(ctx);
 
@@ -192,10 +195,13 @@ describe("WshShell", () => {
 
                 assert.doesNotThrow(() => wsh.SpecialFolders);
                 assert.doesNotThrow(() => wsh.SpecialFolders.item("Desktop"));
-                assert.equal(wsh.SpecialFolders.item("Desktop"), "C:\\Users\\SomeUser\\Desktop");
+                assert.equal(
+		    wsh.SpecialFolders.item("Desktop"),
+		    "C:\\Users\\SomeUser\\Desktop"
+		);
             });
 
-            it("should support fetching .SpecialFolders via either prop or method", () => {
+            it("should support fetching .SpecialFolders via prop or method", () => {
 
                 const wsh = new WshShell(ctx);
 
@@ -203,18 +209,28 @@ describe("WshShell", () => {
 
                 // PROPERTY
                 assert.doesNotThrow(() => wsh.SpecialFolders);
-                assert.equal(wsh.SpecialFolders.item(0), "C:\\Users\\Public\\Desktop");
+                assert.equal(
+		    wsh.SpecialFolders.item(0),
+		    "C:\\Users\\Public\\Desktop"
+		);
 
                 // METHOD + ARG
                 assert.doesNotThrow(() => wsh.SpecialFolders("Desktop"));
-                assert.equal(wsh.SpecialFolders("Desktop"), "C:\\Users\\SomeUser\\Desktop");
+                assert.equal(
+		    wsh.SpecialFolders("Desktop"),
+		    "C:\\Users\\SomeUser\\Desktop"
+		);
             });
 
             it("should return the dirpath when called as a method", () => {
 
                 const wsh = new WshShell(ctx);
 
-                assert.equal(wsh.SpecialFolders("Desktop"), "C:\\Users\\SomeUser\\Desktop");
+                assert.equal(
+		    wsh.SpecialFolders("Desktop"),
+		    "C:\\Users\\SomeUser\\Desktop"
+		);
+		
                 assert.equal(wsh.SpecialFolders(0), "C:\\Users\\Public\\Desktop");
             });
         });
@@ -247,7 +263,7 @@ describe("WshShell", () => {
 
         describe("#CreateShortcut", () => {
 
-            it("should throw when the given pathspec doesn't end eith .lnk or .url", () => {
+            it("should throw when pathspec doesn't end with .lnk or .url", () => {
 
                 make_context({
                     config: CONFIG,
@@ -288,7 +304,10 @@ describe("WshShell", () => {
 
                 assert.isFalse(ctx.vfs.FileExists("C:\\shortcut.lnk"));
                 var sc = null;
-                assert.doesNotThrow(() => sc = (new WshShell(ctx)).CreateShortcut("C:\\shortcut.lnk"));
+                assert.doesNotThrow(
+		    () =>
+			sc = (new WshShell(ctx)).CreateShortcut("C:\\shortcut.lnk")
+		);
                 assert.equal(sc.__name__, "WshShortcut");
             });
 
@@ -302,7 +321,9 @@ describe("WshShell", () => {
                 sc = null;
 
                 const wsh = new WshShell(ctx);
-                assert.doesNotThrow(() => sc = wsh.CreateShortcut("C:\\shortcut.lnk"));
+                assert.doesNotThrow(
+		    () => sc = wsh.CreateShortcut("C:\\shortcut.lnk")
+		);
                 assert.equal(sc.targetpath, "C:\\Windows");
             });
         });
