@@ -356,7 +356,7 @@ describe("WshShell", () => {
                  });
             });
 
-            it("should not replace variables which are not enclosed between '%'", () => {
+            it("should not replace variables which are not between '%'", () => {
                 assert.equal(
                     new WshShell(ctx).ExpandEnvironmentStrings("temp"),
                     "temp"
@@ -377,7 +377,7 @@ describe("WshShell", () => {
 
                 const inputs = {
                     "Hello %foo% world": "Hello bar world",
-                    "Read from %temp%": "Read from C:\\Users\\SomeUser\\AppData\\Local\\Temp",
+                    "Read from %foo%": "Read from bar",
                     "%foo% %foo% %foo%": "bar bar bar"
                 };
 
@@ -389,7 +389,9 @@ describe("WshShell", () => {
 
             it("should ignore the envvar when it cannot be found", () => {
                 assert.equal(
-                    new WshShell(ctx).ExpandEnvironmentStrings("test %unknown% %env% %var% test"),
+                    new WshShell(ctx).ExpandEnvironmentStrings(
+			"test %unknown% %env% %var% test"
+		    ),
                     "test %unknown% %env% %var% test"
                 );
             });
@@ -397,7 +399,7 @@ describe("WshShell", () => {
 
         describe("#LogEvent", () => {
 
-            it("should throw a 'type mistmatch' exception when the log type is invalid", () => {
+            it("should throw type mismatch when the log type is invalid", () => {
 
                 make_context({
                     config: CONFIG,
@@ -408,15 +410,21 @@ describe("WshShell", () => {
                     }
                 });
 
-                assert.throws(() => new WshShell(ctx).LogEvent("",   "xx"),"unknown log type");
-                assert.throws(() => new WshShell(ctx).LogEvent("0!", "xx"),"unknown log type");
+                assert.throws(
+		    () => new WshShell(ctx).LogEvent("",   "xx"),"unknown log type"
+		);
+                assert.throws(
+		    () => new WshShell(ctx).LogEvent("0!", "xx"),"unknown log type"
+		);
 
                 // does not throw for string|number values.
                 assert.doesNotThrow(() => new WshShell(ctx).LogEvent(0,   "xx"));
                 assert.doesNotThrow(() => new WshShell(ctx).LogEvent("0", "xx"));
             });
 
-            // returns true|false
+            it("should return false when trying to log to a remote host", () => {
+                assert.isFalse(new WshShell(ctx).LogEvent(0, "xx", "foobar"));
+            });
         });
     });
 });

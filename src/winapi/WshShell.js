@@ -37,7 +37,8 @@ class JS_WshShell extends Component {
                 "", // description
                 `WshShell`,
                 `Invalid path specified.`,
-                `New path value given to wsh.currentdirectory is not a valid Win32 path.`,
+                `New path value given to wsh.currentdirectory is not a ` +
+                    `valid Win32 path.`,
             );
         }
 
@@ -159,7 +160,10 @@ class JS_WshShell extends Component {
                 let orig_val   = match[0],
                     identifier = match[0].toLowerCase().replace(/%/g, "");
 
-                let matching_evar = Object.keys(env_vars).find(ev => ev.toLowerCase() === identifier);
+                let matching_evar = Object
+                    .keys(env_vars)
+                    .find(ev => ev.toLowerCase() === identifier);
+
                 if (matching_evar) {
                     let value = env_vars[matching_evar];
                     str = str.replace(new RegExp(orig_val, "g"), value);
@@ -172,7 +176,7 @@ class JS_WshShell extends Component {
         }(str));
     }
 
-    logevent (log_type, message, target) {
+    logevent (log_type, message, host) {
         // * Notes: On a Win7 VM, 'target' is used as a NetBIOS name
         // which I guess is the server expected to receive the log
         // message.
@@ -194,6 +198,15 @@ class JS_WshShell extends Component {
                     "must be one of: [0, 1, 2, 4, 8, 16].  Any other value " +
                     "will cause this error to be thrown."
             );
+        }
+
+        //
+        // TODO: check param types
+        //
+
+        if (host) {
+            // We always return false for a remote target.
+            return false;
         }
     }
 
