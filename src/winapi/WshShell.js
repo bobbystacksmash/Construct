@@ -172,6 +172,31 @@ class JS_WshShell extends Component {
         }(str));
     }
 
+    logevent (log_type, message, target) {
+        // * Notes: On a Win7 VM, 'target' is used as a NetBIOS name
+        // which I guess is the server expected to receive the log
+        // message.
+
+        const LOG_EVT_TYPES = {
+            0:  "Success",
+            1:  "Error",
+            2:  "Warning",
+            4:  "Information",
+            8:  "Audit_Success",
+            16: "Audit_Failure"
+        };
+
+        if (LOG_EVT_TYPES.hasOwnProperty(log_type) === false) {
+            this.context.exceptions.throw_type_mismatch(
+                "WshShell",
+                "Unknown 'logType' value passed to LogEvent().",
+                "The LogEvent() method accepts a 'logType' input which " +
+                    "must be one of: [0, 1, 2, 4, 8, 16].  Any other value " +
+                    "will cause this error to be thrown."
+            );
+        }
+    }
+
     /*
     //
     // PROPERTIES

@@ -394,5 +394,29 @@ describe("WshShell", () => {
                 );
             });
         });
+
+        describe("#LogEvent", () => {
+
+            it("should throw a 'type mistmatch' exception when the log type is invalid", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_type_mismatch: () => {
+                            throw new Error("unknown log type");
+                        }
+                    }
+                });
+
+                assert.throws(() => new WshShell(ctx).LogEvent("",   "xx"),"unknown log type");
+                assert.throws(() => new WshShell(ctx).LogEvent("0!", "xx"),"unknown log type");
+
+                // does not throw for string|number values.
+                assert.doesNotThrow(() => new WshShell(ctx).LogEvent(0,   "xx"));
+                assert.doesNotThrow(() => new WshShell(ctx).LogEvent("0", "xx"));
+            });
+
+            // returns true|false
+        });
     });
 });
