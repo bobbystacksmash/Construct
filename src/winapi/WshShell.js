@@ -134,6 +134,44 @@ class JS_WshShell extends Component {
         return new JS_WshScriptExec(this.context);
     }
 
+    /**
+     * Expands an environment variable and returns its value.  An
+     * environment variable is enclosed between to '%' symbols.
+     *
+     * @param {string} str - String containing environment vars.
+     * @return {string}
+     */
+    expandenvironmentstrings (str) {
+
+        const env_vars = Object.assign(
+            {},
+            this.context.config.environment.variables.system,
+            this.context.config.environment.variables.user
+        );
+
+        return (function expand (str) {
+
+            const env_var_re = /%[^%]+%/g;
+            let match = env_var_re.exec(str);
+
+            while (match !== null) {
+
+                let orig_val   = match[0],
+                    identifier = match[0].toLowerCase().replace(/%/g, "");
+
+                let matching_evar = Object.keys(env_vars).find(ev => ev.toLowerCase() === identifier);
+                if (matching_evar) {
+                    let value = env_vars[matching_evar];
+                    str = str.replace(new RegExp(orig_val, "g"), value);
+                    str = expand(str);
+                }
+
+                match = env_var_re.exec(str);
+            }
+            return str;
+        }(str));
+    }
+
     /*
     //
     // PROPERTIES

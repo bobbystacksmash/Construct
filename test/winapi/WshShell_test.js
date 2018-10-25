@@ -11,6 +11,7 @@ const CONFIG = {
         cwd: "C:\\Users\\Testing",
         variables: {
             system: {
+                TEMP: "C:\\Users\\SomeUser\\AppData\\Local\\Temp",
                 foo: "bar"
             },
             process: {
@@ -145,10 +146,10 @@ describe("WshShell", () => {
 
                 assert.doesNotThrow(() => wsh.environment.count());
                 assert.doesNotThrow(() => wsh.environment("PROCESS").count());
-                assert.equal(wsh.environment("PROCESS").count(), 2);
+                assert.isNumber(wsh.environment("PROCESS").count());
 
                 assert.doesNotThrow(() => wsh.environment("SYSTEM").count());
-                assert.equal(wsh.environment("SYSTEM").count(), 1);
+                assert.isNumber(wsh.environment("SYSTEM").count());
             });
         });
 
@@ -230,7 +231,7 @@ describe("WshShell", () => {
 		    wsh.SpecialFolders("Desktop"),
 		    "C:\\Users\\SomeUser\\Desktop"
 		);
-		
+
                 assert.equal(wsh.SpecialFolders(0), "C:\\Users\\Public\\Desktop");
             });
         });
@@ -332,6 +333,65 @@ describe("WshShell", () => {
             it("should return a WshScriptExec instance when called", () => {
                 const wsh = new WshShell(ctx);
                 assert.equal(wsh.exec("cmd").__name__, "WshScriptExec");
+            });
+        });
+
+        describe("#ExpandEnvironmentStrings", () => {
+
+            it("should expand an environment variable", () => {
+                assert.equal(
+                    new WshShell(ctx).ExpandEnvironmentStrings("%TEMP%"),
+                    CONFIG.environment.variables.system.TEMP
+                );
+            });
+
+            it("should expand an envvar, ignoring case", () => {
+
+                ["temp", "TEMP", "Temp", "tEmp", "teMp", "temP",
+                 "TEmp", "TEMp"].forEach(t => {
+                     assert.equal(
+                         new WshShell(ctx).ExpandEnvironmentStrings(`%${t}%`),
+                         CONFIG.environment.variables.system.TEMP
+                     );
+                 });
+            });
+
+            it("should not replace variables which are not enclosed between '%'", () => {
+                assert.equal(
+                    new WshShell(ctx).ExpandEnvironmentStrings("temp"),
+                    "temp"
+                );
+
+                assert.equal(
+                    new WshShell(ctx).ExpandEnvironmentStrings("temp%"),
+                    "temp%"
+                );
+
+                assert.equal(
+                    new WshShell(ctx).ExpandEnvironmentStrings("%temp"),
+                    "%temp"
+                );
+            });
+
+            it("should replace envvars anywhere inside a string", () => {
+
+                const inputs = {
+                    "Hello %foo% world": "Hello bar world",
+                    "Read from %temp%": "Read from C:\\Users\\SomeUser\\AppData\\Local\\Temp",
+                    "%foo% %foo% %foo%": "bar bar bar"
+                };
+
+                Object.keys(inputs).forEach(key => assert.equal(
+                    new WshShell(ctx).ExpandEnvironmentStrings(key),
+                    inputs[key]
+                ));
+            });
+
+            it("should ignore the envvar when it cannot be found", () => {
+                assert.equal(
+                    new WshShell(ctx).ExpandEnvironmentStrings("test %unknown% %env% %var% test"),
+                    "test %unknown% %env% %var% test"
+                );
             });
         });
     });
