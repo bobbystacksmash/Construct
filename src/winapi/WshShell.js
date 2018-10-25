@@ -177,9 +177,6 @@ class JS_WshShell extends Component {
     }
 
     logevent (log_type, message, host) {
-        // * Notes: On a Win7 VM, 'target' is used as a NetBIOS name
-        // which I guess is the server expected to receive the log
-        // message.
 
         const LOG_EVT_TYPES = {
             0:  "Success",
@@ -200,14 +197,22 @@ class JS_WshShell extends Component {
             );
         }
 
-        //
-        // TODO: check param types
-        //
+        if (message === null) {
+            this.context.exceptions.throw_type_mismatch(
+                "WshShell",
+                "NULL passed as second parameter to WshShell.LogEvent().",
+                "NULL is not a valid value for the message parameter.  " +
+                    "Consider using a string value instead."
+            );
+        }
+
 
         if (host) {
             // We always return false for a remote target.
             return false;
         }
+
+        return true;
     }
 
     /*

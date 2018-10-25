@@ -413,6 +413,7 @@ describe("WshShell", () => {
                 assert.throws(
 		    () => new WshShell(ctx).LogEvent("",   "xx"),"unknown log type"
 		);
+
                 assert.throws(
 		    () => new WshShell(ctx).LogEvent("0!", "xx"),"unknown log type"
 		);
@@ -422,8 +423,29 @@ describe("WshShell", () => {
                 assert.doesNotThrow(() => new WshShell(ctx).LogEvent("0", "xx"));
             });
 
+
+            it("should throw type mismatch when 'message' is NULL", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_type_mismatch: () => {
+                            throw new Error("message is null");
+                        }
+                    }
+                });
+
+                assert.throws(
+		    () => new WshShell(ctx).LogEvent("", null), "message is null"
+		);
+            });
+
             it("should return false when trying to log to a remote host", () => {
                 assert.isFalse(new WshShell(ctx).LogEvent(0, "xx", "foobar"));
+            });
+
+            it("should return true even when the message field is an empty string", () => {
+                assert.isTrue(new WshShell(ctx).LogEvent(0, ""));
             });
         });
     });
