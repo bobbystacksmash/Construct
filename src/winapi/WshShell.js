@@ -215,6 +215,29 @@ class JS_WshShell extends Component {
         return true;
     }
 
+    /**
+     * Displayes a message popup box.  Construct is "headless",
+     * meaning there's no GUI, so we do not actually display anything
+     * here - we just capture the events and move on.
+     *
+     * @param {string} message - message to display.
+     * @param {number} delay   - number of seconds to wait before displaying.
+     * @param {string} title   - title of the msgbox.
+     * @param {number} type    - type of buttons and icons to use.
+     */
+    popup (message, delay, title, type) {
+
+        if (arguments.length === 0) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "WshShell",
+                "Popup method called without any arguments.",
+                "The #Popup() method requires at least a `message' " +
+                    "parameter to operate correctly."
+            );
+        }
+
+    }
+
     /*
     //
     // PROPERTIES

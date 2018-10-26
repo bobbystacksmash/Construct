@@ -448,5 +448,26 @@ describe("WshShell", () => {
                 assert.isTrue(new WshShell(ctx).LogEvent(0, ""));
             });
         });
+
+        describe("#Popup", () => {
+
+            // When called without ANY args, throws:
+            // name TypeError
+            //message Wrong number of arguments or invalid property assignment
+            it("should throw a TypeError when called without any arguments", () => {
+
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_wrong_argc_or_invalid_prop_assign: () => {
+                            throw new Error("no args given");
+                        }
+                    }
+                });
+
+                assert.throws(() => new WshShell(ctx).Popup(), "no args given");
+            });
+        });
     });
 });
