@@ -151,6 +151,20 @@ describe("WshShell", () => {
                 assert.doesNotThrow(() => wsh.environment("SYSTEM").count());
                 assert.isNumber(wsh.environment("SYSTEM").count());
             });
+
+            it("should throw a 'TypeError' when attempting to assign to .Env", () => {
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_unsupported_prop_or_method: () => {
+                            throw new Error("cannot assign to this prop");
+                        }
+                    }
+                });
+
+                const wsh = new WshShell(ctx);
+                assert.throws(() => wsh.Environment = 6, "cannot assign to this prop");
+            });
         });
 
         describe(".SpecialFolders", () => {
@@ -233,6 +247,20 @@ describe("WshShell", () => {
 		);
 
                 assert.equal(wsh.SpecialFolders(0), "C:\\Users\\Public\\Desktop");
+            });
+
+            it("should throw a 'TypeError' when attempting to assign to .Env", () => {
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_unsupported_prop_or_method: () => {
+                            throw new Error("cannot assign to this prop");
+                        }
+                    }
+                });
+
+                const wsh = new WshShell(ctx);
+                assert.throws(() => wsh.SpecialFolders = 6, "cannot assign to this prop");
             });
         });
     });

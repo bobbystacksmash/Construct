@@ -63,12 +63,39 @@ class JS_WshShell extends Component {
     }
 
     /**
+     * Throws a TypeError stating that assignment to this property is
+     * not allowed.
+     * @throws {TypeError}
+     */
+    set environment (_) {
+        this.context.exceptions.throw_unsupported_prop_or_method(
+            "WshShell",
+            "The .Environment property cannot be assigned to.",
+            "Assigning to the .Environment property is not allowed."
+        );
+    }
+
+    /**
      * Returns a WshSpecialFolders collection.
      * @return {WshSpecialFolders} A WshSpecialFolders collection.
      */
     get specialfolders () {
         return new JS_WshSpecialFolders(this.context, "WshShell");
     }
+
+    /**
+     * Throws a TypeError stating that assignment to this property is
+     * not allowed.
+     * @throws {TypeError}
+     */
+    set specialfolders (_) {
+        this.context.exceptions.throw_unsupported_prop_or_method(
+            "WshShell",
+            "The .SpecialFolders property cannot be assigned to.",
+            "Assigning to the .SpecialFolders property is not allowed."
+        );
+    }
+
 
     /**
      * Activates an application window.  Cosntruct treats it as a NOOP.
