@@ -456,7 +456,6 @@ describe("WshShell", () => {
             //message Wrong number of arguments or invalid property assignment
             it("should throw a TypeError when called without any arguments", () => {
 
-
                 make_context({
                     config: CONFIG,
                     exceptions: {
@@ -467,6 +466,19 @@ describe("WshShell", () => {
                 });
 
                 assert.throws(() => new WshShell(ctx).Popup(), "no args given");
+            });
+
+            it("should throw 'TypeMismatch' when message=NULL", () => {
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_type_mismatch: () => {
+                            throw new Error("msg is null");
+                        }
+                    }
+                });
+
+                assert.throws(() => new WshShell(ctx).Popup(null), "msg is null");
             });
         });
     });
