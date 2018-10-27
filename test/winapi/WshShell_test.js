@@ -553,9 +553,27 @@ describe("WshShell", () => {
                 assert.doesNotThrow(() => new WshShell(ctx).Popup("xx", 3));
             });
 
-            // TODO
-            // ----
-            //  * add tests for strTitle
+            it("should throw when null or [] are set as title", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_type_mismatch: () => {
+                            throw new Error("not a valid title");
+                        }
+                    }
+                });
+
+                assert.throws(() => new WshShell(ctx).Popup("x", 1, null), "not a valid title");
+                assert.throws(() => new WshShell(ctx).Popup("x", 1, []),   "not a valid title");
+            });
+
+            it("should not throw for .toString types", () => {
+                const types = [{}, undefined, 10, "yes"];
+                types.forEach(t => {
+                    assert.doesNotThrow(() => new WshShell(ctx).popup("x", 1, t));
+                });
+            });
 
             it("should throw if the delay value is a string but not a number", () => {
 

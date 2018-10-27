@@ -313,9 +313,16 @@ class JS_WshShell extends Component {
             }
         }
 
-
-
-        // TODO: strTitle
+        // `title' param validation
+        // ------------------------
+        if (title === null || Array.isArray(title)) {
+            this.context.exceptions.throw_type_mismatch(
+                "WshShell",
+                "Title does not accept non-string-castable types",
+                "Title must be set to something which can be cast to " +
+                    "a string."
+            );
+        }
 
         // `type' param validation
         // -----------------------
