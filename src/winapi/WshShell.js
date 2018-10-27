@@ -254,6 +254,8 @@ class JS_WshShell extends Component {
      */
     popup (message, delay, title, type) {
 
+        // `message' param validation
+        // ---------------------------
         if (arguments.length === 0) {
             this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
                 "WshShell",
@@ -269,6 +271,31 @@ class JS_WshShell extends Component {
                 "The message field must be a type which implements " +
                     ".toString()."
             );
+        }
+
+        // `delay' param validation
+        // ------------------------
+        if (delay === undefined) {
+            delay = 0;
+        }
+
+        if (/^(?:string|number)$/i.test(typeof delay) === false) {
+            this.context.exceptions.throw_type_mismatch(
+                "WshShell",
+                "Unknown type assigned to Popup delay",
+                "The delay (seconds) only accepts string or number" +
+                    "types."
+            );
+        }
+        else if (typeof delay === "string") {
+            if (isNaN(parseFloat(delay))) {
+                this.context.exceptions.throw_type_mismatch(
+                    "WshShell",
+                    "Delay seconds not a valid numeric value",
+                    `The string value ${delay} cannot be cast to a ` +
+                        `numeric value.`
+                );
+            }
         }
     }
 

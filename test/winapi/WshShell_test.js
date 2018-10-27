@@ -508,6 +508,50 @@ describe("WshShell", () => {
 
                 assert.throws(() => new WshShell(ctx).Popup(null), "msg is null");
             });
+
+            it("should throw when given a non-numeric (castable) type", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_type_mismatch: () => {
+                            throw new Error("bad delay type");
+                        }
+                    }
+                });
+
+                const non_numeric_types = [
+                    {}, [], null
+                ];
+
+                non_numeric_types.forEach(t => {
+                    assert.throws(() => new WshShell(ctx).Popup("xx", t), "bad delay type");
+                });
+            });
+
+            it("should throw if the delay value is a string but not a number", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_type_mismatch: () => {
+                            throw new Error("not a num");
+                        }
+                    }
+                });
+
+                assert.throws(() => new WshShell(ctx).Popup("xx", "foobar"), "not a num");
+            });
+
+            it("should ignore undefined and negative values for delay", () => {
+                assert.doesNotThrow(() => new WshShell(ctx).Popup("xx", undefined));
+                assert.doesNotThrow(() => new WshShell(ctx).Popup("xx", -10));
+            });
+
+            it("should allow string and numeric delay seconds", () => {
+                assert.doesNotThrow(() => new WshShell(ctx).Popup("xx", "3"));
+                assert.doesNotThrow(() => new WshShell(ctx).Popup("xx", 3));
+            });
         });
     });
 });
