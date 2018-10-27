@@ -1,4 +1,5 @@
 const VirtualFileSystem = require("../src/runtime/virtfs"),
+      VirtualRegistry   = require("../src/runtime/virtreg"),
       win32path         = require("path").win32;
 
 var ctx = null;
@@ -58,6 +59,7 @@ function make_context (opts) {
         emitter: { emit: () => {} },
         exceptions: {},
         vfs: {},
+        vreg: {},
         skew_time_ahead_by: (n) => { this.epoch++ },
         streams: streams,
         get_env: (e) => env[e],
@@ -73,6 +75,13 @@ function make_context (opts) {
 
     let vfs = new VirtualFileSystem(new_ctx);
     new_ctx.vfs = vfs;
+
+    let vreg = new VirtualRegistry(new_ctx);
+    new_ctx.vreg = vreg;
+    vreg.write(
+        "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\bad",
+        "calc.exe"
+    );
 
     // We set this just so code outside of this function can access
     // the created context object should it need to.

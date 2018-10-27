@@ -597,5 +597,59 @@ describe("WshShell", () => {
                 });
             });
         });
+
+        describe("#ReadRead", () => {
+
+            const RUNKEY = "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+
+            it("should successfully read an existing reg path", () => {
+                assert.equal(new WshShell(ctx).RegRead(`${RUNKEY}\\bad`), "calc.exe");
+            });
+
+            xit("should throw when attempting to read an invalid registry root", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_native_vreg_invalid_root: () => {
+                            var err = new Error();
+                            err.name = "VirtualRegistryInvalidRoot";
+                            throw err;
+                        },
+                        throw_invalid_reg_root: () => {
+                            throw new Error("bad root");
+                        }
+                    }
+                });
+
+                assert.throws(() => new WshShell(ctx).RegRead("foobar"), "bad root");
+            });
+
+            it("should throw when attempting to read an unknown registry key", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_native_vreg_subkey_not_exists: () => {
+                            var err = new Error();
+                            err.name = "VirtualRegistryUnknownSubkey";
+                            throw err;
+                        },
+                        throw_unknown_reg_subkey: () => {
+                            throw new Error("unknown subkey");
+                        }
+                    }
+                });
+
+                assert.throws(() => new WshShell(ctx).RegRead("HKLM\\non\\existant\\key"), "unknown subkey");
+            });
+        });
+
+        /*describe("#RegDelete", () => {
+
+            it("should delete a valid and existing reg key", () => {
+
+            });
+        });*/
     });
 });

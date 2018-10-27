@@ -342,26 +342,64 @@ class JS_WshShell extends Component {
         }
     }
 
-    /*
-    regdelete (key) {
+    /**
+     * Deltes a key or value from the registry.
+     *
+     * @param {string} regpath - Registry key or value path to delete.
+     */
+    regdelete (regpath) {
 
         try {
-            this.context.vreg.delete(key);
+            this.context.vreg.delete(regpath);
         }
         catch (e) {
 
         }
     }
 
-    regread (key) {
-        return this.context.vreg.read(key);
+    /**
+     * Returns a read registry value.
+     *
+     * @param {string} regpath - The registry path to read.
+     * @returns {string} regvalue - The registry value found at 'path'.
+     */
+    regread (regpath) {
+
+        try {
+            return this.context.vreg.read(regpath);
+        }
+        catch (e) {
+
+            if (e.name === "VirtualRegistryUnknownRoot") {
+                this.context.exceptions.throw_invalid_reg_root(
+                    "WshShell",
+                    "Given registry root is not recognised.",
+                    `Error while reading reg path: '${regpath}'.`,
+                    regpath
+                );
+            }
+            else if (e.name === "VirtualRegistryUnknownSubkey") {
+                this.context.exceptions.throw_unknown_reg_subkey(
+                    "WshShell",
+                    `Given registry subkey not found.`,
+                    `Unable to find subkey: "${regpath}"`,
+                    regpath
+                );
+            }
+        }
     }
 
+    /**
+     * Writes a given value to a given registry location.
+     *
+     * @param {string} key - The registry path to write to.
+     * @param {string} val - The value to write to the registry.
+     */
     regwrite (key, value) {
         this.context.vreg.write(key, value);
     }
 
-    run (command) {
+    /*run (command) {
 
     }
 

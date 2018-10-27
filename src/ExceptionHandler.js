@@ -111,6 +111,25 @@ class ExceptionHandler extends Component {
         );
     }
 
+    throw_invalid_reg_root (source, summary, details, key) {
+        this.throw_generic_winapi_exception(
+            "Error",
+            `Invalid root in registry key "${key}".`,
+            -2147024893,
+            `Invalid root in registry key "${key}".`,
+            source, summary, details
+        );
+    }
+
+    throw_unknown_reg_subkey (source, summary, details, regpath) {
+        this.throw_generic_winapi_exception(
+            "Error",
+            `Unable to open registry key "${regpath}" for reading.`,
+            -2147024894,
+            `Unable to open registry key "${regpath}" for reading.`,
+            source, summary, details
+        );
+    }
 
     throw_unsupported_prop_or_method (source, summary, details) {
         this.throw_generic_winapi_exception(
@@ -377,7 +396,7 @@ class ExceptionHandler extends Component {
     // *** Virtual Registry ***
     throw_native_vreg_invalid_root (source, summary, details) {
         this.throw_native_exception(
-            "VirtualRegistryError",
+            "VirtualRegistryInvalidRoot",
             summary,
             0,
             summary,
@@ -407,7 +426,7 @@ class ExceptionHandler extends Component {
 
     throw_native_vreg_subkey_not_exists (source, summary, details) {
         this.throw_native_exception(
-            "VirtualRegistry",
+            "VirtualRegistryUnknownSubkey",
             summary,
             0,
             summary,
