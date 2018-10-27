@@ -251,8 +251,23 @@ class JS_WshShell extends Component {
      * @param {number} delay   - number of seconds to wait before displaying.
      * @param {string} title   - title of the msgbox.
      * @param {number} type    - type of buttons and icons to use.
+     *
+     * @throws {TypeError}
      */
     popup (message, delay, title, type) {
+
+        const POPUP_TYPES = {
+            0:  "OK",
+            1:  "OK and Cancel",
+            2:  "Abort, Retry, Ignore",
+            3:  "Yes, No, Cancel",
+            4:  "Yes, No",
+            5:  "Retry, Cancel",
+            16: "Stop",
+            32: "Question",
+            48: "Exclamation",
+            64: "Information"
+        };
 
         // `message' param validation
         // ---------------------------
@@ -294,6 +309,27 @@ class JS_WshShell extends Component {
                     "Delay seconds not a valid numeric value",
                     `The string value ${delay} cannot be cast to a ` +
                         `numeric value.`
+                );
+            }
+        }
+
+
+
+        // TODO: strTitle
+
+        // `type' param validation
+        // -----------------------
+        if (type === undefined) {
+            return;
+        }
+
+        if (POPUP_TYPES.hasOwnProperty(type) === false) {
+            if (isNaN(parseFloat(type))) {
+                this.context.exceptions.throw_type_mismatch(
+                    "WshShell",
+                    "Popup box type must be a number",
+                    `Cannot use the value ${type} as a popup ` +
+                        `box type.`
                 );
             }
         }

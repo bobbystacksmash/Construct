@@ -552,6 +552,32 @@ describe("WshShell", () => {
                 assert.doesNotThrow(() => new WshShell(ctx).Popup("xx", "3"));
                 assert.doesNotThrow(() => new WshShell(ctx).Popup("xx", 3));
             });
+
+            // TODO
+            // ----
+            //  * add tests for strTitle
+
+            it("should throw if the delay value is a string but not a number", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_type_mismatch: () => {
+                            throw new Error("not a num");
+                        }
+                    }
+                });
+
+                assert.throws(
+                    () => new WshShell(ctx).Popup("a", 3, "c", "d"), "not a num"
+                );
+            });
+
+            it("should not throw when the value is any number", () => {
+                [-10, "10", "333.3333", 0xA].forEach(num => {
+                    assert.doesNotThrow(() => new WshShell(ctx).Popup("a", 1, "c", num));
+                });
+            });
         });
     });
 });
