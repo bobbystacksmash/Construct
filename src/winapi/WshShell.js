@@ -365,12 +365,21 @@ class JS_WshShell extends Component {
      */
     regread (regpath) {
 
+        if (arguments.length === 0) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "WshShell",
+                "Cannot call WshShell.RegRead without any arguments",
+                "WshShell.RegRead must be called with a valid registry path " +
+                    "to read."
+            );
+        }
+
         try {
             return this.context.vreg.read(regpath);
         }
         catch (e) {
 
-            if (e.name === "VirtualRegistryUnknownRoot") {
+            if (e.name === "VirtualRegistryInvalidRoot") {
                 this.context.exceptions.throw_invalid_reg_root(
                     "WshShell",
                     "Given registry root is not recognised.",

@@ -606,7 +606,21 @@ describe("WshShell", () => {
                 assert.equal(new WshShell(ctx).RegRead(`${RUNKEY}\\bad`), "calc.exe");
             });
 
-            xit("should throw when attempting to read an invalid registry root", () => {
+            it("should throw a type error when called without any args", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_wrong_argc_or_invalid_prop_assign: () => {
+                            throw new Error("no args");
+                        }
+                    }
+                });
+
+                assert.throws(() => new WshShell(ctx).RegRead(), "no args");
+            });
+
+            it("should throw when attempting to read an invalid registry root", () => {
 
                 make_context({
                     config: CONFIG,
@@ -641,7 +655,9 @@ describe("WshShell", () => {
                     }
                 });
 
-                assert.throws(() => new WshShell(ctx).RegRead("HKLM\\non\\existant\\key"), "unknown subkey");
+                assert.throws(
+                    () => new WshShell(ctx).RegRead("HKLM\\non\\existant\\key"), "unknown subkey"
+                );
             });
         });
 
