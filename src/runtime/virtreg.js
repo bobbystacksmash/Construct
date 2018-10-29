@@ -58,7 +58,7 @@ class KeyNode {
     // Deletes a subkey where the `subkey.name' matches `name'.
     //
     delete_subkey (name) {
-        delete this.subkeys[name];
+        this.subkeys = this.subkeys.filter(sk => sk.name !== name);
     }
 
     // Set Subkey
@@ -261,6 +261,7 @@ class VirtualRegistry {
     // key/value which cannot be found.
     //
     delete (path) {
+
         let resolved = this.resolve_key(path);
 
         if (resolved.error) {
@@ -284,7 +285,7 @@ class VirtualRegistry {
 
         if (resolved.value_label === "") {
             // Delete the entire key.
-            resolved.key.parent.delete_subkey(resolved.name);
+            resolved.key.parent.delete_subkey(resolved.key.name);
         }
         else {
             resolved.del_value();

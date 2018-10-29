@@ -206,19 +206,16 @@ describe("Virtual Registry", () => {
 
         it("should throw when unable to open an non-existant registry key", () => {
 
-            const vreg = make_vreg({
-                exceptions: {
-                    throw_native_vreg_subkey_not_exists: () => {
-                        throw new Error("Cannot find subkey");
-                    }
-                }
-            });
-            const path = "HKEY_LOCAL_MACHINE\\aa\\bb\\cc";
+            const path = "HKEY_LOCAL_MACHINE\\aa\\bb\\cc",
+                  vreg = make_vreg({
+                      exceptions: {
+                          throw_native_vreg_subkey_not_exists: () => {
+                              throw new Error("Cannot find subkey");
+                          }
+                      }
+                  });
 
-            assert.throws(
-                () => vreg.read(path),
-                `Cannot find subkey`
-            );
+            assert.throws(() => vreg.read(path), `Cannot find subkey`);
         });
     });
 
@@ -235,10 +232,17 @@ describe("Virtual Registry", () => {
             assert.equal(vreg.read(path), undefined);
         });
 
-        it("should delete an entire if path ends with '\\'", () => {
+        it("should delete an entire key if path ends with '\\'", () => {
 
-            const vreg = make_vreg(),
-                  path = "HKLM\\foo\\bar\\";
+            const vreg = make_vreg({
+                exceptions: {
+                    throw_native_vreg_subkey_not_exists: () => {
+                        throw new Error("subkey not found");
+                    }
+                }
+            });
+
+            const path = "HKLM\\foo\\bar\\";
 
             vreg.write("HKLM\\foo\\bar\\default", "!default");
             vreg.write("HKLM\\foo\\bar\\hello",   "!world");
@@ -250,9 +254,9 @@ describe("Virtual Registry", () => {
 
             assert.doesNotThrow(() => vreg.delete(path));
 
-            assert.equal(vreg.read("HKLM\\foo\\bar\\default"), "!default");
-            assert.equal(vreg.read("HKLM\\foo\\bar\\hello"), "!world");
-            assert.equal(vreg.read("HKLM\\foo\\bar\\boat"), "!train");
+            assert.throws(() => vreg.read("HKLM\\foo\\bar\\default"), "subkey not found");
+            assert.throws(() => vreg.read("HKLM\\foo\\bar\\hello"),   "subkey not found");
+            assert.throws(() => vreg.read("HKLM\\foo\\bar\\boat"),    "subkey not found");
         });
 
         it("should throw 'invalid root' if trying to delete root key", () => {
