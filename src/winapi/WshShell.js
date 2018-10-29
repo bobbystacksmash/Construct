@@ -349,11 +349,28 @@ class JS_WshShell extends Component {
      */
     regdelete (regpath) {
 
+        if (arguments.length === 0) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "WshShell",
+                "Cannot call WshShell.RegDelete without any arguments",
+                "WshShell.RegDelete must be called with a valid registry path " +
+                    "to delete."
+            );
+        }
+
         try {
             this.context.vreg.delete(regpath);
         }
         catch (e) {
 
+            if (e.name === "VirtualRegistryUnknownSubkey") {
+                this.context.exceptions.throw_invalid_reg_root(
+                    "WshShell",
+                    "The given registry path to delete is not recognised.",
+                    `Error while trying to delete registry path: '${regpath}'.`,
+                    regpath
+                );
+            }
         }
     }
 

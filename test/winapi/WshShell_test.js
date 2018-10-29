@@ -598,9 +598,10 @@ describe("WshShell", () => {
             });
         });
 
-        describe("#ReadRead", () => {
 
-            const RUNKEY = "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+        const RUNKEY = "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+
+        describe("#ReadRead", () => {
 
             it("should successfully read an existing reg path", () => {
                 assert.equal(new WshShell(ctx).RegRead(`${RUNKEY}\\bad`), "calc.exe");
@@ -661,11 +662,91 @@ describe("WshShell", () => {
             });
         });
 
-        /*describe("#RegDelete", () => {
+        describe("#RegDelete", () => {
 
-            it("should delete a valid and existing reg key", () => {
+            it("should throw a type error when called without any args", () => {
 
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_wrong_argc_or_invalid_prop_assign: () => {
+                            throw new Error("no args");
+                        }
+                    }
+                });
+
+                assert.throws(() => new WshShell(ctx).RegDelete(), "no args");
             });
-        });*/
+
+            it("should throw when trying to delete an unknown registry key", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_native_vreg_subkey_not_exists: () => {
+                            var err = new Error();
+                            err.name = "VirtualRegistryUnknownSubkey";
+                            throw err;
+                        },
+                        throw_invalid_reg_root: () => {
+                            throw new Error("unknown subkey");
+                        }
+                    }
+                });
+
+                assert.throws(
+                    () => new WshShell(ctx).RegDelete(`${RUNKEY}\\not\\found`),
+                    "unknown subkey"
+                );
+            });
+
+            it("should delete an entire registry key when the path ends with \\", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_native_vreg_subkey_not_exists: () => {
+                            var err = new Error();
+                            err.name = "VirtualRegistryUnknownSubkey";
+                            throw err;
+                        },
+                        throw_unknown_reg_subkey: () => {
+                            throw new Error("unknown subkey");
+                        }
+                    }
+                });
+
+                const wsh = new WshShell(ctx);
+
+                assert.equal(wsh.RegRead(`${RUNKEY}\\bad`),   "calc.exe");
+                assert.equal(wsh.RegRead(`${RUNKEY}\\hello`), "world.exe");
+                assert.doesNotThrow(() => new WshShell(ctx).RegDelete(`${RUNKEY}\\`));
+
+                assert.throws(() => wsh.RegRead(`${RUNKEY}\\bad`),   "unknown subkey");
+                assert.throws(() => wsh.RegRead(`${RUNKEY}\\hello`), "unknown subkey");
+            });
+
+            it("should throw when trying to delete an unknown registry key", () => {
+
+                const wsh = new WshShell(ctx);
+
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_native_vreg_subkey_not_exists: () => {
+                            var err = new Error();
+                            err.name = "VirtualRegistryUnknownSubkey";
+                            throw err;
+                        },
+                        throw_invalid_reg_root: () => {
+                            throw new Error("unknown subkey");
+                        }
+                    }
+                });
+
+                assert.throws(() => new WshShell(ctx).RegDelete("HKLM\\unknown\\value"), "unknown subkey");
+            });
+        });
     });
 });

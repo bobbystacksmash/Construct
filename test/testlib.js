@@ -83,6 +83,11 @@ function make_context (opts) {
         "calc.exe"
     );
 
+    vreg.write(
+        "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\hello",
+        "world.exe"
+    );
+
     // We set this just so code outside of this function can access
     // the created context object should it need to.
     ctx = new_ctx;
