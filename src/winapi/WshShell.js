@@ -422,7 +422,38 @@ class JS_WshShell extends Component {
      * @param {string} val - The value to write to the registry.
      */
     regwrite (key, value) {
-        this.context.vreg.write(key, value);
+
+        if (arguments.length <= 1) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "WshShell",
+                "Cannot call WshShell.RegWrite without any arguments",
+                "WshShell.RegWrite must be called with a valid registry path " +
+                    "to read."
+            );
+        }
+
+        try {
+            this.context.vreg.write(key, value);
+        }
+        catch (e) {
+
+            if (e.name === "VirtualRegistryInvalidRoot") {
+                this.context.exceptions.throw_invalid_reg_root(
+                    "WshShell",
+                    "Given registry root is not recognised.",
+                    `Error locating reg path: '${key}'.`,
+                    key
+                );
+            }
+            else if (e.name === "VirtualRegistryUnknownSubkey") {
+                this.context.exceptions.throw_unknown_reg_subkey(
+                    "WshShell",
+                    `Given registry subkey not found.`,
+                    `Unable to find subkey for writing: "${key}"`,
+                    key
+                );
+            }
+        }
     }
 
     /*run (command) {

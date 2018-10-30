@@ -748,5 +748,75 @@ describe("WshShell", () => {
                 assert.throws(() => new WshShell(ctx).RegDelete("HKLM\\unknown\\value"), "unknown subkey");
             });
         });
+
+        describe("#RegWrite", () => {
+
+            it("should throw a type error when called with too few args", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_wrong_argc_or_invalid_prop_assign: () => {
+                            throw new Error("no args");
+                        }
+                    }
+                });
+
+                assert.throws(() => new WshShell(ctx).RegWrite(), "no args");
+                assert.throws(() => new WshShell(ctx).RegWrite(RUNKEY), "no args");
+            });
+
+            it("should throw when given an invalid registry root", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_native_vreg_invalid_root: () => {
+                            var err = new Error();
+                            err.name = "VirtualRegistryInvalidRoot";
+                            throw err;
+                        },
+                        throw_invalid_reg_root: () => {
+                            throw new Error("bad root");
+                        }
+                    }
+                });
+
+                assert.throws(
+                    () => new WshShell(ctx).RegWrite("NEW_ROOT\\foo", "calc.exe"),
+                    "bad root"
+                );
+            });
+
+            it("should create a full path when given a valid root", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_native_vreg_subkey_not_exists: () => {
+                            var err = new Error();
+                            err.name = "VirtualRegistryUnknownSubkey";
+                            throw err;
+                        },
+                        throw_unknown_reg_subkey: () => {
+                            throw new Error("unknown subkey");
+                        }
+                    }
+                });
+
+                const wsh  = new WshShell(ctx);
+
+                let missing_key_path = `${RUNKEY}\\foo`.replace("Microsoft", "Redmond");
+
+                // First, test that the path doesn't already exist...
+                assert.throws(() => wsh.RegRead(missing_key_path), "unknown subkey");
+
+                // Second, create the path.
+                assert.doesNotThrow(() => wsh.RegWrite(missing_key_path, "value.exe"));
+
+                // Finally, read it back to make sure the path was created.
+                assert.equal(wsh.RegRead(missing_key_path), "value.exe");
+            });
+        });
     });
 });
