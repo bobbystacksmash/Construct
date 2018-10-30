@@ -89,11 +89,6 @@ class KeyNode {
     // If `key' is the empty string ("") then this is interpreted to
     // mean "the default value".
     set_value (key, value) {
-
-        const existing_key = Object.keys(this.values).filter(
-            k => k.toLowerCase === key.toLowerCase()
-        ).pop();
-
         this.values[key] = value;
     }
 

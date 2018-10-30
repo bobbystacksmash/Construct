@@ -103,6 +103,23 @@ describe("Virtual Registry", () => {
             assert.equal(vreg.read(path), "this is the default");
         });
 
+        it("should automatically create the path when given a valid root", () => {
+
+            const vreg = make_vreg({
+                exceptions: {
+                    throw_native_vreg_subkey_not_exists: () => {
+                        throw new Error("unknown path");
+                    }
+                }
+            });
+
+            const path = "HKLM\\Nothing\\here";
+            assert.throws(() => vreg.read(path), "unknown path");
+
+            assert.doesNotThrow(() => vreg.write(path, "hello, world!"));
+            assert.equal(vreg.read(path), "hello, world!");
+        });
+
         it("should throw 'invalid root' when trying to write an unknown root", () => {
 
             const vreg = make_vreg({
