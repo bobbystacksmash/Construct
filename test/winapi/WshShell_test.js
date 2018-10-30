@@ -660,6 +660,11 @@ describe("WshShell", () => {
                     () => new WshShell(ctx).RegRead("HKLM\\non\\existant\\key"), "unknown subkey"
                 );
             });
+
+            it("should return an empty string if the path is valid but no value exists", () => {
+                const wsh = new WshShell(ctx);
+                assert.equal(wsh.RegRead(`${RUNKEY}\\`), "");
+            });
         });
 
         describe("#RegDelete", () => {
@@ -788,6 +793,35 @@ describe("WshShell", () => {
                 );
             });
 
+            it("should throw a type mismatch error when attempting to write 'NULL'", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_type_mismatch: () => {
+                            throw new Error("invalid reg value");
+                        }
+                    }
+                });
+
+                assert.throws(
+                    () => new WshShell(ctx).RegWrite("HKLM\\foo", null), "invalid reg value"
+                );
+            });
+
+            it("should not throw when writing string-coercible types to a valid reg key", () => {
+
+                const types = [
+                    undefined, {}, []
+                ];
+
+                types.forEach(t => {
+                    assert.doesNotThrow(() => {
+                        new WshShell(ctx).RegWrite("HKLM\\baz", t);
+                    });
+                });
+            });
+
             it("should create a full path when given a valid root", () => {
 
                 make_context({
@@ -805,7 +839,6 @@ describe("WshShell", () => {
                 });
 
                 const wsh  = new WshShell(ctx);
-
                 let missing_key_path = `${RUNKEY}\\foo`.replace("Microsoft", "Redmond");
 
                 // First, test that the path doesn't already exist...
@@ -816,6 +849,30 @@ describe("WshShell", () => {
 
                 // Finally, read it back to make sure the path was created.
                 assert.equal(wsh.RegRead(missing_key_path), "value.exe");
+            });
+
+            it("should successfully overwrite an existing value", () => {
+
+                const wsh  = new WshShell(ctx),
+                      path = `${RUNKEY}\\hello`;
+
+                assert.equal(wsh.RegRead(path), "world.exe");
+
+                // Let's try over writing the value...
+                assert.doesNotThrow(() => wsh.RegWrite(path, "universe.exe"));
+
+                // ... and read it back
+                assert.equal(wsh.RegRead(path), 'universe.exe');
+            });
+
+            it("should support creating a default value when the path ends with \\", () => {
+
+                const wsh  = new WshShell(ctx),
+                      path = `${RUNKEY}\\`;
+                assert.equal(wsh.RegRead(path), "");
+
+                assert.doesNotThrow(() => wsh.RegWrite(path, "hello.js"));
+                assert.equal(wsh.RegRead(path), "hello.js");
             });
         });
     });

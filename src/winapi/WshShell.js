@@ -392,7 +392,8 @@ class JS_WshShell extends Component {
         }
 
         try {
-            return this.context.vreg.read(regpath);
+            const regval = this.context.vreg.read(regpath);
+            return (regval === undefined) ? "" : regval;
         }
         catch (e) {
 
@@ -429,6 +430,14 @@ class JS_WshShell extends Component {
                 "Cannot call WshShell.RegWrite without any arguments",
                 "WshShell.RegWrite must be called with a valid registry path " +
                     "to read."
+            );
+        }
+
+        if (value === null) {
+            this.context.exceptions.throw_type_mismatch(
+                "WshShell",
+                "Cannot write value type to registry.",
+                "The value type assigned to the registry path is not valid."
             );
         }
 
