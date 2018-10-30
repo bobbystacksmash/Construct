@@ -607,6 +607,14 @@ describe("WshShell", () => {
                 assert.equal(new WshShell(ctx).RegRead(`${RUNKEY}\\bad`), "calc.exe");
             });
 
+            it("should be able to read short and log versions of registry roots", () => {
+                const wsh = new WshShell(ctx);
+
+                let short = "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                    long  = "HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+                assert.equal(wsh.RegRead(short), wsh.RegRead(long));
+            });
+
             it("should throw a type error when called without any args", () => {
 
                 make_context({
@@ -873,6 +881,48 @@ describe("WshShell", () => {
 
                 assert.doesNotThrow(() => wsh.RegWrite(path, "hello.js"));
                 assert.equal(wsh.RegRead(path), "hello.js");
+            });
+
+            it("should permit only certain types when writing to the registry", () => {
+
+                const type_value_map = {
+                    REG_SZ: "hello",
+                    REG_EXPAND_SZE: "goodbyte",
+                    REG_DWORD: 42,
+                    REG_BINARY: "??"
+                };
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_wrong_argc_or_invalid_prop_assign: () => {
+                            throw new Error("unknown type");
+                        }
+                    }
+                });
+
+                const wsh = new WshShell(ctx);
+
+                assert.throws(
+                    () => wsh.RegWrite(`${RUNKEY}\\`, "test", "unknown-type"), "unknown type"
+                );
+
+                /*Object.keys(type_value_map).forEach(key => {
+                    assert.doesNotThrow(() => {
+                        new WshShell(ctx).RegWrite(`${RUNKEY}\\`, type_value_map[key], key);
+                    });
+                });*/
+            });
+
+            xit("should allow a literal number to be written when type is a string", () => {
+                assert.doesNotThrow(() => {
+                    new WshShell(ctx).RegWrite(`${RUNKEY}\\`, 42, "REG_DWORD");
+                });
+
+            });
+
+            xit("should throw if type is REG_DWORD and the value is not a number", () => {
+
             });
         });
     });

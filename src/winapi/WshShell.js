@@ -419,17 +419,18 @@ class JS_WshShell extends Component {
     /**
      * Writes a given value to a given registry location.
      *
-     * @param {string} key - The registry path to write to.
-     * @param {string} val - The value to write to the registry.
+     * @param {string} key  - The registry path to write to.
+     * @param {string} val  - The value to write to the registry.
+     * @param {string} type - Registry value data-type identifier.
      */
-    regwrite (key, value) {
+    regwrite (key, value, type) {
 
-        if (arguments.length <= 1) {
+        if (arguments.length <= 1 || arguments.length > 3) {
             this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
                 "WshShell",
-                "Cannot call WshShell.RegWrite without any arguments",
-                "WshShell.RegWrite must be called with a valid registry path " +
-                    "to read."
+                "Calls to WshShell.RegWrite must use between two and three params",
+                "WshShell.RegWrite must be called with with two manditory params, " +
+                    "'key' and 'value', and an optional third 'type'."
             );
         }
 
@@ -439,6 +440,18 @@ class JS_WshShell extends Component {
                 "Cannot write value type to registry.",
                 "The value type assigned to the registry path is not valid."
             );
+        }
+
+        const TYPES = [ "REG_SZ", "REG_EXPAND_SZ", "REG_DWORD", "REG_BINARY" ];
+        if (arguments.length === 3) {
+            // Do type validation
+            if (TYPES.includes(type) === false) {
+                this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                    "WshShell",
+                    "Registry type value must exactly match set of valid types.",
+                    "Valid types permitted are: " + TYPES.join(",")
+                );
+            }
         }
 
         try {
