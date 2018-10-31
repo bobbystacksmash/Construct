@@ -443,13 +443,24 @@ class JS_WshShell extends Component {
         }
 
         const TYPES = [ "REG_SZ", "REG_EXPAND_SZ", "REG_DWORD", "REG_BINARY" ];
+
         if (arguments.length === 3) {
             // Do type validation
             if (TYPES.includes(type) === false) {
                 this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
                     "WshShell",
-                    "Registry type value must exactly match set of valid types.",
+                    `Unknown registry value type: ${type}.`,
                     "Valid types permitted are: " + TYPES.join(",")
+                );
+            }
+            else if (type === "REG_DWORD" && typeof value !== "number") {
+                this.context.exceptions.throw_type_mismatch(
+                    "WshShell",
+                    "Unable to write non-number value when type is 'REG_DWORD'.",
+                    "Type validation is applied to values written to the registry when " +
+                        "the 'type' parameter is set.  In this instance, the type parameter " +
+                        "is set to REG_DWORD (number), while the given type is not a numeric " +
+                        `type, and therefore cannot be written.  Given type: ${typeof value}.`
                 );
             }
         }

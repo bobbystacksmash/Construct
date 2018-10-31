@@ -887,7 +887,7 @@ describe("WshShell", () => {
 
                 const type_value_map = {
                     REG_SZ: "hello",
-                    REG_EXPAND_SZE: "goodbyte",
+                    REG_EXPAND_SZ: "goodbyte",
                     REG_DWORD: 42,
                     REG_BINARY: "??"
                 };
@@ -907,21 +907,37 @@ describe("WshShell", () => {
                     () => wsh.RegWrite(`${RUNKEY}\\`, "test", "unknown-type"), "unknown type"
                 );
 
-                /*Object.keys(type_value_map).forEach(key => {
+                Object.keys(type_value_map).forEach(key => {
                     assert.doesNotThrow(() => {
                         new WshShell(ctx).RegWrite(`${RUNKEY}\\`, type_value_map[key], key);
                     });
-                });*/
+                });
             });
 
-            xit("should allow a literal number to be written when type is a string", () => {
+            it("should allow a literal number to be written when type is a string", () => {
                 assert.doesNotThrow(() => {
                     new WshShell(ctx).RegWrite(`${RUNKEY}\\`, 42, "REG_DWORD");
                 });
-
             });
 
-            xit("should throw if type is REG_DWORD and the value is not a number", () => {
+            it("should throw if type is REG_DWORD and the value is not a number", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_type_mismatch: () => {
+                            throw new Error("value is not a number");
+                        }
+                    }
+                });
+
+                assert.throws(
+                    () => new WshShell(ctx).RegWrite(`${RUNKEY}\\`, "hello", "REG_DWORD"),
+                    "value is not a number"
+                );
+            });
+
+            xit("should continue type-checking here. REG_BINARY needs testing.", () => {
 
             });
         });
