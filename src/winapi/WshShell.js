@@ -489,11 +489,27 @@ class JS_WshShell extends Component {
         }
     }
 
-    /*run (command) {
+    /**
+     * Runs a string command, similar to Exec.
+     *
+     * @param {string}  command      - The CMD.exe command to run.
+     * @param {number}  winstyle     - The window style of the new process.
+     * @param {boolean} [async=true] - Handles asynchronous running, true=async, false=wait.
+     *
+     * @returns {number} Represents the success (0) or failure (>=1).
+     */
+    run (command, winstyle, async) {
 
+        if (arguments.length <= 1 || arguments.length > 3) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "WshShell",
+                "Calls to WshShell.Run must be given at least one argument.",
+                "WshShell.Run accepts one required param, and two optionals. "
+            );
+        }
     }
 
-    sendkeys (keystroke) {
+    /*sendkeys (keystroke) {
 
     }
 */

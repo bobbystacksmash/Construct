@@ -937,8 +937,37 @@ describe("WshShell", () => {
                 );
             });
 
-            xit("should continue type-checking here. REG_BINARY needs testing.", () => {
+            // TODO: Add tests for REG_BINARY.
+        });
 
+        describe("#Run", () => {
+
+            it("should throw if not enough args are specified", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_wrong_argc_or_invalid_prop_assign: () => {
+                            throw new Error("too few args");
+                        }
+                    }
+                });
+
+                assert.throws(() => new WshShell(ctx).Run(), "too few args");
+            });
+
+            it("should throw if too many args are specified", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_wrong_argc_or_invalid_prop_assign: () => {
+                            throw new Error("too many args");
+                        }
+                    }
+                });
+
+                assert.throws(() => new WshShell(ctx).Run("dir", 1, true, 12), "too many args");
             });
         });
     });
