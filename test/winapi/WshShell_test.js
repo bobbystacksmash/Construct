@@ -969,6 +969,29 @@ describe("WshShell", () => {
 
                 assert.throws(() => new WshShell(ctx).Run("dir", 1, true, 12), "too many args");
             });
+
+            it("should throw a TypeMismatch when window style is not string|num", () => {
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_type_mismatch: () => {
+                            throw new Error("type mismatch");
+                        }
+                    }
+                });
+
+                const bad_types = [
+                    [], "[]", null
+                ];
+
+                bad_types.forEach(t => {
+                    assert.throws(() => new WshShell(ctx).Run("dir", t), "type mismatch");
+                });
+
+                // booleans should be cast to numbers and not throw
+                assert.doesNotThrow(() => new WshShell(ctx).Run("dir", false));
+                assert.doesNotThrow(() => new WshShell(ctx).Run("dir", true));
+            });
         });
     });
 });

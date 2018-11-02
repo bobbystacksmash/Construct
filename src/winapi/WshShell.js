@@ -507,6 +507,27 @@ class JS_WshShell extends Component {
                 "WshShell.Run accepts one required param, and two optionals. "
             );
         }
+
+        if (winstyle === undefined) winstyle = 0;
+
+        let throw_type_mismatch = function () {
+            this.context.exceptions.throw_type_mismatch(
+                "WshShell",
+                "Given 'winstyle' type is not numeric.",
+                "Only strings and number types can be given to 'winstyle', " +
+                    "any other type causes this exception to be thrown."
+            );
+        }.bind(this);
+
+        if (typeof winstyle === "boolean") {
+            winstyle = (winstyle) ? 1 : 0;
+        }
+
+        winstyle = parseInt(winstyle, 10);
+
+        if (isNaN(winstyle)) {
+            throw_type_mismatch();
+        }
     }
 
     /*sendkeys (keystroke) {
