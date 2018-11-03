@@ -500,11 +500,19 @@ class JS_WshShell extends Component {
      */
     run (command, winstyle, async) {
 
-        if (arguments.length <= 1 || arguments.length > 3) {
+        if (arguments.length < 1 || arguments.length > 3) {
             this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
                 "WshShell",
                 "Calls to WshShell.Run must be given at least one argument.",
                 "WshShell.Run accepts one required param, and two optionals. "
+            );
+        }
+
+        if (typeof command !== "string") {
+            this.context.exceptions.throw_invalid_fn_arg(
+                "WshShell",
+                "The command-to-run argument must be a string.",
+                "Can only run commands when the type is 'string'."
             );
         }
 

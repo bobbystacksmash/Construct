@@ -970,6 +970,20 @@ describe("WshShell", () => {
                 assert.throws(() => new WshShell(ctx).Run("dir", 1, true, 12), "too many args");
             });
 
+            it("should throw if the command to run is not string-coercible", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_invalid_fn_arg: () => {
+                            throw new Error("invalid cmd");
+                        }
+                    }
+                });
+
+                assert.throws(() => new WshShell(ctx).Run([]), "invalid cmd");
+            });
+
             it("should throw a TypeMismatch when window style is not string|num", () => {
                 make_context({
                     config: CONFIG,
