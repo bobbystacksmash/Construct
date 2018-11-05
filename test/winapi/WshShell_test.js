@@ -1037,7 +1037,22 @@ describe("WshShell", () => {
                         "bad async type"
                     );
                 });
+            });
+        });
 
+        describe("#SendKeys", () => {
+            it("should throw when called without any args", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_wrong_argc_or_invalid_prop_assign: () => {
+                            throw new Error("no args");
+                        }
+                    }
+                });
+
+                assert.throws(() => new WshShell(ctx).SendKeys(), "no args");
             });
         });
     });

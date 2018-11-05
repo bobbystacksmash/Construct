@@ -564,10 +564,22 @@ class JS_WshShell extends Component {
         }
     }
 
-    /*sendkeys (keystroke) {
+    /**
+     * Sends keystrokes to the active window.
+     * (Not implemented at all within Cosntruct)
+     *
+     * @param {string} keystroke - the keystroke to send.
+     */
+    sendkeys (keystroke) {
 
+        if (arguments.length === 0) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "WshShell",
+                "SendKeys accepts only one parameter (none given)",
+                "SendKeys accepts only one parameter (none given)"
+            );
+        }
     }
-*/
 }
 
 module.exports = function (context) {
