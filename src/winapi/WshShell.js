@@ -536,6 +536,32 @@ class JS_WshShell extends Component {
         if (isNaN(winstyle)) {
             throw_type_mismatch();
         }
+
+        if (async === undefined) async = true;
+
+        if (typeof async === "string" && /^\d+$/.test(async) === false) {
+            this.context.exceptions.throw_type_mismatch(
+                "WshShell",
+                "Async type cannot be cast to a boolean",
+                "The type or value given as the async parameter cannot be " +
+                    "cast to a boolean."
+            );
+        }
+        else if (typeof async === null) {
+            this.context.exceptions.throw_type_mismatch(
+                "WshShell",
+                "Async type cannot be NULL",
+                "The async type cannot be NULL in WshShell.Run()"
+            );
+        }
+        else if (/^string|number|boolean$/i.test(typeof async) === false) {
+            this.context.exceptions.throw_type_mismatch(
+                "WshShell",
+                "Async type cannot be cast to a boolean.",
+                `The given async type (${typeof async}) cannot be cast ` +
+                    "to a boolean."
+            );
+        }
     }
 
     /*sendkeys (keystroke) {

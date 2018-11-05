@@ -985,6 +985,7 @@ describe("WshShell", () => {
             });
 
             it("should throw a TypeMismatch when window style is not string|num", () => {
+
                 make_context({
                     config: CONFIG,
                     exceptions: {
@@ -1005,6 +1006,38 @@ describe("WshShell", () => {
                 // booleans should be cast to numbers and not throw
                 assert.doesNotThrow(() => new WshShell(ctx).Run("dir", false));
                 assert.doesNotThrow(() => new WshShell(ctx).Run("dir", true));
+            });
+
+            it("should throw if the given async type is not a boolean|number|strnum", () => {
+
+                make_context({
+                    config: CONFIG,
+                    exceptions: {
+                        throw_type_mismatch: () => {
+                            throw new Error("bad async type");
+                        }
+                    }
+                });
+
+                const do_not_throw = [
+                    true, false, 1, 2, 10, "2", "1", undefined
+                ];
+
+                do_not_throw.forEach(t => {
+                    assert.doesNotThrow(() => new WshShell(ctx).Run("cmd", 1, t));
+                });
+
+                const throwers = [
+                    "yes", "on", [], {}, null
+                ];
+
+                throwers.forEach(t => {
+                    assert.throws(
+                        () => new WshShell(ctx).Run("cmd", 1, t),
+                        "bad async type"
+                    );
+                });
+
             });
         });
     });
