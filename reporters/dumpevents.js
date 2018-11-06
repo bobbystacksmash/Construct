@@ -7,13 +7,12 @@ module.exports = {
         description: "Dumps a JSON object containing all captured events."
     },
 
-    report: (event) => {
+    report: (event, done) => {
 
-        if (event.meta !== "finished") {
-            events.push(event);
+        if (event.meta === "finished") {
+            done(null, events);
         }
-        else {
-            console.log(JSON.stringify(events, null, 2));
-        }
+
+        events.push(event);
     }
 };

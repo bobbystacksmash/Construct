@@ -58,7 +58,7 @@ function Runtime (options) {
 };
 
 
-Runtime.prototype.load = function(path_to_file, options) {
+Runtime.prototype.load = function(path_to_file, done, options) {
 
     options = options || { coverage: false };
 
@@ -126,7 +126,7 @@ Runtime.prototype.load = function(path_to_file, options) {
     this.context.vfs.AddFile(script_path, this.source.original);
     this.context.set_env("ScriptFullName", script_path);
 
-    return this._make_runnable();
+    return this._make_runnable(done);
 };
 
 // ########################
@@ -181,7 +181,7 @@ Runtime.prototype._capture_coverage_report = function (coverage_var) {
 // ################################
 // # Capture Function Constructor #
 // ################################
-Runtime.prototype._capture_function_constructor = function (...args) {
+/*Runtime.prototype._capture_function_constructor = function (...args) {
 
     emitter.emit("runtime.capture.function_constructor", {
         function: [...args]
@@ -211,9 +211,17 @@ Runtime.prototype._capture_function_constructor = function (...args) {
     }
 
     return this._create_runtime_sandbox(source);
-};
+};*/
 
 
+/**
+ * Prepares a single function which will initiate analysis of a given file.
+ *
+ * @param {function} resolve Called if analysis completes successfully.
+ * @param {function} reject  Called if analysis fails.
+ *
+ * @returns {function}
+ */
 Runtime.prototype._create_runtime_sandbox = function (options) {
 
     options = options || {};
@@ -222,7 +230,7 @@ Runtime.prototype._create_runtime_sandbox = function (options) {
     options = Object.assign(default_opts, options);
 
     let context = this.context,
-        self = this;
+        self    = this;
 
     // All of the constructable JScript types are set here.
     var sandbox = {
@@ -259,7 +267,7 @@ Runtime.prototype.add_event_listener = function (fn) {
 };
 
 
-Runtime.prototype._make_runnable = function () {
+Runtime.prototype._make_runnable = function (done) {
 
     let events  = this.events,
         epoch   = this.context.epoch,
@@ -389,24 +397,25 @@ Runtime.prototype._make_runnable = function () {
     });
 
     ee.on("onevent", function (event) {
-        self.onevent(event);
+        self.onevent(event, done);
     });
 
+    return () => {
 
-    let ready_to_run_env = this._create_runtime_sandbox();
+        let ready_to_run = this._create_runtime_sandbox();
 
-    return function (done) {
         try {
-            ready_to_run_env();
+            ready_to_run();
             ee.emit("finished", { success: true });
-            return done(null, { success: true });
         }
         catch (e) {
             if (e.message === "Script execution timed out.") {
                 ee.emit("finished", { success: true, "timeout_reached": true });
-                return done(null, { "success": true, "timeout_reached": true });
+                resolve({ success: true, timeout: true });
 	    }
-            return done(e);
+            else {
+                reject(e);
+            }
         }
     };
 };
