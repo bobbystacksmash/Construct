@@ -19,7 +19,6 @@
     "license": "ISC",
     "devDependencies": {
         "chai": "^4.1.2",
-        "chai-as-promised": "^7.1.1",
         "documentation": "^8.1.2",
         "expect": "^21.2.1",
         "grunt": "^1.0.3",
@@ -61,6 +60,7 @@
         "sprintf-js": "^1.1.1",
         "spyfs": "^1.0.2",
         "stack-trace": "0.0.10",
+        "temp": "^0.8.3",
         "text-table": "^0.2.0",
         "toml": "^2.3.3",
         "unionfs": "^3.0.2",
