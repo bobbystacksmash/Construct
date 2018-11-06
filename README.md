@@ -9,17 +9,76 @@ Construct is a cross-platform, Windows Script Host (WSH) emulator, written from
 the ground up to be a fully compatible environment for running and dynamically
 analysing malicious [JScript](https://en.wikipedia.org/wiki/JScript) programs.
 
-This project was designed to simplify the analysis of highly obfuscated and
-deliberately hard-to-follow malicious JScript code.  Favouring configuration
-over code, Construct attempts to help both technical and non-technical analysts
-quickly and confidently gather Indicators Of Compromise (IOCs) from malicious
-JScript programs.
+This project was designed to simplify the analysis of highly
+obfuscated and deliberately hard-to-follow malicious JScript code.
+Favouring configuration over code, Construct attempts to help both
+technical and non-technical malware analysts quickly and confidently
+gather Indicators Of Compromise (IOCs) from malicious JScript
+programs.
 
 _Construct is currently in **alpha**.  Please help improve
 the project by [reporting issues](https://github.com/bobbystacksmash/Construct/issues).
 Patches are most welcome._
 
-### How it works
+## Installing
+
+Construct has been designed to run on any operating system capable of running
+the latest version of the Node.js programming language.  To install Construct:
+
+1. Install the Node.js programming language and the Node Package Manager (NPM).
+2. Clone or download this repository.
+3. `cd` in to the Construct folder and run `npm install` to install all dependencies.
+4. Launch Construct by running `node src/cli.js --help` from the Construct folder.
+
+## Usage
+### Command Line
+
+To use construct on the command line, run `node src/cli.js`.  For
+details, see `--help`:
+
+```
+  Usage: node src/cli.js FILE [options]
+
+  Options:
+
+    -c, --coverage             Write a HTML coverage report to './html-report'.
+    -D, --debug                Prints debug information to STDOUT.
+    -d, --date <datestr>       Sets the sandbox clock within the virtualised environment.
+    --list-reporters           Lists all available output reporters.
+    -r, --reporter <REPORTER>  Uses the given REPORTER to produce output.
+    -h, --help                 output usage information
+
+```
+
+### Web Browser
+
+_Work in progress._ The Construct project has a HTTP interface.  To
+use it, see `TODO`.
+
+### Node JS API / Module
+
+Once the Construct API has been tested, the project will be available
+for install via NPM.  Until then, make sure you require `index.js` in
+the root of your Construct project.
+
+```javascript
+const Construct = require("./index");
+
+let analyser = new Construct({
+    config:   "./construct.cfg",
+    reporter: "dumpevents"
+});
+
+analyser.analyse("/path/to/jscript/file")
+    .then((analysis) => {
+        console.log("Scan results:, JSON.stringify(analysis, null, 2));
+    })
+    .catch((err) => {
+        console.log("Error: ", err.message);
+    });
+```
+
+## How it works
 
 As JScript code runs inside Construct's analysis environment, a wide number of
 different events are emitted.  *Output Reporters* capture these events and
@@ -61,30 +120,8 @@ configuration file it is possible to:
 
  * ... and much more.
 
-## Installing
-
-Construct has been designed to run on any operating system capable of running
-the latest version of the Node.js programming language.  To install Construct:
-
-1. Install the Node.js programming language and the Node Package Manager (NPM).
-2. Clone or download this repository.
-3. `cd` in to the Construct folder and run `npm install` to install all dependencies.
-4. Launch Construct by running `node src/cli.js --help` from the Construct folder.
 
 ## Usage
 
-```
-  Usage: node src/cli.js FILE [options]
-
-  Options:
-
-    -c, --coverage             Write a HTML coverage report to './html-report'.
-    -D, --debug                Prints debug information to STDOUT.
-    -d, --date <datestr>       Sets the sandbox clock within the virtualised environment.
-    --list-reporters           Lists all available output reporters.
-    -r, --reporter <REPORTER>  Uses the given REPORTER to produce output.
-    -h, --help                 output usage information
-
-```
 
 TODO: examples and tutorials coming soon.
