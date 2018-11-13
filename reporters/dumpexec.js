@@ -9,7 +9,7 @@ module.exports = {
         description: "Extracts and dumps various execution indicators."
     },
 
-    report: (event) => {
+    report: (event, done) => {
 
         if (event.meta && event.meta === "runtime.api.call") {
             if (/wshshell/i.test(event.target) && /^(?:run|exec)$/i.test(event.property.normalised)) {
@@ -20,7 +20,7 @@ module.exports = {
             }
         }
         else if (event.meta && event.meta === "finished") {
-            console.log(JSON.stringify(exec_events));
+            done(null, exec_events);
         }
     }
 };

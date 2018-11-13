@@ -411,13 +411,13 @@ Runtime.prototype._make_runnable = function (done) {
         catch (e) {
             if (e.message === "Script execution timed out.") {
                 ee.emit("finished", { success: true, "timeout_reached": true });
-                resolve({ success: true, timeout: true });
+                return { success: true, timeout: true };
 	    }
             else {
-                reject(e);
+                throw e;
             }
         }
-    };
+    }
 };
 
 module.exports = Runtime;

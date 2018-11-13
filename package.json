@@ -9,6 +9,7 @@
         "testdev": "node_modules/.bin/mocha --watch --recursive --reporter spec ./test/winapi/WshShell_test.js",
         "testreg": "node_modules/.bin/mocha --watch --recursive --reporter spec ./test/runtime/virtreg_test.js",
         "code": "node src/index.js",
+        "http": "node src/http/app.js",
         "debug": "node --inspect --inspect-brk src/index.js "
     },
     "bin": {
@@ -38,6 +39,7 @@
         "espree": "^3.5.2",
         "esprima": "^4.0.0",
         "eventemitter2": "^5.0.0",
+        "express": "^4.16.4",
         "falafel": "^2.1.0",
         "fs-monkey": "^0.3.3",
         "hexy": "^0.2.10",
@@ -57,6 +59,7 @@
         "mkdirp": "^0.5.1",
         "moment": "^2.22.2",
         "npm": "^6.4.1",
+        "pug": "^2.0.3",
         "sprintf-js": "^1.1.1",
         "spyfs": "^1.0.2",
         "stack-trace": "0.0.10",
