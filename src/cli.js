@@ -96,17 +96,12 @@ if (program.debug) {
     process.exit();
 }
 
-let construct = new Construct({
-    config: "./construct.cfg"
-});
-construct.load_reporters("./reporters");
-
 // =================
 // R E P O R T E R S
 // =================
 if (program.listReporters) {
 
-    const reporters = construct.get_reporters();
+    let reporters = new Construct({ config: "./construct.cfg" }).reporters;
 
     if (Object.keys(reporters).length === 0) {
         console.log("No reporters found.");
@@ -125,7 +120,9 @@ if (program.listReporters) {
 if (program.reporter) {
 
     try {
-        construct.onevent(program.reporter);
+        var analyser = new Construct({
+            config: "./construct.cfg"
+        });
     }
     catch (e) {
         console.log(`Error: Unable to find reporter '${program.reporter}'.`);
@@ -141,12 +138,14 @@ if (file_to_analyse === null) {
 }
 
 
-construct.load(file_to_analyse, { coverage: program.coverage });
-const res = construct.run();
-
-if (res === false) {
-    process.exit();
-}
+analyser
+    .analyse(file_to_analyse, { coverage: program.coverage })
+    .then((results) => {
+        console.log(JSON.stringify(results, null, 2));
+    })
+    .catch((err) => {
+        console.log(err);
+    });
 
 // ===============
 // C O V E R A G E
