@@ -7,10 +7,10 @@ module.exports = {
         description: "Extracts and dumps various network indicators."
     },
 
-    report: (event) => {
+    report: (event, done) => {
 
         if (event.meta === "finished") {
-            console.log(JSON.stringify(events));
+            done(null, events);
         }
         else if (event.meta && event.meta === "runtime.api.call") {
             if (/xmlhttp/i.test(event.target)) {

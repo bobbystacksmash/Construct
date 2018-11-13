@@ -7,10 +7,10 @@ module.exports = {
         description: "Extracts and dumps URIs found within the source."
     },
 
-    report: (event) => {
+    report: (event, done) => {
 
         if (event.meta === "finished") {
-            console.log(JSON.stringify(uris));
+            done(null, uris);
         }
         else if (event.meta && event.meta === "runtime.api.call") {
 

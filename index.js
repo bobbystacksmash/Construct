@@ -62,10 +62,14 @@ class Construct {
         options = options || {};
         options = Object.assign(DEFAULT_ANALYSER_OPTS, options);
 
-
-        this._set_reporter(options.reporter);
-
         return new Promise((resolve, reject) => {
+
+            try {
+                this._set_reporter(options.reporter);
+            }
+            catch (err) {
+                reject(err);
+            }
 
             var done_callback = function (err, success) {
                 (err) ? reject(err) : resolve(success);

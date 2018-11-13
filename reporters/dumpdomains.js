@@ -1,5 +1,7 @@
 const uri = require("url");
 
+let uris = [];
+
 module.exports = {
 
     meta: {
@@ -7,7 +9,12 @@ module.exports = {
         description: "Extracts only the host part (domain name) of all discovered URIs."
     },
 
-    report: (event) => {
+    report: (event, done) => {
+
+        if (event.meta === "finished") {
+            done(null, uris);
+        }
+
         // TODO: Update this to also try and pull URIs from exec commands, such
         // as PS IEX calls, etc.
         if (event.meta && event.meta === "runtime.api.call") {
@@ -17,10 +24,9 @@ module.exports = {
 
                     try {
                         let url = uri.parse(event.args[1].value);
-                        console.log(url.hostname.toLowerCase());
+                        uris.push(url);
                     }
                     catch (_) {
-                        console.log(_);
                     }
                 }
             }

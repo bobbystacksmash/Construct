@@ -117,19 +117,6 @@ if (program.listReporters) {
     process.exit();
 }
 
-if (program.reporter) {
-
-    try {
-        var analyser = new Construct({
-            config: "./construct.cfg"
-        });
-    }
-    catch (e) {
-        console.log(`Error: Unable to find reporter '${program.reporter}'.`);
-        console.log(`Use the '--list-reporters' option to view available reporters.`);
-        process.exit();
-    }
-}
 
 if (file_to_analyse === null) {
     console.log("Usage: construct FILE [OPTION]...");
@@ -137,15 +124,29 @@ if (file_to_analyse === null) {
     return;
 }
 
-
-analyser
-    .analyse(file_to_analyse, { coverage: program.coverage })
-    .then((results) => {
-        console.log(JSON.stringify(results, null, 2));
-    })
-    .catch((err) => {
-        console.log(err);
+try {
+    var analyser = new Construct({
+        config: "./construct.cfg"
     });
+
+    analyser
+        .analyse(file_to_analyse, { reporter: program.reporter })
+        .then((results) => {
+            console.log(JSON.stringify(results, null, 2));
+        })
+        .catch((err) => {
+            // TODO: add better failure messages here.
+            console.log(err);
+        });
+}
+catch (e) {
+    console.log(`Error: Unable to find reporter '${program.reporter}'.`);
+    console.log(`Use the '--list-reporters' option to view available reporters.`);
+    process.exit();
+}
+
+
+
 
 // ===============
 // C O V E R A G E

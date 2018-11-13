@@ -6,7 +6,8 @@ module.exports = {
         description: "Dumps all captured function arguments and return values."
     },
 
-    report: (events) => {
-        console.log(JSON.stringify(events), null, 2);
+    report: (events, done) => {
+        // TODO...
+        done(null, events);
     }
 };
