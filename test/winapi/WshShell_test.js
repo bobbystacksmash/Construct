@@ -1056,4 +1056,13 @@ describe("WshShell", () => {
             });
         });
     });
+
+    describe("Usage", () => {
+
+        it("should allow access to the ENV collection via [] notation", () => {
+            const wsh = new WshShell(ctx),
+                  fn  = wsh["Environment"]("SYSTEM");
+            assert.equal(fn("comspec"), "CMD BLAH", "should return COMSPEC env var.");
+        });
+    });
 });
