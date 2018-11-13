@@ -1,0 +1,13 @@
+html
+  head
+    title= title
+  body
+    form(name="scan-jscript" method="post" action="/scan")
+      select(name="reporter")
+        for reporter in reporters
+          option(value=reporter.meta.name) #{reporter.meta.name}
+      textarea(name="code", value="WScript.Echo('test');")
+      input(
+        type="submit"
+        value="Scan"
+      )
