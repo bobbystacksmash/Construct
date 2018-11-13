@@ -71,7 +71,7 @@ let analyser = new Construct({
 
 analyser.analyse("/path/to/jscript/file")
     .then((analysis) => {
-        console.log("Scan results:, JSON.stringify(analysis, null, 2));
+        console.log("Scan results:", JSON.stringify(analysis, null, 2));
     })
     .catch((err) => {
         console.log("Error: ", err.message);
