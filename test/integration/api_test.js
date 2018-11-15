@@ -25,8 +25,9 @@ describe("#Construct public API", () => {
             const analyser = new Construct({ config: "./construct.cfg" });
 
             const data = await analyser.analyse(fp);
+
             expect(data).to.be.a("array");
-            expect(data).to.have.lengthOf(2);
+            expect(data).to.have.lengthOf(1);
             expect(data[0]).to.have.all.keys(
                 "args",
                 "meta",

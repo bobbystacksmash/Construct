@@ -66,18 +66,28 @@ function event_to_source (event) {
     }
 }
 
-module.exports = {
+function DeObfuscate () {
 
-    meta: {
-        name: "deobfuscate",
-        description: "Exports the given JScript program with all obfuscation removed."
-    },
+    this.events = [];
 
-    report: (event) => {
-        const src = event_to_source(event);
+    return {
+        meta: {
+            name: "deobfuscate",
+            description: "Exports the given JScript program with all obfuscation removed."
+        },
 
-        if (src) {
-            console.log(src);
+        report: (event) => {
+            const src = event_to_source(event);
+
+            if (src) {
+                this.events.push(src);
+            }
+
+            if (event.meta === "finished") {
+                done(null, this.events);
+            }
         }
-    }
+    };
 };
+
+module.exports = DeObfuscate;

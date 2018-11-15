@@ -1,7 +1,7 @@
 
 function DumpReg () {
 
-    this.this.events = [];
+    this.events = [];
 
     return {
 
@@ -28,3 +28,5 @@ function DumpReg () {
         }
     };
 };
+
+module.exports = DumpReg;

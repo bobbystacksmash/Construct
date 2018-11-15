@@ -25,3 +25,5 @@ function DumpFS () {
         }
     };
 };
+
+module.exports = DumpFS;
