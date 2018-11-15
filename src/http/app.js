@@ -1,25 +1,28 @@
-const path      = require("path"),
-      temp      = require("temp"),
-      fs        = require("fs"),
-      app       = require("express")(),
-      server    = require('http').Server(app),
+const path       = require("path"),
+      temp       = require("temp"),
+      fs         = require("fs"),
+      express    = require("express"),
+      http       = require("http"),
       bodyParser = require("body-parser"),
-      Construct = require("../../index");
+      Construct  = require("../../index");
 
-temp.track();
+const app    = express(),
+      server = http.Server(app);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "pug");
 app.set("views", "src/http/views");
+app.use(express.static("src/http/public"));
+server.listen(8080);
 
-let analyser = new Construct({
-    config: path.join("construct.cfg")
-});
-
-server.listen(3000);
+temp.track();
 
 app.get('/', (req, res) => {
+
+    let analyser = new Construct({
+        config: path.join("construct.cfg")
+    });
 
     res.render("index", {
         title: "Construct UI",
@@ -32,7 +35,12 @@ app.get('/', (req, res) => {
 // Returns an object which maps the reporters name to meta information
 // about the reporter, such as its description.
 app.get("/reporters", (req, res) => {
+
     res.setHeader("Content-Type", "application/json");
+
+    let analyser = new Construct({
+        config: path.join("construct.cfg")
+    });
     res.send(analyser.reporters);
 });
 
@@ -44,15 +52,23 @@ app.post("/scan", function (req, res) {
         reporter = req.body.reporter;
     }
 
-    temp.open("blah", (err, info) => {
+    temp.open("tmpfile", (err, info) => {
 
         if (!err) {
 
             fs.write(info.fd, req.body.code, function () {});
 
             fs.close(info.fd, function () {
+
+                let analyser = new Construct({
+                    config: path.join("construct.cfg")
+                });
+
                 analyser.analyse(info.path, { reporter: reporter })
-                    .then((results) => res.send(results))
+                    .then((results) => {
+                        res.send(results);
+                        analyser = null;
+                    })
                     .catch((err) => {
                         console.log(err);
                         res.send(err.message);

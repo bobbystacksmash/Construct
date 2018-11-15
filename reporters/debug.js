@@ -1,18 +1,21 @@
-let events = [];
 
-module.exports = {
+function DebugReporter () {
 
-    meta: {
-        name: "debug",
-        description: "Displays real-time debug information in JSON format."
-    },
+    this.events = [];
 
-    report: (event, done) => {
-        console.log(JSON.stringify(event));
-        if (event.meta === "finished") {
-            done(null, {});
+    return {
+        meta: {
+            name: "debug",
+            description: "Displays real-time debug information in JSON format."
+        },
+
+        report: (event, done) => {
+            this.events.push(event);
+            if (event.meta === "finished") {
+                done(null, this.events);
+            }
         }
-
-
-    }
+    };
 };
+
+module.exports = DebugReporter;

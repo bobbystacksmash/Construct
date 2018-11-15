@@ -1,21 +1,25 @@
-let events = [];
 
-module.exports = {
+function DumpEval () {
 
-    meta: {
-        title: "Dump code passed to 'eval' and 'Function'.",
-        name: "dumpeval",
-        description: "Dumps code which was dynamically evaluated at runtime."
-    },
+    this.events = [];
 
-    report: (event) => {
+    return {
+        meta: {
+            title: "Dump code passed to 'eval' and 'Function'.",
+            name: "dumpeval",
+            description: "Dumps code which was dynamically evaluated at runtime."
+        },
 
-        if (event.meta === "finished") {
-            console.log(JSON.stringify(events));
-            return;
+        report: (event, done) => {
+
+            if (event.meta === "finished") {
+                done(null, this.events);
+            }
+            else if (event.meta && event.meta.startsWith("runtime.capture")) {
+                this.events.push(event);
+            }
         }
-        else if (event.meta && event.meta.startsWith("runtime.capture")) {
-            events.push(event);
-        }
-    }
+    };
 };
+
+module.exports = DumpEval;

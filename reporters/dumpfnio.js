@@ -1,13 +1,20 @@
-module.exports = {
 
-    meta: {
-        title: "Dump all function input/output values.",
-        name: "dumpfnio",
-        description: "Dumps all captured function arguments and return values."
-    },
+function DumpFNIO () {
 
-    report: (events, done) => {
-        // TODO...
-        done(null, events);
-    }
+    this.events = [];
+
+    return {
+        meta: {
+            title: "Dump all function input/output values.",
+            name: "dumpfnio",
+            description: "Dumps all captured function arguments and return values."
+        },
+
+        report: (events, done) => {
+            // TODO...
+            done(null, events);
+        }
+    };
 };
+
+module.exports = DumpFNIO;

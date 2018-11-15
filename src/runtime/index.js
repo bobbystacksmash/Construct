@@ -15,8 +15,7 @@ const stack_trace    = require("stack-trace");
 
 // Emitter is not defined as a `this.` property because it may be
 // passed to sandbox code which may not resolve `this' correctly.
-const emitter = new EventEmitter2({ wildcard: true }),
-      make_id = function () { let x = 1; return () => x++;};
+const make_id = function () { let x = 1; return () => x++;};
 
 function Runtime (options) {
 
@@ -24,7 +23,10 @@ function Runtime (options) {
     this.onevent = function () {};
 
     var self = this;
-    const evtpush = this.events.push;
+
+    const evtpush = this.events.push,
+          emitter = new EventEmitter2({ wildcard: true });
+
     this.events.push = function (event) {
         emitter.emit("onevent", event);
         evtpush.call(self.events, event);

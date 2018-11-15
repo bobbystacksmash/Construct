@@ -1,35 +1,40 @@
 const uri = require("url");
 
-let uris = [];
+function DumpDomains () {
 
-module.exports = {
+    this.uris = [];
 
-    meta: {
-        name: "dumpdomains",
-        description: "Extracts only the host part (domain name) of all discovered URIs."
-    },
+    return {
 
-    report: (event, done) => {
+        meta: {
+            name: "dumpdomains",
+            description: "Extracts only the host part (domain name) of all discovered URIs."
+        },
 
-        if (event.meta === "finished") {
-            done(null, uris);
-        }
+        report: (event, done) => {
 
-        // TODO: Update this to also try and pull URIs from exec commands, such
-        // as PS IEX calls, etc.
-        if (event.meta && event.meta === "runtime.api.call") {
-            if (/xmlhttp/i.test(event.target) && /^open$/i.test(event.property.normalised)) {
+            if (event.meta === "finished") {
+                done(null, this.uris);
+            }
 
-                if (event.args && event.args.length >= 1) {
+            // TODO: Update this to also try and pull URIs from exec commands, such
+            // as PS IEX calls, etc.
+            if (event.meta && event.meta === "runtime.api.call") {
+                if (/xmlhttp/i.test(event.target) && /^open$/i.test(event.property.normalised)) {
 
-                    try {
-                        let url = uri.parse(event.args[1].value);
-                        uris.push(url);
-                    }
-                    catch (_) {
+                    if (event.args && event.args.length >= 1) {
+
+                        try {
+                            let url = uri.parse(event.args[1].value);
+                            this.uris.push(url);
+                        }
+                        catch (_) {
+                        }
                     }
                 }
             }
         }
     }
 };
+
+module.exports = DumpDomains;

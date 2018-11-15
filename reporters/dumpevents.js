@@ -1,18 +1,24 @@
-let events = [];
+function DumpEvents () {
 
-module.exports = {
+    this.events = [];
 
-    meta: {
-        name: "dumpevents",
-        description: "Dumps a JSON object containing all captured events."
-    },
+    return {
+        meta: {
+            name: "dumpevents",
+            description: "Returns a JSON object containing all captured events."
+        },
 
-    report: (event, done) => {
+        report: (event, done) => {
 
-        if (event.meta === "finished") {
-            done(null, events);
+            if (event.meta === "finished") {
+                done(null, this.events);
+            }
+            else {
+                this.events.push(event);
+            }
         }
+    };
+}
 
-        events.push(event);
-    }
-};
+
+module.exports = DumpEvents;

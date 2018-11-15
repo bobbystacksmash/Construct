@@ -1,34 +1,36 @@
-let uris = {};
+function DumpURIs() {
 
-module.exports = {
+    this.events = [];
 
-    meta: {
-        name: "dumpuris",
-        description: "Extracts and dumps URIs found within the source."
-    },
+    return {
+        meta: {
+            name: "dumpuris",
+            description: "Extracts and dumps URIs found within the source."
+        },
 
-    report: (event, done) => {
+        report: (event, done) => {
 
-        if (event.meta === "finished") {
-            done(null, uris);
-        }
-        else if (event.meta && event.meta === "runtime.api.call") {
+            if (event.meta === "finished") {
+                done(null, this.events);
+            }
+            else if (event.meta && event.meta === "runtime.api.call") {
 
-            if (/xmlhttp/i.test(event.target) && /^open$/i.test(event.property.normalised)) {
+                if (/xmlhttp/i.test(event.target) && /^open$/i.test(event.property.normalised)) {
 
-                let method = event.args[0].value.toLowerCase(),
-                    uri    = event.args[1].value;
+                    let method = event.args[0].value.toLowerCase(),
+                        uri    = event.args[1].value;
 
-                if (!uris.hasOwnProperty(method)) {
-                    uris[method] = {};
+                    if (!this.events.hasOwnProperty(method)) {
+                        this.events[method] = {};
+                    }
+
+                    if (!this.events[method].hasOwnProperty(uri)) {
+                        this.events[method][uri] = 0;
+                    }
+
+                    this.events[method][uri]++;
                 }
-
-                if (!uris[method].hasOwnProperty(uri)) {
-                    uris[method][uri] = 0;
-                }
-
-                uris[method][uri]++;
             }
         }
-    }
+    };
 };

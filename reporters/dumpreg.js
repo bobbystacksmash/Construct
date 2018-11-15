@@ -1,28 +1,30 @@
 
-let events = [];
+function DumpReg () {
 
-module.exports = {
+    this.this.events = [];
 
-    meta: {
-        title: "Dump Registry Indicators",
-        name: "dumpreg",
-        description: "Extracts and dumps various registry indicators."
-    },
+    return {
 
-    report: (event) => {
+        meta: {
+            title: "Dump Registry Indicators",
+            name: "dumpreg",
+            description: "Extracts and dumps various registry indicators."
+        },
 
-        if (event.meta === "finished") {
-            console.log(JSON.stringify(events));
-        }
+        report: (event) => {
 
-        if (event.meta && event.meta === "runtime.api.call") {
-
-            if (/wshshell/i.test(event.target) && /regread/i.test(event.property.normalised)) {
-                events.push(event);
+            if (event.meta === "finished") {
+                console.log(JSON.stringify(this.events));
             }
-            else if (/wshshell/i.test(event.target) && /regwrite/i.test(event.property.normalised)) {
-                event.push(event);
+            else if (event.meta && event.meta === "runtime.api.call") {
+
+                if (/wshshell/i.test(event.target) && /regread/i.test(event.property.normalised)) {
+                    this.events.push(event);
+                }
+                else if (/wshshell/i.test(event.target) && /regwrite/i.test(event.property.normalised)) {
+                    event.push(event);
+                }
             }
         }
-    }
+    };
 };
