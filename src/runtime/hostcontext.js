@@ -405,6 +405,9 @@ class HostContext {
     }
 
     get_env (var_name) {
+
+        if (var_name === "path") var_name = "cwd";
+
         if (! this.environment.hasOwnProperty(var_name)) return undefined;
         return this.environment[var_name];
     }

@@ -5,16 +5,18 @@ class ObjectInteraction {
         obj = Object.assign({
             target:   null,
             property: null,
+            id:       null,
             args:     [],
             type:     null,
             retval:   null
         }, obj);
 
-        this.type     = obj.type;
-        this.target   = obj.target;
-        this.property = obj.property;
-        this.args     = obj.args;
-        this.retval   = obj.retval;
+        this._type     = obj.type;
+        this._target   = obj.target;
+        this._property = obj.property;
+        this._id       = obj.id;
+        this._args     = obj.args;
+        this._retval   = obj.retval;
     }
 
     event () {
@@ -22,6 +24,7 @@ class ObjectInteraction {
             target:   this._target,
             type:     this._type,
             property: this._property,
+            id:       this._id,
             args:     this._args,
             retval:   this._retval
         };
@@ -85,6 +88,10 @@ class ObjectInteraction {
         }
 
         this._retval = retval;
+    }
+
+    static TYPE_CONSTRUCTOR () {
+        return "constructor";
     }
 
     static TYPE_METHOD () {

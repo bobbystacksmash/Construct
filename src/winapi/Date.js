@@ -1,20 +1,6 @@
-const Component = require("../Component"),
-      proxify   = require("../proxify2");
-
-function make_emittable (obj) {
-
-    //id, prop, args, type, retval) {
-
-    return {
-        target: "Date",
-        id: obj.id,
-        hooked: false,
-        prop: obj.prop,
-        args: obj.args,
-        type: obj.type,
-        return: obj.retval
-    };
-};
+const Component         = require("../Component"),
+      proxify           = require("../proxify2"),
+      ObjectInteraction = require("../ObjectInteraction");
 
 const DATE = Date;
 
@@ -34,16 +20,15 @@ module.exports = function create(context) {
             instance = new DATE(...args);
         }
 
-        context.emitter.emit(
-            "runtime.api.method",
-            make_emittable({
-                id: component.__id__,
-                prop: "new",
-                args: [...args],
-                type: "method",
-                retval: instance.getTime()
-            })
-        );
+        let apicall = new ObjectInteraction({
+            target: "Date",
+            property: "new",
+            id: component.__id__,
+            type: ObjectInteraction.TYPE_CONSTRUCTOR,
+            args: [...args],
+            retval: instance.getTime()
+        });
+        context.emitter.emit("runtime.api.method", apicall.event());
 
         return new Proxy(instance, {
             get (target, property) {
@@ -52,46 +37,48 @@ module.exports = function create(context) {
                 if (typeof objprop === "function") {
                     return function (...args) {
                         const retval = target[property](...args);
-                        context.emitter.emit(
-                            "runtime.api.method",
-                            make_emittable({
-                                id: component.__id__,
-                                prop: property,
-                                args: [...args],
-                                type: "method",
-                                retval: retval
-                            })
-                        );
+
+                        let apicall = new ObjectInteraction({
+                            target: "Date",
+                            id: component.__id__,
+                            property: property,
+                            type: ObjectInteraction.TYPE_METHOD,
+                            args: [...args],
+                            retval: retval
+                        });
+
+                        context.emitter.emit(`runtime.api.method`, apicall.event());
                         return retval;
                     };
                 }
                 else {
-                    context.emitter.emit(
-                        "runtime.api.getter",
-                        make_emittable({
-                            id: component.__id__,
-                            prop: property,
-                            args: null,
-                            type: "getter",
-                            retval: objprop
-                        })
-                    );
+
+                    let apicall = new ObjectInteraction({
+                        target: "Date",
+                        id: component.__id__,
+                        property: property,
+                        type: ObjectInteraction.TYPE_GETTER,
+                        args: [],
+                        retval: objprop
+                    });
+                    context.emitter.emit(`runtime.api.getter`, apicall.event());
+
                     return objprop;
                 }
             },
 
             set (target, property, value) {
                 const retval = Reflect.set(target, property, value);
-                context.emitter.emit(
-                    "runtime.api.setter",
-                    make_emittable({
-                        id: component.__id__,
-                        prop: property,
-                        args: value,
-                        type: "setter",
-                        retval: retval
-                    })
-                );
+                let apicall = new ObjectInteraction({
+                    target: "Date",
+                    id: component.__id__,
+                    property: property,
+                    type: ObjectInteraction.TYPE_SETTER,
+                    args: [value],
+                    retval: retval
+                });
+
+                context.emitter.emit(`runtime.api.setter`, apicall.event());
 
                 return retval;
             }
@@ -154,21 +141,6 @@ module.exports = function create(context) {
 
         return retval;
     };
-
-    function emitter_method_call_helper (prop, args, retval) {
-        console.log("CALLED");
-
-        context.emitter.emit(
-            "runtime.api.method",
-            make_emittable({
-                id: component.__id__,
-                prop: prop,
-                args: args,
-                type: "method",
-                retval: retval
-            })
-        );
-    }
 
     return JS_Date;
 };

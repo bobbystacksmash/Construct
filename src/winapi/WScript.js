@@ -1,6 +1,7 @@
-const Component       = require("../Component");
-const proxify         = require("../proxify2");
-const create_instance = require("../winapi/support/create_instance");
+const Component         = require("../Component"),
+      proxify           = require("../proxify2"),
+      ObjectInteraction = require("../ObjectInteraction"),
+      create_instance   = require("../winapi/support/create_instance");
 
 /* MSDN: https://msdn.microsoft.com/en-us/library/at5ydy31(v=vs.84).aspx
  *
@@ -195,18 +196,6 @@ class JS_WScript extends Component {
 
         try {
             let instance = create_instance(this.context, type);
-
-            const apiobj = {
-                target:  "WScript",
-                id:      this.__id__,
-                hooked:  false,
-                type:    "constructor",
-                prop:    "new",
-                args:    [{ type: typeof type, value: type }],
-                return:  { instance: type, id: instance.__id__ }
-            };
-            this.context.emitter.emit(`runtime.api.constructor`, apiobj);
-
             return instance;
         }
         catch (e) {

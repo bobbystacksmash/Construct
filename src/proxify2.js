@@ -22,10 +22,7 @@ module.exports = function (context, jscript_class) {
 
             if (typeof target_value === "function") {
 
-                if (target_value.__name__ === "WshEnvironment") {
-                    return target_value;
-                }
-                else if (target_value.__name__ === "WshSpecialFolders") {
+                if (/^(?:WshSpecialFolders|WshEnvironment)$/i.test(target_value.__name__)) {
                     return target_value;
                 }
                 else {
@@ -33,6 +30,7 @@ module.exports = function (context, jscript_class) {
 
                         const retval   = jscript_class[lc_property](...args);
                         apicall.type   = ObjectInteraction.TYPE_METHOD;
+                        apicall.id     = target.__id__;
                         apicall.args   = [...args];
                         apicall.retval = retval;
                         context.emitter.emit(`runtime.api.method`, apicall.event());

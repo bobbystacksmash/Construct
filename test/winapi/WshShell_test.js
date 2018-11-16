@@ -165,6 +165,8 @@ describe("WshShell", () => {
                 const wsh = new WshShell(ctx);
                 assert.throws(() => wsh.Environment = 6, "cannot assign to this prop");
             });
+
+
         });
 
         describe(".SpecialFolders", () => {
@@ -1057,12 +1059,14 @@ describe("WshShell", () => {
         });
     });
 
-    describe("Usage", () => {
+    xdescribe("XX", () => {
 
         it("should allow access to the ENV collection via [] notation", () => {
             const wsh = new WshShell(ctx),
                   fn  = wsh["Environment"]("SYSTEM");
-            assert.equal(fn("comspec"), "CMD BLAH", "should return COMSPEC env var.");
+
+            assert.equal(typeof fn, "object");
+            assert.equal(fn("COMSPEC"), "XXX");
         });
     });
 });

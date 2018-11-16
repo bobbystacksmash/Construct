@@ -10,6 +10,17 @@ function DumpURIs() {
 
         report: (event, done) => {
 
+            if (!event.property) {
+                console.log("#######################################");
+                console.log("#######################################");
+                console.log("#######################################");
+                console.log(JSON.stringify(event, null, 2));
+                console.log("#######################################");
+                console.log("#######################################");
+                console.log("#######################################");
+                process.exit();
+            }
+
             if (event.meta === "finished") {
                 done(null, this.events);
             }

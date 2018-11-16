@@ -32,6 +32,7 @@ describe("#Construct public API", () => {
                 "args",
                 "meta",
                 "property",
+                "id",
                 "retval",
                 "target",
                 "type"

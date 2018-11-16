@@ -1,6 +1,4 @@
 
-let exec_events = [];
-
 function DumpExec () {
 
     this.events = [];
