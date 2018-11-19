@@ -3,3 +3,4 @@ node_modules/
 f.js
 g.js
 *.tern-port
+src/http/public/css/codemirror/theme/*.css

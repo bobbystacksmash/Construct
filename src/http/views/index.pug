@@ -4,16 +4,35 @@ html
 
     meta(name="viewport" content="width=device-width, initial-scale=1")
     meta(charset="utf-8")
-    link(rel="stylesheet" href="css/pure.css/pure-min.css")
-    link(rel="stylesheet" href="css/pure.css/grids-responsive-min.css")
 
     script(src="js/jquery-3.3.1.min.js")
-    script(src="js/highlight.pack.js")
+    script(src="js/codemirror.js")
+
+    link(rel="stylesheet" href="css/pure.css/pure-min.css")
+    link(rel="stylesheet" href="css/pure.css/grids-responsive-min.css")
+    link(rel="stylesheet" href="css/codemirror/codemirror.css")
+    link(rel="stylesheet" href="css/codemirror/theme/monokai.css")
+    link(rel="stylesheet" href="css/main.css")
+
+    script(src="js/codemirror.javascript.js")
+    script(src="js/ui.js")
+
   body
 
     div(class="pure-g")
 
       div(class="pure-u-1 pure-u-md-1-2")
-        p Input
+        h2 Input
+        form(id="code-form" name="scan-jscript" method="post" action="/scan")
+          textarea(name="code", id="code" value="WScript.Echo('test');")
+          select(name="reporter")
+            for reporter in reporters
+              option(value=reporter.meta.name) #{reporter.meta.name}
+          input(
+            type="submit"
+            value="Scan"
+          )
+
       div(class="pure-u-1 pure-u-md-1-2")
-        p Output
+        h2 Output
+        pre(id="output")
