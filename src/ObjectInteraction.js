@@ -24,7 +24,6 @@ class ObjectInteraction {
             target:   this._target,
             type:     this._type,
             property: this._property,
-            id:       this._id,
             args:     this._args,
             retval:   this._retval
         };
@@ -90,19 +89,19 @@ class ObjectInteraction {
         this._retval = retval;
     }
 
-    static TYPE_CONSTRUCTOR () {
+    static get TYPE_CONSTRUCTOR () {
         return "constructor";
     }
 
-    static TYPE_METHOD () {
+    static get TYPE_METHOD () {
         return "method";
     }
 
-    static TYPE_GETTER () {
+    static get TYPE_GETTER () {
         return "getter";
     }
 
-    static TYPE_SETTER () {
+    static get TYPE_SETTER () {
         return "setter";
     }
 }

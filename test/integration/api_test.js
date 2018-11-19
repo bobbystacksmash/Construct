@@ -32,11 +32,12 @@ describe("#Construct public API", () => {
                 "args",
                 "meta",
                 "property",
-                "id",
                 "retval",
                 "target",
                 "type"
             );
+
+            expect(data[0].target).to.have.all.keys("name", "id");
 
             expect(data[0].args).to.deep.equal([{
                 type: "string",

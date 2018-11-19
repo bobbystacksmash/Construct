@@ -16,7 +16,7 @@ module.exports = function (context, jscript_class) {
                   target_value = Reflect.get(target, lc_property, receiver);
 
             let apicall = new ObjectInteraction({
-                target: target,
+                target: { name: target.__name__, id: target.__id__ },
                 property: property
             });
 
@@ -30,7 +30,6 @@ module.exports = function (context, jscript_class) {
 
                         const retval   = jscript_class[lc_property](...args);
                         apicall.type   = ObjectInteraction.TYPE_METHOD;
-                        apicall.id     = target.__id__;
                         apicall.args   = [...args];
                         apicall.retval = retval;
                         context.emitter.emit(`runtime.api.method`, apicall.event());
@@ -40,6 +39,7 @@ module.exports = function (context, jscript_class) {
                 }
             }
             else {
+
                 apicall.type   = ObjectInteraction.TYPE_GETTER;
                 apicall.retval = target_value;
                 context.emitter.emit(`runtime.api.getter`, apicall.event());
@@ -50,7 +50,7 @@ module.exports = function (context, jscript_class) {
         set (target, property, value) {
 
             let apicall = new ObjectInteraction({
-                target:   target,
+                target:   { id: target.__id__, name: target.__name__ },
                 property: property,
                 args:     value
             });

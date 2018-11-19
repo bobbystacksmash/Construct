@@ -21,9 +21,8 @@ module.exports = function create(context) {
         }
 
         let apicall = new ObjectInteraction({
-            target: "Date",
+            target: { name: "Date", id: component.__id__ },
             property: "new",
-            id: component.__id__,
             type: ObjectInteraction.TYPE_CONSTRUCTOR,
             args: [...args],
             retval: instance.getTime()
@@ -39,8 +38,7 @@ module.exports = function create(context) {
                         const retval = target[property](...args);
 
                         let apicall = new ObjectInteraction({
-                            target: "Date",
-                            id: component.__id__,
+                            target: { name: "Date", id: component.__id__ },
                             property: property,
                             type: ObjectInteraction.TYPE_METHOD,
                             args: [...args],
@@ -54,8 +52,7 @@ module.exports = function create(context) {
                 else {
 
                     let apicall = new ObjectInteraction({
-                        target: "Date",
-                        id: component.__id__,
+                        target: { name: "Date", id: component.__id__ },
                         property: property,
                         type: ObjectInteraction.TYPE_GETTER,
                         args: [],
@@ -70,8 +67,7 @@ module.exports = function create(context) {
             set (target, property, value) {
                 const retval = Reflect.set(target, property, value);
                 let apicall = new ObjectInteraction({
-                    target: "Date",
-                    id: component.__id__,
+                    target: { name: "Date", id: component.__id__ },
                     property: property,
                     type: ObjectInteraction.TYPE_SETTER,
                     args: [value],
