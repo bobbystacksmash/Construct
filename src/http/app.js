@@ -67,7 +67,6 @@ app.post("/scan", function (req, res) {
                 analyser.analyse(info.path, { reporter: reporter })
                     .then((results) => {
                         res.send(results);
-                        analyser = null;
                     })
                     .catch((err) => {
                         console.log(err);
