@@ -17,6 +17,8 @@ function DumpURIs() {
 
                 if (/xmlhttp/i.test(event.target.name) && /^open$/i.test(event.property)) {
 
+                    if (event.args.length < 2) return;
+
                     let method = event.args[0].value.toLowerCase(),
                         uri    = event.args[1].value;
 

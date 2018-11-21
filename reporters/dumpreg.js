@@ -11,17 +11,17 @@ function DumpReg () {
             description: "Extracts and dumps various registry indicators."
         },
 
-        report: (event) => {
+        report: (event, done) => {
 
             if (event.meta === "finished") {
-                console.log(JSON.stringify(this.events));
+                done(null, this.events);
             }
             else if (event.meta && event.meta === "runtime.api.call") {
 
-                if (/wshshell/i.test(event.target) && /regread/i.test(event.property.normalised)) {
+                if (/wshshell/i.test(event.target.name) && /regread/i.test(event.property)) {
                     this.events.push(event);
                 }
-                else if (/wshshell/i.test(event.target) && /regwrite/i.test(event.property.normalised)) {
+                else if (/wshshell/i.test(event) && /regwrite/i.test(event.property)) {
                     event.push(event);
                 }
             }
