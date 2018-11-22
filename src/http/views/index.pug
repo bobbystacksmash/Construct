@@ -25,14 +25,15 @@ html
       div(class="pure-u-1 pure-u-md-1-2")
         h2 Input
         form(id="code-form" name="scan-jscript" method="post" action="/scan")
+          input(id="btn-code-tidy" type="button" value="Tidy code" class="pure-button button-primary")
           textarea(name="code", id="code" value="WScript.Echo('test');")
-          input(id="btn-code-tidy" type="button" value="Code Tidy")
           select(name="reporter")
             for reporter in reporters
               option(value=reporter.meta.name) #{reporter.meta.name}
           input(
             type="submit"
             value="Scan"
+            class="pure-button button-secondary button-success"
           )
 
       div(class="pure-u-1 pure-u-md-1-2")

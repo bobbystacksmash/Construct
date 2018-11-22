@@ -5,3 +5,13 @@ body {
 h1, h2, h3, h4, h5, h6, h7 {
     color: #c0d4d8;
 }
+
+.button-secondary {
+    color: white;
+    border-radius: 2px;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.button-success {
+    background: rgb(28, 184, 65); /* this is a green */
+}
