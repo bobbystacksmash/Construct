@@ -30,19 +30,28 @@ class Construct {
         };
         options     = options || {};
         options     = Object.assign(DEFAULT_OPTS, options);
-        this.config = this._load_config_file(options.config);
+        this._config = this._load_config_file(options.config);
 
         //
         // Prepare the runtime envifronment.
         //
         this.runtime = new Runtime({
-            config: this.config
+            config: this._config
         });
 
         //
         // Load the reporters.
         //
-        this._reporters = this._load_reporters(this.config.reporters_dir);
+        this._reporters = this._load_reporters(this._config.reporters_dir);
+    }
+
+    /**
+     * Returns an instance of the Construct configuration.
+     *
+     * @return {Object} The configuration instance.
+     */
+    get config () {
+        return this._config;
     }
 
     /**

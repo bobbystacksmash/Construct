@@ -4,6 +4,7 @@
 const expect         = require("chai").expect,
       temp           = require("temp"),
       fs             = require("fs"),
+      path           = require("path"),
       Construct      = require("../../index");
 
 temp.track();
@@ -23,7 +24,6 @@ describe("#Construct public API", () => {
 
             let fp = mktmp("WScript.Echo('hello');");
             const analyser = new Construct({ config: "./construct.cfg" });
-
             const data = await analyser.analyse(fp);
 
             expect(data).to.be.a("array");
@@ -43,6 +43,28 @@ describe("#Construct public API", () => {
                 type: "string",
                 value: "hello"
             }]);
+        });
+
+        it("should be able to load a file, and that file read itself", async () => {
+
+            // Bit weird, but we need a way to get the configured username.
+            const whoami = (new Construct({ config: "./construct.cfg" })).config.general.whoami;
+
+            let info = temp.openSync("tempjs");
+
+            let code = [
+                "// %HELLO_WORLD%",
+                "var fso = new ActiveXObject('Scripting.FileSystemObject');",
+                `var ts  = fso.OpenTextFile("C:\\\\Users\\\\${whoami}\\\\${path.basename(info.path)}");`,
+                `ts.ReadAll();`
+            ].join("\n");
+
+            fs.writeSync(info.fd, code);
+
+            const analyser = new Construct({ config: "./construct.cfg" });
+            const data = await analyser.analyse(info.path);
+            expect(data.pop().retval).to.equal(code);
+            fs.closeSync(info.fd);
         });
     });
 });
