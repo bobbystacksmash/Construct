@@ -28,7 +28,7 @@ class ExceptionHandler extends Component {
                 `addressed.`);
     }
 
-    _throw (name, message, number, description, _source, _summary, _description, type) {
+    _throw (name, message, number, description, _source, _summary, _description) {
 
         if (!_summary)     this._lazy_throw_protect(_source, "Summary is not defined.");
         if (!_description) this._lazy_throw_protect(_source, "Detailed description is not defined.");
@@ -44,11 +44,10 @@ class ExceptionHandler extends Component {
             // Construct informational properties
             source:      _source,
             summary:     _summary,
-            description: _description,
-            type:        type
+            description: _description
         };
         const err = new ConstructError(throw_obj);
-        this.context.emitter.emit(`runtime.exception.${type.toLowerCase()}`, err);
+        this.context.emitter.emit(`runtime.exception`, err);
         throw err;
     }
 
