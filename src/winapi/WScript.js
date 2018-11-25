@@ -1,7 +1,8 @@
 const Component         = require("../Component"),
       proxify           = require("../proxify2"),
       ObjectInteraction = require("../ObjectInteraction"),
-      create_instance   = require("../winapi/support/create_instance");
+      JS_WshArguments   = require("./WshArguments"),
+      create_instance   = require("./support/create_instance");
 
 /* MSDN: https://msdn.microsoft.com/en-us/library/at5ydy31(v=vs.84).aspx
  *
@@ -35,8 +36,18 @@ const Component         = require("../Component"),
 
 class JS_WScript extends Component {
 
-    constructor (context) {
+    constructor (context, options) {
+
 	super(context, "WScript");
+
+        options = options || {};
+        const default_options = {
+            arguments: []
+        };
+
+        options = Object.assign(default_options, options);
+
+        this._arguments = new JS_WshArguments(context, options.arguments);
     }
 
     //
@@ -49,8 +60,7 @@ class JS_WScript extends Component {
 
     // WScript.Arguments: https://msdn.microsoft.com/en-us/library/z2b05k8s(v=vs.84).aspx
     get arguments () {
-	let args = this.context.ENVIRONMENT.Arguments;
-	return args;
+        return this._arguments;
     }
 
     // WScript.BuildVersion      https://msdn.microsoft.com/en-us/library/kt8ycte6(v=vs.84).aspx
@@ -241,7 +251,7 @@ class JS_WScript extends Component {
 }
 
 
-module.exports = function create(context) {
-    let wscript = new JS_WScript(context);
+module.exports = function create(context, options) {
+    let wscript = new JS_WScript(context, options);
     return proxify(context, wscript);
 };

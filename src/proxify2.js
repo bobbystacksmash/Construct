@@ -22,7 +22,7 @@ module.exports = function (context, jscript_class) {
 
             if (typeof target_value === "function") {
 
-                if (/^(?:WshSpecialFolders|WshEnvironment)$/i.test(target_value.__name__)) {
+                if (/^(?:WshSpecialFolders|WshArguments|WshEnvironment)$/i.test(target_value.__name__)) {
                     return target_value;
                 }
                 else {

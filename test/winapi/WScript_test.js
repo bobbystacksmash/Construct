@@ -14,10 +14,33 @@ describe("WScript", () => {
 
         describe(".Arguments", () => {
 
-            it("should return the script arguments", (done) => {
-                let wsh = new WScript(ctx);
-                assert.deepEqual(wsh.arguments, ctx.ENVIRONMENT.Arguments);
-                done();
+            it("should return an Arguments collection", () => {
+                const wsh  = new WScript(ctx);
+                assert.equal(wsh.arguments.length, 0);
+            });
+
+            it("should populate the Arguments collection when called with args", () => {
+                const wsh = new WScript(ctx, {
+                    arguments: [
+                        { foo: "bar" },
+                        "baz"
+                    ]
+                });
+
+                assert.equal(wsh.arguments.length, 2);
+            });
+
+            it("should support calling the Arguments collection as a function", () => {
+
+                const wsh  = new WScript(ctx, {
+                    arguments: [
+                        { foo: "bar" },
+                        "baz"
+                    ]
+                });
+
+                assert.equal(wsh.Arguments(1),      "baz");
+                assert.equal(wsh.Arguments.item(1), "baz");
             });
         });
 

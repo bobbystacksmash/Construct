@@ -64,7 +64,8 @@ class JS_WshArguments extends Component {
     // Count method.
     //
     get length () {
-        return this.argobj.named.length + this.argobj.unnamed.length;
+        let arglen = this.argobj.named.length + this.argobj.unnamed.length;
+        return arglen;
     }
 
     set length (_) {
@@ -74,7 +75,6 @@ class JS_WshArguments extends Component {
             "The length of the WshArguments object cannot be assigned to."
         );
     }
-
 
     get named () {
         return this.argobj.named;
@@ -137,7 +137,44 @@ class JS_WshArguments extends Component {
     }
 }
 
-module.exports = function create(context, a) {
-    let args = new JS_WshArguments(context, a);
-    return proxify(context, args);
+module.exports = function create(context, args) {
+
+    const default_args = new JS_WshArguments(context, args);
+
+    var wrapper = (function (props) {
+
+        function WshArgsWrapper (index) {
+            return default_args.item(index);
+        }
+
+        for (let prop in props) {
+            WshArgsWrapper[prop] = props[prop];
+        }
+
+        Object.defineProperty(WshArgsWrapper, "length", {
+            get: function ()  { return default_args.length;     },
+            set: function (x) { return default_args.length = x; } // throws.
+        });
+
+        Object.defineProperty(WshArgsWrapper, "named", {
+            get: function ()  { return default_args.named;     },
+            set: function (x) { return default_args.named = x; } // throws.
+        });
+
+        Object.defineProperty(WshArgsWrapper, "unnamed", {
+            get: function ()  { return default_args.unnamed;     },
+            set: function (x) { return default_args.unnamed = x; } // throws.
+        });
+
+        return WshArgsWrapper;
+    }({
+        item: (...args) => default_args.item(...args),
+        count: (...args) => default_args.count(...args),
+        showusage: (...args) => default_args.showusage(...args),
+
+        __name__: "WshArguments",
+        __id__  : default_args.__id__
+    }));
+
+    return proxify(context, wrapper);
 };

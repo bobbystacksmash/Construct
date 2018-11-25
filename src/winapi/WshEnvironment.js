@@ -100,13 +100,13 @@ module.exports = function create(context, type) {
 
     const default_env = new JS_WshEnvironment(context, (type) ? type : "SYSTEM");
 
-    var wrapper = (function(props) {
+    var wrapper = (function (props) {
 
         function WshEnvWrapper (type) {
             return proxify(context, new JS_WshEnvironment(context, type));
         };
 
-        for (var prop in props) {
+        for (let prop in props) {
             WshEnvWrapper[prop] = props[prop];
         }
 
