@@ -4,8 +4,10 @@ const Component = require("../Component"),
 class JS_WshNamed extends Component {
 
     constructor (context, named_args) {
+
 	super(context, "WshNamed");
 	this.ee   = this.context.emitter;
+
         this.args = named_args || {};
     }
 
@@ -78,7 +80,19 @@ class JS_WshNamed extends Component {
     }
 }
 
-module.exports = function create(context, named) {
+module.exports = function create(context, named, options) {
+
+    options = options || {};
+    const default_opts = {
+        proxify: true
+    };
+    options = Object.assign(default_opts, options);
+
     let args = new JS_WshNamed(context, named);
-    return proxify(context, args);
+
+    if (options.proxify) {
+        return proxify(context, args);
+    }
+
+    return args;
 };

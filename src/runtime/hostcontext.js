@@ -7,6 +7,7 @@ const JScript_Math          = require("../winapi/Math");
 const JScript_WScript       = require("../winapi/WScript");
 const JScript_ActiveXObject = require("../winapi/ActiveXObject");
 const JScript_TextStream    = require("../winapi/TextStream");
+const JScript_WshArguments  = require("../winapi/WshArguments");
 const win32path = require("path").win32;
 const path = require("path");
 const fs   = require("fs");
@@ -254,7 +255,21 @@ class HostContext {
 	// =======
 	// WScript
 	// =======
-	this.global_objects["WScript"] = new JScript_WScript(this);
+        //
+        // WScript also accepts additional options, such as script
+        // arguments.
+        let scriptargs = [];
+        if (this.config.environment.hasOwnProperty("arguments")) {
+            if (this.config.environment.arguments.unnamed) {
+                scriptargs = scriptargs.concat(this.config.environment.arguments.unnamed);
+            }
+
+            if (this.config.environment.arguments.named) {
+                let named = this.config.environment.arguments.named;
+                Object.keys(named).forEach(key => scriptargs.push({ key: named[key] }));
+            }
+        }
+        this.global_objects["WScript"] = new JScript_WScript(this, { arguments: scriptargs });
 	this.register("WScript", this.global_objects["WScript"]);
     }
 
@@ -442,6 +457,7 @@ class HostContext {
     }
 
     get_instance_by_id (id) {
+
         let instance = this.instances.find(ins => ins.__id__ === id);
 
         if (instance) {

@@ -58,7 +58,19 @@ class JS_WshUnnamed extends Component {
     }
 }
 
-module.exports = function create(context, unnamed) {
+module.exports = function create(context, unnamed, options) {
+
+    options = options || {};
+    const default_opts = {
+        proxify: true
+    };
+    options = Object.assign(default_opts, options);
+
     let args = new JS_WshUnnamed(context, unnamed);
-    return proxify(context, args);
+
+    if (options.proxify) {
+        return proxify(context, args);
+    }
+
+    return args;
 };

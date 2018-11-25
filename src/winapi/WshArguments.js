@@ -1,7 +1,8 @@
-const Component      = require("../Component"),
-      proxify        = require("../proxify2"),
-      JS_WshNamed    = require("./WshNamed"),
-      JS_WshUnnamed  = require("./WshUnnamed");
+const Component         = require("../Component"),
+      proxify           = require("../proxify2"),
+      ObjectInteraction = require("../ObjectInteraction"),
+      JS_WshNamed       = require("./WshNamed"),
+      JS_WshUnnamed     = require("./WshUnnamed");
 
 // MSDN: https://msdn.microsoft.com/en-us/subscriptions/ss1ysb2a(v=vs.84).aspx
 //
@@ -44,8 +45,8 @@ class JS_WshArguments extends Component {
         });
 
         this.argobj = {
-            named: new JS_WshNamed(context, named),
-            unnamed: new JS_WshUnnamed(context, unnamed)
+            named: new JS_WshNamed(context, named, { proxify: false }),
+            unnamed: new JS_WshUnnamed(context, unnamed, { proxify: false })
         };
 
         this.args = args;
@@ -144,6 +145,18 @@ module.exports = function create(context, args) {
     var wrapper = (function (props) {
 
         function WshArgsWrapper (index) {
+
+            let retval = default_args.item(index);
+
+            let apicall = new ObjectInteraction({
+                target:   { id: default_args.__id__, name: default_args.__name__ }
+            });
+
+            apicall.type     = ObjectInteraction.TYPE_METHOD;
+            apicall.retval   = retval;
+            apicall.property = "item";
+            context.emitter.emit(`runtime.api.method`, apicall.event());
+
             return default_args.item(index);
         }
 
@@ -151,7 +164,43 @@ module.exports = function create(context, args) {
             WshArgsWrapper[prop] = props[prop];
         }
 
-        Object.defineProperty(WshArgsWrapper, "length", {
+        ["length", "named", "unnamed"].forEach(prop => {
+
+            Object.defineProperty(WshArgsWrapper, prop, {
+                get: () => {
+
+                    let apicall = new ObjectInteraction({
+                        target:   { id: default_args.__id__, name: default_args.__name__ }
+                    });
+
+                    apicall.type     = ObjectInteraction.TYPE_GETTER;
+                    apicall.retval   = default_args[prop];
+                    apicall.property = prop;
+
+                    context.emitter.emit(`runtime.api.getter`, apicall.event());
+
+                    return default_args[prop];
+                },
+                set: (val) => {
+
+                    let apicall = new ObjectInteraction({
+                        target:   { id: default_args.__id__, name: default_args.__name__ }
+                    });
+
+                    apicall.type     = ObjectInteraction.TYPE_SETTER;
+                    apicall.retval   = default_args[prop];
+                    apicall.args     = val;
+                    apicall.property = prop;
+
+                    context.emitter.emit(`runtime.api.setter`, apicall.event());
+
+                    return default_args[prop] = val; // throws.
+                }
+            });
+        });
+
+
+        /*Object.defineProperty(WshArgsWrapper, "length", {
             get: function ()  { return default_args.length;     },
             set: function (x) { return default_args.length = x; } // throws.
         });
@@ -164,10 +213,11 @@ module.exports = function create(context, args) {
         Object.defineProperty(WshArgsWrapper, "unnamed", {
             get: function ()  { return default_args.unnamed;     },
             set: function (x) { return default_args.unnamed = x; } // throws.
-        });
+        });*/
 
         return WshArgsWrapper;
     }({
+
         item: (...args) => default_args.item(...args),
         count: (...args) => default_args.count(...args),
         showusage: (...args) => default_args.showusage(...args),
