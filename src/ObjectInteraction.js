@@ -15,7 +15,7 @@ class ObjectInteraction {
         this._target   = obj.target;
         this._property = obj.property;
         this._id       = obj.id;
-        this._args     = obj.args;
+        this.args      = obj.args;
         this._retval   = obj.retval;
     }
 
@@ -50,15 +50,15 @@ class ObjectInteraction {
 
         if (!original_property) return;
 
-        this._property = {
-            original:   original_property,
-            normalised: original_property.toLowerCase()
-        };
+        this._property = original_property;
     }
 
     // Args are the arguments either passed to a method, or assigned
     // to a property.
     set args (args) {
+
+        if (args === undefined) return [];
+
         args = (Array.isArray(args)) ? args : [args];
         this._args = args.map(arg => {
             return {
