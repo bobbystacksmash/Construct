@@ -25,6 +25,7 @@ module.exports = function (context, jscript_class) {
                 if (/^(?:WshSpecialFolders|WshArguments|WshEnvironment)$/i.test(target_value.__name__)) {
                     // See special wrappers for their object interaction emitters.
 
+                    apicall.type = ObjectInteraction.TYPE_GETTER;
                     apicall.retval = { __name__: target_value.__name__, __id__: target_value.__id__ };
                     context.emitter.emit(`runtime.api.getter`, apicall.event());
 
@@ -57,6 +58,7 @@ module.exports = function (context, jscript_class) {
             let apicall = new ObjectInteraction({
                 target:   { id: target.__id__, name: target.__name__ },
                 property: property,
+                type: ObjectInteraction.TYPE_SETTER,
                 args:     value
             });
 

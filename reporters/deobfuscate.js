@@ -2,26 +2,60 @@
 function DeObfuscate () {
 
     this.events     = [];
-    this.symbol_tbl = {};
+    var symbol_tbl = {};
 
     function symtbl_lookup (id) {
 
+        if (symbol_tbl.hasOwnProperty(id)) {
+            return symbol_tbl[id];
+        }
+
+        return null;
     }
 
-    function symtbl_insert (event) {
-        console.log("inserting", event);
+    function symtbl_insert (id, identifier) {
+        symbol_tbl[id] = identifier;
     }
+
+    function generate_identifier (obj) {
+
+        let instance = obj.instance.replace(/[.-]/g, "").toLowerCase(),
+            id       = obj.id;
+
+        return `${instance}_${id}`;
+    }
+
+    function args_to_string (args) {
+        return args.map(arg => {
+            return (arg.type === "string") ? `'${arg.value}'` : arg.value;
+        }).join(",");
+    }
+
 
     function event_to_source (e) {
 
-        if (/^activexobject$/i.test(e.target.name)) {
+        if (e.type === "constructor") {
+            if (/^activexobject$/i.test(e.target.name)) {
+                if (/^new$/i.test(e.property)) {
+                    // Add a new entry to the symbol table for this
+                    // instance.  The retval should contain the
+                    // instance name and ID for the returned object.
+                    let identifier = generate_identifier(e.retval),
+                        args       = args_to_string(e.args);
+                    symtbl_insert(e.retval.id, identifier);
 
-            // We need to create a new identifier and store it in the
-            // symbol table.
-            symtbl_insert(e);
+                    return `var ${identifier} = new ActiveXObject(${args})`;
+                }
+            }
         }
+        else if (e.type === "setter") {
 
-        return `${e.target.name}.${e.property}`;
+            // Fetch the identifier we'd like to assign-to:
+            let identifier = symtbl_lookup(e.target.id),
+                args       = args_to_string(e.args);
+
+            return `${identifier}.${e.property} = ${args};`;
+        }
     }
 
 
