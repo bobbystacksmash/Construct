@@ -48,6 +48,10 @@ function DeObfuscate () {
                 }
             }
         }
+        else if (e.type === "getter") {
+            let identifier = symtbl_lookup(e.target.id);
+            return `${identifier}.${e.property}`;
+        }
         else if (e.type === "setter") {
 
             // Fetch the identifier we'd like to assign-to:
@@ -55,6 +59,16 @@ function DeObfuscate () {
                 args       = args_to_string(e.args);
 
             return `${identifier}.${e.property} = ${args};`;
+        }
+        else if (e.type === "method") {
+
+            let identifier = symtbl_lookup(e.target.id),
+                args       = args_to_string(e.args);
+
+            return `${identifier}.${e.property}(${args});`;
+        }
+        else {
+            console.log(e);
         }
     }
 
