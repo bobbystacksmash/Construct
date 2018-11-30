@@ -20,6 +20,10 @@ class HostContext {
         this.hooks = opts.hooks || [];
         this.instances = [];
 
+        this._event_tracking = {
+            // Maps instance __id__ to true|false.
+        };
+
         // Configuration
         // =============
         this.environment  = opts.config.environment;
@@ -474,6 +478,55 @@ class HostContext {
 
     write_to_output_buf (...args) {
         this.output_buf.push(args.join(" "));
+    }
+
+    enable_event_tracking (instance) {
+
+        let id;
+
+        if (typeof id === "number" || typeof id === "string") {
+            id = instance;
+        }
+        else {
+            id = instance.__id__;
+        }
+
+        console.log("ID IS", id);
+
+        this._event_tracking[id] = true;
+    }
+
+    disable_event_tracking (instance) {
+
+        let id;
+
+        if (typeof id === "number" || typeof id === "string") {
+            id = instance;
+        }
+        else {
+            id = instance.__id__;
+        }
+
+        this._event_tracking[id] = false;
+    }
+
+    allow_event_tracking (instance) {
+
+        let id;
+
+        if (typeof id === "number" || typeof id === "string") {
+            id = instance;
+        }
+        else {
+            id = instance.__id__;
+        }
+
+        if (this._event_tracking.hasOwnProperty(id) === false) {
+            return true; // always allow event tracking by default
+        }
+        else {
+            return this._event_tracking[id];
+        }
     }
 }
 

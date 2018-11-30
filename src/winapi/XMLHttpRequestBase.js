@@ -309,15 +309,6 @@ class XMLHttpRequestBase extends Component {
 
         this.response = this.context.get_nethook(this.request);
 
-        let apicall = new ObjectInteraction({
-            target:   { name: this.__name__, id: this.__id__ },
-            property: "send",
-            args:     Array.prototype.slice.call(arguments),
-            type:     ObjectInteraction.TYPE_METHOD
-        });
-
-        this.ee.emit(`runtime.api.call`, apicall.event());
-
 	this._set_ready_state(2);
 	this._set_ready_state(3);
 	this._set_ready_state(4);

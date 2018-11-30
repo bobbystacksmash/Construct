@@ -336,7 +336,6 @@ class Stream {
         // | adSaveCreateNotExist  |   1   | Default. Creates new file if not exists. |
         // | adSaveCreateOverWrite |   2   | Creates new or overwrites existing file. |
         //
-
         let overwrite_file = false;
 
         if (save_opt === undefined || save_opt === null) {

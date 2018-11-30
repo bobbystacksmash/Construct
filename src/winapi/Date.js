@@ -20,14 +20,15 @@ module.exports = function create(context) {
             instance = new DATE(...args);
         }
 
-        let apicall = new ObjectInteraction({
+        let apicall = new ObjectInteraction(context, {
             target: { name: "Date", id: component.__id__ },
             property: "new",
             type: ObjectInteraction.TYPE_CONSTRUCTOR,
             args: [...args],
             retval: instance.getTime()
         });
-        context.emitter.emit("runtime.api.method", apicall.event());
+
+        apicall.emit_event("runtime.api.method");
 
         return new Proxy(instance, {
             get (target, property) {
@@ -37,7 +38,7 @@ module.exports = function create(context) {
                     return function (...args) {
                         const retval = target[property](...args);
 
-                        let apicall = new ObjectInteraction({
+                        let apicall = new ObjectInteraction(context, {
                             target: { name: "Date", id: component.__id__ },
                             property: property,
                             type: ObjectInteraction.TYPE_METHOD,
@@ -45,20 +46,20 @@ module.exports = function create(context) {
                             retval: retval
                         });
 
-                        context.emitter.emit(`runtime.api.method`, apicall.event());
+                        apicall.emit_event(`runtime.api.method`);
                         return retval;
                     };
                 }
                 else {
 
-                    let apicall = new ObjectInteraction({
+                    let apicall = new ObjectInteraction(context, {
                         target: { name: "Date", id: component.__id__ },
                         property: property,
                         type: ObjectInteraction.TYPE_GETTER,
                         args: [],
                         retval: objprop
                     });
-                    context.emitter.emit(`runtime.api.getter`, apicall.event());
+                    apicall.emit_event(`runtime.api.getter`);
 
                     return objprop;
                 }
@@ -66,7 +67,7 @@ module.exports = function create(context) {
 
             set (target, property, value) {
                 const retval = Reflect.set(target, property, value);
-                let apicall = new ObjectInteraction({
+                let apicall = new ObjectInteraction(context, {
                     target: { name: "Date", id: component.__id__ },
                     property: property,
                     type: ObjectInteraction.TYPE_SETTER,
@@ -74,7 +75,7 @@ module.exports = function create(context) {
                     retval: retval
                 });
 
-                context.emitter.emit(`runtime.api.setter`, apicall.event());
+                apicall.emit_event(`runtime.api.setter`);
 
                 return retval;
             }

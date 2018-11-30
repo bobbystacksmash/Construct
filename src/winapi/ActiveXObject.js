@@ -18,14 +18,14 @@ class JS_ActiveXObject extends Component {
         let args = [type];
         if (location) args.push(location);
 
-        let apicall = new ObjectInteraction({
+        let apicall = new ObjectInteraction(context, {
             target: { name: "ActiveXObject", id: instance.__id__ },
             property: "new",
             type: ObjectInteraction.TYPE_CONSTRUCTOR,
             args: args,
             retval: { instance: type, id: instance.__id__ }
         });
-        context.emitter.emit(`runtime.api.method`, apicall.event());
+        apicall.emit_event(`runtime.api.method`);
 
         return instance;
     };

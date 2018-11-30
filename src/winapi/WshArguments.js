@@ -148,14 +148,14 @@ module.exports = function create(context, args) {
 
             let retval = default_args.item(index);
 
-            let apicall = new ObjectInteraction({
+            let apicall = new ObjectInteraction(context, {
                 target:   { id: default_args.__id__, name: default_args.__name__ }
             });
 
             apicall.type     = ObjectInteraction.TYPE_METHOD;
             apicall.retval   = retval;
             apicall.property = "item";
-            context.emitter.emit(`runtime.api.method`, apicall.event());
+            apicall.emit_event(`runtime.api.method`);
 
             return default_args.item(index);
         }
@@ -169,7 +169,7 @@ module.exports = function create(context, args) {
             Object.defineProperty(WshArgsWrapper, prop, {
                 get: () => {
 
-                    let apicall = new ObjectInteraction({
+                    let apicall = new ObjectInteraction(context, {
                         target:   { id: default_args.__id__, name: default_args.__name__ }
                     });
 
@@ -177,13 +177,13 @@ module.exports = function create(context, args) {
                     apicall.retval   = default_args[prop];
                     apicall.property = prop;
 
-                    context.emitter.emit(`runtime.api.getter`, apicall.event());
+                    apicall.emit_event(`runtime.api.getter`);
 
                     return default_args[prop];
                 },
                 set: (val) => {
 
-                    let apicall = new ObjectInteraction({
+                    let apicall = new ObjectInteraction(context, {
                         target:   { id: default_args.__id__, name: default_args.__name__ }
                     });
 
@@ -192,7 +192,7 @@ module.exports = function create(context, args) {
                     apicall.args     = val;
                     apicall.property = prop;
 
-                    context.emitter.emit(`runtime.api.setter`, apicall.event());
+                    apicall.emit_event(`runtime.api.setter`);
 
                     return default_args[prop] = val; // throws.
                 }

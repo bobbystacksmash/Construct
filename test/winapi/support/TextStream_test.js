@@ -2,43 +2,48 @@ const assert = require("chai").assert;
 const TextStream = require("../../../src/winapi/support/TextStream");
 const VirtualFileSystem = require("../../../src/runtime/virtfs");
 const iconv = require("iconv-lite");
+const make_context = require("../../testlib");
+
+var context;
 
 describe("TextStream", () => {
 
+    beforeEach(() => context = make_context());
+
     describe("#open", () => {
 
-        it("should throw if an unopened stream is written to.", (done) => {
-            let ts = new TextStream();
+        it("should throw if an unopened stream is written to.", () => {
+            let ts = new TextStream(context);
             assert.throws(function () { ts.put("testing..."); });
-            done();
+
         });
 
-        it("should throw if an opened stream has been closed and is written to.", (done) => {
-            let ts = new TextStream();
+        it("should throw if an opened stream has been closed and is written to.", () => {
+            let ts = new TextStream(context);
             ts.open();
             assert.doesNotThrow(function () { ts.put("testing..."); });
             ts.close();
             assert.throws(function () { ts.put("testing..."); });
-            done();
+
         });
 
-        it("should throw if an opened stream is opened again", (done) => {
+        it("should throw if an opened stream is opened again", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             assert.doesNotThrow(() => ts.open());
             assert.isTrue(ts.is_open);
 
             assert.throws(() => ts.open(), "Cannot open an already opened stream.");
 
-            done();
+
         });
     });
 
     describe("#close", () => {
 
-        it("should set the position to zero when closed/opened", (done) => {
+        it("should set the position to zero when closed/opened", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.put("abcd");
 
@@ -48,24 +53,24 @@ describe("TextStream", () => {
             ts.open();
             assert.equal(ts.position, 0);
 
-            done();
+
         });
 
     });
 
     describe("#put", () => {
 
-        it("should allow writing to an opened stream.", (done) => {
+        it("should allow writing to an opened stream.", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             assert.doesNotThrow(function () { ts.put("testing..."); });
-            done();
+
         });
 
-        it("should handle correctly inserting ASCII text in to the stream", (done) => {
+        it("should handle correctly inserting ASCII text in to the stream", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.charset = "ascii";
 
@@ -88,12 +93,12 @@ describe("TextStream", () => {
             ts.position = 0;
             assert.equal(ts.fetch_all(), "wxyzzabcdefghi");
 
-            done();
+
         });
 
-        it("should handle correctly inserting Unicode text in to the stream", (done) => {
+        it("should handle correctly inserting Unicode text in to the stream", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.charset = "Unicode";
 
@@ -122,12 +127,12 @@ describe("TextStream", () => {
             ts.position = 0;
             assert.equal(ts.fetch_all(), "abcdXXghij");
 
-            done();
+
         });
 
-        it("should not add the BOM when switching charset from ascii -> unicode", (done) => {
+        it("should not add the BOM when switching charset from ascii -> unicode", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.charset = "ascii";
 
@@ -146,12 +151,12 @@ describe("TextStream", () => {
             ts.charset = "ascii";
             assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x61);
 
-            done();
+
         });
 
-        it("should add the BOM only once", (done) => {
+        it("should add the BOM only once", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.charset = "Unicode";
 
@@ -170,12 +175,12 @@ describe("TextStream", () => {
             ts.position = 0;
             assert.equal(ts.fetch_n_chars(3), "abc");
 
-            done();
+
         });
 
-        it("should not strip the BOM when switching charset from unicode -> ascii", (done) => {
+        it("should not strip the BOM when switching charset from unicode -> ascii", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.charset = "Unicode";
 
@@ -195,45 +200,45 @@ describe("TextStream", () => {
             ts.charset = "Unicode";
             assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x61);
 
-            done();
+
 
         });
-        it("should write the BOM when put is passed 'undefined'", (done) => {
+        it("should write the BOM when put is passed 'undefined'", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             assert.doesNotThrow(() => ts.put(undefined));
 
             assert.equal(ts.size, 2);
             assert.equal(ts.position, 2);
 
-            done();
+
         });
 
-        it("should throw when trying to write 'null' to the stream", (done) => {
+        it("should throw when trying to write 'null' to the stream", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             assert.throws(() => ts.put(null), "cannot write null data to this stream");
 
-            done();
+
         });
 
-        it("should treat an empty array '[]' as an undefined value", (done) => {
+        it("should treat an empty array '[]' as an undefined value", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
 
             assert.doesNotThrow(() => ts.put([]));
             assert.equal(ts.size, 2);
             assert.equal(ts.position, 2);
 
-            done();
+
         });
 
-        it("should convert an object to '[object Object]' when an object-write is attempted", (done) => {
+        it("should convert an object to '[object Object]' when an object-write is attempted", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
 
             // '{}' becomes '[object Object]'.
@@ -242,12 +247,12 @@ describe("TextStream", () => {
             assert.equal(ts.size, 32);
             assert.equal(ts.position, 32);
 
-            done();
+
         });
 
-        it("should correctly handle inserting Unicode text in to the stream", (done) => {
+        it("should correctly handle inserting Unicode text in to the stream", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.charset = "Unicode"; // default...
 
@@ -262,12 +267,12 @@ describe("TextStream", () => {
             ts.position = 0;
             assert.equal(ts.fetch_all(), "abc");
 
-            done();
+
         });
 
-        it("should add CRLF when options == 1.", (done) => {
+        it("should add CRLF when options == 1.", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
 
             ts.put("", 1);
@@ -280,12 +285,12 @@ describe("TextStream", () => {
             assert.equal(ts.size, 16);
             assert.equal(ts.position, 16);
 
-            done();
+
         });
 
-        it("should throw if options value is neither 1 nor 0", (done) => {
+        it("should throw if options value is neither 1 nor 0", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
 
             assert.throws(() => ts.put("abc", 3));
@@ -296,7 +301,7 @@ describe("TextStream", () => {
             assert.doesNotThrow(() => ts.put("abc", 1));
             assert.doesNotThrow(() => ts.put("abc", 0));
 
-            done();
+
         });
     });
 
@@ -313,9 +318,9 @@ describe("TextStream", () => {
         //   WScript.Echo(ado.readtext(2)); // prints "ab".
         //
 
-        it("should correctly fetch chars when the encoding bytes are set", (done) => {
+        it("should correctly fetch chars when the encoding bytes are set", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
 
             ts.open();
             ts.put("abcdef");
@@ -327,12 +332,12 @@ describe("TextStream", () => {
             assert.equal(ts.fetch_n_chars(1), "b");
             assert.equal(ts.position, 6);
 
-            done();
+
         });
 
-        it("should correctly fetch and encode text characters, including BOM", (done) => {
+        it("should correctly fetch and encode text characters, including BOM", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
 
             ts.open();
             ts.put("abcdef");
@@ -360,24 +365,24 @@ describe("TextStream", () => {
                 assert.equal(ts.position, e.endPos);
             });
 
-            done();
+
         });
 
-        it("should return an empty string if there are no chars to read", (done) => {
+        it("should return an empty string if there are no chars to read", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.position = 0;
             assert.equal(ts.fetch_n_chars(2), "");
-            done();
+
         });
     });
 
     describe("#fetch_line", () => {
 
-        it("should fetch up to the first CRLF by default", (done) => {
+        it("should fetch up to the first CRLF by default", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.put("abcd\r\nefgh\r\n");
             ts.position = 0;
@@ -393,23 +398,23 @@ describe("TextStream", () => {
             ts.position = 0;
             assert.equal(ts.fetch_all(), "abcd\r\nefgh\r\n");
 
-            done();
+
         });
 
-        it("should return an empty string when at the end of the buffer", (done) => {
+        it("should return an empty string when at the end of the buffer", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.put("abcd\r\n");
 
             assert.equal(ts.fetch_line(), "");
             assert.equal(ts.position, 14);
-            done();
+
         });
 
-        it("should return the whole string when CRLF cannot be found", (done) => {
+        it("should return the whole string when CRLF cannot be found", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.put("abcd");
 
@@ -417,12 +422,12 @@ describe("TextStream", () => {
             assert.equal(ts.fetch_line(), "abcd");
             assert.equal(ts.position, 10);
 
-            done();
+
         });
 
-        it("should handle the case where the whole string is CRLF pairs", (done) => {
+        it("should handle the case where the whole string is CRLF pairs", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.put("\r\n\r\n\r\n\r\n");
             ts.separator = -1; // CRLF separator
@@ -444,14 +449,14 @@ describe("TextStream", () => {
             assert.equal(ts.fetch_line(), "");
             assert.equal(ts.position, 18);
 
-            done();
+
         });
 
         describe("line separator specific", () => {
 
-            it("should throw if the sep value isn't CR, CRLF, or LF", (done) => {
+            it("should throw if the sep value isn't CR, CRLF, or LF", () => {
 
-                let ts = new TextStream();
+                let ts = new TextStream(context);
                 ts.open();
 
                 assert.throws(() => ts.separator = "\r\n");
@@ -464,12 +469,12 @@ describe("TextStream", () => {
                 assert.doesNotThrow(() => ts.separator = 13);
                 assert.doesNotThrow(() => ts.separator = 10);
 
-                done();
+
             });
 
-            it("should change to LF", (done) => {
+            it("should change to LF", () => {
 
-                let ts = new TextStream();
+                let ts = new TextStream(context);
                 ts.open();
                 ts.put("abcd\r\nefgh\r\n");
 
@@ -480,13 +485,13 @@ describe("TextStream", () => {
 
                 assert.equal(ts.position, 26);
 
-                done();
+
 
             });
 
-            it("should change to CR", (done) => {
+            it("should change to CR", () => {
 
-                let ts = new TextStream();
+                let ts = new TextStream(context);
                 ts.open();
                 ts.put("abcd\rdefg\r\r");
 
@@ -502,44 +507,44 @@ describe("TextStream", () => {
                 assert.equal(ts.fetch_line(), "");
                 assert.equal(ts.position, 24);
 
-                done();
+
             });
         });
     });
 
     describe("#fetch_all", () => {
 
-        it("should fetch all chars from pos to EOB (end-of-buffer)", (done) => {
+        it("should fetch all chars from pos to EOB (end-of-buffer)", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.put("abcd");
             ts.position = 0;
             assert.equal(ts.fetch_all(), "abcd");
             assert.equal(ts.position, 10);
-            done();
+
         });
 
-        it("should fetch all chars from pos to EOB (when pos != 0)", (done) => {
+        it("should fetch all chars from pos to EOB (when pos != 0)", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.put("abcdef");
             ts.position = 6;
 
             assert.equal(ts.fetch_all(), "cdef");
             assert.equal(ts.position, 14);
-            done();
+
         });
 
-        it("should return an empty string if the buffer is empty", (done) => {
+        it("should return an empty string if the buffer is empty", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             assert.equal(ts.fetch_all(), "");
             assert.equal(ts.position, 0);
 
-            done();
+
         });
     });
 
@@ -547,9 +552,9 @@ describe("TextStream", () => {
 
         describe("when the charset is ASCII", () => {
 
-            it("should default to CRLF without changing LineSep (default)", (done) => {
+            it("should default to CRLF without changing LineSep (default)", () => {
 
-                let ts = new TextStream();
+                let ts = new TextStream(context);
                 ts.open();
                 ts.charset = "ASCII";
 
@@ -561,13 +566,13 @@ describe("TextStream", () => {
                 ts.skipline();
 
                 assert.equal(ts.position, 5);
-                done();
+
             });
 
 
-            it("should continue skipping lines until there are no more left to skip", (done) => {
+            it("should continue skipping lines until there are no more left to skip", () => {
 
-                let ts = new TextStream();
+                let ts = new TextStream(context);
                 ts.open();
                 ts.charset = "ASCII";
 
@@ -591,12 +596,12 @@ describe("TextStream", () => {
                 ts.skipline();
                 assert.equal(ts.position, 15);
 
-                done();
+
             });
 
-            it("should read up to LF if set", (done) => {
+            it("should read up to LF if set", () => {
 
-                let ts = new TextStream();
+                let ts = new TextStream(context);
                 ts.open();
                 ts.charset = "ASCII";
 
@@ -605,12 +610,12 @@ describe("TextStream", () => {
                 ts.position = 0;
                 ts.skipline(10); // 10 = enum value for LF
                 assert.equal(ts.position, 4);
-                done();
+
             });
 
-            it("should read up to CR if CR is linesep", (done) => {
+            it("should read up to CR if CR is linesep", () => {
 
-                let ts = new TextStream();
+                let ts = new TextStream(context);
                 ts.open();
                 ts.charset = "ASCII";
 
@@ -618,15 +623,15 @@ describe("TextStream", () => {
                 ts.position = 0;
                 ts.skipline(13);
                 assert.equal(ts.position, 4);
-                done();
+
             });
         });
 
         describe("when the charset is Unicode", () => {
 
-            it("should default to CRLF without changing LineSep (default)", (done) => {
+            it("should default to CRLF without changing LineSep (default)", () => {
 
-                let ts = new TextStream();
+                let ts = new TextStream(context);
                 ts.open();
                 ts.type = 2;
 
@@ -636,13 +641,13 @@ describe("TextStream", () => {
                 ts.skipline();
 
                 assert.equal(ts.position, 12);
-                done();
+
             });
 
 
-            it("should continue skipping lines until there are no more left to skip", (done) => {
+            it("should continue skipping lines until there are no more left to skip", () => {
 
-                let ts = new TextStream();
+                let ts = new TextStream(context);
                 ts.open();
                 ts.type = 2;
                 ts.put("abc\r\ndef\r\nghi\r\n");
@@ -664,48 +669,48 @@ describe("TextStream", () => {
                 ts.skipline();
                 assert.equal(ts.position, 32);
 
-                done();
+
             });
 
-            it("should read up to LF if set", (done) => {
+            it("should read up to LF if set", () => {
 
-                let ts = new TextStream();
+                let ts = new TextStream(context);
                 ts.open();
                 ts.type = 2;
                 ts.put("abc\ndef");
                 ts.position = 0;
                 ts.skipline(10); // 10 = enum value for LF
                 assert.equal(ts.position, 10);
-                done();
+
             });
 
-            it("should read up to CR if CR is linesep", (done) => {
+            it("should read up to CR if CR is linesep", () => {
 
-                let ts = new TextStream();
+                let ts = new TextStream(context);
                 ts.open();
                 ts.put("abc\rdef");
                 ts.position = 0;
                 ts.skipline(13);
                 assert.equal(ts.position, 10);
-                done();
+
             });
         });
     });
 
     describe(".state", () => {
 
-        it("should return 1 when stream is open", (done) => {
+        it("should return 1 when stream is open", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
 
             assert.equal(ts.state, 1);
-            done();
+
         });
 
-        it("should return 0 when stream is closed", (done) => {
+        it("should return 0 when stream is closed", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
 
             assert.equal(ts.state, 0);
 
@@ -716,24 +721,24 @@ describe("TextStream", () => {
             ts.close();
             assert.equal(ts.state, 0);
 
-            done();
+
         });
     });
 
     describe(".charset", () => {
 
-        it("should be 'Unicode' by default", (done) => {
+        it("should be 'Unicode' by default", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
 
             assert.equal(ts.charset, "Unicode");
-            done();
+
         });
 
-        it("should throw if the given charset value is unknown", (done) => {
+        it("should throw if the given charset value is unknown", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
 
             assert.throws(() => ts.charset = "unknown");
             assert.throws(() => ts.charset = "windows-1252");
@@ -742,12 +747,12 @@ describe("TextStream", () => {
             assert.doesNotThrow(() => ts.charset = "Unicode");
             assert.doesNotThrow(() => ts.charset = "ASCII");
 
-            done();
+
         });
 
-        it("should retain the casing used for the charset", (done) => {
+        it("should retain the casing used for the charset", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
 
             ts.charset = "AsCiI";
@@ -756,22 +761,22 @@ describe("TextStream", () => {
             ts.charset = "UNICODE";
             assert.equal(ts.charset, "UNICODE");
 
-            done();
+
         });
 
 
-        it("should support the ASCII charset", (done) => {
+        it("should support the ASCII charset", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.charset = 'ascii';
 
             assert.equal(ts.charset, "ascii");
-            done();
+
         });
 
-        it("should throw if trying to change '.charset' when position is not zero", (done) => {
+        it("should throw if trying to change '.charset' when position is not zero", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
 
             ts.charset = "ASCII";
@@ -781,12 +786,12 @@ describe("TextStream", () => {
 
             assert.throws(() => ts.charset = "Unicode");
 
-            done();
+
         });
 
-        it("should allow the charset to be changed when the stream is closed", (done) => {
+        it("should allow the charset to be changed when the stream is closed", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.charset = "ASCII";
             ts.open();
             ts.put("abcd");
@@ -796,12 +801,12 @@ describe("TextStream", () => {
 
             assert.doesNotThrow(() => ts.charset = "Unicode");
 
-            done();
+
         });
 
-        it("should reset position back to zero when '#close()' is called", (done) => {
+        it("should reset position back to zero when '#close()' is called", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.put("abcd");
 
@@ -812,23 +817,23 @@ describe("TextStream", () => {
 
             assert.equal(ts.position, 0);
 
-            done();
+
         });
 
-        it("should throw if trying to change charcode when position is not zero", (done) => {
+        it("should throw if trying to change charcode when position is not zero", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
 
             ts.open();
             ts.put("abcd");
 
             assert.throws(() => ts.charset = "ascii");
-            done();
+
         });
 
-        it("should not alter position when changing charcode", (done) => {
+        it("should not alter position when changing charcode", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
 
             ts.open();
             ts.put("abcd");
@@ -837,12 +842,12 @@ describe("TextStream", () => {
             ts.charset = "ASCII";
 
             assert.equal(ts.position, 0);
-            done();
+
         });
 
-        it("should correctly report the size of a Unicode string", (done) => {
+        it("should correctly report the size of a Unicode string", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
 
             ts.open();
             ts.charset = "unicode";
@@ -850,12 +855,12 @@ describe("TextStream", () => {
             ts.put("abcd");
 
             assert.equal(ts.size, 10);
-            done();
+
         });
 
-        it("should correctly handle converting from Unicode (UTF16LE) to ASCII (Windows-1252) charset", (done) => {
+        it("should correctly handle converting from Unicode (UTF16LE) to ASCII (Windows-1252) charset", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
 
             ts.open();
             ts.charset = "unicode";
@@ -879,12 +884,12 @@ describe("TextStream", () => {
             assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x64); // ASCII 'd'
             assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x00);
 
-            done();
+
         });
 
-        it("should correctly handle changing between ASCII (Windows-1252) -> Unicode (UTF16LE) charsets", (done) => {
+        it("should correctly handle changing between ASCII (Windows-1252) -> Unicode (UTF16LE) charsets", () => {
 
-            let ts  = new TextStream();
+            let ts  = new TextStream(context);
 
             ts.open();
             ts.charset = 'ascii';
@@ -910,15 +915,15 @@ describe("TextStream", () => {
             assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x6261);
             assert.equal(ts.fetch_n_chars(1).charCodeAt(0), 0x6463);
 
-            done();
+
         });
     });
 
     describe(".position", () => {
 
-        it("should overwrite chars when position is changed", (done) => {
+        it("should overwrite chars when position is changed", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.put("abcd");
             ts.position = 4;
@@ -927,27 +932,27 @@ describe("TextStream", () => {
             ts.position = 0;
             assert.equal(ts.fetch_all(), "a123456");
             assert.equal(ts.position, 16);
-            done();
+
         });
 
-        it("should throw when .position is called on an unopened stream", (done) => {
+        it("should throw when .position is called on an unopened stream", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             assert.throws(function () { ts.position; });
-            done();
+
         });
 
-        it("should report a position of zero when stream is open but not written to.", (done) => {
+        it("should report a position of zero when stream is open but not written to.", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             assert(ts.position === 0, "Position is zero when not written to.");
-            done();
+
         });
 
-        it("should not advance position when empty strings are written.", (done) => {
+        it("should not advance position when empty strings are written.", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             assert(ts.position === 0, "Position is zero when stream is not written to.");
 
@@ -957,12 +962,12 @@ describe("TextStream", () => {
             ts.put("");
             assert.equal(ts.position, 2, "Position remains at zero when another blank string is written.");
 
-            done();
+
         });
 
-        it("should advance 'position' by 2 bytes for a single char written to the stream.", (done) => {
+        it("should advance 'position' by 2 bytes for a single char written to the stream.", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
 
             assert.equal(ts.position, 0, "Position is 0");
@@ -979,12 +984,12 @@ describe("TextStream", () => {
             ts.position = 0;
             assert.equal(ts.fetch_all(), "abcdef");
 
-            done();
+
         });
 
-        it("should throw if position is set higher than string len", (done) => {
+        it("should throw if position is set higher than string len", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
 
             ts.put("abc");
@@ -993,12 +998,12 @@ describe("TextStream", () => {
             assert.doesNotThrow(() => ts.position = 6);
             assert.throws(() => ts.position = 9);
 
-            done();
+
         });
 
-        it("should put in to the correct position when position is changed", (done) => {
+        it("should put in to the correct position when position is changed", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
 
             ts.put("abcd");
@@ -1014,55 +1019,55 @@ describe("TextStream", () => {
             ts.put("blah");
             assert.equal(ts.position, 10);
 
-            done();
+
         });
     });
 
     describe(".size", () => {
 
-        it("should throw when size is requested on an unopened stream", (done) => {
-            let ts = new TextStream();
+        it("should throw when size is requested on an unopened stream", () => {
+            let ts = new TextStream(context);
             assert.throws(function () { ts.size(); });
-            done();
+
         });
 
-        it("should report the size as zero for an open but not written-to stream", (done) => {
+        it("should report the size as zero for an open but not written-to stream", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             assert.equal(ts.size, 0, "size is zero");
-            done();
+
         });
 
-        it("should report the size as zero for an empty string written to the stream", (done) => {
+        it("should report the size as zero for an empty string written to the stream", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.put("");
             assert.equal(ts.size, 2, "Size is equal to 2 for empty string");
-            done();
+
         });
 
-        it("should report the size correctly for UTF16LE strings (including BOM)", (done) => {
+        it("should report the size correctly for UTF16LE strings (including BOM)", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.put("abc");
             assert.equal(ts.size, 8);
-            done();
+
         });
     });
 
     describe("#copy_to", () => {
 
-        it("should copy from one stream to another", (done) => {
+        it("should copy from one stream to another", () => {
 
-            let srcstream = new TextStream();
+            let srcstream = new TextStream(context);
             srcstream.open();
             srcstream.put("abc");
             srcstream.position = 0;
 
-            let deststream = new TextStream();
+            let deststream = new TextStream(context);
             deststream.open();
             deststream.put("xyz");
 
@@ -1070,17 +1075,17 @@ describe("TextStream", () => {
 
             deststream.position = 0;
             assert.equal(deststream.fetch_all(), "xyzabc");
-            done();
+
         });
 
-        it("should copy from one stream to another when src stream's pos isn't EOS", (done) => {
+        it("should copy from one stream to another when src stream's pos isn't EOS", () => {
 
-            let srcstream = new TextStream();
+            let srcstream = new TextStream(context);
             srcstream.open();
             srcstream.put("abc");
             srcstream.position = 4;
 
-            let deststream = new TextStream();
+            let deststream = new TextStream(context);
             deststream.open();
             deststream.put("xyz");
 
@@ -1088,7 +1093,7 @@ describe("TextStream", () => {
 
             deststream.position = 0;
             assert.equal(deststream.fetch_all(), "xyzbc");
-            done();
+
         });
     });
 
@@ -1096,8 +1101,7 @@ describe("TextStream", () => {
 
         it("should save to a file when the stream is open", () => {
 
-            let vfs = new VirtualFileSystem({ register: () => {} }),
-                ts  = new TextStream({ vfs: vfs });
+            let ts = new TextStream(context);
 
             ts.open();
             ts.put("abcdef");
@@ -1105,15 +1109,14 @@ describe("TextStream", () => {
             const save_file_path = "C:\\hello.txt";
             ts.save_to_file(save_file_path);
             assert.deepEqual(
-                vfs.ReadFileContents(save_file_path),
+                context.vfs.ReadFileContents(save_file_path),
                 Buffer.from(iconv.encode("abcdef", "utf16le", { addBOM: true }))
             );
         });
 
-        it("should throw when attempting to save a file when the stream is not open", (done) => {
+        it("should throw when attempting to save a file when the stream is not open", () => {
 
-            let vfs = new VirtualFileSystem({ register: () => {} });
-            let ts = new TextStream({ vfs: vfs });
+            let ts = new TextStream(context);
 
             ts.open();
             ts.put("abcdef");
@@ -1122,27 +1125,26 @@ describe("TextStream", () => {
             const save_file_path = "C:\\hello.txt";
 
             assert.throws(function () { ts.save_to_file(save_file_path); });
-
-            done();
         });
 
         it("should write an empty buffer to the file system if the buffer is empty or null", () => {
 
-            let vfs = new VirtualFileSystem({ register: () => {} });
-            let ts = new TextStream({ vfs: vfs });
+            let ts = new TextStream(context);
 
             ts.open();
             const save_file_path = "C:\\hello.txt";
 
             ts.save_to_file(save_file_path);
 
-            assert.deepEqual(vfs.ReadFileContents(save_file_path), Buffer.alloc(0));
+            assert.deepEqual(
+                context.vfs.ReadFileContents(save_file_path),
+                Buffer.alloc(0)
+            );
         });
 
         it("should save the BOM if the buffer contains only the empty string", () => {
 
-            let vfs = new VirtualFileSystem({ register: () => {} }),
-                ts  = new TextStream({ vfs: vfs });
+            let ts = new TextStream(context);
 
             ts.open();
             ts.put("");
@@ -1152,16 +1154,14 @@ describe("TextStream", () => {
             ts.save_to_file(save_file_path);
 
             assert.deepEqual(
-                vfs.ReadFileContents(save_file_path),
+                context.vfs.ReadFileContents(save_file_path),
                 Buffer.from([0xFF, 0xFE]) // UTF-16LE Byte-Order-Mark (BOM)
             );
-
         });
 
-        it("should save the BOM + str to a file", (done) => {
+        it("should save the BOM + str to a file", () => {
 
-            let vfs = new VirtualFileSystem({ register: () => {} }),
-                ts  = new TextStream({ vfs: vfs });
+            let ts = new TextStream(context);
 
             ts.open();
             ts.put("abcdef");
@@ -1171,17 +1171,14 @@ describe("TextStream", () => {
             ts.save_to_file(save_file_path);
 
             assert.deepEqual(
-                vfs.ReadFileContents(save_file_path),
+                context.vfs.ReadFileContents(save_file_path),
                 Buffer.from(iconv.encode("abcdef", "utf16le", { addBOM: true }))
             );
-
-            done();
         });
 
-        it("should set position to 0 after a successful write", (done) => {
+        it("should set position to 0 after a successful write", () => {
 
-            let vfs = new VirtualFileSystem({ register: () => {} });
-            let ts = new TextStream({ vfs: vfs });
+            let ts = new TextStream(context);
 
             ts.open();
             ts.put("abcd");
@@ -1190,22 +1187,19 @@ describe("TextStream", () => {
             assert.equal(ts.position, 10);
             ts.save_to_file(save_file_path);
             assert.equal(ts.position, 0);
-
-            done();
         });
 
     });
 
     describe("#load_from_file", () => {
 
-        it("should load from a file, if that file exists", (done) => {
+        it("should load from a file, if that file exists", () => {
 
-            let vfs = new VirtualFileSystem({ register: () => {} }),
-                ts  = new TextStream({ vfs: vfs });
+            let ts = new TextStream(context);
 
             const file_path = "C:\\foo\\bar.txt";
 
-            vfs.AddFile(file_path, Buffer.from("abcd")); // ASCII file (no BOM), stream charset is Unicode.
+            context.vfs.AddFile(file_path, Buffer.from("abcd")); // ASCII file (no BOM), stream charset is Unicode.
 
             ts.open();
             ts.load_from_file(file_path);
@@ -1213,29 +1207,27 @@ describe("TextStream", () => {
             assert.equal(ts.position, 0);
             assert.equal(ts.size, 6);
 
-            done();
+
         });
 
-        it("should throw if the file does not exist", (done) => {
+        it("should throw if the file does not exist", () => {
 
-            let vfs = new VirtualFileSystem({ register: () => {} });
-            let ts  = new TextStream({ vfs: vfs });
+            let ts = new TextStream(context);
 
-            vfs.AddFile("C:\\foo\\bar.txt", "abcd");
+            context.vfs.AddFile("C:\\foo\\bar.txt", "abcd");
 
             ts.open();
             const file_path = "C:\\foo.txt";
 
             assert.throws(() => ts.load_from_file(file_path));
-            done();
         });
     });
 
     describe("#to_binary_stream", () => {
 
-        it("should return a copy as a binary stream", (done) => {
+        it("should return a copy as a binary stream", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.put("abcd");
             ts.position = 0;
@@ -1253,12 +1245,12 @@ describe("TextStream", () => {
                 Buffer.from([0xFF, 0xFE, 0x61, 0x00, 0x62, 0x00, 0x63, 0x00, 0x64, 0x00])
             );
 
-            done();
+
         });
 
-        it("should return a copy as a binary stream, copying across position", (done) => {
+        it("should return a copy as a binary stream, copying across position", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.put("Hello, world!");
             ts.position = 5
@@ -1271,12 +1263,12 @@ describe("TextStream", () => {
             assert.equal(bs.size, 28);
             assert.equal(bs.position, 5);
 
-            done();
+
         });
 
-        it("should return a copy as a binary stream, copying across open/closed status", (done) => {
+        it("should return a copy as a binary stream, copying across open/closed status", () => {
 
-            let ts = new TextStream();
+            let ts = new TextStream(context);
             ts.open();
             ts.put("Hello, world!");
 
@@ -1289,13 +1281,13 @@ describe("TextStream", () => {
             assert.equal(bs.type, 1);
             assert.equal(bs.is_closed, true);
 
-            done();
+
         });
     });
 
     describe("#pos_lookahead_matches", () => {
 
-        it("should return True if lookahead matches", (done) => {
+        it("should return True if lookahead matches", () => {
 
             let ts = new TextStream(context);
             ts.open();
@@ -1305,10 +1297,10 @@ describe("TextStream", () => {
 
             assert.isTrue(ts.pos_lookahead_matches(Buffer.from("Hello")));
 
-            done();
+
         });
 
-        it("should return False is incoming buf is empty", (done) => {
+        it("should return False is incoming buf is empty", () => {
 
             let ts = new TextStream(context);
             ts.open();
@@ -1317,10 +1309,10 @@ describe("TextStream", () => {
             ts.position = 0;
 
             assert.isFalse(ts.pos_lookahead_matches(Buffer.alloc(0)));
-            done();
+
         });
 
-        it("should return False if pos is already at the end of the stream", (done) => {
+        it("should return False if pos is already at the end of the stream", () => {
 
             let ts = new TextStream(context);
             ts.open();
@@ -1328,13 +1320,13 @@ describe("TextStream", () => {
             ts.put("Hello, World!");
 
             assert.isFalse(ts.pos_lookahead_matches(Buffer.from("hello")));
-            done();
+
         });
     });
 
     describe("#column", () => {
 
-        it("should return '1' when pos is '0' (column numbering starts at 1)", (done) => {
+        it("should return '1' when pos is '0' (column numbering starts at 1)", () => {
 
             let ts = new TextStream(context);
             ts.open();
@@ -1344,10 +1336,10 @@ describe("TextStream", () => {
 
             assert.equal(ts.column(), 1);
 
-            done();
+
         });
 
-        it("should correctly return columns using the default linesep", (done) => {
+        it("should correctly return columns using the default linesep", () => {
 
             let ts = new TextStream(context);
             ts.open();
@@ -1391,22 +1383,22 @@ describe("TextStream", () => {
                 assert.equal(ts.fetch_n_chars(1), a.chr);
             });
 
-            done();
+
         });
     });
 
     describe("#line", () => {
 
-        it("should return line 1 when the stream is empty", (done) => {
+        it("should return line 1 when the stream is empty", () => {
 
             let ts = new TextStream(context);
             ts.open();
 
             assert.equal(ts.line(), 1);
-            done();
+
         });
 
-        it("should return the current line number correctly", (done) => {
+        it("should return the current line number correctly", () => {
 
             let ts = new TextStream(context);
             ts.open();
@@ -1425,13 +1417,13 @@ describe("TextStream", () => {
             ts.skipline();
             assert.equal(ts.line(), 3);
 
-            done();
+
         });
     });
 
     describe("#skip_n_chars", () => {
 
-        it("should successfully skip the correct number of ASCII characters", (done) => {
+        it("should successfully skip the correct number of ASCII characters", () => {
 
             let ts = new TextStream(context);
 
@@ -1446,10 +1438,10 @@ describe("TextStream", () => {
             ts.skip_n_chars(4);
             assert.equal(ts.fetch_n_chars(4), "dddd");
 
-            done();
+
         });
 
-        it("should successfully skip the correct number of UTF-16 characters", (done) => {
+        it("should successfully skip the correct number of UTF-16 characters", () => {
 
             let ts = new TextStream(context);
 
@@ -1463,10 +1455,10 @@ describe("TextStream", () => {
             ts.skip_n_chars(4);
             assert.equal(ts.fetch_n_chars(4), "dddd");
 
-            done();
+
         });
 
-        it("should throw if a skip is attempted beyond the bounds of the stream", (done) => {
+        it("should throw if a skip is attempted beyond the bounds of the stream", () => {
 
             let ts = new TextStream(context);
             const content = "aaaabbbbccccdddd";
@@ -1479,7 +1471,7 @@ describe("TextStream", () => {
             assert.doesNotThrow(() => ts.skip_n_chars(16));
             assert.throws(() => ts.skip_n_chars(1), "Cannot skip beyond buffer length");
 
-            done();
+
 
         });
     });

@@ -8,6 +8,7 @@ class TextStream extends Stream {
         super(context);
 
         this.__name__ = "TextStream";
+        this.__id__   = context.make_uid();
 
         this.has_encoding_bytes = false;
 

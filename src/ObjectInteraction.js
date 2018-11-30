@@ -1,6 +1,8 @@
 class ObjectInteraction {
 
-    constructor (obj) {
+    constructor (context, obj) {
+
+        this.context = context;
 
         obj = Object.assign({
             target:   null,
@@ -19,14 +21,22 @@ class ObjectInteraction {
         this._retval   = obj.retval;
     }
 
-    event () {
-        return {
+    emit_event (event_name) {
+
+        let evt = {
             target:   this._target,
             type:     this._type,
             property: this._property,
             args:     this._args,
             retval:   this._retval
         };
+
+        if (this.context.allow_event_tracking(this._target)) {
+        }
+        else {
+        }
+
+        this.context.emitter.emit(event_name, evt);
     }
 
     // The `target' is an instance of a WINAPI object, such as

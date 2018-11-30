@@ -68,7 +68,10 @@ function make_context (opts) {
         get_hook: () => {},
         get_file_association: f => get_file_assoc(f),
         get_instance_by_id: () => {},
-        add_instance: () => undefined
+        add_instance: () => undefined,
+        allow_event_tracking: () => true,
+        disable_event_tracking: () => true,
+        enable_event_tracking: () => true,
     };
 
     let new_ctx = Object.assign({}, context, opts);
