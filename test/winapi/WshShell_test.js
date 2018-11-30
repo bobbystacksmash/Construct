@@ -146,6 +146,8 @@ describe("WshShell", () => {
 
                 assert.doesNotThrow(() => wsh.environment.count());
                 assert.doesNotThrow(() => wsh.environment("PROCESS").count());
+                assert.doesNotThrow(() => wsh.environment("SYSTEM")("ComSpec"));
+                assert.equal(wsh.environment("SYSTEM")("Foo"), "bar");
                 assert.isNumber(wsh.environment("PROCESS").count());
 
                 assert.doesNotThrow(() => wsh.environment("SYSTEM").count());
@@ -165,8 +167,6 @@ describe("WshShell", () => {
                 const wsh = new WshShell(ctx);
                 assert.throws(() => wsh.Environment = 6, "cannot assign to this prop");
             });
-
-
         });
 
         describe(".SpecialFolders", () => {

@@ -48,10 +48,9 @@ class JS_WshEnvironment extends Component {
             );
         }
 
-        name = name.toLowerCase();
-
-        if (this._vars.hasOwnProperty(name.toLowerCase())) {
-            return this._vars[name];
+        let var_value = Object.keys(this._vars).find(key => key.toLowerCase() === name.toLowerCase());
+        if (var_value) {
+            return this._vars[var_value];
         }
 
         return "";
@@ -103,7 +102,22 @@ module.exports = function create(context, type) {
     var wrapper = (function (props) {
 
         function WshEnvWrapper (type) {
-            return proxify(context, new JS_WshEnvironment(context, type));
+
+            let callable = function (var_name) {
+                return default_env.item(var_name);
+            };
+
+            for (let prop in props) {
+                callable[prop] = props[prop];
+            }
+
+
+            Object.defineProperty(WshEnvWrapper, "length", {
+                get: function ()  { return default_env.length; },
+                set: function (x) { return default_env.length = x; }
+            });
+
+            return callable;
         };
 
         for (let prop in props) {
