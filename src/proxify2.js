@@ -15,7 +15,7 @@ module.exports = function (context, jscript_class) {
             const lc_property  = property.toLowerCase(),
                   target_value = Reflect.get(target, lc_property, receiver);
 
-            let apicall = new ObjectInteraction({
+            let apicall = new ObjectInteraction(context, {
                 target: { name: target.__name__, id: target.__id__ },
                 property: property
             });
@@ -26,7 +26,7 @@ module.exports = function (context, jscript_class) {
                     // See special wrappers for their object interaction emitters.
 
                     apicall.retval = { __name__: target_value.__name__, __id__: target_value.__id__ };
-                    context.emitter.emit(`runtime.api.getter`, apicall.event());
+                    apicall.emit_event(`runtime.api.getter`);
 
                     return target_value;
                 }
@@ -37,7 +37,7 @@ module.exports = function (context, jscript_class) {
                         apicall.type   = ObjectInteraction.TYPE_METHOD;
                         apicall.args   = [...args];
                         apicall.retval = retval;
-                        context.emitter.emit(`runtime.api.method`, apicall.event());
+                        apicall.emit_event(`runtime.api.method`);
 
                         return retval;
                     };
@@ -47,14 +47,14 @@ module.exports = function (context, jscript_class) {
 
                 apicall.type   = ObjectInteraction.TYPE_GETTER;
                 apicall.retval = target_value;
-                context.emitter.emit(`runtime.api.getter`, apicall.event());
+                apicall.emit_event(`runtime.api.getter`);
 
                 return target_value;
             }
         },
         set (target, property, value) {
 
-            let apicall = new ObjectInteraction({
+            let apicall = new ObjectInteraction(context, {
                 target:   { id: target.__id__, name: target.__name__ },
                 property: property,
                 args:     value
@@ -64,7 +64,7 @@ module.exports = function (context, jscript_class) {
             const retval = Reflect.set(target, lc_property, value);
 
             apicall.retval = retval;
-            context.emitter.emit(`runtime.api.setter`, apicall.event());
+            apicall.emit_event(`runtime.api.setter`);
 
             return retval;
         }
