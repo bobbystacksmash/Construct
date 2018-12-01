@@ -1,6 +1,5 @@
 const Component         = require("../Component"),
       proxify           = require("../proxify2"),
-      ObjectInteraction = require("../ObjectInteraction"),
       JS_WshArguments   = require("./WshArguments"),
       create_instance   = require("./support/create_instance");
 

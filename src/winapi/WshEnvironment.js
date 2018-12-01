@@ -1,5 +1,6 @@
 const Component = require("../Component"),
-      proxify   = require("../proxify2");
+      proxify   = require("../proxify2"),
+      ObjectInteraction = require("../ObjectInteraction");
 
 class JS_WshEnvironment extends Component {
 
@@ -103,14 +104,41 @@ module.exports = function create(context, type) {
 
         function WshEnvWrapper (type) {
 
+            let apicall = new ObjectInteraction(context, {
+                target: {
+                    name: default_env.__name__,
+                    id: default_env.__id__
+                },
+                type: ObjectInteraction.TYPE_METHOD,
+                property: "ENVIRONMENT",
+                retval: { __name__: "WshEnvironment", __id__: default_env.__id__ },
+                args: type
+            });
+            apicall.emit_event(`runtime.api.call`);
+
             let callable = function (var_name) {
-                return default_env.item(var_name);
+
+                let var_value = default_env.item(var_name);
+
+                let apicall = new ObjectInteraction(context, {
+                    target: {
+                        name:default_env.__name__,
+                        id: default_env.__id__
+                    },
+                    property: "item",
+                    type: ObjectInteraction.TYPE_METHOD,
+                    args: [var_name],
+                    retval: var_value
+                });
+
+                apicall.emit_event(`runtime.api.call`);
+
+                return var_value;
             };
 
             for (let prop in props) {
                 callable[prop] = props[prop];
             }
-
 
             Object.defineProperty(WshEnvWrapper, "length", {
                 get: function ()  { return default_env.length; },

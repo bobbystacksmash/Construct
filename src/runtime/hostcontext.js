@@ -517,6 +517,9 @@ class HostContext {
         if (typeof id === "number" || typeof id === "string") {
             id = instance;
         }
+        else if (instance.hasOwnProperty("name") && instance.hasOwnProperty("id")) {
+            id = instance.id;
+        }
         else {
             id = instance.__id__;
         }

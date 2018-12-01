@@ -45,8 +45,6 @@ describe("Deobfuscate reporter", () => {
         expect(data).to.have.lengthOf(1);
 
         expect(data[0]).to.equal(`var adodbstream_14 = WScript.CreateObject('ADODB.Stream');`);
-
-        //expect(data[0]).to.equal(`.CreateObject('ADODB.Stream');`);
     });
 
     it("should re-use the same var name when dealing with events from the same target", async () => {
@@ -62,6 +60,22 @@ describe("Deobfuscate reporter", () => {
         expect(data).to.deep.equal([
             `var adodbstream_14 = WScript.CreateObject('ADODB.Stream');`,
             `adodbstream_14.type = 2;`
+        ]);
+    });
+
+    it("should handle odd JScript function/object types", async () => {
+
+        let data = await init_and_get_results(`
+          var a = WScript.CreateObject("WScript.Shell");
+          var b = a.ENVIRONMENT("SYSTEM")("ComSpec");
+        `);
+
+        expect(data).to.be.an("array");
+        expect(data).to.have.lengthOf(3);
+        expect(data).to.deep.equal([
+            `var wshshell_14 = WScript.CreateObject('WScript.Shell');`,
+            `var wshenvironment_15 = WshEnvironment.ENVIRONMENT('SYSTEM');`,
+            `wshenvironment_15.item('ComSpec'); // => C:\\Windows\\System32\\cmd.exe`
         ]);
     });
 });

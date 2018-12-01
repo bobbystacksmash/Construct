@@ -22,13 +22,8 @@ module.exports = function (context, jscript_class) {
 
             if (typeof target_value === "function") {
 
-                if (/^(?:WshSpecialFolders|WshArguments|WshEnvironment)$/i.test(target_value.__name__)) {
+                if (/^(?:WshSpecialFolders|WshEnvironment|WshArguments)$/i.test(target_value.__name__)) {
                     // See special wrappers for their object interaction emitters.
-
-                    apicall.type = ObjectInteraction.TYPE_GETTER;
-                    apicall.retval = { __name__: target_value.__name__, __id__: target_value.__id__ };
-                    apicall.emit_event(`runtime.api.getter`);
-
                     return target_value;
                 }
                 else {

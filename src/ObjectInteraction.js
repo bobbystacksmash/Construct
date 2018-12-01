@@ -18,7 +18,7 @@ class ObjectInteraction {
         this._property = obj.property;
         this._id       = obj.id;
         this.args      = obj.args;
-        this._retval   = obj.retval;
+        this.retval    = obj.retval;
     }
 
     emit_event (event_name) {
@@ -89,11 +89,20 @@ class ObjectInteraction {
     // method.
     set retval (retval) {
 
-        if (retval && typeof retval === "object") {
-            retval = {
-                target : retval.__name__,
-                id     : retval.__id__
-            };
+        if (retval) {
+
+            if (typeof retval === "object") {
+                retval = {
+                    target : retval.__name__,
+                    id     : retval.__id__
+                };
+            }
+            else if (typeof retval === "function") {
+                retval = {
+                    target: retval.__name__,
+                    id: retval.__id__
+                };
+            }
         }
 
         this._retval = retval;

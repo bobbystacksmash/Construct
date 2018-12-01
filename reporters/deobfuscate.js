@@ -44,29 +44,12 @@ function DeObfuscate () {
             symtbl_insert(retval.id, identifier);
             return `var ${identifier} = ${e.target.name}.${e.property}(${args});`;
         }
-
-        if (retval === undefined) {
+        else if (retval === undefined) {
             return `${e.target.name}.${e.property}(${args});`;
         }
-
-        /*if (e.target.hasOwnProperty("name") && e.target.hasOwnProperty("id")) {
-
-            if (e.target.name.toLowerCase() === "wscript") {
-
-                if (e.retval === undefined) {
-                    return `WScript.${e.property}(${args});`;
-                }
-            }
+        else if (typeof retval === "string" || typeof retval === "number") {
+            return `${identifier}.${e.property}(${args}); // => ${retval}`;
         }
-
-        if (!identifier) {
-            if (e.retval && e.retval.hasOwnProperty("target") && e.retval.hasOwnProperty("id")) {
-                identifier = generate_identifier(e.retval);
-                symtbl_insert(e.retval.id, identifier);
-            }
-        }*/
-
-        return `${identifier}.${e.property}(${args});`;
     }
 
 
