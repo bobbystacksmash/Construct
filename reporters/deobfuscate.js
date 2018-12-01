@@ -19,7 +19,7 @@ function DeObfuscate () {
 
     function generate_identifier (obj) {
 
-        let instance = obj.instance.replace(/[.-]/g, "").toLowerCase(),
+        let instance = obj.target.replace(/[.-]/g, "").toLowerCase(),
             id       = obj.id;
 
         return `${instance}_${id}`;
@@ -29,6 +29,44 @@ function DeObfuscate () {
         return args.map(arg => {
             return (arg.type === "string") ? `'${arg.value}'` : arg.value;
         }).join(",");
+    }
+
+    function method_to_source (e) {
+
+        let identifier = symtbl_lookup(e.target.id),
+            args       = args_to_string(e.args),
+            retval     = e.retval;
+
+        if (retval && retval.hasOwnProperty("target") && retval.hasOwnProperty("id")) {
+            // The return value of this method call requires a symbol
+            // be used to store the returned instance.
+            identifier = generate_identifier(retval);
+            symtbl_insert(retval.id, identifier);
+            return `var ${identifier} = ${e.target.name}.${e.property}(${args});`;
+        }
+
+        if (retval === undefined) {
+            return `${e.target.name}.${e.property}(${args});`;
+        }
+
+        /*if (e.target.hasOwnProperty("name") && e.target.hasOwnProperty("id")) {
+
+            if (e.target.name.toLowerCase() === "wscript") {
+
+                if (e.retval === undefined) {
+                    return `WScript.${e.property}(${args});`;
+                }
+            }
+        }
+
+        if (!identifier) {
+            if (e.retval && e.retval.hasOwnProperty("target") && e.retval.hasOwnProperty("id")) {
+                identifier = generate_identifier(e.retval);
+                symtbl_insert(e.retval.id, identifier);
+            }
+        }*/
+
+        return `${identifier}.${e.property}(${args});`;
     }
 
 
@@ -61,11 +99,7 @@ function DeObfuscate () {
             return `${identifier}.${e.property} = ${args};`;
         }
         else if (e.type === "method") {
-
-            let identifier = symtbl_lookup(e.target.id),
-                args       = args_to_string(e.args);
-
-            return `${identifier}.${e.property}(${args});`;
+            return method_to_source(e);
         }
         else {
             console.log(e);
