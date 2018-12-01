@@ -44,7 +44,12 @@ function DeObfuscate () {
             symtbl_insert(retval.id, identifier);
             return `var ${identifier} = ${e.target.name}.${e.property}(${args});`;
         }
-        else if (retval === undefined) {
+
+        if (identifier === null) {
+            identifier = e.target.name;
+        }
+
+        if (retval === undefined) {
             return `${e.target.name}.${e.property}(${args});`;
         }
         else if (typeof retval === "string" || typeof retval === "number") {

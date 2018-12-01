@@ -78,4 +78,12 @@ describe("Deobfuscate reporter", () => {
             `wshenvironment_15.item('ComSpec'); // => C:\\Windows\\System32\\cmd.exe`
         ]);
     });
+
+    it("should not emit any events associated with Math", async () => {
+        let data = await init_and_get_results(`var x = Math.ceil(3.14);`);
+
+        expect(data).to.be.an("array");
+        expect(data).to.have.lengthOf(1);
+        expect(data[0]).to.equal(`Math.ceil(3.14); // => 4`);
+    });
 });

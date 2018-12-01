@@ -23,7 +23,7 @@ class JS_ActiveXObject extends Component {
             property: "new",
             type: ObjectInteraction.TYPE_CONSTRUCTOR,
             args: args,
-            retval: { target: type, id: instance.__id__ }
+            retval: instance
         });
         apicall.emit_event(`runtime.api.method`);
 
