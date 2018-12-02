@@ -177,10 +177,9 @@ describe("FolderObject", () => {
 
             ctx.vfs.AddFolder(path);
 
-            const folder = new Folder(ctx, path),
-                  parent = folder.ParentFolder;
+            const folder = new Folder(ctx, path);
 
-            assert.equal(parent.name, "RootOne");
+            assert.equal(folder.ParentFolder.name, "RootOne");
         });
 
         it("should return undefined if the Folder is already root", () => {
