@@ -24,7 +24,7 @@ let init_and_get_results = async function (code) {
 
 describe("Dumpnet reporter", () => {
 
-    it("xx.", async () => {
+    it("should capture HTTP GET requests via XHR", async () => {
 
         let data = await init_and_get_results(`
           var xhr = new ActiveXObject("MSXML2.XMLHTTP");
@@ -36,5 +36,4 @@ describe("Dumpnet reporter", () => {
 
         expect(data[0]).to.deep.equal({ "GET": "github.com" });
     });
-
 });

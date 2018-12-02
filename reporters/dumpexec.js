@@ -13,16 +13,19 @@ function DumpExec () {
 
         report: (event, done) => {
 
-            if (event.meta && event.meta === "runtime.api.call") {
-                if (/wshshell/i.test(event.target) && /^(?:run|exec)$/i.test(event.property.normalised)) {
-                    this.events.push(event.args[0].value);
-                }
-                else if (/ShellApplication/i.test(event.target) && /shellexecute/i.test(event.property.normalised)) {
+            if (event.meta === "finished") {
+                return done(null, this.events);
+            }
+
+            if (/^wshshell/i.test(event.target.name)) {
+                if (/^(?:run|exec)$/i.test(event.property)) {
                     this.events.push(event.args[0].value);
                 }
             }
-            else if (event.meta && event.meta === "finished") {
-                done(null, this.events);
+            else if (/^shellapplication/i.test(event.target.name)) {
+                if (/^shellexecute$/i.test(event.property)) {
+                    this.events.push(event.args[0].value);
+                }
             }
         }
     };
