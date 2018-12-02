@@ -518,12 +518,20 @@ class JS_FileSystemObject extends Component {
     // not.
     folderexists (dirpath) {
 
+        if (arguments.length === 0) {
+            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+                "FileSystemObject",
+                "Not enough parameters passed to FileSystemObject.FolderExists().",
+                "FileSystemObject.FolderExists must be called with 1 argument."
+            );
+        }
+
         if (typeof dirpath !== "string") {
             try {
                 dirpath = dirpath.toString();
             }
             catch (e) {
-                throw e;
+                return false;
             }
         }
 

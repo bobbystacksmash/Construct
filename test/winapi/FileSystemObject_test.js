@@ -984,6 +984,27 @@ describe("Scripting.FileSystemObject", () => {
 
             assert.isFalse(fso.FolderExists("C:\\RootOne\\SubDir*"));
         });
+
+        it("should return false when passed 'undefined'", () => {
+            const fso = make_FSO();
+            assert.isFalse(fso.FolderExists(undefined));
+        });
+
+        it("should throw when called with no params", () => {
+
+
+            const fso = make_FSO({
+                exceptions: {
+                    throw_wrong_argc_or_invalid_prop_assign: () => {
+                        throw new Error("drive not found");
+                    }
+                }
+            });
+
+            assert.throws(() => fso.FolderExists(), "drive not found");
+
+        });
+
     });
 
     describe("#GetAbsolutePathName", () => {
