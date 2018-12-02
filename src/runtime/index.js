@@ -242,6 +242,7 @@ Runtime.prototype._create_runtime_sandbox = function (options) {
         Date          : context.get_global_object("Date"),
         Math          : context.get_global_object("Math"),
         WScript       : context.get_global_object("WScript"),
+        ScriptEngine  : () => "JScript",
         ActiveXObject : context.get_global_object("ActiveXObject")
     };
 
