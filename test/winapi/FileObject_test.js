@@ -784,8 +784,8 @@ describe("FileObject", () => {
             ctx.vfs.AddFile("C:\\foo.txt", "existing content");
 
             const file = new File(ctx, "C:\\foo.txt"),
-                  ts   = file.OpenAsTextStream(8, /* for appending */
-                                               0, /* use ASCII */);
+                  ts   = file.OpenAsTextStream(8, //for appending
+                                               0); // use ASCII
 
             assert.equal(ctx.vfs.ReadFileContents("C:\\foo.txt"), "existing content");
 
@@ -806,8 +806,8 @@ describe("FileObject", () => {
             assert.equal(ctx.vfs.ReadFileContents("C:\\file.txt"), "AAAA");
 
             const file = new File(ctx, "C:\\file.txt"),
-                  ts   = file.OpenAsTextStream(8, /* for appending */
-                                               -1 /* use unicode */);
+                  ts   = file.OpenAsTextStream(8, // for appending
+                                               -1); // use unicode
 
             const A   = 0x41,
                   B   = 0x42,
@@ -839,8 +839,8 @@ describe("FileObject", () => {
             ctx.vfs.AddFile("C:\\file.txt", "AAAA");
 
             const file = new File(ctx, "C:\\file.txt"),
-                  ts   = file.OpenAsTextStream(1, /* for reading */
-                                               0, /* use ASCII   */);
+                  ts   = file.OpenAsTextStream(1, // for reading
+                                               0);// use ASCII
 
             assert.equal(ts.ReadAll(), "AAAA");
             assert.throws(() => ts.Write("BBBB"), "read only ");
@@ -858,8 +858,8 @@ describe("FileObject", () => {
             ctx.vfs.AddFile("C:\\file.txt", "AAAA");
 
             const file = new File(ctx, "C:\\file.txt"),
-                  ts   = file.OpenAsTextStream(2, /* for writing */
-                                               0, /* use ASCII   */);
+                  ts   = file.OpenAsTextStream(2, //for writing
+                                               0); // use ASCII
 
             assert.doesNotThrow(() => ts.Write("BBBB"));
             assert.throws(() => ts.ReadAll(), "write only mode");
@@ -871,8 +871,8 @@ describe("FileObject", () => {
             ctx.vfs.AddFile("C:\\file.txt", "AAAA");
 
             const file = new File(ctx, "C:\\file.txt"),
-                  ts   = file.OpenAsTextStream(2, /* for writing */
-                                               0, /* use ASCII */);
+                  ts   = file.OpenAsTextStream(2, // for writing
+                                               0);// use ASCII
 
             ts.Write("BBBB");
 
@@ -888,15 +888,15 @@ describe("FileObject", () => {
             ctx.vfs.AddFile("C:\\file.txt");
 
             const file = new File(ctx, "C:\\file.txt"),
-                  ts   = file.OpenAsTextStream(2,  /* for writing */
-                                               -1, /* use ASCII */);
+                  ts   = file.OpenAsTextStream(2,    // for writing
+                                               -1 ); // use ASCII
 
             ts.Write("BBBB");
 
             assert.deepEqual(
                 ctx.vfs.ReadFileContents("C:\\file.txt"),
                 Buffer.from([
-                    0xFF, 0xFE, /* BOM */
+                    0xFF, 0xFE, // BOM
                     0x42, 0x00,
                     0x42, 0x00,
                     0x42, 0x00,
@@ -911,8 +911,8 @@ describe("FileObject", () => {
             ctx.vfs.AddFile("C:\\file.txt");
 
             const file = new File(ctx, "C:\\file.txt"),
-                  ts   = file.OpenAsTextStream(2,  /* for writing */
-                                               -2, /* use default */);
+                  ts   = file.OpenAsTextStream(2,  // for writing
+                                               -2); // use default
 
             ts.Write("BBBB");
 
@@ -928,7 +928,7 @@ describe("FileObject", () => {
             ctx.vfs.AddFile("C:\\file.txt");
 
             const file = new File(ctx, "C:\\file.txt"),
-                  ts   = file.OpenAsTextStream(2,  /* for writing */);
+                  ts   = file.OpenAsTextStream(2); // for writing
 
             ts.Write("BBBB");
 
