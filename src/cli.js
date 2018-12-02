@@ -8,6 +8,8 @@ const wrap           = require("word-wrap");
 const moment         = require("moment");
 const path           = require("path");
 const HookCollection = require("./hooks");
+const fs             = require("fs");
+const acorn          = require("acorn");
 
 const Construct = require("../index");
 
@@ -88,6 +90,12 @@ program
         "Uses the given REPORTER to produce output.",
         "dumpevents"
     )
+
+    .option(
+        "-c, --check-syntax",
+        "Checks whether the input file appears to be syntactically valid."
+    )
+
     .parse(process.argv);
 
 
@@ -121,7 +129,20 @@ if (program.listReporters) {
 if (file_to_analyse === null) {
     console.log("Usage: construct FILE [OPTION]...");
     console.log("Try: 'construct --help' for more information.");
+    process.exit(1);
     return;
+}
+
+if (program.checkSyntax) {
+    try {
+        acorn.parse(fs.readFileSync(file_to_analyse).toString());
+        console.log("Syntax OK.");
+    }
+    catch (e) {
+        console.log(e);
+    }
+
+    process.exit();
 }
 
 try {
