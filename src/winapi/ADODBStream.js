@@ -33,7 +33,6 @@ class JS_ADODBStream extends Component {
 
     constructor (context) {
         super(context, "ADODBStream");
-        this.ee  = this.context.emitter;
         this.vfs = this.context.vfs;
         this.stream = new TextStream(context);
     }

@@ -32,11 +32,8 @@ class ObjectInteraction {
         };
 
         if (this.context.allow_event_tracking(this._target)) {
+            this.context.emitter.emit(event_name, evt);
         }
-        else {
-        }
-
-        this.context.emitter.emit(event_name, evt);
     }
 
     // The `target' is an instance of a WINAPI object, such as
