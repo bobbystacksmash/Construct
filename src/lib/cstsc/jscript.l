@@ -3,6 +3,7 @@
 
 %{
 function token (state, name) {
+
     let obj = {
         name  : name,
         match : state.match,
@@ -63,12 +64,12 @@ Ignore                     .
 // Strings
 //
 <INITIAL>{DoubleQuote}           { this.begin("DQS"); }
-<DQS>[^\\]{DoubleQuote}*         { this.popState();   }
-<DQS>{Ignore}                    { /* Ignore */       }
+<DQS>[^\\]{DoubleQuote}          { this.popState();   }
+<DQS>{Ignore}                    { return token(this, "IGNORE"); }
 
 <INITIAL>{SingleQuote}           { this.begin("SQS"); }
 <SQS>[^\\]{SingleQuote}*         { this.popState();   }
-<SQS>{Ignore}                    { /* Ignore */       }
+<SQS>{Ignore}                    { return token(this, "IGNORE");  }
 
 //
 // CC

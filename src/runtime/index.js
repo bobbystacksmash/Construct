@@ -130,7 +130,6 @@ Runtime.prototype.load = function(path_to_file, done, options) {
     this.context.vfs.AddFile(script_path, this.source.original);
     this.context.set_env("ScriptFullName", script_path);
 
-
     return this._make_runnable(done);
 };
 
@@ -244,6 +243,8 @@ Runtime.prototype._create_runtime_sandbox = function (options) {
         Date          : context.get_global_object("Date"),
         Math          : context.get_global_object("Math"),
         WScript       : context.get_global_object("WScript"),
+        util_log      : () => {}, // Does-not-throw when run with WinDBG.
+        print         : () => {}, // Does-not-throw when run with WinDBG.
         ScriptEngine  : () => "JScript",
         ActiveXObject : context.get_global_object("ActiveXObject")
     };

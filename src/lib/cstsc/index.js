@@ -128,8 +128,9 @@ function transpile (code_in) {
         if (token === "EOF") {
             break;
         }
-
-        tokens.unshift(token);
+        else if (token.name !== "IGNORE") {
+            tokens.unshift(token);
+        }
     }
 
     let lines_of_code = code_in.split(/\n/);

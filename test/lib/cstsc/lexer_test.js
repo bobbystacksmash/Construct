@@ -56,7 +56,7 @@ const util = {
                 // problem in files with thousands of lines without a
                 // single CC token, eventually reaching max stack
                 // depth.
-                if (token.name !== "NEWLINE") {
+                if (token.name !== "NEWLINE" && token.name !== "IGNORE") {
                     tokens.push(token.name);
                 }
             }
