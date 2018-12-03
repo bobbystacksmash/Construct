@@ -26,6 +26,9 @@ function DumpNet () {
                         if (!request_type) {
                             request_type = "UNKNOWN";
                         }
+                        else if (event.args.length < 2) {
+                            return;
+                        }
                         else {
                             request_type = request_type.toUpperCase();
                         }

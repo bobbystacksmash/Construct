@@ -162,6 +162,7 @@ class HostContext {
         let responses = [];
 
         Object.keys(netcfg.response).forEach(rkey => {
+
             let res  = Object.assign(this.default_nethook_response, netcfg.response[rkey]),
                 body = res.body;
 
@@ -205,6 +206,16 @@ class HostContext {
 
             res.body = body;
             res.headers["Content-Length"] = Buffer.from(body).length;
+
+            // Response Headers
+            // ================
+            if (res.hasOwnProperty("contentType")) {
+                res.headers["Content-Type"] = res.contentType;
+            }
+            else {
+                res.headers["Content-Type"] = "text/html";
+            }
+
             responses.push(res);
         });
 
@@ -371,6 +382,7 @@ class HostContext {
 
 
     get_nethook (req) {
+
         let nethook = this.nethooks.find(nh => {
             return nh.match_url(req.address);
         });
@@ -491,8 +503,6 @@ class HostContext {
             id = instance.__id__;
         }
 
-        console.log("ID IS", id);
-
         this._event_tracking[id] = true;
     }
 
@@ -500,7 +510,7 @@ class HostContext {
 
         let id;
 
-        if (typeof id === "number" || typeof id === "string") {
+        if (typeof instance === "number" || typeof instance === "string") {
             id = instance;
         }
         else {
