@@ -17,8 +17,8 @@ class JS_Math extends Component {
 
     constructor (context) {
 	super(context, "Math");
+        context.disable_event_tracking(this.__id__);
 	this.math = Math;
-	this.ee   = this.context.emitter;
     }
 
     // Properties
