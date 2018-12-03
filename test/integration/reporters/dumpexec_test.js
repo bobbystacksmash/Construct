@@ -14,12 +14,23 @@ function mktmp (code) {
     return info.path;
 }
 
-let init_and_get_results = async function (code) {
+
+let init_and_get_results = async function (code, include_header) {
+
+    if (include_header === undefined) {
+        include_header = false;
+    }
+
     let fp = mktmp(code);
     const analyser = new Construct({ config: TEST_CONFIG_FILE }),
           data     = await analyser.analyse(fp, { reporter: "dumpexec" });
 
-    return data;
+    if (include_header) {
+        return data;
+    }
+    else {
+        return data.body;
+    }
 }
 
 describe("Dumpexec reporter", () => {

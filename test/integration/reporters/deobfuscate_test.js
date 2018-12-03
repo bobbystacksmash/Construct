@@ -8,18 +8,31 @@ TEST_CONFIG_FILE = "./test/integration/construct.cfg";
 
 temp.track();
 function mktmp (code) {
+
     let info = temp.openSync("tempjs");
     fs.writeSync(info.fd, code);
     fs.closeSync(info.fd);
     return info.path;
 }
 
-let init_and_get_results = async function (code) {
+let init_and_get_results = async function (code, include_header) {
+
+    if (include_header === undefined) {
+        include_header = false;
+    }
+
+    include_header = !!include_header;
+
     let fp = mktmp(code);
     const analyser = new Construct({ config: TEST_CONFIG_FILE }),
           data     = await analyser.analyse(fp, { reporter: "deobfuscate" });
 
-    return data;
+    if (include_header) {
+        return data;
+    }
+    else {
+        return data.body;
+    }
 }
 
 describe("Deobfuscate reporter", () => {

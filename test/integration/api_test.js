@@ -28,9 +28,17 @@ describe("Construct", () => {
             const analyser = new Construct({ config: TEST_CONFIG_FILE });
             const data = await analyser.analyse(fp);
 
-            expect(data).to.be.a("array");
-            expect(data).to.have.lengthOf(1);
-            expect(data[0]).to.have.all.keys(
+            expect(data).to.be.an("object");
+
+            let header = data.header,
+                body   = data.body;
+
+            expect(header.reporter).to.equal("dumpevents");
+            expect(header).to.have.all.keys("src", "reporter");
+
+            expect(body).to.be.an("array");
+            expect(body).to.have.lengthOf(1);
+            expect(body[0]).to.have.all.keys(
                 "args",
                 "meta",
                 "property",
@@ -39,9 +47,9 @@ describe("Construct", () => {
                 "type"
             );
 
-            expect(data[0].target).to.have.all.keys("name", "id");
+            expect(body[0].target).to.have.all.keys("name", "id");
 
-            expect(data[0].args).to.deep.equal([{
+            expect(body[0].args).to.deep.equal([{
                 type: "string",
                 value: "hello"
             }]);
@@ -65,7 +73,7 @@ describe("Construct", () => {
 
             const analyser = new Construct({ config: TEST_CONFIG_FILE });
             const data = await analyser.analyse(info.path);
-            expect(data.pop().retval).to.equal(code);
+            expect(data.body.pop().retval).to.equal(code);
             fs.closeSync(info.fd);
         });
 
@@ -77,7 +85,7 @@ describe("Construct", () => {
             const analyser = new Construct({ config: TEST_CONFIG_FILE }),
                   data     = await analyser.analyse(fp);
 
-            expect(data.pop().retval).to.equal("baz");
+            expect(data.body.pop().retval).to.equal("baz");
         });
     });
 

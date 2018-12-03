@@ -81,7 +81,18 @@ class Construct {
             }
 
             var done_callback = function (err, success) {
-                (err) ? reject(err) : resolve(success);
+
+                if (err) {
+                    return reject(err);
+                }
+
+                // Add header information.
+                let header = {
+                    src: path,
+                    reporter: options.reporter
+                };
+
+                return resolve((Object.assign({ header: header }, { body: success })));
             };
 
             // First, we try to load the JScript program from disk...
