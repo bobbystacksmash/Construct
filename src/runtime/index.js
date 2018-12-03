@@ -81,10 +81,12 @@ Runtime.prototype.load = function(path_to_file, done, options) {
         return ["__construct", uuid().replace(/-/g, "_"), new Date().getTime()].join("_");
     };
 
+    let transpiled_src = new CodeRewriter(src).using("transpile jscript").source();
+
     // Generate unique function names to inject into the source so we
     // can pass data across the sandbox.
     //
-    // [ COVERAGE ]
+    // COVERAGE
     //
     // We need two identifiers for this:
     //
@@ -98,7 +100,7 @@ Runtime.prototype.load = function(path_to_file, done, options) {
         filepath:   path.resolve(path_to_file)
     };
 
-    const beautified     = new CodeRewriter(src).using("beautify").source(),
+    const beautified     = new CodeRewriter(transpiled_src).using("beautify").source(),
           beautified_cov = new CodeRewriter(beautified).using("coverage", cov).source();
 
     // Create different versions of the source:
