@@ -83,7 +83,26 @@ describe("Deobfuscate reporter", () => {
         let data = await init_and_get_results(`var x = Math.ceil(3.14);`);
 
         expect(data).to.be.an("array");
+        expect(data).to.have.lengthOf(0);
+    });
+
+    it("should correctly turn a 'new Date()' expr in to code", async () => {
+
+        let data = await init_and_get_results(`var x = new Date()`);
+
+        expect(data).to.be.an("array");
         expect(data).to.have.lengthOf(1);
-        expect(data[0]).to.equal(`Math.ceil(3.14); // => 4`);
+    });
+
+    it("should correctly follow a date instance", async () => {
+
+        let data = await init_and_get_results(`
+          var d1 = new Date(1234567890);
+          d1.getTime();
+        `);
+
+        expect(data).to.be.an("array");
+        expect(data).to.have.lengthOf(2);
+        expect(data[1]).to.equal("date_14.getTime(); // => 1234567890");
     });
 });

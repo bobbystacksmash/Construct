@@ -73,6 +73,14 @@ function DeObfuscate () {
                     return `var ${identifier} = new ActiveXObject(${args})`;
                 }
             }
+            else if (/^date$/i.test(e.target.name)) {
+
+                let identifier = generate_identifier(e.retval),
+                    args       = args_to_string(e.args);
+                symtbl_insert(e.retval.id, identifier);
+
+                return `var ${identifier} = new Date(${args});`;
+            }
         }
         else if (e.type === "getter") {
             let identifier = symtbl_lookup(e.target.id);

@@ -25,7 +25,7 @@ module.exports = function create(context) {
             property: "new",
             type: ObjectInteraction.TYPE_CONSTRUCTOR,
             args: [...args],
-            retval: instance.getTime()
+            retval: component
         });
 
         apicall.emit_event("runtime.api.method");
