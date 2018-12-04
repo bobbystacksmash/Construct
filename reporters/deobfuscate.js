@@ -27,7 +27,24 @@ function DeObfuscate () {
 
     function args_to_string (args) {
         return args.map(arg => {
-            return (arg.type === "string") ? `'${arg.value}'` : arg.value;
+
+            switch (arg.type) {
+            case "string":
+                return `'${arg.value}'`;
+            case "number":
+                return `${arg.value}`;
+
+            case "object":
+                if (Buffer.isBuffer(arg.value)) {
+                    let octets = [];
+                    for (let octet of arg.value) octets.push(octet);
+                    octets = Array.prototype.slice.call(octets, 0, 8).join(", ");
+                    return `Buffer<${octets}, ..>`;
+                }
+
+            default:
+                return arg.value;
+            }
         }).join(",");
     }
 
@@ -83,8 +100,16 @@ function DeObfuscate () {
             }
         }
         else if (e.type === "getter") {
-            let identifier = symtbl_lookup(e.target.id);
-            return `${identifier}.${e.property}`;
+            let identifier = symtbl_lookup(e.target.id),
+                retval     = e.retval;
+
+            let statement = `${identifier}.${e.property};`;
+
+            if (typeof retval === "string" || typeof retval === "number") {
+                statement += ` // => ${e.retval}`;
+            }
+
+            return statement;
         }
         else if (e.type === "setter") {
 
