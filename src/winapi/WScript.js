@@ -53,7 +53,6 @@ module.exports = function create(context, options) {
 
         // WScript.Arguments: https://msdn.microsoft.com/en-us/library/z2b05k8s(v=vs.84).aspx
         get arguments () {
-            //this.context.emitter.emit("runtime.api.call", "maaaaattteeee");
             const default_options = {
                 arguments: []
             };
@@ -64,13 +63,13 @@ module.exports = function create(context, options) {
 
         // WScript.BuildVersion      https://msdn.microsoft.com/en-us/library/kt8ycte6(v=vs.84).aspx
         get buildversion () {
-	    let build_version = this.context.ENVIRONMENT.BuildVersion;
+	    let build_version = context.ENVIRONMENT.BuildVersion;
 	    return build_version;
         }
 
         set buildversion (_) {
             // READ ONLY PROPERTY
-            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
                 "WScript",
                 "The .BuildVersion property cannot be set.",
                 "The .BuildVersion property cannot be set."
@@ -79,13 +78,13 @@ module.exports = function create(context, options) {
 
         // FullName https://msdn.microsoft.com/en-us/library/z00t383b(v=vs.84).aspx
         get fullname () {
-	    let full_name = this.context.ENVIRONMENT.FullName;
+	    let full_name = context.ENVIRONMENT.FullName;
 	    return full_name;
         }
 
         set fullname (_) {
             // READ ONLY PROPERTY
-            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
                 "WScript",
                 "The .FullName property cannot be set.",
                 "The .FullName property cannot be set."
@@ -94,7 +93,7 @@ module.exports = function create(context, options) {
 
         // Interactive https://msdn.microsoft.com/en-us/library/b48sxsw0(v=vs.84).aspx
         get interactive () {
-	    let interactive = this.context.ENVIRONMENT.Interactive;
+	    let interactive = context.ENVIRONMENT.Interactive;
 	    return interactive;
         }
 
@@ -104,12 +103,12 @@ module.exports = function create(context, options) {
 
         // Name https://msdn.microsoft.com/en-us/library/3ktf76t1(v=vs.84).aspx
         get name () {
-	    let name = this.context.ENVIRONMENT.Name;
+	    let name = context.ENVIRONMENT.Name;
 	    return name;
         }
 
         set name (_) {
-            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
                 "WScript",
                 "Cannot set .Name",
                 "The .Name property is read-only."
@@ -122,12 +121,12 @@ module.exports = function create(context, options) {
         // Returns the name of the directory containing the host
         // executable (CScript.exe or WScript.exe).
         get path () {
-	    let path = this.context.ENVIRONMENT.Path;
+	    let path = context.ENVIRONMENT.Path;
 	    return path;
         }
 
         set path (_) {
-            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
                 "WScript",
                 "Cannot set .Path",
                 "The .Path property is read-only."
@@ -137,12 +136,12 @@ module.exports = function create(context, options) {
 
         // ScriptFullName    https://msdn.microsoft.com/en-us/library/cc5ywscw(v=vs.84).aspx
         get scriptfullname () {
-	    let script_full_name = this.context.get_env("ScriptFullName");
+	    let script_full_name = context.get_env("ScriptFullName");
 	    return script_full_name;
         }
 
         set scriptfullname (_) {
-            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
                 "WScript",
                 "Cannot set .ScriptFullName",
                 "The .ScriptFullName property is read-only."
@@ -152,12 +151,12 @@ module.exports = function create(context, options) {
 
         // ScriptName        https://msdn.microsoft.com/en-us/library/3faf1xkh(v=vs.84).aspx
         get scriptname () {
-	    let script_name = this.context.ENVIRONMENT.ScriptName;
+	    let script_name = context.ENVIRONMENT.ScriptName;
 	    return script_name;
         }
 
         set scriptname (_) {
-            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
                 "WScript",
                 "Cannot set .ScriptName",
                 "The .ScriptName property is read-only."
@@ -181,12 +180,12 @@ module.exports = function create(context, options) {
 
         // Version https://msdn.microsoft.com/en-us/library/kaw07b53(v=vs.84).aspx
         get version () {
-	    let version = this.context.config.ENVIRONMENT.Version;
+	    let version = context.config.ENVIRONMENT.Version;
 	    return version;
         }
 
         set version (_) {
-            this.context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
+            context.exceptions.throw_wrong_argc_or_invalid_prop_assign(
                 "WScript",
                 "Cannot set .Version property",
                 "The .Version property is read-only."
@@ -204,13 +203,13 @@ module.exports = function create(context, options) {
         createobject (type) {
 
             try {
-                let instance = create_instance(this.context, type);
+                let instance = create_instance(context, type);
                 return instance;
             }
             catch (e) {
 
                 if (e.message.includes("Unknown instance type")) {
-                    this.context.exceptions.throw_could_not_locate_automation_class(
+                    context.exceptions.throw_could_not_locate_automation_class(
                         "WScript",
                         "CreateObject cannot create an object for the given type.",
                         `Unable to create an object because type: "${type}" is unknown ` +
@@ -228,9 +227,9 @@ module.exports = function create(context, options) {
 
         echo (...args) {
 	    let msg = args.join(" ");
-            this.context.write_to_output_buf(msg);
+            context.write_to_output_buf(msg);
 
-	    if (this.context.output_behaviour === "repl") {
+	    if (context.output_behaviour === "repl") {
 	        console.log(" > ", ...args);
 	    }
         }
@@ -239,13 +238,13 @@ module.exports = function create(context, options) {
         }
 
         quit (exit_code) {
-            //this.context.shutdown(exit_code);
+            //context.shutdown(exit_code);
         }
 
         sleep (ms) {
-            let old_time = this.context.epoch;
-	    this.context.skew_time_ahead_by(ms);
-            let new_time = this.context.epoch;
+            let old_time = context.epoch;
+	    context.skew_time_ahead_by(ms);
+            let new_time = context.epoch;
         }
     }
 
