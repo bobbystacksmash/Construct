@@ -30,6 +30,19 @@ $(document).ready(function () {
         ""
     ];
 
+    function handle_results (data) {
+
+        let header = data.header,
+            body   = data.body;
+
+        if (data.header.reporter === "deobfuscate") {
+            results_mirror.setValue(data.body.join("\n"));
+        }
+        else {
+            results_mirror.setValue(JSON.stringify(data, null, 2));
+        }
+    }
+
     code_mirror.setValue(welcome_message.join("\n"));
 
     $("#code-form").submit(function (e) {
@@ -44,8 +57,7 @@ $(document).ready(function () {
             url: url,
             data: $form.serialize(),
             success: function (data) {
-                console.log("GOT RESULT", data);
-                results_mirror.setValue(JSON.stringify(data, null, 2));
+                handle_results(data);
             },
             fail: function () {
                 alert("ERROR!");
