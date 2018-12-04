@@ -33,7 +33,6 @@ function create(context, path) {
     class JS_FolderObject extends Component {
 
         constructor(context, path) {
-
 	    super(context, "Folder");
             assert_exists();
         }
@@ -442,6 +441,10 @@ function create(context, path) {
         // Returns a string representation of this class.
         //
         tostring () {
+            return path;
+        }
+
+        valueof () {
             return path;
         }
     }

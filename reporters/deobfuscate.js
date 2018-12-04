@@ -100,8 +100,13 @@ function DeObfuscate () {
             }
         }
         else if (e.type === "getter") {
+
             let identifier = symtbl_lookup(e.target.id),
                 retval     = e.retval;
+
+            if (e.target.name === "WScript") {
+                identifier = "WScript";
+            }
 
             let statement = `${identifier}.${e.property};`;
 
