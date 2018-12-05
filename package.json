@@ -7,7 +7,7 @@
         "test": "grunt",
         "integration": "node_modules/.bin/mocha --watch --recursive --reporter spec ./test/integration/api_test.js",
         "testdev": "node_modules/.bin/mocha --watch --recursive --reporter spec ./test/integration/reporters/deobfuscate_test.js",
-        "testreg": "node_modules/.bin/mocha --watch --recursive --reporter spec ./test/runtime/virtreg_test.js",
+        "testwsh": "node_modules/.bin/mocha --watch --recursive --reporter spec ./test/winapi/DriveObject_test",
         "code": "node src/index.js",
         "http": "node src/http/app.js",
         "debug": "node --inspect --inspect-brk src/index.js "
@@ -60,6 +60,7 @@
         "moment": "^2.22.2",
         "npm": "^6.4.1",
         "pug": "^2.0.3",
+        "serialize-error": "^3.0.0",
         "sprintf-js": "^1.1.1",
         "spyfs": "^1.0.2",
         "stack-trace": "0.0.10",

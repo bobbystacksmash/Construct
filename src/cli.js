@@ -10,6 +10,7 @@ const path           = require("path");
 const HookCollection = require("./hooks");
 const fs             = require("fs");
 const acorn          = require("acorn");
+const serializeError = require("serialize-error");
 
 const Construct = require("../index");
 
@@ -156,8 +157,8 @@ try {
             console.log(JSON.stringify(results, null, 2));
         })
         .catch((err) => {
-            // TODO: add better failure messages here.
-            console.log(err);
+            err.body = serializeError(err.body);
+            console.log(JSON.stringify(err, null, 2));
         });
 }
 catch (e) {

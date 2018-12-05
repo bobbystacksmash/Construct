@@ -71,28 +71,40 @@ class Construct {
         options = options || {};
         options = Object.assign(DEFAULT_ANALYSER_OPTS, options);
 
+        // Add header information.
+        let header = {
+            src: path,
+            reporter: options.reporter,
+            error: false
+        };
+
         return new Promise((resolve, reject) => {
 
             try {
                 this._set_reporter(options.reporter);
             }
             catch (err) {
-                reject(err);
+                header.error = true;
+                reject({
+                    header: header,
+                    body: err
+                });
             }
 
             var done_callback = function (err, success) {
 
                 if (err) {
-                    return reject(err);
+                    header.error = true;
+                    return reject({
+                        header: header,
+                        body: err
+                    });
                 }
 
-                // Add header information.
-                let header = {
-                    src: path,
-                    reporter: options.reporter
-                };
-
-                return resolve((Object.assign({ header: header }, { body: success })));
+                return resolve({
+                    header: header,
+                    body:   success
+                });
             };
 
             // First, we try to load the JScript program from disk...
@@ -100,9 +112,11 @@ class Construct {
                 var runnable = this.runtime.load(path, done_callback, options);
             }
             catch (e) {
-                console.log(`Error parsing file '${path}':`);
-                console.log(`Check that the file contains valid JScript code (only).`);
-                reject(e);
+                header.error = true;
+                reject({
+                    header: header,
+                    body: e
+                });
             }
 
             // Great!  We now have a `runnable.  A runnable is just a
