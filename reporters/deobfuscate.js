@@ -67,10 +67,13 @@ function DeObfuscate () {
         }
 
         if (retval === undefined) {
-            return `${e.target.name}.${e.property}(${args});`;
+            return `${identifier}.${e.property}(${args});`;
         }
         else if (typeof retval === "string" || typeof retval === "number") {
             return `${identifier}.${e.property}(${args}); // => ${retval}`;
+        }
+        else {
+            return "????";
         }
     }
 
