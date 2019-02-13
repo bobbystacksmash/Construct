@@ -14,6 +14,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "pug");
 app.set("views", "src/http/views");
 app.use(express.static("src/http/public"));
+
+console.log("Starting Construct HTTP interface...");
+console.log("Server listening on http://127.0.0.1:8080");
 server.listen(8080);
 
 temp.track();
