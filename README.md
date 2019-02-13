@@ -31,6 +31,17 @@ the latest version of the Node.js programming language.  To install Construct:
 4. Launch Construct by running `node src/cli.js --help` from the Construct folder.
 
 ## Usage
+
+### Web Browser
+
+Construct has a basic HTTP interface.
+![Construct's HTTP UI showing Deobfuscator plugin](https://raw.githubusercontent.com/wiki/bobbystacksmash/Construct/images/general/deobfuscator-http.png)
+The above shows the deobfuscator plugin in action.  Obfuscated JScript code
+was sent through Construct, which analysed it, and produced a sequence of events.
+The deobfuscator plugin walks this sequence of events and translates them back in
+to JScript in a form that is far more readable by an analyst.  All other output plugins
+can also be used from the web interface.
+
 ### Command Line
 
 To use construct on the command line, run `node src/cli.js`.  For
@@ -49,11 +60,6 @@ details, see `--help`:
     -h, --help                 output usage information
 
 ```
-
-### Web Browser
-
-_Work in progress._ The Construct project has a HTTP interface.  To
-use it, see `TODO`.
 
 ### Node JS API / Module
 
