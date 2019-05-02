@@ -38,6 +38,17 @@ class HostContext {
             }
         };
 
+	try {
+	    var defaultResponse = this.config.network.response.default,
+		defaultStatus      = defaultResponse.status,
+		defaultBody        = defaultResponse.body;
+
+	    this.default_nethook_response.status = defaultStatus;
+	    this.default_nethook_response.body = defaultBody;
+	}
+	catch (e) {
+	}
+
         this.default_exechook = {
             cmd: "",
             stdout: "",
