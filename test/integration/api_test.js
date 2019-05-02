@@ -22,7 +22,7 @@ describe("Construct", () => {
 
     describe("Public API", () => {
 
-        it("should resolve a promise with the event output", async () => {
+        xit("should resolve a promise with the event output", async () => {
 
             let fp = mktmp("WScript.Echo('hello');");
             const analyser = new Construct({ config: TEST_CONFIG_FILE });
