@@ -21,7 +21,11 @@ the project by [reporting issues](https://github.com/bobbystacksmash/Construct/i
 Patches are most welcome._
 
 ## Installing
+The manual install instructions are the most stable.  If you're more comfortable
+with Docker, please see the *Docker* install instructions, but beware, these are
+experimental at this time.
 
+### Manual Install
 Construct has been designed to run on any operating system capable of running
 the latest version of the Node.js programming language.  To install Construct:
 
@@ -29,6 +33,32 @@ the latest version of the Node.js programming language.  To install Construct:
 2. Clone or download this repository.
 3. `cd` in to the Construct folder and run `npm install` to install all dependencies.
 4. Launch Construct by running `node src/cli.js --help` from the Construct folder.
+
+### Docker (experimental)
+_NOTE: This is experimental at this time, and only configures the Construct HTTP UI,
+and therefore not recommended for those wishing to use the command line interface._
+
+To install Construct using Docker:
+
+0. Make sure you have Docker installed on your system.
+1. Clone or download/extract this repository.
+2. Using your terminal, `cd` in to the `Construct` dir created in step #1.
+3. Run `docker build -t construct/http:alpha .`
+4. Run `docker run -p 8080:8080 construct/http:alpha` _See NOTES (below) for more details_
+5. This will fetch all construct modules and dependencies, and start the Construct HTTP UI.
+6. Browse to `http://localhost:8080` for the Construct HTTP UI.
+
+_NOTES_
+In step 4 we map TCP port 8080 in the container to port 8080 on the Docker host.  If you
+already have 8080 mapped to another service, please change the lefthand value.  For example,
+if you'd prefer to use port 8282, you may want to use something like:
+
+`docker run -p 8282:8080 construct/http:alpha`
+
+#### Stopping the Construct Docker Container
+1. Find the list of currently running containers using `docker ps`
+2. From the output, find the container named `construct/http:alpha`, and note its `CONTAINER ID`.
+3. Run `docker stop CONTAINER_ID` (being sure to replace `CONTAINER_ID` with the /actual/ container ID).
 
 ## Usage
 
